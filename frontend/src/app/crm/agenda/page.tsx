@@ -805,7 +805,7 @@ export default function CRMAgendaPage() {
             </div>
 
             {/* Lista interna de citas del día con auto-scroll limpio sin barras visibles */}
-            <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-3 space-y-2.5">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5">
               {selectedDayAppointments.length > 0 ? (
                 selectedDayAppointments.map((apt) => (
                   <div
@@ -1008,7 +1008,7 @@ export default function CRMAgendaPage() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-3 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
             {appointments
               .filter((a) => {
                 const matchMod = filterModality === 'todas' || a.modality === filterModality;

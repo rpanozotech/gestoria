@@ -12,26 +12,55 @@
     color: #0b1c30;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
-    scrollbar-width: none !important; /* Firefox */
-    -ms-overflow-style: none !important; /* IE y Edge */
   }
 
-  /* Ocultar barras de scroll en todos los navegadores */
-  * {
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-  }
+  /*
+   * Las barras de scroll NO se ocultan globalmente.
+   *
+   * Antes habia un bloque que aplicaba scrollbar-width: none a * (todos
+   * los elementos) y display: none a ::-webkit-scrollbar. Con eso, un
+   * contenedor con overflow-y-auto y 200 clientes se ve exactamente
+   * igual que uno con 8: no hay barra, y sin paginacion no hay ninguna
+   * pista de que el contenido continua hacia abajo. El gestor no puede
+   * saber si esta viendo todo el directorio.
+   *
+   * Quien quiera una zona sin barra la pide con .no-scrollbar, que sigue
+   * disponible mas abajo para tabs horizontales y chips.
+   */
+}
 
-  *::-webkit-scrollbar,
+@layer base {
+  /* Barra fina y discreta, pero visible. */
   ::-webkit-scrollbar {
-    display: none !important;
-    width: 0px !important;
-    height: 0px !important;
-    background: transparent !important;
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #c6c6cd;
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #a8a9b3;
+  }
+
+  /* Firefox */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #c6c6cd transparent;
   }
 }
 
 @layer utilities {
+  /* Reservado a zonas donde la barra estorba de verdad: strips de tabs
+     horizontales, chips con scroll lateral, areas de arrastre. */
   .no-scrollbar::-webkit-scrollbar {
     display: none !important;
     width: 0px !important;

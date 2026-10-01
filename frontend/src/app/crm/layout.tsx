@@ -4,16 +4,21 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { getToken, getStoredUser, clearSession } from '@/lib/session';
+import { apiFetch } from '@/lib/api';
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(getStoredUser());
   const [checking, setChecking] = useState(true);
+  // Clientes activos, para el contador del menu. null = aun no cargado,
+  // para no mostrar un 0 que luego salta al valor real.
+  const [activeClients, setActiveClients] = useState<number | null>(null);
 
   // Estados interactivos para Topbar y Responsive Drawer
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(3);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,6 +34,19 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     setUser(getStoredUser());
     setChecking(false);
   }, [pathname, router]);
+
+  // Contador de clientes del menu. Se recarga al cambiar de ruta para que
+  // un alta o una desactivacion se reflejen sin recargar la pagina.
+  useEffect(() => {
+    if (!getToken()) return;
+
+    apiFetch('/clients/count')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (typeof data?.activos === 'number') setActiveClients(data.activos);
+      })
+      .catch(() => {});
+  }, [pathname]);
 
   // Cerrar menú móvil al navegar
   useEffect(() => {
@@ -56,21 +74,29 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/crm', label: 'Dashboard', icon: 'grid_view' },
     { href: '/crm/tarifas', label: 'Tarifas & Precios Web', icon: 'price_change', highlight: true, badge: 'Terminal' },
-    { href: '/crm/clientes', label: 'Clientes & Ficha 360', icon: 'group', badge: '148' },
+    {
+      href: '/crm/clientes',
+      label: 'Clientes & Ficha 360',
+      icon: 'group',
+      ...(activeClients !== null ? { badge: String(activeClients) } : {}),
+    },
     { href: '/crm/alta-ia', label: 'Alta IA & Escáner', icon: 'auto_awesome', highlight: true },
     { href: '/crm/facturacion', label: 'Presupuestos & Facturas', icon: 'receipt_long' },
     { href: '/crm/agenda', label: 'Agenda & Citas', icon: 'calendar_today' },
     { href: '/crm/documentos-ia', label: 'Asistente Documentos', icon: 'document_scanner' },
     { href: '/crm/chat-ia', label: 'Chat Asistente IA', icon: 'forum', highlight: true, badge: 'En vivo' },
+    { href: '/crm/backup', label: 'Copia de Seguridad', icon: 'cloud_download', highlight: true, badge: 'Exportar' },
   ];
 
   const quickSearchResults = [
+    { title: 'Descargar Copia de Seguridad Completa (JSON)', category: 'Backup', href: '/crm/backup' },
+    { title: 'Exportar Clientes a CSV (Excel / Otros CRM)', category: 'Exportar', href: '/crm/backup' },
+    { title: 'Exportar Facturación Oficial a CSV', category: 'Exportar', href: '/crm/backup' },
     { title: 'Maria Popescu (BSN: 982145672)', category: 'Cliente', href: '/crm/clientes' },
     { title: 'Carlos Mendoza Ruiz (BSN: 817293845)', category: 'Cliente', href: '/crm/clientes' },
     { title: 'EXP-2026-0041: Activación DigiD + Zorgtoeslag', category: 'Expediente', href: '/crm' },
     { title: 'EXP-2026-0042: M-Form 2025 Belastingdienst', category: 'Expediente', href: '/crm' },
     { title: 'FAC-2026-0001: € 266,20 (Pagada iDEAL)', category: 'Factura', href: '/crm/facturacion' },
-    { title: 'FAC-2026-0002: € 102,85 (Emitida)', category: 'Factura', href: '/crm/facturacion' },
     { title: 'Tarifas Oficiales: M-Form, DigiD, ZZP', category: 'Tarifas', href: '/crm/tarifas' },
   ].filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -92,7 +118,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Brand header */}
           <div className="h-16 px-6 flex items-center justify-between border-b border-surface-container">
             <Link href="/" className="flex items-center gap-2.5">
@@ -246,19 +272,32 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 title="Notificaciones"
               >
                 <span className="material-symbols-outlined text-[20px]">notifications</span>
-                <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 bg-error text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  3
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 bg-error text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
               {/* Dropdown Notificaciones */}
               {showNotifications && (
                 <div className="absolute right-0 top-11 w-80 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl p-4 space-y-3 z-50 animate-in fade-in">
                   <div className="flex items-center justify-between pb-2 border-b border-surface-container">
-                    <span className="font-bold text-xs text-on-surface">Notificaciones (3)</span>
-                    <span className="text-[10px] text-secondary font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
-                      Cerrar
-                    </span>
+                    <span className="font-bold text-xs text-on-surface">Notificaciones ({unreadCount})</span>
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setUnreadCount(0)}
+                          className="text-[10px] text-secondary font-semibold hover:underline"
+                        >
+                          Marcar leídas
+                        </button>
+                      )}
+                      <span className="text-[10px] text-outline font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
+                        Cerrar
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-2 text-xs">
@@ -319,17 +358,36 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
               {/* Dropdown Usuario */}
               {showUserMenu && (
-                <div className="absolute right-0 top-11 w-56 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl p-3 space-y-2 z-50 text-xs">
+                <div className="absolute right-0 top-11 w-60 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl p-3 space-y-2 z-50 text-xs">
                   <div className="px-2 py-1.5 border-b border-surface-container">
                     <p className="font-bold text-on-surface">{user?.full_name || 'Gestor'}</p>
                     <p className="text-[11px] text-outline font-mono-data">{user?.email}</p>
                   </div>
+
+                  <Link
+                    href="/crm/backup"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors font-semibold text-secondary"
+                  >
+                    <span className="material-symbols-outlined text-[16px] text-secondary">cloud_download</span>
+                    <span>Copia de Seguridad & Exportar</span>
+                  </Link>
+
+                  <Link
+                    href="/crm/tarifas"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px] text-outline">price_change</span>
+                    <span>Tarifas Oficiales</span>
+                  </Link>
+
                   <Link
                     href="/portal"
                     onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px] text-secondary">visibility</span>
+                    <span className="material-symbols-outlined text-[16px] text-outline">visibility</span>
                     <span>Probar Vista Cliente</span>
                   </Link>
                   <Link
@@ -360,7 +418,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content View: Adaptado a pantalla completa sin scrollbar visible a la derecha */}
-        <main className="flex-1 h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-surface no-scrollbar">
+        <main className="flex-1 h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-surface">
           {children}
         </main>
       </div>

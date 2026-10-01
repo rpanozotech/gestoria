@@ -647,7 +647,7 @@ export default function PortalClientePage() {
                   <h5 className="font-bold text-white text-xs">Avisos de tu Expediente</h5>
                   <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-white">✕</button>
                 </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
+                <div className="space-y-2 max-h-60 overflow-y-auto">
                   {notificationsList.map((notif) => (
                     <div
                       key={notif.id}
@@ -1242,7 +1242,7 @@ export default function PortalClientePage() {
             </div>
 
             {/* Mensajes del Chat */}
-            <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 no-scrollbar">
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
               {chatMessages.map((msg) => (
                 <div
                   key={msg.id}

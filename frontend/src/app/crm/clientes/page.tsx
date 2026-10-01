@@ -1559,6 +1559,31 @@ export default function CRMClientesPage() {
         </button>
       </div>
 
+      {/* Contador de resultados visibles.
+          Sin esto, con 200 clientes el gestor no tiene forma de saber si
+          esta viendo la lista entera. La barra de scroll ayuda a ver que
+          sigue, pero no dice cuantos hay. */}
+      <div className="flex items-center justify-between gap-3 text-[11px] text-outline">
+        <span>
+          Mostrando{' '}
+          <span className="font-mono-data font-semibold text-on-surface">
+            {filteredClients.length}
+          </span>{' '}
+          {filteredClients.length === 1 ? 'cliente' : 'clientes'}
+          {filteredClients.length !== clients.length && (
+            <span className="text-on-surface-variant">
+              {' '}
+              de {clients.length} en total
+            </span>
+          )}
+        </span>
+        {filteredClients.length > 20 && (
+          <span className="text-on-surface-variant">
+            Desplaza la lista para ver el resto.
+          </span>
+        )}
+      </div>
+
       {/* Grid: Clients Directory Table (CLICK EN FILA ABRE CLIENTE) */}
       <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
         <div className="overflow-x-auto no-scrollbar">
@@ -3170,7 +3195,7 @@ export default function CRMClientesPage() {
                 {/* Mensajes del Chat */}
                 <div
                   ref={clientAiScrollRef}
-                  className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 bg-surface/40 no-scrollbar"
+                  className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 bg-surface/40"
                 >
                   {clientAiMessages.map((m) => (
                     <div
@@ -3300,7 +3325,7 @@ export default function CRMClientesPage() {
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <form
             onSubmit={handleSaveClientEdit}
-            className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar animate-in zoom-in-95"
+            className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-3 border-b border-surface-container">
               <div className="flex items-center gap-2">
@@ -3912,7 +3937,7 @@ export default function CRMClientesPage() {
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <form
             onSubmit={handleSaveQuote}
-            className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar animate-in zoom-in-95"
+            className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-3 border-b border-surface-container">
               <div className="flex items-center gap-2.5">
@@ -3961,7 +3986,7 @@ export default function CRMClientesPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto no-scrollbar p-1 border border-outline-variant/60 rounded-xl bg-surface">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1 border border-outline-variant/60 rounded-xl bg-surface">
                   {servicesCatalog.map((s) => {
                     const isSelected = selectedQuoteServiceIds.includes(s.id);
                     return (
@@ -4000,7 +4025,7 @@ export default function CRMClientesPage() {
                   <span className="font-bold text-[11px] text-on-surface uppercase tracking-wider block">
                     Desglose de Trámites a Facturar ({selectedQuoteServiceIds.length}):
                   </span>
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto no-scrollbar pr-1">
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                     {getSelectedQuoteItems().map((item) => (
                       <div
                         key={item.id}
@@ -4090,7 +4115,7 @@ export default function CRMClientesPage() {
       {/* MODAL 8: HOJA OFICIAL FACTURA / PRESUPUESTO */}
       {/* ========================================================================= */}
       {selectedDoc && (
-        <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-scrollbar">
+        <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className="bg-surface-container-lowest max-w-3xl w-full rounded-2xl shadow-2xl border border-outline-variant overflow-hidden my-auto animate-in zoom-in-95">
             {/* Barra Superior del Visor Documental */}
             <div className="bg-surface-container-low px-6 py-3.5 border-b border-surface-container flex items-center justify-between">

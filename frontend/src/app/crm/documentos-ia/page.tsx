@@ -1793,7 +1793,7 @@ ${
             {/* CONTENEDOR DE MENSAJES CON AUTO-SCROLL CONTINUO */}
             <div
               ref={chatScrollContainerRef}
-              className="flex-1 overflow-y-auto space-y-3 p-2 my-2 bg-surface/60 rounded-lg border border-surface-container scroll-smooth no-scrollbar"
+              className="flex-1 overflow-y-auto space-y-3 p-2 my-2 bg-surface/60 rounded-lg border border-surface-container scroll-smooth"
             >
               {chatMessages.map((msg, idx) => (
                 <div

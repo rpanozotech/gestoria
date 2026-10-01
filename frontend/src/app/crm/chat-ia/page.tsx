@@ -628,7 +628,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 mt-3 scroll-smooth no-scrollbar">
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 mt-3 scroll-smooth">
               {atajosCategorizados.map((cat, idx) => (
                 <div key={idx} className="space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold text-outline">
@@ -709,7 +709,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
           {/* VISOR DE MENSAJES CON AUTO-SCROLL SUAVE CONTINUO */}
           <div
             ref={chatScrollContainerRef}
-            className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 scroll-smooth bg-surface/30 no-scrollbar print:bg-white print:border-none"
+            className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 scroll-smooth bg-surface/30 print:bg-white print:border-none"
           >
             {chatMessages.map((msg, idx) => (
               <div
