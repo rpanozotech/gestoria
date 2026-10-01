@@ -93,6 +93,9 @@ export default function ChatIAPage() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latencyMs?: number } | null>(null);
 
+  // Visibilidad del panel de atajos (para dar 100% de ancho total si el usuario lo desea)
+  const [showTopicsSidebar, setShowTopicsSidebar] = useState(true);
+
   // Estados del Chat
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; timestamp?: string }>>([
     {
@@ -105,7 +108,7 @@ Estoy especializado en derecho administrativo y fiscal de los Países Bajos. Pue
 3. **CAK & HollandZorg**: Justificación de seguro médico extranjero y eliminación de multas administrativas.
 4. **Contratos y Registro**: Cláusulas de arrendamiento (*Huurovereenkomst*) y empadronamiento (*BRP/Gemeente*).
 
-Escribe tu consulta abajo o haz clic en cualquiera de los atajos rápidos recomendados.`,
+Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas rápidas recomendadas.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -350,7 +353,7 @@ Escribe tu consulta abajo o haz clic en cualquiera de los atajos rápidos recome
   ];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+    <div className="w-full flex flex-col h-[calc(100vh-6.5rem)] space-y-3">
       {/* Toast de Notificaciones */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-indigo-500/40 animate-in fade-in duration-200 no-print">
@@ -359,51 +362,64 @@ Escribe tu consulta abajo o haz clic en cualquiera de los atajos rápidos recome
         </div>
       )}
 
-      {/* Header Principal */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-surface-container no-print">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-700 to-blue-600 text-white flex items-center justify-center shadow-sm">
-              <span className="material-symbols-outlined text-[20px]">forum</span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-on-surface">Chat Asistente Legal IA</h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs text-on-surface-variant">
-                  Especializado en legislación, fiscalidad y trámites de Países Bajos (Awb / Belastingdienst).
+      {/* Header Superior - Ancho Completo */}
+      <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-container shrink-0 no-print">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-700 to-blue-600 text-white flex items-center justify-center shadow-sm">
+            <span className="material-symbols-outlined text-[20px]">forum</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-on-surface">Chat Asistente Legal IA</h1>
+              {config.apiKey ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-[10px] font-semibold rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>{config.model}</span>
                 </span>
-                {config.apiKey ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-[10px] font-semibold rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>{config.model}</span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-700 text-[10px] font-semibold rounded-full">
-                    <span className="material-symbols-outlined text-[12px]">info</span>
-                    <span>Modo Local</span>
-                  </span>
-                )}
-              </div>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-700 text-[10px] font-semibold rounded-full">
+                  <span className="material-symbols-outlined text-[12px]">info</span>
+                  <span>Modo Local</span>
+                </span>
+              )}
             </div>
+            <p className="text-[11px] text-on-surface-variant">
+              Asesoría legal, fiscal y administrativa neerlandesa (Awb / Belastingdienst / Toeslagen).
+            </p>
           </div>
         </div>
 
         {/* Acciones del Header */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Enlace rápido a Asistente de Documentos */}
+          {/* Alternar visibilidad del panel de atajos */}
+          <button
+            onClick={() => setShowTopicsSidebar(!showTopicsSidebar)}
+            className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border shadow-xs ${
+              showTopicsSidebar
+                ? 'bg-surface border-outline-variant text-on-surface hover:bg-surface-container'
+                : 'bg-secondary/10 border-secondary/30 text-secondary hover:bg-secondary/20'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">
+              {showTopicsSidebar ? 'left_panel_close' : 'left_panel_open'}
+            </span>
+            <span>{showTopicsSidebar ? 'Ocultar Temas' : 'Mostrar Temas'}</span>
+          </button>
+
+          {/* Enlace a Asistente de Documentos */}
           <Link
             href="/crm/documentos-ia"
-            className="h-9 px-3 bg-surface hover:bg-surface-container border border-outline-variant text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+            className="h-8 px-3 bg-surface hover:bg-surface-container border border-outline-variant text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
           >
             <span className="material-symbols-outlined text-[16px] text-secondary">document_scanner</span>
-            <span>Ir a Documentos & Plantillas</span>
+            <span>Documentos & Plantillas</span>
           </Link>
 
           {/* Exportar a Word */}
           <button
             onClick={handleExportChatToWord}
             title="Exportar conversación a Microsoft Word (.docx)"
-            className="h-9 px-3 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+            className="h-8 px-3 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
           >
             <span className="material-symbols-outlined text-[16px]">file_open</span>
             <span>Exportar Word (.docx)</span>
@@ -413,7 +429,7 @@ Escribe tu consulta abajo o haz clic en cualquiera de los atajos rápidos recome
           <button
             onClick={() => window.print()}
             title="Imprimir o guardar en PDF"
-            className="h-9 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+            className="h-8 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
           >
             <span className="material-symbols-outlined text-[16px]">print</span>
             <span>Imprimir / PDF</span>
@@ -425,25 +441,34 @@ Escribe tu consulta abajo o haz clic en cualquiera de los atajos rápidos recome
               setTestResult(null);
               setShowConfigModal(true);
             }}
-            className="h-9 px-3 bg-gradient-to-r from-slate-900 to-indigo-900 hover:from-slate-800 hover:to-indigo-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-all border border-indigo-700/40"
+            className="h-8 px-3 bg-gradient-to-r from-slate-900 to-indigo-900 hover:from-slate-800 hover:to-indigo-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-all border border-indigo-700/40"
           >
-            <span className="material-symbols-outlined text-[17px] text-amber-300">tune</span>
+            <span className="material-symbols-outlined text-[16px] text-amber-300">tune</span>
             <span>Configurar IA</span>
           </button>
         </div>
       </div>
 
-      {/* Contenedor Principal del Chat */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Columna Izquierda: Atajos Rápidos por Categorías (4 cols) */}
-        <div className="lg:col-span-4 space-y-4 no-print">
-          <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm space-y-3">
-            <h3 className="font-bold text-xs text-on-surface flex items-center gap-1.5 pb-2 border-b border-surface-container">
-              <span className="material-symbols-outlined text-secondary text-base">lightbulb</span>
-              <span>Consultas Frecuentes de Gestoría</span>
-            </h3>
+      {/* ÁREA DE TRABAJO A PANTALLA COMPLETA */}
+      <div className="w-full flex-1 min-h-0 flex flex-col lg:flex-row gap-4 items-stretch overflow-hidden">
+        {/* PANEL LATERAL DE CONSULTAS FRECUENTES (OPCIONAL/COLAPSABLE) */}
+        {showTopicsSidebar && (
+          <aside className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col h-full bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant shadow-xs overflow-hidden no-print animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-between pb-2 border-b border-surface-container shrink-0">
+              <h3 className="font-bold text-xs text-on-surface flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-secondary text-base">lightbulb</span>
+                <span>Consultas Frecuentes de Gestoría</span>
+              </h3>
+              <button
+                onClick={() => setShowTopicsSidebar(false)}
+                title="Cerrar panel de temas para ver el chat a pantalla completa"
+                className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            </div>
 
-            <div className="space-y-3">
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 mt-3 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
               {atajosCategorizados.map((cat, idx) => (
                 <div key={idx} className="space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold text-outline">
@@ -465,59 +490,71 @@ Escribe tu consulta abajo o haz clic en cualquiera de los atajos rápidos recome
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
 
-          {/* Tarjeta informativa de la Awb */}
-          <div className="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs space-y-1 text-indigo-950">
-            <div className="font-bold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px] text-indigo-700">policy</span>
-              <span>Recordatorio Legal (Awb):</span>
+              {/* Tarjeta de recordatorio legal */}
+              <div className="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs space-y-1 text-indigo-950 mt-2">
+                <div className="font-bold flex items-center gap-1 text-[11px]">
+                  <span className="material-symbols-outlined text-[15px] text-indigo-700">policy</span>
+                  <span>Plazo Legal Awb:</span>
+                </div>
+                <p className="text-[10px] leading-relaxed text-indigo-900">
+                  Los recursos ante Belastingdienst / Toeslagen deben presentarse dentro del plazo improrrogable de{' '}
+                  <strong>6 semanas naturales</strong> desde la fecha de notificación oficial.
+                </p>
+              </div>
             </div>
-            <p className="text-[11px] leading-relaxed text-indigo-900">
-              Con carácter general, los recursos ante la Belastingdienst o Dienst Toeslagen deben interponerse en un plazo
-              estricto de <strong>6 semanas naturales</strong> contadas desde la fecha de notificación (dagtekening).
-            </p>
-          </div>
-        </div>
+          </aside>
+        )}
 
-        {/* Columna Derecha: Ventana Interactiva de Chat con Auto-scroll Continuo (8 cols) */}
-        <div className="lg:col-span-8 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col h-[720px] print-area">
-          {/* Header del Chat */}
-          <div className="flex items-center justify-between pb-3 border-b border-surface-container mb-3 no-print">
+        {/* VENTANA PRINCIPAL DE CHAT (EXPANDIDA AL 100% DE LA PANTALLA) */}
+        <section className="flex-1 min-w-0 flex flex-col h-full bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-xs overflow-hidden print-area">
+          {/* Cabecera interna del chat */}
+          <div className="px-4 py-2.5 bg-surface border-b border-surface-container flex items-center justify-between shrink-0 no-print">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-bold text-xs text-on-surface">Conversación con Asistente Legal</span>
-              <span className="text-[10px] text-outline font-mono-data">({config.model})</span>
+              {!showTopicsSidebar && (
+                <button
+                  onClick={() => setShowTopicsSidebar(true)}
+                  className="p-1 hover:bg-surface-container rounded text-secondary flex items-center gap-1 text-xs font-semibold"
+                  title="Mostrar panel de consultas frecuentes"
+                >
+                  <span className="material-symbols-outlined text-[18px]">left_panel_open</span>
+                  <span className="hidden sm:inline">Temas de Gestoría</span>
+                </button>
+              )}
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-bold text-xs text-on-surface">Conversación en Vivo</span>
+              <span className="text-[10px] text-outline font-mono-data hidden sm:inline">({config.model})</span>
             </div>
 
-            <button
-              onClick={() => {
-                setChatMessages([
-                  {
-                    role: 'assistant',
-                    content: 'Conversación reiniciada. ¿Qué consulta o redacción legal deseas realizar?',
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  },
-                ]);
-              }}
-              title="Limpiar y reiniciar chat"
-              className="px-2.5 py-1 text-xs text-outline hover:text-on-surface hover:bg-surface-container rounded-md flex items-center gap-1 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[15px]">refresh</span>
-              <span>Reiniciar chat</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setChatMessages([
+                    {
+                      role: 'assistant',
+                      content: 'Conversación reiniciada. ¿Qué consulta o redacción legal de Países Bajos deseas realizar?',
+                      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    },
+                  ]);
+                }}
+                title="Reiniciar chat"
+                className="px-2.5 py-1 text-xs text-outline hover:text-on-surface hover:bg-surface-container rounded-md flex items-center gap-1 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[15px]">refresh</span>
+                <span className="hidden sm:inline">Reiniciar chat</span>
+              </button>
+            </div>
           </div>
 
-          {/* ÁREA DE MENSAJES CON SCROLL SUAVE AUTOMÁTICO EN TIEMPO REAL */}
+          {/* VISOR DE MENSAJES CON AUTO-SCROLL SUAVE CONTINUO */}
           <div
             ref={chatScrollContainerRef}
-            className="flex-1 overflow-y-auto space-y-4 p-3 bg-surface/50 rounded-xl border border-surface-container scroll-smooth [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 print:bg-white print:border-none"
+            className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 scroll-smooth bg-surface/30 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 print:bg-white print:border-none"
           >
             {chatMessages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-3 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-700 to-blue-600 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold shadow-sm no-print">
@@ -525,9 +562,15 @@ Escribe tu consulta abajo o haz clic en cualquiera de los atajos rápidos recome
                   </div>
                 )}
 
-                <div className={`flex flex-col gap-1 max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div
+                  className={`flex flex-col gap-1 ${
+                    msg.role === 'user'
+                      ? 'items-end max-w-[85%] lg:max-w-[75%]'
+                      : 'items-start max-w-[92%] lg:max-w-[85%]'
+                  }`}
+                >
                   <div
-                    className={`p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-line shadow-xs ${
+                    className={`p-4 rounded-2xl text-xs sm:text-[13px] leading-relaxed whitespace-pre-line shadow-xs ${
                       msg.role === 'user'
                         ? 'bg-secondary text-white rounded-br-none'
                         : 'bg-white border border-outline-variant/60 text-slate-800 rounded-bl-none'
@@ -588,32 +631,34 @@ Escribe tu consulta abajo o haz clic en cualquiera de los atajos rápidos recome
             <div ref={chatBottomAnchorRef} className="h-2 w-full" />
           </div>
 
-          {/* Formulario de Entrada */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendChatMessage();
-            }}
-            className="pt-3 border-t border-surface-container flex gap-2 no-print"
-          >
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Escribe tu consulta legal o pide redactar un texto en neerlandés..."
-              disabled={isChatSending || isStreaming}
-              className="flex-1 h-11 px-4 border border-outline-variant rounded-xl bg-surface focus:border-secondary focus:outline-none text-xs disabled:opacity-50 shadow-inner"
-            />
-            <button
-              type="submit"
-              disabled={isChatSending || isStreaming || !chatInput.trim()}
-              className="h-11 px-5 bg-secondary hover:bg-blue-700 text-white rounded-xl transition-colors text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+          {/* FORMULARIO DE ENTRADA A PANTALLA COMPLETA */}
+          <div className="p-3 sm:p-4 bg-surface-container-lowest border-t border-surface-container shrink-0 no-print">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendChatMessage();
+              }}
+              className="flex gap-2 w-full"
             >
-              <span>Enviar</span>
-              <span className="material-symbols-outlined text-[17px]">send</span>
-            </button>
-          </form>
-        </div>
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Escribe tu consulta legal o pide redactar un texto en neerlandés..."
+                disabled={isChatSending || isStreaming}
+                className="flex-1 h-11 px-4 border border-outline-variant rounded-xl bg-surface focus:border-secondary focus:outline-none text-xs sm:text-[13px] disabled:opacity-50 shadow-inner"
+              />
+              <button
+                type="submit"
+                disabled={isChatSending || isStreaming || !chatInput.trim()}
+                className="h-11 px-5 bg-secondary hover:bg-blue-700 text-white rounded-xl transition-colors text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+              >
+                <span>Enviar</span>
+                <span className="material-symbols-outlined text-[17px]">send</span>
+              </button>
+            </form>
+          </div>
+        </section>
       </div>
 
       {/* ============================================================== */}
