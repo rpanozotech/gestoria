@@ -38,6 +38,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     { href: '/crm/facturacion', label: 'Presupuestos & Facturas', icon: 'receipt_long' },
     { href: '/crm/agenda', label: 'Agenda & Citas', icon: 'calendar_today' },
     { href: '/crm/documentos-ia', label: 'Asistente Documentos', icon: 'document_scanner' },
+    { href: '/crm/chat-ia', label: 'Chat Asistente IA', icon: 'forum', highlight: true, badge: 'En vivo' },
   ];
 
   const quickSearchResults = [
