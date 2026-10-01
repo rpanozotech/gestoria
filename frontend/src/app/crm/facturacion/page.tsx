@@ -1,6 +1,39 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import { activableConTeclado } from '@/lib/a11y';
+
+// Normaliza una factura que llega de Postgres para la vista.
+// `total` y el resto de importes son DECIMAL y el driver pg los devuelve
+// como string ("266.20"), no como numero. La tabla hace toFixed(2), que
+// fallaria en un string. `items` es una columna JSONB y llega como texto,
+// no como array. Sin esto, cargar datos reales rompe la pantalla.
+function normalizarFactura(inv: any) {
+  let items: any[] = [];
+  if (Array.isArray(inv.items)) {
+    items = inv.items;
+  } else if (typeof inv.items === 'string') {
+    try {
+      const parseado = JSON.parse(inv.items);
+      items = Array.isArray(parseado) ? parseado : [];
+    } catch {
+      items = [];
+    }
+  }
+
+  const numero = (v: any) => (v === null || v === undefined ? 0 : Number(v));
+
+  return {
+    ...inv,
+    items,
+    total: numero(inv.total),
+    subtotal: numero(inv.subtotal),
+    tax_amount: numero(inv.tax_amount),
+    tax_rate: numero(inv.tax_rate),
+  };
+}
 
 export default function CRMFacturacionPage() {
   const [tab, setTab] = useState<'facturas' | 'presupuestos'>('facturas');
@@ -68,6 +101,32 @@ export default function CRMFacturacionPage() {
     },
   ]);
 
+  // Las facturas vienen del backend. Antes esta pagina usaba un array fijo
+  // escrito en el codigo, asi que los botones de eliminar no tenian contra
+  // que trabajar: el id '1' no existia en la base de datos.
+  const [cargandoFacturas, setCargandoFacturas] = useState(true);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    apiFetch('/invoices')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelado) return;
+        if (Array.isArray(data?.invoices)) {
+          setInvoices(data.invoices.map(normalizarFactura));
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelado) setCargandoFacturas(false);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
   // Catálogo de Servicios y Trámites
   const [servicesCatalog] = useState([
     { id: '1', title: 'Declaración Fiscal M-Form', category: 'Fiscalidad / Belastingdienst', defaultFee: 180.00 },
@@ -82,6 +141,43 @@ export default function CRMFacturacionPage() {
   // Visualizador oficial de presupuestos y facturas
   const [selectedDoc, setSelectedDoc] = useState<{ type: 'quote' | 'invoice'; data: any } | null>(null);
   const [emailSentToast, setEmailSentToast] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleExportCsv = () => {
+    const isFacturas = tab === 'facturas';
+    let csv = '\uFEFF';
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    if (isFacturas) {
+      csv += '"Numero Factura";"Cliente";"BSN";"Concepto";"Base EUR";"BTW 21%";"Total EUR";"Estado";"Metodo Pago";"Vencimiento"\r\n';
+      invoices.forEach((inv) => {
+        const { subtotal, tax, total } = getDocTotals(inv);
+        csv += `"${inv.code}";"${inv.client_name}";"${inv.client_bsn || ''}";"${inv.items?.[0]?.description || 'Servicios Gestoría'}";"${subtotal.toFixed(2)}";"${tax.toFixed(2)}";"${total.toFixed(2)}";"${inv.status}";"${inv.payment_method || 'ideal'}";"${inv.due_date || ''}"\r\n`;
+      });
+    } else {
+      csv += '"Numero Presupuesto";"Cliente";"BSN";"Concepto";"Base EUR";"BTW 21%";"Total EUR";"Estado";"Valido Hasta"\r\n';
+      quotes.forEach((q) => {
+        const { subtotal, tax, total } = getDocTotals(q);
+        csv += `"${q.code}";"${q.client_name}";"${q.client_bsn || ''}";"${q.items?.[0]?.description || 'Servicios Gestoría'}";"${subtotal.toFixed(2)}";"${tax.toFixed(2)}";"${total.toFixed(2)}";"${q.status}";"${q.valid_until || ''}"\r\n`;
+      });
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nexusgest-${isFacturas ? 'facturas' : 'presupuestos'}-${dateStr}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    showToast(`¡${isFacturas ? 'Facturas' : 'Presupuestos'} exportados a CSV con éxito!`);
+  };
 
   const getDocTotals = (doc: any) => {
     if (!doc) return { subtotal: 0, tax: 0, total: 0 };
@@ -260,8 +356,64 @@ export default function CRMFacturacionPage() {
     );
   };
 
+  // Eliminar factura: llama al backend. El backend bloquea el borrado de
+  // las pagadas por conservación fiscal y devuelve el motivo.
+  const handleDeleteInvoice = async (invoiceId: string, code: string, status: string) => {
+    if (status === 'pagada') {
+      if (!confirm(`La factura ${code} está pagada.\n\nNo se puede eliminar: las facturas cobradas deben conservarse por obligación legal.\n\n¿Marcarla como "cancelada" en su lugar? Se conserva el registro.`)) {
+        return;
+      }
+      try {
+        const res = await apiFetch(`/invoices/${invoiceId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'cancelada' }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert(data.error || 'No se pudo actualizar la factura.');
+          return;
+        }
+        setInvoices(invoices.map((inv) => (inv.id === invoiceId ? { ...inv, status: 'cancelada' } : inv)));
+      } catch {
+        alert('Error de conexión al actualizar la factura.');
+      }
+      return;
+    }
+
+    if (!confirm(`¿Eliminar la factura ${code}?\n\nSe borrará definitivamente del servidor. Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`/invoices/${invoiceId}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || 'No se pudo eliminar la factura.');
+        return;
+      }
+      setInvoices(invoices.filter((inv) => inv.id !== invoiceId));
+    } catch {
+      alert('Error de conexión al eliminar la factura.');
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Toast de Notificaciones */}
+      {toastMessage && (
+        <div className="fixed top-20 right-8 z-[200] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-secondary/40 animate-in fade-in duration-200">
+          <span className="material-symbols-outlined text-secondary text-xl">check_circle</span>
+          <span className="text-xs font-semibold">{toastMessage}</span>
+        </div>
+      )}
+
+      {cargandoFacturas && (
+        <div className="flex items-center gap-2 text-xs text-outline">
+          <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+          Cargando facturas...
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-container">
         <div>
@@ -271,13 +423,34 @@ export default function CRMFacturacionPage() {
           </p>
         </div>
 
-        <button
-          onClick={openQuoteModal}
-          className="h-9 px-4 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <span className="material-symbols-outlined text-[16px]">add</span>
-          <span>+ Nuevo Presupuesto</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="h-9 px-3 bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-secondary hover:text-secondary text-xs font-semibold rounded-md shadow-xs transition-colors flex items-center gap-1.5"
+            title="Descargar datos en CSV para importar a otros CRM o Excel"
+          >
+            <span className="material-symbols-outlined text-[16px]">file_download</span>
+            <span>Exportar CSV</span>
+          </button>
+
+          <Link
+            href="/crm/backup"
+            className="h-9 px-3 bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-secondary hover:text-secondary text-xs font-semibold rounded-md shadow-xs transition-colors flex items-center gap-1.5"
+            title="Ir al Centro de Copias de Seguridad"
+          >
+            <span className="material-symbols-outlined text-[16px] text-secondary">cloud_download</span>
+            <span className="hidden sm:inline">Backup</span>
+          </Link>
+
+          <button
+            onClick={openQuoteModal}
+            className="h-9 px-4 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            <span>+ Nuevo Presupuesto</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -320,11 +493,20 @@ export default function CRMFacturacionPage() {
               </thead>
               <tbody className="divide-y divide-surface-container">
                 {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-surface-container-low transition-colors">
+                  <tr
+                    key={inv.id}
+                    onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
+                    {...activableConTeclado(() => setSelectedDoc({ type: 'invoice', data: inv }))}
+                    className="hover:bg-surface-container-low cursor-pointer transition-colors"
+                    title="Pulsar o Enter para abrir la factura"
+                  >
                     <td className="px-5 py-3.5 font-mono-data font-bold">
                       <button
                         type="button"
-                        onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDoc({ type: 'invoice', data: inv });
+                        }}
                         className="text-secondary hover:underline flex items-center gap-1.5 font-bold"
                         title="Abrir factura oficial"
                       >
@@ -373,13 +555,39 @@ export default function CRMFacturacionPage() {
                         {inv.status !== 'pagada' && (
                           <button
                             type="button"
-                            onClick={() => handleMarkAsPaid(inv.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsPaid(inv.id);
+                            }}
                             className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
                           >
                             <span className="material-symbols-outlined text-[14px]">credit_card</span>
                             <span>Cobro iDEAL</span>
                           </button>
                         )}
+                        {/* Eliminar. En las pagadas el handler ofrece
+                            "marcar como cancelada" en vez de borrar. */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteInvoice(inv.id, inv.code, inv.status);
+                            }}
+                          className={`h-7 w-7 rounded transition-colors inline-flex items-center justify-center ${
+                            inv.status === 'pagada'
+                              ? 'text-outline hover:text-amber-700 hover:bg-amber-50'
+                              : 'text-outline hover:text-error hover:bg-red-50'
+                          }`}
+                          title={
+                            inv.status === 'pagada'
+                              ? 'Las facturas pagadas no se borran: marcar como cancelada'
+                              : 'Eliminar factura'
+                          }
+                        >
+                          <span className="material-symbols-outlined text-[15px]">
+                            {inv.status === 'pagada' ? 'event_busy' : 'delete'}
+                          </span>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -408,11 +616,23 @@ export default function CRMFacturacionPage() {
               </thead>
               <tbody className="divide-y divide-surface-container">
                 {quotes.map((q) => (
-                  <tr key={q.id} className="hover:bg-surface-container-low transition-colors">
+                  <tr
+                    key={q.id}
+                    onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDoc({ type: 'quote', data: q });
+                        }}
+                    {...activableConTeclado(() => setSelectedDoc({ type: 'quote', data: q }))}
+                    className="hover:bg-surface-container-low cursor-pointer transition-colors"
+                    title="Pulsar o Enter para abrir el presupuesto"
+                  >
                     <td className="px-5 py-3.5 font-mono-data font-bold">
                       <button
                         type="button"
-                        onClick={() => setSelectedDoc({ type: 'quote', data: q })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDoc({ type: 'quote', data: q });
+                        }}
                         className="text-secondary hover:underline flex items-center gap-1.5 font-bold"
                         title="Abrir presupuesto oficial"
                       >
@@ -462,7 +682,10 @@ export default function CRMFacturacionPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
-                          onClick={() => setSelectedDoc({ type: 'quote', data: q })}
+                          onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDoc({ type: 'quote', data: q });
+                        }}
                           className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
                           title="Ver detalle del presupuesto"
                         >
@@ -472,7 +695,10 @@ export default function CRMFacturacionPage() {
                         {q.status !== 'convertido' && (
                           <button
                             type="button"
-                            onClick={() => handleConvertToInvoice(q)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleConvertToInvoice(q);
+                            }}
                             className="h-7 px-3 bg-secondary hover:bg-blue-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
                           >
                             <span className="material-symbols-outlined text-[13px]">transform</span>
