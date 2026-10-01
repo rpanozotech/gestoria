@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"inverse-surface":"#213145","on-error":"#ffffff","on-tertiary":"#ffffff","on-tertiary-fixed":"#07006c","primary-fixed-dim":"#bec6e0","secondary-container":"#316bf3","outline":"#76777d","on-primary-fixed-variant":"#3f465c","on-tertiary-fixed-variant":"#2f2ebe","on-error-container":"#93000a","on-secondary-container":"#fefcff","outline-variant":"#c6c6cd","on-primary-container":"#7c839b","error-container":"#ffdad6","primary":"#000000","tertiary-container":"#07006c","on-primary":"#ffffff","secondary-fixed-dim":"#b4c5ff","surface-container-highest":"#d3e4fe","tertiary-fixed":"#e1e0ff","error":"#ba1a1a","secondary-fixed":"#dbe1ff","surface-container-lowest":"#ffffff","primary-fixed":"#dae2fd","tertiary":"#000000","on-secondary-fixed-variant":"#003ea8","on-background":"#0b1c30","tertiary-fixed-dim":"#c0c1ff","inverse-on-surface":"#eaf1ff","inverse-primary":"#bec6e0","on-secondary":"#ffffff","on-surface":"#0b1c30","surface":"#f8f9ff","primary-container":"#131b2e","on-tertiary-container":"#7073ff","surface-dim":"#cbdbf5","on-primary-fixed":"#131b2e","on-surface-variant":"#45464d","background":"#f8f9ff","on-secondary-fixed":"#00174b","surface-container-low":"#eff4ff","surface-bright":"#f8f9ff","surface-container-high":"#dce9ff","surface-container":"#e5eeff","secondary":"#0051d5","surface-tint":"#565e74","surface-variant":"#d3e4fe"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{"space-xl":"1.5rem","margin-md":"1.5rem","space-2xl":"2rem",gutter:"1rem","space-3xl":"3rem","space-sm":"0.5rem","space-2xs":"0.125rem","gutter-lg":"1.5rem",margin:"1rem","margin-lg":"2rem","space-lg":"1rem","space-xs":"0.25rem","space-md":"0.75rem"},fontFamily:{"label-sm":["Inter"],"body-sm":["Inter"],"mono-data":["JetBrains Mono"],"headline-sm":["Plus Jakarta Sans"],"body-lg":["Inter"],"body-md":["Inter"],"display-lg":["Plus Jakarta Sans"],"label-md":["Inter"],"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"]},fontSize:{"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.025em",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",letterSpacing:"0.005em",fontWeight:"400"}],"mono-data":["12px",{lineHeight:"16px",letterSpacing:"-0.01em",fontWeight:"500"}],"headline-sm":["18px",{lineHeight:"24px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"24px",letterSpacing:"-0.005em",fontWeight:"400"}],"body-md":["14px",{lineHeight:"20px",letterSpacing:"0em",fontWeight:"400"}],"display-lg":["36px",{lineHeight:"44px",letterSpacing:"-0.025em",fontWeight:"700"}],"label-md":["13px",{lineHeight:"18px",letterSpacing:"0.01em",fontWeight:"500"}],"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-md":["22px",{lineHeight:"28px",letterSpacing:"-0.015em",fontWeight:"600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col flex-1 overflow-y-auto"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="NexusGest Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UGL1TcrvgqQTS7P7tWRnC85nNZKFJclsBEgopGSeeW14oBzFdOSlVwjxxi3aa-Ko1tpQP_AoiK-bXTsGprM7WskQLtt-SPhCIpcpoUeTLN0WOLR4s2ZOMfxv0A7VMnyiC-AICHIV3kllLDzVwRv4s8jqxlWXDfn61jk-ujrh6M0Mxlp79quxVsegXJLp083DYTwipERIt2FGgUMoNw72Iow8kanV1oAKWU4HLWHN2Otwc08KbS-bzqGNw"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">NexusGest</span></div><span class="px-space-xs py-space-2xs bg-surface-container text-on-surface-variant font-label-sm text-label-sm rounded">v2.4 Pro</span></div><div class="px-space-md py-space-xs"><span class="px-space-sm font-label-sm text-label-sm text-outline uppercase tracking-wider">Gestión & Operaciones</span></div><nav class="flex flex-col gap-space-2xs px-space-sm" data-active-classes="bg-secondary-container text-on-secondary-container font-label-md"><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="dashboard" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">grid_view</span><span>Dashboard</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="clientes" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">group</span><span>Clientes</span></div><span class="px-space-xs py-space-2xs bg-surface-container-high text-on-surface font-mono-data text-mono-data rounded-full">148</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="alta-ia-escaner" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl text-secondary">auto_awesome</span><span>Alta IA & Escáner</span></div><span class="px-space-xs py-space-2xs bg-secondary text-on-secondary font-label-sm text-label-sm rounded">IA</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="tramites-servicios" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">business_center</span><span>Trámites & Servicios</span></div></a><a aria-current="page" class="flex items-center justify-between px-space-md py-space-sm rounded-lg transition-colors bg-secondary-container text-on-secondary-container font-label-md" data-path="presupuestos" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">description</span><span>Presupuestos</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="facturacion" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">receipt_long</span><span>Facturación</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="agenda-citas" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">calendar_today</span><span>Agenda & Citas</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="asistente-documentos" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">document_scanner</span><span>Asistente Documentos</span></div></a></nav></div><div class="p-space-md flex flex-col gap-space-sm bg-surface-container-low"><div class="p-space-sm bg-surface-container-lowest rounded-lg flex flex-col gap-space-2xs shadow-[0_1px_3px_rgba(0,0,0,0.04)]"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-outline">Sistema Cloud</span><span class="flex h-2 w-2 rounded-full bg-secondary"></span></div><div class="flex flex-col font-mono-data text-mono-data text-on-surface-variant gap-space-2xs"><div class="flex items-center justify-between"><span>PostgreSQL</span><span class="text-secondary font-label-sm text-label-sm">Online</span></div><div class="flex items-center justify-between"><span>Storage S3</span><span class="text-secondary font-label-sm text-label-sm">99.9%</span></div></div></div><nav class="flex flex-col" data-active-classes="bg-secondary-container text-on-secondary-container font-label-md"><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="configuracion" href="#"><span class="material-symbols-outlined text-space-xl">settings</span><span>Configuración</span></a></nav></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 px-space-xl flex items-center justify-between gap-space-lg"><div class="flex-1 max-w-xl"><div class="relative flex items-center w-full"><span class="material-symbols-outlined absolute left-space-md text-outline pointer-events-none text-space-xl">search</span><input class="w-full h-9 pl-10 pr-space-md bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.02)] focus:outline-none" placeholder="Buscar cliente, BSN, factura, trámite o comando IA... (Cmd + K)" type="text"/></div></div><div class="flex items-center gap-space-lg"><button class="h-9 px-space-md bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-space-xs hover:bg-primary-container transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.08)]"><span class="material-symbols-outlined text-space-lg">add</span><span>Nuevo Trámite / IA</span></button><div class="flex items-center gap-space-xs"><button class="relative h-9 w-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Notificaciones"><span class="material-symbols-outlined text-space-xl">notifications</span><span class="absolute top-1 right-1 h-4 w-4 bg-error text-on-error font-label-sm text-label-sm rounded-full flex items-center justify-center">3</span></button><button class="h-9 w-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Soporte y Ayuda"><span class="material-symbols-outlined text-space-xl">help</span></button></div><div class="flex items-center gap-space-md pl-space-sm"><div class="flex items-center gap-space-sm cursor-pointer"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8Xeg7Vtga4Rzfh9r0LXBU67VuZUXAJxX6qLLQn86SqPw4hOk3SfSZzOSnKdGkvltdASdrKRfymem__Yfc9lfA0-pH3n-Nc94qp8Ax33ZegQRLmwwkEMqXPHQlkZ9mYUWt_u3Vd_FhjP42RtkJ8G_4KjC-qnGgoeVz9KamfPC1xMMLZIMJZQEoZQXYJgqL51QUdFbj8kuCzvQETrNbu0BI6MllUXSToUk8AinIUavxtbPBAeX0XsLx"/><div class="hidden xl:flex flex-col text-left"><span class="font-label-md text-label-md text-on-surface leading-tight">Elena Martínez</span><span class="font-label-sm text-label-sm text-outline">Gestora Principal / Admin</span></div><span class="material-symbols-outlined text-outline text-space-lg">expand_more</span></div></div></div></header><main class="w-full pt-16 px-gutter-lg pb-space-3xl bg-surface min-h-screen"><div class="flex flex-col w-full gap-space-xl">
+<!-- Top Navigation & Action Deck -->
+<section class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-lg bg-surface-container-lowest p-space-lg rounded-xl shadow-sm">
+<div class="flex flex-col sm:flex-row sm:items-center gap-space-lg">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs font-mono-data text-mono-data text-secondary uppercase tracking-wider">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary"></span>
+          Gestión Financiera Holandesa
+        </div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Presupuestos & Facturación</h1>
+</div>
+<!-- Segmented View Toggle -->
+<div class="flex items-center bg-surface-container-high p-space-2xs rounded-lg select-none">
+<button class="px-space-md py-space-xs rounded font-label-md text-label-md transition-all duration-150 bg-surface-container-lowest text-on-surface shadow-sm flex items-center gap-space-xs" id="viewToggleQuotes">
+<span class="material-symbols-outlined text-space-lg text-secondary">request_quote</span>
+<span>Presupuestos</span>
+<span class="ml-space-2xs px-space-xs py-space-2xs bg-surface-container text-on-surface-variant font-mono-data text-mono-data rounded-full">14</span>
+</button>
+<button class="px-space-md py-space-xs rounded font-label-md text-label-md transition-all duration-150 text-on-surface-variant hover:text-on-surface flex items-center gap-space-xs" id="viewToggleInvoices">
+<span class="material-symbols-outlined text-space-lg">receipt_long</span>
+<span>Facturas</span>
+<span class="ml-space-2xs px-space-xs py-space-2xs bg-surface-container text-on-surface-variant font-mono-data text-mono-data rounded-full">89</span>
+</button>
+</div>
+</div>
+<!-- Right Primary CTA Group -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="h-9 px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors shadow-sm">
+<span class="material-symbols-outlined text-space-lg text-outline">file_download</span>
+<span>Exportar Informe Contable</span>
+</button>
+<button class="h-9 px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors shadow-sm">
+<span class="material-symbols-outlined text-space-lg">add_card</span>
+<span>+ Emitir Factura Directa</span>
+</button>
+<button class="h-9 px-space-md bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-all shadow-sm">
+<span class="material-symbols-outlined text-space-lg">post_add</span>
+<span>+ Nuevo Presupuesto</span>
+</button>
+</div>
+</section>
+<!-- Main Workspace: Dual Pane Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-xl items-start">
+<!-- LEFT & CENTER: Active Commercial Document Workspace (8 Cols) -->
+<div class="xl:col-span-8 flex flex-col gap-space-lg">
+<!-- Operational Status Bar & Conversion Trigger -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="h-11 w-11 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-space-xl">description</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface">PRE-2026-0043</span>
+<!-- Verified Status Badge -->
+<span class="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs bg-[#ECFDF5] text-[#065F46] rounded font-label-sm text-label-sm">
+<span class="h-1.5 w-1.5 rounded-full bg-[#10B981]"></span>
+                  Aceptado por el cliente
+                </span>
+</div>
+<div class="flex items-center gap-space-md text-on-surface-variant font-mono-data text-mono-data">
+<span class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-space-md text-outline">calendar_today</span>
+                  Emisión: 10/03/2026
+                </span>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-space-2xs text-[#92400E]">
+<span class="material-symbols-outlined text-space-md text-[#F59E0B]">schedule</span>
+                  Vence: 25/03/2026 (15 días)
+                </span>
+</div>
+</div>
+</div>
+<!-- Secondary Actions -->
+<div class="flex items-center gap-space-xs">
+<button class="h-9 px-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors" title="Descargar PDF">
+<span class="material-symbols-outlined text-space-lg">picture_as_pdf</span>
+<span>PDF Oficial</span>
+</button>
+<button class="h-9 px-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors" title="Enviar por Email o WhatsApp">
+<span class="material-symbols-outlined text-space-lg">send</span>
+<span>Enviar</span>
+</button>
+<button class="h-9 px-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors" title="Duplicar Presupuesto">
+<span class="material-symbols-outlined text-space-lg">content_copy</span>
+<span>Duplicar</span>
+</button>
+</div>
+</div>
+<!-- Prominent Auto-Conversion Smart Banner -->
+<div class="relative overflow-hidden p-space-md rounded-xl bg-surface-container-high flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-start md:items-center gap-space-md z-10">
+<div class="h-10 w-10 rounded-lg bg-secondary text-on-secondary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-space-xl">bolt</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface">Conversión Fiscal Lista</span>
+<span class="px-space-xs py-space-2xs bg-surface-container text-on-surface font-mono-data text-mono-data rounded">KVK & BTW validado</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Presupuesto formalmente confirmado el 10/03/2026. Al ejecutar, se asignará el correlativo oficial <strong class="text-on-surface font-mono-data">FAC-2026-0020</strong> y se preparará el envío a la Belastingdienst.
+              </p>
+</div>
+</div>
+<button class="shrink-0 h-10 px-space-lg bg-secondary hover:bg-secondary-container text-on-secondary font-label-md text-label-md rounded-lg flex items-center gap-space-sm shadow-md transition-all transform active:scale-95 z-10" id="convertInvoiceBtn">
+<span class="material-symbols-outlined text-space-lg">sync_alt</span>
+<span>⚡ Convertir a Factura Oficial (FAC-2026-0020)</span>
+</button>
+</div>
+</div>
+<!-- Legal Printable Commercial Sheet Preview -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Visual top brand bar -->
+<div class="h-1.5 w-full bg-secondary"></div>
+<div class="p-space-2xl flex flex-col gap-space-2xl">
+<!-- Document Header: Advisor & Client Data -->
+<div class="flex flex-col md:flex-row justify-between gap-space-xl">
+<!-- Advisory Details (Gestoría Holandesa) -->
+<div class="flex flex-col max-w-sm">
+<div class="flex items-center gap-space-sm mb-space-sm">
+<div class="h-9 w-9 bg-primary text-on-primary rounded-lg flex items-center justify-center font-headline-sm text-headline-sm">
+                  N
+                </div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-on-surface leading-none">NexusGest B.V.</span>
+<span class="font-body-sm text-body-sm text-outline">Advies & Belastingdienst Support</span>
+</div>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex flex-col gap-space-2xs">
+<span>Keizersgracht 421-B, 1016 EK Amsterdam</span>
+<span class="font-mono-data text-mono-data">KVK: 84920194 • BTW-id: NL863412098B01</span>
+<span class="font-mono-data text-mono-data text-on-surface">IBAN: NL91 ABNA 0412 8821 00 (ABN AMRO)</span>
+<span>Email: facturacion@nexusgest.nl</span>
+</div>
+</div>
+<!-- Client Metadata Sheet -->
+<div class="flex flex-col md:items-end text-left md:text-right">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-space-xs">Facturado / Presupuestado A</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Maria Popescu</span>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs flex flex-col">
+<span>Stratumsedijk 28-A</span>
+<span>5611 ND Eindhoven, Países Bajos</span>
+<span class="font-mono-data text-mono-data text-on-surface">BSN Fiscal: ••••-7721</span>
+<span>maria.popescu@expateu.com</span>
+</div>
+</div>
+</div>
+<!-- Document Classification Meta Ribbon -->
+<div class="bg-surface-container-low p-space-md rounded-lg grid grid-cols-2 sm:grid-cols-4 gap-space-md">
+<div>
+<span class="block font-label-sm text-label-sm text-outline uppercase">Tipo Documento</span>
+<span class="font-label-md text-label-md text-on-surface">Presupuesto Legal</span>
+</div>
+<div>
+<span class="block font-label-sm text-label-sm text-outline uppercase">Referencia</span>
+<span class="font-mono-data text-mono-data text-secondary">PRE-2026-0043</span>
+</div>
+<div>
+<span class="block font-label-sm text-label-sm text-outline uppercase">Moneda</span>
+<span class="font-label-md text-label-md text-on-surface">EUR (€) - Holanda</span>
+</div>
+<div>
+<span class="block font-label-sm text-label-sm text-outline uppercase">Régimen IVA</span>
+<span class="font-label-md text-label-md text-on-surface">BTW Standaard 21%</span>
+</div>
+</div>
+<!-- Tabular Concepts Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container text-outline font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-space-sm px-space-md rounded-l">Concepto y Descripción del Servicio</th>
+<th class="py-space-sm px-space-sm text-center">Cant.</th>
+<th class="py-space-sm px-space-sm text-right">Precio Unit.</th>
+<th class="py-space-sm px-space-sm text-right">IVA (BTW 21%)</th>
+<th class="py-space-sm px-space-md text-right rounded-r">Total Bruto</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md divide-y-0">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Gestión y solicitud de DigiD personal</span>
+<span class="font-body-sm text-body-sm text-outline">Trámite acelerado para residentes comunitarios con cita municipal asignada.</span>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-center font-mono-data text-mono-data text-on-surface">1</td>
+<td class="py-space-md px-space-sm text-right font-mono-data text-mono-data text-on-surface">60,00 €</td>
+<td class="py-space-md px-space-sm text-right font-mono-data text-mono-data text-outline">12,60 €</td>
+<td class="py-space-md px-space-md text-right font-mono-data text-mono-data text-on-surface font-semibold">72,60 €</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Declaración de la Renta 2025 (Inkomstenbelasting)</span>
+<span class="font-body-sm text-body-sm text-outline">Formulario M/P para año de llegada o cambio de residencia fiscal en Países Bajos.</span>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-center font-mono-data text-mono-data text-on-surface">1</td>
+<td class="py-space-md px-space-sm text-right font-mono-data text-mono-data text-on-surface">35,00 €</td>
+<td class="py-space-md px-space-sm text-right font-mono-data text-mono-data text-outline">7,35 €</td>
+<td class="py-space-md px-space-md text-right font-mono-data text-mono-data text-on-surface font-semibold">42,35 €</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Settlement & Totalization Breakdown Block -->
+<div class="flex flex-col md:flex-row justify-between items-start gap-space-xl pt-space-md">
+<!-- Left Terms & Note -->
+<div class="w-full md:max-w-md bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-xs">
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-space-lg text-secondary">verified_user</span>
+                Términos y Métodos de Cobro
+              </span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Pago a la recepción de la factura oficial a emitir. Métodos habilitados: transferencia SEPA directa a cuenta ABN AMRO o enlace digital seguro mediante iDEAL. Plazo estándar de liquidación: 14 días naturales.
+              </p>
+</div>
+<!-- Right Numerical Totals Grid -->
+<div class="w-full md:w-80 flex flex-col gap-space-xs bg-surface-container p-space-md rounded-xl">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-body-md text-body-md">Subtotal base imponible</span>
+<span class="font-mono-data text-mono-data text-on-surface">95,00 €</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-body-md text-body-md">Descuento aplicado (0%)</span>
+<span class="font-mono-data text-mono-data text-outline">0,00 €</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-body-md text-body-md">BTW / IVA (21%)</span>
+<span class="font-mono-data text-mono-data text-on-surface">19,95 €</span>
+</div>
+<div class="h-0.5 bg-outline-variant/30 my-space-xs"></div>
+<div class="flex items-baseline justify-between">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">TOTAL A PAGAR</span>
+<span class="font-mono-data text-mono-data text-outline">Impuestos incluidos</span>
+</div>
+<span class="font-display-lg text-display-lg text-secondary">114,95 €</span>
+</div>
+</div>
+</div>
+<!-- Document Life-cycle Audit Trail -->
+<div class="flex flex-col gap-space-sm pt-space-lg">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Historial y Auditoría del Documento</span>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<div class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-low">
+<div class="h-7 w-7 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-space-md">auto_awesome</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Generado por Asistente IA</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">09/03/2026 - 16:22</span>
+<span class="font-mono-data text-mono-data text-outline">Origen: Trámite #TR-8812</span>
+</div>
+</div>
+<div class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-low">
+<div class="h-7 w-7 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-space-md">outgoing_mail</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Notificado al Cliente</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">09/03/2026 - 16:30</span>
+<span class="font-mono-data text-mono-data text-outline">Canal: Email + Portal Privado</span>
+</div>
+</div>
+<div class="flex items-start gap-space-sm p-space-sm rounded-lg bg-[#ECFDF5]">
+<div class="h-7 w-7 rounded-full bg-[#10B981] text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-space-md">task_alt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-[#065F46]">Aceptado por cliente</span>
+<span class="font-body-sm text-body-sm text-[#065F46]">10/03/2026 - 09:40</span>
+<span class="font-mono-data text-mono-data text-[#065F46]">Firma digital IP 84.112.5.19</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANE: Correlative Invoices Ledger & Quick Actions (4 Cols) -->
+<div class="xl:col-span-4 flex flex-col gap-space-lg">
+<!-- Correlative Invoices Panel -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-space-xl text-secondary">receipt</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Facturas Recientes</h2>
+</div>
+<span class="px-space-xs py-space-2xs bg-surface-container font-mono-data text-mono-data rounded text-outline">Serie 2026</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Control correlativo obligatorio para cumplimiento con la Agencia Tributaria Neerlandesa.
+        </p>
+<!-- Correlative List Items -->
+<div class="flex flex-col gap-space-sm">
+<!-- Item 1: Carlos Gomez -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container transition-all flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-mono-data text-mono-data font-semibold text-on-surface">FAC-2026-0018</span>
+<span class="material-symbols-outlined text-space-md text-outline" title="Verificado SEPA">lock</span>
+</div>
+<span class="inline-flex items-center gap-space-2xs px-space-xs py-space-2xs bg-[#ECFDF5] text-[#065F46] rounded font-label-sm text-label-sm">
+<span class="h-1.5 w-1.5 rounded-full bg-[#10B981]"></span>
+                Pagada
+              </span>
+</div>
+<div class="flex items-baseline justify-between mt-space-2xs">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Carlos Gómez</span>
+<span class="font-body-sm text-body-sm text-outline">Cobrado vía Transferencia Banco</span>
+</div>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold text-body-lg">340,00 €</span>
+</div>
+</div>
+<!-- Item 2: Andrei Ionescu -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container transition-all flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-mono-data text-mono-data font-semibold text-on-surface">FAC-2026-0019</span>
+<span class="material-symbols-outlined text-space-md text-[#F59E0B]" title="Aviso de vencimiento">notification_important</span>
+</div>
+<span class="inline-flex items-center gap-space-2xs px-space-xs py-space-2xs bg-[#FFFBEB] text-[#92400E] rounded font-label-sm text-label-sm">
+<span class="h-1.5 w-1.5 rounded-full bg-[#F59E0B]"></span>
+                Pendiente de pago
+              </span>
+</div>
+<div class="flex items-baseline justify-between mt-space-2xs">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Andrei Ionescu</span>
+<span class="font-body-sm text-body-sm text-[#92400E]">Vence en 5 días (15/03)</span>
+</div>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold text-body-lg">120,00 €</span>
+</div>
+</div>
+<!-- Placeholder Slot for Upcoming Auto-Converted Invoice -->
+<div class="p-space-md rounded-xl bg-surface-container-high/60 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-mono-data text-mono-data text-secondary font-semibold">FAC-2026-0020 [Siguiente]</span>
+<span class="px-space-xs py-space-2xs bg-surface-container text-outline font-label-sm text-label-sm rounded">Pendiente emisión</span>
+</div>
+<div class="flex items-baseline justify-between mt-space-2xs">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Maria Popescu</span>
+<span class="font-body-sm text-body-sm text-outline">Derivado de PRE-2026-0043</span>
+</div>
+<span class="font-mono-data text-mono-data text-secondary font-semibold">114,95 €</span>
+</div>
+</div>
+</div>
+<!-- Manual Collection Action Button -->
+<div class="pt-space-sm flex flex-col gap-space-xs">
+<button class="w-full h-10 px-space-md bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md rounded-lg flex items-center justify-center gap-space-xs transition-colors shadow-sm" id="openManualPayBtn">
+<span class="material-symbols-outlined text-space-lg text-secondary">payments</span>
+<span>Registrar cobro manual</span>
+</button>
+<span class="font-body-sm text-body-sm text-outline text-center">Permite conciliar transferencias bancarias o cobros presenciales.</span>
+</div>
+</div>
+<!-- Financial Metrics Card with SVG Progress Metric -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface">Volumen Facturado Marzo</span>
+<span class="font-mono-data text-mono-data text-secondary">Q1 2026</span>
+</div>
+<div class="flex items-center gap-space-lg">
+<!-- Inline Mini Radial Ring SVG -->
+<div class="relative w-16 h-16 shrink-0 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-secondary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="78, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute font-mono-data text-mono-data font-semibold text-on-surface">78%</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-on-surface">14.890 €</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Meta mensual: 19.000 €</span>
+<span class="font-mono-data text-mono-data text-secondary mt-space-2xs">BTW devengado: 3.126,90 €</span>
+</div>
+</div>
+<!-- Quick AI Compliance Advisor Note -->
+<div class="p-space-md rounded-lg bg-surface-container flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-space-lg text-secondary shrink-0">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Próxima liquidación trimestral del BTW ante el <em>Belastingdienst</em>: <strong class="text-on-surface">30 de abril de 2026</strong>. Todas las facturas correlativas están sincronizadas en tiempo real.
+          </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Manual Payment Registration Drawer / Modal Simulation (Hidden by Default) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden" id="manualPayModal">
+<div class="bg-surface-container-lowest rounded-xl max-w-lg w-full mx-space-md p-space-xl shadow-xl flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="h-9 w-9 bg-surface-container text-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-space-lg">point_of_sale</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Registrar Cobro Manual</span>
+</div>
+<button class="h-8 w-8 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface flex items-center justify-center" id="closeManualPayBtn">
+<span class="material-symbols-outlined text-space-lg">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-space-md">
+<div>
+<label class="block font-label-sm text-label-sm text-outline uppercase mb-space-xs">Seleccionar Factura Pendiente</label>
+<select class="w-full h-9 px-space-sm bg-surface-container-lowest text-on-surface font-body-md text-body-md rounded-lg shadow-sm focus:outline-none">
+<option>FAC-2026-0019 — Andrei Ionescu (120,00 €)</option>
+<option>PRE-2026-0043 — Maria Popescu (114,95 € - Previo a emisión)</option>
+</select>
+</div>
+<div class="grid grid-cols-2 gap-space-md">
+<div>
+<label class="block font-label-sm text-label-sm text-outline uppercase mb-space-xs">Importe Percibido</label>
+<input class="w-full h-9 px-space-sm bg-surface-container-lowest text-on-surface font-mono-data text-mono-data rounded-lg shadow-sm focus:outline-none" type="text" value="120,00 €"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-outline uppercase mb-space-xs">Fecha de Abono</label>
+<input class="w-full h-9 px-space-sm bg-surface-container-lowest text-on-surface font-body-md text-body-md rounded-lg shadow-sm focus:outline-none" type="date" value="2026-03-10"/>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-outline uppercase mb-space-xs">Método de Conciliación</label>
+<div class="grid grid-cols-3 gap-space-xs">
+<label class="flex items-center gap-space-xs p-space-xs rounded bg-surface-container-low cursor-pointer">
+<input checked="" class="text-secondary" name="payMethod" type="radio"/>
+<span class="font-body-sm text-body-sm text-on-surface">SEPA</span>
+</label>
+<label class="flex items-center gap-space-xs p-space-xs rounded bg-surface-container-low cursor-pointer">
+<input class="text-secondary" name="payMethod" type="radio"/>
+<span class="font-body-sm text-body-sm text-on-surface">Efectivo</span>
+</label>
+<label class="flex items-center gap-space-xs p-space-xs rounded bg-surface-container-low cursor-pointer">
+<input class="text-secondary" name="payMethod" type="radio"/>
+<span class="font-body-sm text-body-sm text-on-surface">iDEAL POS</span>
+</label>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-outline uppercase mb-space-xs">Referencia / Comprobante Bancario</label>
+<input class="w-full h-9 px-space-sm bg-surface-container-lowest text-on-surface font-mono-data text-mono-data rounded-lg shadow-sm focus:outline-none" placeholder="Ej. TRF-NL91-003829..." type="text"/>
+</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="h-9 px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md" id="cancelManualPayBtn">
+          Cancelar
+        </button>
+<button class="h-9 px-space-md bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-space-xs" id="saveManualPayBtn">
+<span class="material-symbols-outlined text-space-lg">check_circle</span>
+<span>Confirmar e Imputar Asiento</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Notification Toast Container -->
+<div class="fixed bottom-6 right-6 z-50 transition-all duration-300 transform translate-y-12 opacity-0 pointer-events-none flex items-center gap-space-sm p-space-md bg-primary text-on-primary rounded-xl shadow-xl" id="actionToast">
+<span class="material-symbols-outlined text-space-xl text-secondary">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md" id="toastMessage">Operación completada exitosamente</span>
+<span class="font-mono-data text-mono-data text-on-primary-container" id="toastSub">Acción registrada en el log de auditoría</span>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // Interactive Elements
+    const convertBtn = document.getElementById('convertInvoiceBtn');
+    const toggleQuotes = document.getElementById('viewToggleQuotes');
+    const toggleInvoices = document.getElementById('viewToggleInvoices');
+    const manualPayBtn = document.getElementById('openManualPayBtn');
+    const manualPayModal = document.getElementById('manualPayModal');
+    const closeManualPayBtn = document.getElementById('closeManualPayBtn');
+    const cancelManualPayBtn = document.getElementById('cancelManualPayBtn');
+    const saveManualPayBtn = document.getElementById('saveManualPayBtn');
+    const toast = document.getElementById('actionToast');
+    const toastMsg = document.getElementById('toastMessage');
+    const toastSub = document.getElementById('toastSub');
+
+    function triggerToast(message, subtext) {
+      if (!toast) return;
+      toastMsg.textContent = message;
+      toastSub.textContent = subtext;
+      toast.classList.remove('translate-y-12', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-12', 'opacity-0', 'pointer-events-none');
+      }, 3500);
+    }
+
+    // Convert Presupuesto to Factura Oficial Event
+    if (convertBtn) {
+      convertBtn.addEventListener('click', function() {
+        convertBtn.disabled = true;
+        convertBtn.innerHTML = `
+          <span class="material-symbols-outlined text-space-lg animate-spin">refresh</span>
+          <span>Procesando correlativo...</span>
+        `;
+
+        setTimeout(() => {
+          convertBtn.innerHTML = `
+            <span class="material-symbols-outlined text-space-lg">done_all</span>
+            <span>Factura Emitida: FAC-2026-0020</span>
+          `;
+          convertBtn.classList.remove('bg-secondary', 'hover:bg-secondary-container');
+          convertBtn.classList.add('bg-[#10B981]', 'text-on-primary');
+          triggerToast('Factura FAC-2026-0020 generada', 'Asignada a Maria Popescu. Enlace iDEAL activado.');
+        }, 900);
+      });
+    }
+
+    // Toggle views behavior
+    if (toggleQuotes && toggleInvoices) {
+      toggleQuotes.addEventListener('click', function() {
+        toggleQuotes.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        toggleQuotes.classList.remove('text-on-surface-variant');
+        toggleInvoices.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        toggleInvoices.classList.add('text-on-surface-variant');
+      });
+
+      toggleInvoices.addEventListener('click', function() {
+        toggleInvoices.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        toggleInvoices.classList.remove('text-on-surface-variant');
+        toggleQuotes.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        toggleQuotes.classList.add('text-on-surface-variant');
+      });
+    }
+
+    // Modal Control
+    if (manualPayBtn && manualPayModal) {
+      manualPayBtn.addEventListener('click', () => {
+        manualPayModal.classList.remove('hidden');
+      });
+    }
+
+    function closeModal() {
+      if (manualPayModal) {
+        manualPayModal.classList.add('hidden');
+      }
+    }
+
+    if (closeManualPayBtn) closeManualPayBtn.addEventListener('click', closeModal);
+    if (cancelManualPayBtn) cancelManualPayBtn.addEventListener('click', closeModal);
+
+    if (saveManualPayBtn) {
+      saveManualPayBtn.addEventListener('click', () => {
+        closeModal();
+        triggerToast('Cobro manual asentado', 'FAC-2026-0019 marcada como Pagada vía SEPA');
+      });
+    }
+  })();
+</script></main></div></body></html>

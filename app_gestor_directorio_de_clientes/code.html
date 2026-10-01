@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "primary-fixed-dim": "#bec6e0", "on-surface": "#0b1c30", "on-primary-fixed-variant": "#3f465c", "on-secondary-fixed-variant": "#003ea8", "on-tertiary-fixed": "#07006c", "on-tertiary-fixed-variant": "#2f2ebe", "on-primary-container": "#7c839b", "inverse-surface": "#213145", "inverse-primary": "#bec6e0", "on-tertiary": "#ffffff", "surface-bright": "#f8f9ff", "error": "#ba1a1a", "on-background": "#0b1c30", "tertiary-fixed-dim": "#c0c1ff", "on-surface-variant": "#45464d", "primary": "#000000", "error-container": "#ffdad6", "surface-container-lowest": "#ffffff", "inverse-on-surface": "#eaf1ff", "on-error": "#ffffff", "surface-variant": "#d3e4fe", "tertiary-fixed": "#e1e0ff", "on-error-container": "#93000a", "surface-container-low": "#eff4ff", "on-secondary-fixed": "#00174b", "surface-container-high": "#dce9ff", "on-secondary": "#ffffff", "on-secondary-container": "#fefcff", "secondary-fixed": "#dbe1ff", "on-primary": "#ffffff", "surface": "#f8f9ff", "secondary-fixed-dim": "#b4c5ff", "tertiary-container": "#07006c", "outline-variant": "#c6c6cd", "surface-container": "#e5eeff", "outline": "#76777d", "on-primary-fixed": "#131b2e", "tertiary": "#000000", "surface-dim": "#cbdbf5", "primary-fixed": "#dae2fd", "on-tertiary-container": "#7073ff", "secondary-container": "#316bf3", "primary-container": "#131b2e", "secondary": "#0051d5", "background": "#f8f9ff", "surface-container-highest": "#d3e4fe", "surface-tint": "#565e74" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-2xs": "0.125rem", "space-lg": "1rem", "space-xs": "0.25rem", "space-2xl": "2rem", "gutter": "1rem", "margin-md": "1.5rem", "margin-lg": "2rem", "space-3xl": "3rem", "margin": "1rem", "space-md": "0.75rem", "gutter-lg": "1.5rem", "space-xl": "1.5rem", "space-sm": "0.5rem" }, "fontFamily": { "display-lg": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ], "headline-md": [ "Plus Jakarta Sans" ], "mono-data": [ "JetBrains Mono" ], "label-sm": [ "Inter" ], "headline-sm": [ "Plus Jakarta Sans" ], "label-md": [ "Inter" ], "body-md": [ "Inter" ], "body-lg": [ "Inter" ] }, "fontSize": { "display-lg": [ "36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.005em", "fontWeight": "400" } ], "headline-md": [ "22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "mono-data": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.025em", "fontWeight": "600" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "label-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "body-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ], "body-lg": [ "16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" } ] } } } };</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style></head><body class="bg-surface font-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"/><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary-container truncate leading-none">NexusGest Pro</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate hidden sm:inline-block leading-none">| Directorio Clientes</span></div><div class="flex items-center gap-space-xs mt-space-2xs"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Elena Martínez · En línea</span></div></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button class="relative w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-full transition-colors active:scale-95"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2 right-2 w-4 h-4 bg-error text-on-error font-label-sm text-[10px] leading-tight rounded-full flex items-center justify-center font-bold">3</span></button><button class="w-11 h-11 flex items-center justify-center rounded-full active:scale-95 transition-transform"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VE8POL9nnf4cvlLj8Py1GsPsfUwePNkGHzqLy5Ckd7C-c0dfxCNE3n8ooZuwdqSHGZsKi0_QH2hsgj-8g-mh5cvDoyV9_l__67YW6YrnVy2l7QTmOICovoE_xUrjSKI15qju3P8ih21PhopDtOJaHjPYbUEE2sMYU0p7bBdtvNpjR2MS4Cz6HWDJ79NDNCK3_3xKsRtgxjyAodoptR5z5spYJLdQA615Md2bfipUq81Bd2L_4geLfaw5o"/></button></div></div></header><main class="flex flex-col relative w-full pt-16 pb-28 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Status & Quick Search Header Cluster -->
+<div class="px-margin pt-space-md pb-space-sm flex flex-col gap-space-md">
+<!-- Top KPI Bar & Counter -->
+<div class="flex items-center justify-between">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight">Directorio Activo</span>
+<span class="font-mono-data text-mono-data text-secondary font-semibold bg-surface-container-high px-2 py-0.5 rounded-full">142</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="h-9 px-space-sm flex items-center gap-1.5 rounded-xl bg-surface-container text-on-surface-variant hover:text-on-surface active:scale-95 transition-all text-label-sm font-label-sm" id="toggleViewBtn">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span>Filtros</span>
+</button>
+<button class="h-9 px-space-md rounded-xl bg-primary text-on-primary font-label-md text-label-md shadow-sm active:scale-95 transition-transform flex items-center gap-1.5" id="openNewClientBtn">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>Alta</span>
+</button>
+</div>
+</div>
+<!-- Smart Input Bar (One-handed Ergonomics) -->
+<div class="relative w-full flex items-center bg-surface-container-lowest rounded-xl shadow-sm border-0 focus-within:shadow-md transition-shadow">
+<div class="pl-space-md pr-space-xs flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="w-full h-12 bg-transparent text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none pr-2" id="clientSearchInput" placeholder="Buscar nombre, BSN, KVK, expediente..." type="text"/>
+<div class="flex items-center gap-1 pr-space-xs">
+<button aria-label="Búsqueda por voz" class="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button aria-label="Escanear ID o BSN" class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container text-secondary hover:bg-secondary-fixed active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined text-[19px]">qr_code_scanner</span>
+</button>
+</div>
+</div>
+<!-- Horizontal Category Filter Chips -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 -mx-margin px-margin">
+<button class="filter-chip active flex-shrink-0 h-8 px-3.5 rounded-full font-label-sm text-label-sm bg-primary text-on-primary flex items-center gap-1.5 shadow-sm transition-all">
+<span>Todos</span>
+<span class="font-mono-data text-[10px] opacity-75">142</span>
+</button>
+<button class="filter-chip flex-shrink-0 h-8 px-3.5 rounded-full font-label-sm text-label-sm bg-surface-container-low text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error inline-block animate-pulse"></span>
+<span class="text-error font-medium">Urgentes</span>
+<span class="font-mono-data text-[10px] text-error font-semibold">5</span>
+</button>
+<button class="filter-chip flex-shrink-0 h-8 px-3.5 rounded-full font-label-sm text-label-sm bg-surface-container-low text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all flex items-center gap-1.5">
+<span>Renta M-Form</span>
+<span class="font-mono-data text-[10px] text-outline font-semibold">28</span>
+</button>
+<button class="filter-chip flex-shrink-0 h-8 px-3.5 rounded-full font-label-sm text-label-sm bg-surface-container-low text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all flex items-center gap-1.5">
+<span>Autónomos ZZP</span>
+<span class="font-mono-data text-[10px] text-outline font-semibold">45</span>
+</button>
+<button class="filter-chip flex-shrink-0 h-8 px-3.5 rounded-full font-label-sm text-label-sm bg-surface-container-low text-on-surface-variant hover:bg-surface-container active:scale-95 transition-all flex items-center gap-1.5">
+<span>HollandZorg</span>
+<span class="font-mono-data text-[10px] text-outline font-semibold">12</span>
+</button>
+</div>
+</div>
+<!-- Smart Advisory Alert Card -->
+<div class="px-margin mb-space-sm">
+<div class="bg-surface-container-high rounded-xl p-space-md shadow-sm flex items-start gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-secondary text-on-secondary flex items-center justify-center flex-shrink-0 shadow-sm mt-0.5">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-semibold text-secondary-container">Auditoría IA en lote</span>
+<span class="font-mono-data text-[10px] text-on-surface-variant">Hoy 09:42</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 line-clamp-2">
+          3 expedientes de Renta M-Form presentan discrepancias de retención con el fisco neerlandés.
+        </p>
+</div>
+<button class="text-secondary font-label-sm text-label-sm font-semibold flex items-center self-center px-2 py-1 rounded-lg bg-surface-container-lowest">
+        Revisar
+      </button>
+</div>
+</div>
+<!-- Client Cards List -->
+<div class="flex flex-col gap-space-sm px-margin">
+<!-- Card 1: Maria Popescu (Urgent / Warning) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<!-- Card Header -->
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative w-11 h-11 flex-shrink-0">
+<img class="w-11 h-11 rounded-xl object-cover" data-alt="Close up professional portrait of a 34 year old European woman named Maria with brown hair tied back, neutral warm studio lighting, subtle blue backdrop, natural professional demeanor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqBnSrfBrIqEPTB5RadzWNffwGulO5_McWYk3FOAo997N1WdbOLgecXaJ4uK5s2DM3baZCfjFwj8yq3-yLKW5wySV4dcr5DtljBlWcIJSMV58-pxZO7vvlHkaHsTBMRq9e5W5mVXFlcSXhC6e1EOklPxEDO22Kk5C3kB58214Ym-v6rTIrCQNP0ueC5q9xMgQp3xf8HUcIx4FPBuP77hou_cTwF3K8rK8tx9bvOqNBwkFt62VcT9co"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-surface-container-lowest flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+</div>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Maria Popescu</h2>
+<span class="font-mono-data text-[10px] text-on-secondary-fixed-variant bg-secondary-fixed px-1.5 py-0.2 rounded font-medium">EXP-25-08</span>
+</div>
+<div class="flex items-center gap-1.5 mt-0.5 text-on-surface-variant">
+<span class="font-mono-data text-mono-data">BSN: 9821.44.110</span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">location_on</span>
+                Eindhoven
+              </span>
+</div>
+</div>
+</div>
+<!-- Status Badge -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 font-label-sm text-label-sm font-semibold flex-shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+          Falta Jaaropgave
+        </span>
+</div>
+<!-- Procedure Progress -->
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-medium text-on-surface">Declaración Renta M-Form 2025</span>
+<span class="font-mono-data text-[11px] text-on-surface-variant font-medium">Fase 2 de 5 (40%)</span>
+</div>
+<!-- Progress bar -->
+<div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-amber-500 rounded-full" style="width: 40%"></div>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant pt-0.5">
+<span class="font-body-sm text-body-sm text-amber-800 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+            Pendiente documento de ASML N.V.
+          </span>
+<span class="font-mono-data text-[10px]">Límite: 01 May</span>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="flex items-center justify-between gap-space-xs pt-0.5">
+<div class="flex items-center gap-2">
+<a aria-label="Llamar a Maria Popescu" class="w-10 h-10 rounded-xl bg-surface-container text-on-surface flex items-center justify-center hover:bg-surface-container-high active:scale-95 transition-all shadow-sm" href="tel:+31649281722">
+<span class="material-symbols-outlined text-[19px]">call</span>
+</a>
+<a aria-label="Enviar WhatsApp directo" class="w-10 h-10 rounded-xl bg-emerald-600 text-surface-container-lowest flex items-center justify-center active:scale-95 transition-transform shadow-sm" href="https://wa.me/31649281722">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">chat</span>
+</a>
+<button class="h-10 px-3 rounded-xl bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[17px]">attach_file</span>
+<span>Pedir Doc</span>
+</button>
+</div>
+<button class="h-10 px-space-md rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 active:scale-95 transition-transform shadow-sm ml-auto">
+<span>Ficha 360°</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Card 2: Carlos Mendoza (In Review / Belastingdienst) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<!-- Card Header -->
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative w-11 h-11 flex-shrink-0">
+<img class="w-11 h-11 rounded-xl object-cover" data-alt="Portrait of an energetic 38 year old Hispanic professional man named Carlos with short dark hair and modern glasses, dressed in crisp navy blue blazer, natural soft ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkHHQuuR16eWgiyFn3grf8Aa_3wO4skO142CfGEVS5gcM2zhgtndbFXqQLeJD9yXZfeeXrTajXfrUUT-CAqIxFmYZBAOOmh34KnHDduP1z2hQujKBDGPacsqgLczoTsM6WxasYhTBmKWkC6-gJKJfymA4xNWiwa2u3zfXBL8wDiViHhaJG9fbQWq9l3lkRdTOMg0VSBti5obs229pkTEaV6WqvAFbVW5L6Z9yGcnMracWYPw6TQYQy"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-surface-container-lowest flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary"></div>
+</div>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Carlos Mendoza</h2>
+<span class="font-mono-data text-[10px] text-on-tertiary-fixed bg-tertiary-fixed px-1.5 py-0.2 rounded font-medium">EXP-24-91</span>
+</div>
+<div class="flex items-center gap-1.5 mt-0.5 text-on-surface-variant">
+<span class="font-mono-data text-mono-data">BSN: 8412.99.301</span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">location_on</span>
+                Ámsterdam
+              </span>
+</div>
+</div>
+</div>
+<!-- Status Badge -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-secondary font-label-sm text-label-sm font-semibold flex-shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Belastingdienst
+        </span>
+</div>
+<!-- Procedure Progress -->
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-medium text-on-surface">Solicitud 30% Ruling Expat</span>
+<span class="font-mono-data text-[11px] text-secondary font-medium">En espera resolución</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-body-sm text-body-sm flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+            Enviado el 12 Feb · Plazo est. 6 semanas
+          </span>
+<span class="font-mono-data text-[10px] font-semibold text-secondary">Día 18</span>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="flex items-center justify-between gap-space-xs pt-0.5">
+<div class="flex items-center gap-2">
+<a aria-label="Llamar a Carlos Mendoza" class="w-10 h-10 rounded-xl bg-surface-container text-on-surface flex items-center justify-center hover:bg-surface-container-high active:scale-95 transition-all shadow-sm" href="tel:+31688123900">
+<span class="material-symbols-outlined text-[19px]">call</span>
+</a>
+<a aria-label="Enviar WhatsApp a Carlos Mendoza" class="w-10 h-10 rounded-xl bg-emerald-600 text-surface-container-lowest flex items-center justify-center active:scale-95 transition-transform shadow-sm" href="https://wa.me/31688123900">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">chat</span>
+</a>
+<button class="h-10 px-3 rounded-xl bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[17px]">history_edu</span>
+<span>Historial</span>
+</button>
+</div>
+<button class="h-10 px-space-md rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 active:scale-95 transition-transform shadow-sm ml-auto">
+<span>Expediente</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 3: Lars van Dijk (ZZP / In Order) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<!-- Card Header -->
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative w-11 h-11 flex-shrink-0">
+<img class="w-11 h-11 rounded-xl object-cover" data-alt="Professional studio headshot of a 42 year old Dutch entrepreneur named Lars with short blonde hair and friendly focused gaze, wearing a light grey sweater, corporate modern aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKu94ynGT7tNb-4Tlq97SHgnS5ly0Iu1ii3jl_JphMrzEewoLxnCIP3KfX8lYmLHaGa0Nost_BWenwhzFXyx3gAs-cwWa2VU7e49Fi3zhSUEfoBfTWRSSBm67WOufZvSXWeclLkP77jWVagTjvYEe1TLA7IdSUYKZmWA2UjBsv9SJ8piS3COkzGz4CJwasoQ_c5nwtD0cHEo3FqzMdT48LuLShOVm7pxwl7LEdBxIb25-fmFE0ORHQ"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-surface-container-lowest flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+</div>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Lars van Dijk</h2>
+<span class="font-mono-data text-[10px] text-on-surface-variant bg-surface-container-high px-1.5 py-0.2 rounded font-medium">ZZP Tech</span>
+</div>
+<div class="flex items-center gap-1.5 mt-0.5 text-on-surface-variant">
+<span class="font-mono-data text-mono-data">KVK: 78923411</span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">location_on</span>
+                Utrecht
+              </span>
+</div>
+</div>
+</div>
+<!-- Status Badge -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-label-sm text-label-sm font-semibold flex-shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          Al día
+        </span>
+</div>
+<!-- Procedure Detail -->
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-medium text-on-surface">Declaración BTW 1T 2026</span>
+<span class="font-mono-data text-[11px] text-emerald-700 font-medium">Facturas sincronizadas (24/24)</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-body-sm text-body-sm flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+            Cierre previsto: 20 de Abril
+          </span>
+<span class="font-mono-data text-[11px] font-semibold text-on-surface">€ 4.290 saldo IVA</span>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="flex items-center justify-between gap-space-xs pt-0.5">
+<div class="flex items-center gap-2">
+<a aria-label="Llamar a Lars van Dijk" class="w-10 h-10 rounded-xl bg-surface-container text-on-surface flex items-center justify-center hover:bg-surface-container-high active:scale-95 transition-all shadow-sm" href="tel:+31612456789">
+<span class="material-symbols-outlined text-[19px]">call</span>
+</a>
+<a aria-label="Enviar WhatsApp a Lars van Dijk" class="w-10 h-10 rounded-xl bg-emerald-600 text-surface-container-lowest flex items-center justify-center active:scale-95 transition-transform shadow-sm" href="https://wa.me/31612456789">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">chat</span>
+</a>
+<button class="h-10 px-3 rounded-xl bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[17px]">receipt_long</span>
+<span>Libros</span>
+</button>
+</div>
+<button class="h-10 px-space-md rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 active:scale-95 transition-transform shadow-sm ml-auto">
+<span>Ver Ficha</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Card 4: Sofia Alarcón (Urgent / Expiring soon) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md relative overflow-hidden">
+<!-- Accent Stripe for high urgency -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-error"></div>
+<!-- Card Header -->
+<div class="flex items-start justify-between gap-space-sm pl-1">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative w-11 h-11 flex-shrink-0">
+<img class="w-11 h-11 rounded-xl object-cover" data-alt="Warm natural portrait of a 29 year old Latina woman named Sofia with curly dark hair, wearing an elegant terracotta knit top, bright soft daylight studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4gU52jEWJ-X3YJnhhMPMASkIK37i5jHMhTC9DiachQRC8IavzmEMZisCIlZo7xIqcIsyxBGtTx7EqJWN32ynqrXHSgmm8w9kZFECxGRS--T1hYJI02WodmRxsq3iGak2naTkJe4N2SK8N8l0Sc8JxfsWFcmRdyDjirOhyhqKUtFx7ev7hKhV8pN0RcECBhsiubZRYJEqIHluhGtT8s542PQul2X7kMI840hfPNvbx4KMrffE_OnmY"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-surface-container-lowest flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-error"></div>
+</div>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Sofia Alarcón</h2>
+<span class="font-mono-data text-[10px] text-error font-bold bg-error-container px-1.5 py-0.2 rounded">URGENTE</span>
+</div>
+<div class="flex items-center gap-1.5 mt-0.5 text-on-surface-variant">
+<span class="font-mono-data text-mono-data">BSN: 7721.05.612</span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">location_on</span>
+                Róterdam
+              </span>
+</div>
+</div>
+</div>
+<!-- Status Badge -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold flex-shrink-0 animate-pulse">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+          Vence en 48h
+        </span>
+</div>
+<!-- Procedure Detail -->
+<div class="bg-error-container/30 rounded-lg p-space-sm flex flex-col gap-1.5 pl-3">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Recurso Sanción CAK / Zorgverzekering</span>
+<span class="font-mono-data text-[11px] text-error font-bold">Plazo fatal: Viernes 17:00</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Requiere firma digital del apoderamiento y justificante de seguro médico vigente en España.
+        </p>
+</div>
+<!-- Quick Action Buttons -->
+<div class="flex items-center justify-between gap-space-xs pt-0.5 pl-1">
+<div class="flex items-center gap-2">
+<a aria-label="Llamar con urgencia a Sofia Alarcon" class="w-10 h-10 rounded-xl bg-error text-on-error flex items-center justify-center active:scale-95 transition-transform shadow-sm" href="tel:+31634567891">
+<span class="material-symbols-outlined text-[19px]">phone_in_talk</span>
+</a>
+<a aria-label="WhatsApp urgente a Sofia Alarcon" class="w-10 h-10 rounded-xl bg-emerald-600 text-surface-container-lowest flex items-center justify-center active:scale-95 transition-transform shadow-sm" href="https://wa.me/31634567891">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">chat</span>
+</a>
+<button class="h-10 px-3 rounded-xl bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[17px]">draw</span>
+<span>Firmar</span>
+</button>
+</div>
+<button class="h-10 px-space-md rounded-xl bg-error text-on-error font-label-md text-label-md flex items-center gap-1 active:scale-95 transition-transform shadow-sm ml-auto">
+<span>Gestionar</span>
+<span class="material-symbols-outlined text-[16px]">priority_high</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Floating Action Sheet Trigger (Mobile Right thumb zone) -->
+<div class="fixed right-4 bottom-24 z-40">
+<button class="h-14 px-5 rounded-full bg-secondary text-on-secondary shadow-lg active:scale-95 transition-all flex items-center gap-2" id="quickFabBtn">
+<span class="material-symbols-outlined text-[22px]">add</span>
+<span class="font-headline-sm text-headline-sm leading-none pr-1">Nuevo Cliente</span>
+</button>
+</div>
+<!-- Bottom Fast-Action Bar Sheet Modal (Toggled via JS) -->
+<div class="hidden fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm flex items-end justify-center" id="newClientModal">
+<div class="w-full bg-surface-container-lowest rounded-t-2xl p-margin-md flex flex-col gap-space-md shadow-2xl max-w-md mx-auto">
+<div class="w-12 h-1 bg-surface-container-high rounded-full self-center"></div>
+<div class="flex items-center justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Alta Rápida de Cliente</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Selecciona el método de incorporación inmediata</p>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant" id="closeModalBtn">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="grid grid-cols-1 gap-2 pt-1">
+<!-- AI Scan option -->
+<button class="p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center gap-3 text-left transition-colors active:scale-98">
+<div class="w-10 h-10 rounded-lg bg-secondary text-on-secondary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">document_scanner</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Escanear ID Neerlandés o Pasaporte</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Extracción automática de BSN, nombres y validez</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- KVK lookup -->
+<button class="p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center gap-3 text-left transition-colors active:scale-98">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-surface-container-lowest flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">domain</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Consulta Automática KVK</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Importa datos fiscales de la Cámara de Comercio</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<!-- Manual form -->
+<button class="p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center gap-3 text-left transition-colors active:scale-98">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">edit_note</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Formulario Manual Simplificado</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Para casos sin documentación en mano</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const modal = document.getElementById('newClientModal');
+    const openBtn = document.getElementById('openNewClientBtn');
+    const fabBtn = document.getElementById('quickFabBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const searchInput = document.getElementById('clientSearchInput');
+    const chips = document.querySelectorAll('.filter-chip');
+
+    function openModal() {
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      if (modal) modal.classList.add('hidden');
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (fabBtn) fabBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    // Close when tapping modal overlay
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+
+    // Filter Chips Interactive State
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => {
+          c.classList.remove('bg-primary', 'text-on-primary');
+          c.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+        });
+        chip.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+        chip.classList.add('bg-primary', 'text-on-primary');
+      });
+    });
+
+    // Quick client search micro-filtering demo
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const clientCards = document.querySelectorAll('.px-margin > .bg-surface-container-lowest');
+        clientCards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          if (!query || text.includes(query)) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_-1px_12px_rgba(11,28,48,0.06)]" data-active-classes="text-secondary font-semibold"><div class="h-20 px-space-xs flex items-center justify-around"><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="inicio-hoy" href="#"><span class="material-symbols-outlined text-[24px]">dashboard</span><span class="font-label-sm text-label-sm mt-0.5">Hoy</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] h-12 transition-colors text-secondary font-semibold" data-path="directorio-clientes" href="#"><span class="material-symbols-outlined text-[24px]">group</span><span class="font-label-sm text-label-sm mt-0.5">Clientes</span></a><a class="flex flex-col items-center justify-center -mt-5 min-w-[60px] h-14 group" data-path="escaner-ia-captura" href="#"><div class="w-12 h-12 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-[0_4px_12px_rgba(0,81,213,0.35)] active:scale-95 transition-transform"><span class="material-symbols-outlined text-[26px]">document_scanner</span></div><span class="font-label-sm text-label-sm text-secondary font-semibold mt-0.5">IA Escanear</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="agenda-citas" href="#"><span class="material-symbols-outlined text-[24px]">calendar_today</span><span class="font-label-sm text-label-sm mt-0.5">Agenda</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="boveda-documentos" href="#"><span class="material-symbols-outlined text-[24px]">folder_shared</span><span class="font-label-sm text-label-sm mt-0.5">Bóveda</span></a></div></nav></body></html>

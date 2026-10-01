@@ -1,0 +1,80 @@
+# =====================================================================
+# NEXUSGEST - DOCKER COMPOSE PARA COOLIFY Y DESPLIEGUE EN SERVIDOR
+# =====================================================================
+
+services:
+  # 1. Base de Datos Relacional PostgreSQL 16
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexusgest_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nexusgest_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexusgest_secret_password_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-nexusgest_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Inicialización automática del esquema de NexusGest al levantar la BD por primera vez
+      - ./backend/src/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nexusgest_user} -d ${POSTGRES_DB:-nexusgest_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexusgest_network
+
+  # 2. Backend API (Node.js + Express + TypeScript)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nexusgest_backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexusgest_user}:${POSTGRES_PASSWORD:-nexusgest_secret_password_2026}@postgres:5432/${POSTGRES_DB:-nexusgest_db}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_nexusgest_secure_2026_change_in_production}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "5000:5000"
+    networks:
+      - nexusgest_network
+
+  # 3. Frontend Web + CRM + Portal Cliente (Next.js Standalone)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nexusgest_frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:5000/api}
+    ports:
+      - "3000:3000"
+    networks:
+      - nexusgest_network
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  nexusgest_network:
+    driver: bridge

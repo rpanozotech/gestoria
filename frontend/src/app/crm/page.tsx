@@ -1,0 +1,353 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+export default function CRMDashboardPage() {
+  const [stats, setStats] = useState<any>({
+    kpis: {
+      active_clients: 148,
+      appointments_today: { total: 6, completed: 2, pending: 4 },
+      active_dossiers: { total: 34, belastingdienst: 8 },
+      finances: { monthly_revenue: 12450.00, pending_revenue: 3120.00, pending_invoices_count: 9 },
+    },
+    today_appointments: [
+      { id: '1', title: 'Revisión M-Form 2025', client_name: 'Carlos Mendoza', appointment_time: '10:00:00', modality: 'online_meet', status: 'confirmada' },
+      { id: '2', title: 'Carta DigiD Belastingdienst', client_name: 'Maria Popescu', appointment_time: '11:30:00', modality: 'presencial', status: 'confirmada' },
+      { id: '3', title: 'Consulta Huurtoeslag', client_name: 'Elena Morales', appointment_time: '16:00:00', modality: 'online_meet', status: 'pendiente' },
+    ],
+    recent_dossiers: [
+      { id: '1', code: 'EXP-2026-0041', title: 'Activación DigiD + Solicitud Zorgtoeslag', client_name: 'Maria Popescu', client_bsn: '982145672', status: 'en_belastingdienst', progress_percentage: 65, fee: '85.00' },
+      { id: '2', code: 'EXP-2026-0042', title: 'Declaración Fiscal M-Form (Migración)', client_name: 'Carlos Mendoza Ruiz', client_bsn: '817293845', status: 'en_proceso', progress_percentage: 40, fee: '180.00' },
+      { id: '3', code: 'EXP-2026-0043', title: 'Alta Eenmanszaak KVK y BTW-nummer', client_name: 'Lars Van Dijk', client_bsn: '728194028', status: 'completado', progress_percentage: 100, fee: '250.00' },
+    ],
+  });
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/dashboard/stats')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.kpis) setStats(data);
+      })
+      .catch(() => {
+        // Fallback optimista pre-cargado
+      });
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      {/* Header & Quick Action Strip */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-on-surface">Panel de Control Operativo</h1>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-surface-container-high text-secondary text-[11px] font-mono-data rounded font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+              EN VIVO
+            </span>
+          </div>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Gestoría y Asesoría Fiscal Neerlandesa · Visión ejecutiva en tiempo real
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/crm/facturacion"
+            className="h-9 px-3.5 bg-surface-container-lowest border border-outline-variant text-on-surface text-xs font-semibold rounded-md shadow-sm hover:bg-surface-container transition-colors flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+            <span>+ Presupuesto / Factura</span>
+          </Link>
+          <Link
+            href="/crm/documentos-ia"
+            className="h-9 px-3.5 bg-surface-container-lowest border border-outline-variant text-on-surface text-xs font-semibold rounded-md shadow-sm hover:bg-surface-container transition-colors flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[16px] text-secondary">document_scanner</span>
+            <span>Escanear Carta Belastingdienst</span>
+          </Link>
+          <Link
+            href="/crm/alta-ia"
+            className="h-9 px-3.5 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
+            <span>+ Alta con IA</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* 6 KPI Cards Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* KPI 1 */}
+        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Clientes Activos</span>
+            <span className="material-symbols-outlined text-[18px] text-secondary">group</span>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold font-mono-data">{stats.kpis.active_clients}</span>
+              <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1 rounded">+8.4%</span>
+            </div>
+            <p className="text-[10px] text-outline mt-0.5">+12 nuevos este mes</p>
+          </div>
+          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
+            <div className="bg-secondary h-full rounded-full w-[78%]"></div>
+          </div>
+        </div>
+
+        {/* KPI 2 */}
+        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Citas de Hoy</span>
+            <span className="material-symbols-outlined text-[18px] text-primary">calendar_clock</span>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold font-mono-data">{stats.kpis.appointments_today.total}</span>
+              <span className="text-[10px] text-on-surface-variant">citas</span>
+            </div>
+            <p className="text-[10px] text-outline mt-0.5">
+              {stats.kpis.appointments_today.completed} hechas · {stats.kpis.appointments_today.pending} pendientes
+            </p>
+          </div>
+          <div className="flex gap-1 mt-3">
+            <span className="h-1 flex-1 bg-secondary rounded-full"></span>
+            <span className="h-1 flex-1 bg-secondary rounded-full"></span>
+            <span className="h-1 flex-1 bg-surface-container-high rounded-full"></span>
+            <span className="h-1 flex-1 bg-surface-container-high rounded-full"></span>
+          </div>
+        </div>
+
+        {/* KPI 3 */}
+        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">En Trámite</span>
+            <span className="material-symbols-outlined text-[18px] text-secondary">pending_actions</span>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold font-mono-data">{stats.kpis.active_dossiers.total}</span>
+              <span className="text-[10px] text-on-surface-variant">expedientes</span>
+            </div>
+            <p className="text-[10px] text-amber-700 font-semibold mt-0.5 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              {stats.kpis.active_dossiers.belastingdienst} en Belastingdienst
+            </p>
+          </div>
+          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
+            <div className="bg-secondary-container h-full rounded-full w-[65%]"></div>
+          </div>
+        </div>
+
+        {/* KPI 4 */}
+        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Facturación Mes</span>
+            <span className="material-symbols-outlined text-[18px] text-emerald-600">payments</span>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold font-mono-data">€ {stats.kpis.finances.monthly_revenue.toLocaleString('es-ES')}</span>
+            </div>
+            <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">+14.2% vs mes anterior</p>
+          </div>
+          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
+            <div className="bg-emerald-500 h-full rounded-full w-[82%]"></div>
+          </div>
+        </div>
+
+        {/* KPI 5 */}
+        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Cobros Pendientes</span>
+            <span className="material-symbols-outlined text-[18px] text-amber-600">receipt</span>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold font-mono-data">€ {stats.kpis.finances.pending_revenue.toLocaleString('es-ES')}</span>
+            </div>
+            <p className="text-[10px] text-outline mt-0.5">{stats.kpis.finances.pending_invoices_count} facturas emitidas</p>
+          </div>
+          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
+            <div className="bg-amber-500 h-full rounded-full w-[35%]"></div>
+          </div>
+        </div>
+
+        {/* KPI 6 */}
+        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Pasarela iDEAL</span>
+            <span className="material-symbols-outlined text-[18px] text-secondary">credit_card</span>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold font-mono-data text-emerald-600">100%</span>
+            </div>
+            <p className="text-[10px] text-outline mt-0.5">Sincronización bancaria OK</p>
+          </div>
+          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
+            <div className="bg-emerald-500 h-full rounded-full w-full"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Proactive Advisory Alert (Executive Precision) */}
+      <div className="p-4 bg-indigo-50 border border-indigo-200 border-l-4 border-l-indigo-600 rounded-lg flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-indigo-600 text-[22px]">smart_toy</span>
+          <div>
+            <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wider">
+              Asistente NexusGest AI · 3 Acciones Recomendadas
+            </h4>
+            <p className="text-xs text-indigo-800 mt-0.5">
+              Se detectaron 2 resoluciones de Belastingdienst pendientes de vincular al expediente de Maria Popescu y 1 presupuesto por vencer.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/crm/alta-ia"
+          className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded flex items-center gap-1.5 transition-colors whitespace-nowrap shadow-sm"
+        >
+          <span>Revisar Acciones IA</span>
+          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+        </Link>
+      </div>
+
+      {/* Dual Workspace: Active Dossiers & Today's Appointments */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Active Dossiers Table (2 cols) */}
+        <div className="xl:col-span-2 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="p-5 border-b border-surface-container flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-on-surface">Expedientes y Trámites en Curso</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5">Seguimiento de estados ante la administración pública neerlandesa</p>
+              </div>
+              <Link href="/crm/clientes" className="text-xs font-semibold text-secondary hover:underline">
+                Ver todos (34)
+              </Link>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
+                  <tr>
+                    <th className="px-5 py-3">Código</th>
+                    <th className="px-5 py-3">Cliente / BSN</th>
+                    <th className="px-5 py-3">Trámite</th>
+                    <th className="px-5 py-3">Estado</th>
+                    <th className="px-5 py-3">Progreso</th>
+                    <th className="px-5 py-3 text-right">Tarifa</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-container">
+                  {stats.recent_dossiers.map((dossier: any) => (
+                    <tr key={dossier.id} className="hover:bg-surface-container-low transition-colors">
+                      <td className="px-5 py-3.5 font-mono-data font-semibold text-secondary">
+                        {dossier.code}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="font-semibold text-on-surface">{dossier.client_name}</div>
+                        <div className="font-mono-data text-[11px] text-outline">BSN: {dossier.client_bsn}</div>
+                      </td>
+                      <td className="px-5 py-3.5 text-on-surface font-medium">
+                        {dossier.title}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {dossier.status === 'en_belastingdienst' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                            Belastingdienst
+                          </span>
+                        )}
+                        {dossier.status === 'en_proceso' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            En Trámite
+                          </span>
+                        )}
+                        {dossier.status === 'completado' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                            Completado
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-surface-container h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-secondary h-full rounded-full" style={{ width: `${dossier.progress_percentage}%` }}></div>
+                          </div>
+                          <span className="font-mono-data text-[10px] text-outline">{dossier.progress_percentage}%</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-mono-data font-semibold">
+                        € {parseFloat(dossier.fee).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Today's Appointments List (1 col) */}
+        <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-4 border-b border-surface-container mb-4">
+              <div>
+                <h3 className="font-bold text-sm text-on-surface">Citas de Hoy</h3>
+                <p className="text-xs text-on-surface-variant">Martes, 10 de Marzo · Agenda oficial</p>
+              </div>
+              <Link href="/crm/agenda" className="text-xs font-semibold text-secondary hover:underline">
+                Calendario
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {stats.today_appointments.map((apt: any) => (
+                <div key={apt.id} className="p-3 rounded-lg border border-surface-container hover:border-secondary transition-colors bg-surface flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="px-2 py-1 bg-surface-container-high rounded text-center">
+                      <span className="block font-mono-data text-xs font-bold text-on-surface">
+                        {apt.appointment_time.slice(0, 5)}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-on-surface">{apt.client_name}</h4>
+                      <p className="text-[11px] text-on-surface-variant mt-0.5">{apt.title}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        {apt.modality === 'online_meet' ? (
+                          <span className="text-[10px] font-medium text-secondary flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px]">videocam</span> Google Meet
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-on-surface-variant flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px]">location_on</span> Despacho
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-surface-container mt-4">
+            <Link
+              href="/crm/agenda"
+              className="w-full h-9 bg-surface-container text-on-surface text-xs font-semibold rounded flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
+            >
+              <span className="material-symbols-outlined text-[16px]">add_circle</span>
+              <span>Agendar Nueva Cita</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

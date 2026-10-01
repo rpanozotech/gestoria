@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"inverse-surface":"#213145","on-error":"#ffffff","on-tertiary":"#ffffff","on-tertiary-fixed":"#07006c","primary-fixed-dim":"#bec6e0","secondary-container":"#316bf3","outline":"#76777d","on-primary-fixed-variant":"#3f465c","on-tertiary-fixed-variant":"#2f2ebe","on-error-container":"#93000a","on-secondary-container":"#fefcff","outline-variant":"#c6c6cd","on-primary-container":"#7c839b","error-container":"#ffdad6","primary":"#000000","tertiary-container":"#07006c","on-primary":"#ffffff","secondary-fixed-dim":"#b4c5ff","surface-container-highest":"#d3e4fe","tertiary-fixed":"#e1e0ff","error":"#ba1a1a","secondary-fixed":"#dbe1ff","surface-container-lowest":"#ffffff","primary-fixed":"#dae2fd","tertiary":"#000000","on-secondary-fixed-variant":"#003ea8","on-background":"#0b1c30","tertiary-fixed-dim":"#c0c1ff","inverse-on-surface":"#eaf1ff","inverse-primary":"#bec6e0","on-secondary":"#ffffff","on-surface":"#0b1c30","surface":"#f8f9ff","primary-container":"#131b2e","on-tertiary-container":"#7073ff","surface-dim":"#cbdbf5","on-primary-fixed":"#131b2e","on-surface-variant":"#45464d","background":"#f8f9ff","on-secondary-fixed":"#00174b","surface-container-low":"#eff4ff","surface-bright":"#f8f9ff","surface-container-high":"#dce9ff","surface-container":"#e5eeff","secondary":"#0051d5","surface-tint":"#565e74","surface-variant":"#d3e4fe"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{"space-xl":"1.5rem","margin-md":"1.5rem","space-2xl":"2rem",gutter:"1rem","space-3xl":"3rem","space-sm":"0.5rem","space-2xs":"0.125rem","gutter-lg":"1.5rem",margin:"1rem","margin-lg":"2rem","space-lg":"1rem","space-xs":"0.25rem","space-md":"0.75rem"},fontFamily:{"label-sm":["Inter"],"body-sm":["Inter"],"mono-data":["JetBrains Mono"],"headline-sm":["Plus Jakarta Sans"],"body-lg":["Inter"],"body-md":["Inter"],"display-lg":["Plus Jakarta Sans"],"label-md":["Inter"],"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"]},fontSize:{"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.025em",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",letterSpacing:"0.005em",fontWeight:"400"}],"mono-data":["12px",{lineHeight:"16px",letterSpacing:"-0.01em",fontWeight:"500"}],"headline-sm":["18px",{lineHeight:"24px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"24px",letterSpacing:"-0.005em",fontWeight:"400"}],"body-md":["14px",{lineHeight:"20px",letterSpacing:"0em",fontWeight:"400"}],"display-lg":["36px",{lineHeight:"44px",letterSpacing:"-0.025em",fontWeight:"700"}],"label-md":["13px",{lineHeight:"18px",letterSpacing:"0.01em",fontWeight:"500"}],"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-md":["22px",{lineHeight:"28px",letterSpacing:"-0.015em",fontWeight:"600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col flex-1 overflow-y-auto"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="NexusGest Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UGL1TcrvgqQTS7P7tWRnC85nNZKFJclsBEgopGSeeW14oBzFdOSlVwjxxi3aa-Ko1tpQP_AoiK-bXTsGprM7WskQLtt-SPhCIpcpoUeTLN0WOLR4s2ZOMfxv0A7VMnyiC-AICHIV3kllLDzVwRv4s8jqxlWXDfn61jk-ujrh6M0Mxlp79quxVsegXJLp083DYTwipERIt2FGgUMoNw72Iow8kanV1oAKWU4HLWHN2Otwc08KbS-bzqGNw"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">NexusGest</span></div><span class="px-space-xs py-space-2xs bg-surface-container text-on-surface-variant font-label-sm text-label-sm rounded">v2.4 Pro</span></div><div class="px-space-md py-space-xs"><span class="px-space-sm font-label-sm text-label-sm text-outline uppercase tracking-wider">Gestión & Operaciones</span></div><nav class="flex flex-col gap-space-2xs px-space-sm" data-active-classes="bg-secondary-container text-on-secondary-container font-label-md"><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="dashboard" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">grid_view</span><span>Dashboard</span></div></a><a aria-current="page" class="flex items-center justify-between px-space-md py-space-sm rounded-lg transition-colors bg-secondary-container text-on-secondary-container font-label-md" data-path="clientes" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">group</span><span>Clientes</span></div><span class="px-space-xs py-space-2xs bg-surface-container-high text-on-surface font-mono-data text-mono-data rounded-full">148</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="alta-ia-escaner" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl text-secondary">auto_awesome</span><span>Alta IA & Escáner</span></div><span class="px-space-xs py-space-2xs bg-secondary text-on-secondary font-label-sm text-label-sm rounded">IA</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="tramites-servicios" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">business_center</span><span>Trámites & Servicios</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="presupuestos" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">description</span><span>Presupuestos</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="facturacion" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">receipt_long</span><span>Facturación</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="agenda-citas" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">calendar_today</span><span>Agenda & Citas</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="asistente-documentos" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">document_scanner</span><span>Asistente Documentos</span></div></a></nav></div><div class="p-space-md flex flex-col gap-space-sm bg-surface-container-low"><div class="p-space-sm bg-surface-container-lowest rounded-lg flex flex-col gap-space-2xs shadow-[0_1px_3px_rgba(0,0,0,0.04)]"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-outline">Sistema Cloud</span><span class="flex h-2 w-2 rounded-full bg-secondary"></span></div><div class="flex flex-col font-mono-data text-mono-data text-on-surface-variant gap-space-2xs"><div class="flex items-center justify-between"><span>PostgreSQL</span><span class="text-secondary font-label-sm text-label-sm">Online</span></div><div class="flex items-center justify-between"><span>Storage S3</span><span class="text-secondary font-label-sm text-label-sm">99.9%</span></div></div></div><nav class="flex flex-col" data-active-classes="bg-secondary-container text-on-secondary-container font-label-md"><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="configuracion" href="#"><span class="material-symbols-outlined text-space-xl">settings</span><span>Configuración</span></a></nav></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 px-space-xl flex items-center justify-between gap-space-lg"><div class="flex-1 max-w-xl"><div class="relative flex items-center w-full"><span class="material-symbols-outlined absolute left-space-md text-outline pointer-events-none text-space-xl">search</span><input class="w-full h-9 pl-10 pr-space-md bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.02)] focus:outline-none" placeholder="Buscar cliente, BSN, factura, trámite o comando IA... (Cmd + K)" type="text"/></div></div><div class="flex items-center gap-space-lg"><button class="h-9 px-space-md bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-space-xs hover:bg-primary-container transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.08)]"><span class="material-symbols-outlined text-space-lg">add</span><span>Nuevo Trámite / IA</span></button><div class="flex items-center gap-space-xs"><button class="relative h-9 w-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Notificaciones"><span class="material-symbols-outlined text-space-xl">notifications</span><span class="absolute top-1 right-1 h-4 w-4 bg-error text-on-error font-label-sm text-label-sm rounded-full flex items-center justify-center">3</span></button><button class="h-9 w-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Soporte y Ayuda"><span class="material-symbols-outlined text-space-xl">help</span></button></div><div class="flex items-center gap-space-md pl-space-sm"><div class="flex items-center gap-space-sm cursor-pointer"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8Xeg7Vtga4Rzfh9r0LXBU67VuZUXAJxX6qLLQn86SqPw4hOk3SfSZzOSnKdGkvltdASdrKRfymem__Yfc9lfA0-pH3n-Nc94qp8Ax33ZegQRLmwwkEMqXPHQlkZ9mYUWt_u3Vd_FhjP42RtkJ8G_4KjC-qnGgoeVz9KamfPC1xMMLZIMJZQEoZQXYJgqL51QUdFbj8kuCzvQETrNbu0BI6MllUXSToUk8AinIUavxtbPBAeX0XsLx"/><div class="hidden xl:flex flex-col text-left"><span class="font-label-md text-label-md text-on-surface leading-tight">Elena Martínez</span><span class="font-label-sm text-label-sm text-outline">Gestora Principal / Admin</span></div><span class="material-symbols-outlined text-outline text-space-lg">expand_more</span></div></div></div></header><main class="w-full pt-16 px-gutter-lg pb-space-3xl bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Dynamic Notification Bar / AI Alert -->
+<div class="mb-space-lg p-space-md bg-surface-container-low rounded-xl flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="h-8 w-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shadow-sm">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Auditoría IA de Expediente activa</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Se detectó Jaaropgave pendiente para completar la Declaración de Renta 2025. Vía de comunicación óptima: WhatsApp (+31).</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-space-xs bg-surface-container-lowest text-on-surface rounded font-label-sm text-label-sm hover:bg-surface-container transition-colors shadow-sm">Ignorar aviso</button>
+<button class="px-space-md py-space-xs bg-secondary text-on-secondary rounded font-label-sm text-label-sm hover:bg-secondary-container transition-colors flex items-center gap-space-2xs shadow-sm">
+<span class="material-symbols-outlined text-[14px]">send</span> Recordar ahora
+      </button>
+</div>
+</div>
+<!-- Header Card: Ficha 360° Profile -->
+<section class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm mb-space-lg relative overflow-hidden">
+<div class="absolute -right-16 -top-16 w-64 h-64 bg-secondary-fixed-dim/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-xl relative z-10">
+<!-- Identity & Quick Info -->
+<div class="flex items-start sm:items-center gap-space-lg">
+<div class="relative">
+<div class="w-16 h-16 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center font-headline-md text-headline-md tracking-tight shadow-md">
+            MP
+          </div>
+<span class="absolute -bottom-1 -right-1 h-5 w-5 bg-secondary rounded-full flex items-center justify-center text-on-secondary shadow-sm" title="Verificado con IA">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+</span>
+</div>
+<div class="flex flex-col gap-space-2xs">
+<div class="flex flex-wrap items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Maria Popescu</h1>
+<span class="px-space-xs py-space-2xs bg-surface-container-high text-on-surface-variant font-mono-data text-mono-data rounded">
+              CLI-2026-089
+            </span>
+<!-- Interactive Status Dropdown -->
+<div class="relative inline-block text-left" id="statusDropdownContainer">
+<button class="px-space-sm py-space-2xs bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm rounded-full flex items-center gap-space-xs shadow-sm hover:opacity-90 transition-opacity" id="statusBtn" type="button">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span id="currentStatusText">En Trámite</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</button>
+<!-- Popover Menu -->
+<div class="hidden absolute left-0 mt-space-xs w-56 rounded-xl bg-surface-container-lowest shadow-xl z-50 p-space-xs" id="statusMenu">
+<div class="px-space-sm py-space-2xs font-label-sm text-label-sm text-outline uppercase tracking-wider">Cambiar estado</div>
+<div class="flex flex-col gap-space-2xs">
+<button class="status-option w-full text-left px-space-sm py-space-xs rounded text-on-surface hover:bg-surface-container font-body-sm text-body-sm flex items-center gap-space-sm" data-color="bg-outline" data-status="Nuevo">
+<span class="w-2 h-2 rounded-full bg-outline"></span> Nuevo
+                  </button>
+<button class="status-option w-full text-left px-space-sm py-space-xs rounded text-on-surface hover:bg-surface-container font-body-sm text-body-sm flex items-center gap-space-sm" data-color="bg-secondary-fixed-dim" data-status="Contactado">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed-dim"></span> Contactado
+                  </button>
+<button class="status-option w-full text-left px-space-sm py-space-xs rounded text-on-surface hover:bg-surface-container font-body-sm text-body-sm flex items-center gap-space-sm" data-color="bg-error" data-status="Esperando documentos">
+<span class="w-2 h-2 rounded-full bg-error"></span> Esperando documentos
+                  </button>
+<button class="status-option w-full text-left px-space-sm py-space-xs rounded text-on-surface hover:bg-surface-container font-body-sm text-body-sm flex items-center gap-space-sm" data-color="bg-secondary" data-status="Presupuesto enviado">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> Presupuesto enviado
+                  </button>
+<button class="status-option w-full text-left px-space-sm py-space-xs rounded text-on-surface hover:bg-surface-container font-body-sm text-body-sm flex items-center gap-space-sm" data-color="bg-secondary" data-status="Presupuesto aceptado">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> Presupuesto aceptado
+                  </button>
+<button class="status-option w-full text-left px-space-sm py-space-xs rounded text-on-surface hover:bg-surface-container font-body-sm text-body-sm flex items-center gap-space-sm" data-color="bg-secondary" data-status="En trámite">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> En trámite
+                  </button>
+<button class="status-option w-full text-left px-space-sm py-space-xs rounded text-on-surface hover:bg-surface-container font-body-sm text-body-sm flex items-center gap-space-sm" data-color="bg-secondary-container" data-status="Finalizado">
+<span class="w-2 h-2 rounded-full bg-secondary-container"></span> Finalizado
+                  </button>
+<button class="status-option w-full text-left px-space-sm py-space-xs rounded text-on-surface hover:bg-surface-container font-body-sm text-body-sm flex items-center gap-space-sm" data-color="bg-secondary" data-status="Pagado">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> Pagado
+                  </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Metadata Strip -->
+<div class="flex flex-wrap items-center gap-y-space-xs gap-x-space-md text-on-surface-variant font-body-sm text-body-sm">
+<span class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-[16px] text-outline">location_on</span>
+              Eindhoven, Países Bajos
+            </span>
+<span class="text-outline-variant">•</span>
+<a class="flex items-center gap-space-2xs hover:text-secondary transition-colors font-mono-data text-mono-data" href="tel:+310612345678">
+<span class="material-symbols-outlined text-[16px] text-outline">phone</span>
+              +31 0612345678
+            </a>
+<span class="text-outline-variant">•</span>
+<a class="flex items-center gap-space-2xs hover:text-secondary transition-colors" href="mailto:maria.popescu@email.com">
+<span class="material-symbols-outlined text-[16px] text-outline">mail</span>
+              maria.popescu@email.com
+            </a>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-space-2xs">
+<span class="font-label-sm text-label-sm text-outline">BSN:</span>
+<span class="px-space-xs py-space-2xs bg-error-container text-on-error-container font-mono-data text-mono-data rounded font-semibold">Pendiente</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Direct Action Buttons -->
+<div class="flex flex-wrap items-center gap-space-xs self-start lg:self-center">
+<a class="h-9 px-space-md bg-surface-container text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs hover:bg-surface-container-high transition-colors shadow-sm" href="tel:+310612345678" title="Llamar">
+<span class="material-symbols-outlined text-[16px]">call</span>
+<span>Llamar</span>
+</a>
+<a class="h-9 px-space-md bg-surface-container text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs hover:bg-surface-container-high transition-colors shadow-sm" href="https://wa.me/310612345678" rel="noopener noreferrer" target="_blank" title="WhatsApp directo">
+<span class="material-symbols-outlined text-[16px] text-secondary">chat</span>
+<span>WhatsApp directo</span>
+</a>
+<a class="h-9 px-space-md bg-surface-container text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs hover:bg-surface-container-high transition-colors shadow-sm" href="mailto:maria.popescu@email.com" title="Enviar Email">
+<span class="material-symbols-outlined text-[16px]">send</span>
+<span>Email</span>
+</a>
+<button class="h-9 px-space-md bg-tertiary-container text-on-tertiary-container rounded-lg font-label-md text-label-md flex items-center gap-space-xs hover:opacity-90 transition-opacity shadow-sm">
+<span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+<span>Generar con IA</span>
+</button>
+<button class="h-9 px-space-md bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-space-xs hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ Nuevo Trámite</span>
+</button>
+</div>
+</div>
+</section>
+<!-- 360° Navigation Tab Bar -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-sm mb-space-lg px-space-md">
+<div class="flex items-center overflow-x-auto gap-space-xs py-space-xs">
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md bg-secondary-container text-on-secondary-container shadow-sm whitespace-nowrap">
+        Resumen
+      </button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors whitespace-nowrap">
+        Datos Personales & BSN
+      </button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors flex items-center gap-space-xs whitespace-nowrap">
+<span>Servicios</span>
+<span class="px-space-xs py-space-2xs bg-surface-container-high text-on-surface font-mono-data text-mono-data rounded-full">2</span>
+</button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors flex items-center gap-space-xs whitespace-nowrap">
+<span>Documentos</span>
+<span class="px-space-xs py-space-2xs bg-error-container text-on-error-container font-mono-data text-mono-data rounded-full">1 pendiente</span>
+</button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors flex items-center gap-space-xs whitespace-nowrap">
+<span>Presupuestos</span>
+<span class="px-space-xs py-space-2xs bg-surface-container-high text-on-surface font-mono-data text-mono-data rounded-full">1</span>
+</button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors flex items-center gap-space-xs whitespace-nowrap">
+<span>Facturas</span>
+<span class="px-space-xs py-space-2xs bg-surface-container-high text-on-surface font-mono-data text-mono-data rounded-full">0</span>
+</button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors flex items-center gap-space-xs whitespace-nowrap">
+<span>Citas</span>
+<span class="px-space-xs py-space-2xs bg-secondary-fixed text-on-secondary-fixed-variant font-mono-data text-mono-data rounded-full">1</span>
+</button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors whitespace-nowrap">
+        Notas & Tareas
+      </button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors flex items-center gap-space-xs whitespace-nowrap">
+<span class="material-symbols-outlined text-[16px] text-secondary">history_edu</span>
+<span>Historial & Actividad IA</span>
+</button>
+</div>
+</div>
+<!-- Main Workspace Grid (Resumen & Servicios Activos) -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+<!-- LEFT COLUMN (Widgets de Datos y Trámites en Curso) - 7 cols on XL -->
+<div class="xl:col-span-7 flex flex-col gap-space-lg">
+<!-- Servicios Activos Section -->
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-space-xl">business_center</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Servicios Activos (2)</h2>
+</div>
+<button class="font-label-sm text-label-sm text-secondary hover:underline flex items-center gap-space-2xs">
+            Ver catálogo completo <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+<div class="flex flex-col gap-space-md">
+<!-- Tarjeta 1: Solicitud y Gestión DigiD -->
+<div class="p-space-lg bg-surface-container-low rounded-xl flex flex-col gap-space-md shadow-sm transition-all hover:shadow-md">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Identidad Digital NL</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Solicitud y Gestión DigiD</h3>
+</div>
+<span class="px-space-sm py-space-2xs bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm rounded-full flex items-center gap-space-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                En trámite con Belastingdienst
+              </span>
+</div>
+<!-- Service Details Matrix -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-md py-space-sm bg-surface-container-lowest/80 rounded-lg px-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Importe Trámite</span>
+<span class="font-mono-data text-body-lg text-on-surface font-semibold">60,00 €</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Responsable</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-space-2xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  Elena Martínez
+                </span>
+</div>
+<div class="flex flex-col col-span-2 sm:col-span-1">
+<span class="font-label-sm text-label-sm text-outline">Plazo Estimado</span>
+<span class="font-body-md text-body-md text-on-surface">3-5 días laborables</span>
+</div>
+</div>
+<!-- Actions Bar inside card -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+                Formulario DigiD enviado telemáticamente
+              </div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-space-xs bg-surface-container-highest text-on-surface rounded font-label-sm text-label-sm hover:bg-surface-container transition-colors">
+                  Ver expediente
+                </button>
+</div>
+</div>
+</div>
+<!-- Tarjeta 2: Declaración Renta 2025 -->
+<div class="p-space-lg bg-surface-container-low rounded-xl flex flex-col gap-space-md shadow-sm transition-all hover:shadow-md">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Fiscalidad Individual / Inkomstenbelasting</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Declaración Renta 2025</h3>
+</div>
+<span class="px-space-sm py-space-2xs bg-error-container text-on-error-container font-label-sm text-label-sm rounded-full flex items-center gap-space-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                Esperando Documentos (Falta Jaaropgave)
+              </span>
+</div>
+<!-- Service Details Matrix -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-md py-space-sm bg-surface-container-lowest/80 rounded-lg px-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Importe Servicio</span>
+<span class="font-mono-data text-body-lg text-on-surface font-semibold">35,00 €</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Asignado a</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-space-2xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  Elena Martínez
+                </span>
+</div>
+<div class="flex flex-col col-span-2 sm:col-span-1">
+<span class="font-label-sm text-label-sm text-outline">Campaña Fiscal</span>
+<span class="font-body-md text-body-md text-on-surface">Cierre 30 Abril</span>
+</div>
+</div>
+<!-- Notification banner inside card -->
+<div class="p-space-sm bg-secondary-fixed/40 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-on-secondary-fixed-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">mark_chat_read</span>
+<span>Recordatorio enviado por WhatsApp hoy a las 09:30</span>
+</div>
+<button class="font-label-sm text-label-sm text-secondary hover:underline">Reenviar</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Documentación del Cliente Section -->
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-space-xl">folder_shared</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Documentación del Cliente</h2>
+</div>
+<span class="font-mono-data text-mono-data text-outline">1 / 2 Verificados</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<!-- Documento Recibido -->
+<div class="p-space-md bg-surface-container-low rounded-xl flex flex-col justify-between gap-space-md shadow-sm">
+<div class="flex items-start gap-space-sm">
+<div class="p-space-sm bg-surface-container-lowest text-secondary rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-[24px]">description</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md text-on-surface">Copia Pasaporte</span>
+<span class="px-space-xs py-space-2xs bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm rounded">PDF</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Subido hace 2 días • 2.4 MB</span>
+<div class="mt-space-xs flex items-center gap-space-2xs text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                  Verificado por OCR IA
+                </div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<button class="px-space-sm py-space-xs bg-surface-container-lowest text-on-surface font-label-sm text-label-sm rounded hover:bg-surface-container transition-colors shadow-sm">
+                Visualizar
+              </button>
+<button class="p-space-xs text-outline hover:text-on-surface transition-colors" title="Descargar">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+</div>
+<!-- Documento Faltante -->
+<div class="p-space-md bg-error-container/20 rounded-xl flex flex-col justify-between gap-space-md shadow-sm">
+<div class="flex items-start gap-space-sm">
+<div class="p-space-sm bg-error-container text-on-error-container rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-[24px]">pending_actions</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md text-error">Jaaropgave 2025</span>
+<span class="px-space-xs py-space-2xs bg-error text-on-error font-label-sm text-label-sm rounded">Faltante</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Certificado anual de ingresos laborales</span>
+<span class="mt-space-xs font-body-sm text-body-sm text-on-surface-variant">Requerido para la Declaración de Renta</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<button class="w-full h-8 px-space-sm bg-error text-on-error rounded font-label-sm text-label-sm flex items-center justify-center gap-space-xs hover:opacity-90 transition-opacity shadow-sm">
+<span class="material-symbols-outlined text-[14px]">outgoing_mail</span>
+                Solicitar por SMS / Email
+              </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN (Presupuesto, Citas, Timeline IA) - 5 cols on XL -->
+<div class="xl:col-span-5 flex flex-col gap-space-lg">
+<!-- Presupuesto Activo Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-space-xl">receipt</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Presupuesto Activo</h2>
+</div>
+<span class="px-space-xs py-space-2xs bg-secondary-fixed text-on-secondary-fixed-variant font-mono-data text-mono-data rounded">
+            PRE-2026-0043
+          </span>
+</div>
+<div class="p-space-md bg-surface-container-low rounded-xl flex flex-col gap-space-sm">
+<div class="flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
+<span>Solicitud DigiD</span>
+<span class="font-mono-data text-mono-data text-on-surface">60,00 €</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
+<span>Declaración Renta 2025</span>
+<span class="font-mono-data text-mono-data text-on-surface">35,00 €</span>
+</div>
+<div class="h-px bg-surface-container my-space-2xs"></div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-outline">
+<span>Subtotal</span>
+<span class="font-mono-data text-mono-data">95,00 €</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-outline">
+<span>IVA (0% exento intra-UE / servicios asesoría)</span>
+<span class="font-mono-data text-mono-data">0,00 €</span>
+</div>
+<div class="flex items-center justify-between font-headline-sm text-headline-sm text-on-surface pt-space-xs">
+<span>Total Presupuesto</span>
+<span class="font-mono-data text-headline-sm text-secondary font-bold">95,00 €</span>
+</div>
+</div>
+<!-- Quick Convert Button -->
+<button class="w-full h-10 px-space-md bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center justify-center gap-space-xs hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+<span>Convertir en Factura</span>
+</button>
+</div>
+<!-- Próxima Cita Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-space-xl">event</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Próxima Cita</h2>
+</div>
+<span class="px-space-xs py-space-2xs bg-secondary text-on-secondary font-label-sm text-label-sm rounded">Confirmada</span>
+</div>
+<div class="p-space-md bg-surface-container-low rounded-xl flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest text-secondary flex flex-col items-center justify-center shrink-0">
+<span class="font-label-sm text-label-sm uppercase leading-none">Hoy</span>
+<span class="font-headline-sm text-headline-sm leading-none font-bold mt-space-2xs">10</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">10:00 - 10:30 CET</span>
+<span class="font-body-md text-body-md text-on-surface-variant flex items-center gap-space-2xs mt-space-2xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">videocam</span>
+              Videollamada 30 min (Revisión datos fiscales)
+            </span>
+<span class="font-body-sm text-body-sm text-outline mt-space-xs">Asesor: Elena Martínez</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="flex-1 h-9 px-space-md bg-secondary text-on-secondary rounded-lg font-label-md text-label-md flex items-center justify-center gap-space-xs hover:bg-secondary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]">video_call</span>
+            Iniciar Videollamada
+          </button>
+<button class="h-9 px-space-md bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors" title="Reprogramar">
+<span class="material-symbols-outlined text-[16px]">edit_calendar</span>
+</button>
+</div>
+</div>
+<!-- Historial de Actividad & Registro IA -->
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-space-xl">auto_awesome</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Historial & Registro IA</h2>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Hoy</span>
+</div>
+<!-- Timeline Items -->
+<div class="flex flex-col gap-space-md relative pl-4">
+<div class="absolute left-1.5 top-2 bottom-2 w-0.5 bg-surface-container-high"></div>
+<!-- Item 1: 08:45 -->
+<div class="flex items-start gap-space-md relative">
+<div class="w-3 h-3 rounded-full bg-secondary-container -ml-5 mt-1 shrink-0"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-mono-data text-mono-data text-on-surface font-semibold">08:45</span>
+<span class="px-space-2xs py-space-2xs bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-[10px] rounded uppercase">IA Audio</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-space-2xs">
+                IA estructuró datos de contacto e interés fiscal desde nota de voz de WhatsApp entrante.
+              </p>
+</div>
+</div>
+<!-- Item 2: 09:00 -->
+<div class="flex items-start gap-space-md relative">
+<div class="w-3 h-3 rounded-full bg-secondary -ml-5 mt-1 shrink-0"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-mono-data text-mono-data text-on-surface font-semibold">09:00</span>
+<span class="px-space-2xs py-space-2xs bg-surface-container-high text-on-surface-variant font-label-sm text-[10px] rounded uppercase">Sistema</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-space-2xs">
+                Presupuesto <span class="font-mono-data text-mono-data font-semibold">PRE-2026-0043</span> emitido por 95,00 € y notificado vía email.
+              </p>
+</div>
+</div>
+<!-- Item 3: 09:15 -->
+<div class="flex items-start gap-space-md relative">
+<div class="w-3 h-3 rounded-full bg-on-surface -ml-5 mt-1 shrink-0"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-mono-data text-mono-data text-on-surface font-semibold">09:15</span>
+<span class="px-space-2xs py-space-2xs bg-surface-container-high text-on-surface-variant font-label-sm text-[10px] rounded uppercase">Humano</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-space-2xs">
+<span class="font-semibold">Elena Martínez</span> validó la ficha de cliente y vinculó trámite DigiD con Belastingdienst.
+              </p>
+</div>
+</div>
+</div>
+<button class="w-full py-space-xs text-center font-label-sm text-label-sm text-secondary hover:underline flex items-center justify-center gap-space-2xs">
+          Ver registro de auditoría completo (8 eventos)
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Simple micro-interaction for client status popover selector
+  const statusBtn = document.getElementById('statusBtn');
+  const statusMenu = document.getElementById('statusMenu');
+  const currentStatusText = document.getElementById('currentStatusText');
+
+  if (statusBtn && statusMenu && currentStatusText) {
+    statusBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      statusMenu.classList.toggle('hidden');
+    });
+
+    document.querySelectorAll('.status-option').forEach(option => {
+      option.addEventListener('click', (e) => {
+        const newStatus = option.getAttribute('data-status');
+        currentStatusText.textContent = newStatus;
+        statusMenu.classList.add('hidden');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!statusMenu.contains(e.target) && !statusBtn.contains(e.target)) {
+        statusMenu.classList.add('hidden');
+      }
+    });
+  }
+</script></main></div></body></html>

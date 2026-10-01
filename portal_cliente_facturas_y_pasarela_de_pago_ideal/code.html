@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-tint": "#565e74", "surface-bright": "#f8f9ff", "inverse-on-surface": "#eaf1ff", "on-error-container": "#93000a", "inverse-primary": "#bec6e0", "on-primary-container": "#7c839b", "tertiary": "#000000", "on-surface-variant": "#45464d", "background": "#f8f9ff", "surface-container-highest": "#d3e4fe", "secondary-fixed": "#dbe1ff", "on-secondary-container": "#fefcff", "on-background": "#0b1c30", "surface-container": "#e5eeff", "error": "#ba1a1a", "on-primary-fixed-variant": "#3f465c", "primary": "#000000", "outline": "#76777d", "surface-dim": "#cbdbf5", "surface-variant": "#d3e4fe", "surface-container-high": "#dce9ff", "surface-container-lowest": "#ffffff", "primary-fixed": "#dae2fd", "on-primary-fixed": "#131b2e", "on-tertiary": "#ffffff", "on-error": "#ffffff", "on-surface": "#0b1c30", "error-container": "#ffdad6", "on-secondary-fixed-variant": "#003ea8", "on-tertiary-container": "#7073ff", "outline-variant": "#c6c6cd", "on-tertiary-fixed-variant": "#2f2ebe", "tertiary-container": "#07006c", "primary-fixed-dim": "#bec6e0", "on-tertiary-fixed": "#07006c", "tertiary-fixed": "#e1e0ff", "inverse-surface": "#213145", "secondary": "#0051d5", "on-secondary-fixed": "#00174b", "on-secondary": "#ffffff", "secondary-fixed-dim": "#b4c5ff", "tertiary-fixed-dim": "#c0c1ff", "surface": "#f8f9ff", "secondary-container": "#316bf3", "surface-container-low": "#eff4ff", "primary-container": "#131b2e", "on-primary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-lg": "1rem", "space-2xl": "2rem", "margin-md": "1.5rem", "gutter-lg": "1.5rem", "space-3xl": "3rem", "space-sm": "0.5rem", "space-xl": "1.5rem", "margin-lg": "2rem", "space-xs": "0.25rem", "margin": "1rem", "space-md": "0.75rem", "space-2xs": "0.125rem", "gutter": "1rem" }, "fontFamily": { "label-md": [ "Inter" ], "body-md": [ "Inter" ], "label-sm": [ "Inter" ], "headline-sm": [ "Plus Jakarta Sans" ], "mono-data": [ "JetBrains Mono" ], "headline-lg": [ "Plus Jakarta Sans" ], "display-lg": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "headline-md": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ] }, "fontSize": { "label-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "body-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.025em", "fontWeight": "600" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "mono-data": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "display-lg": [ "36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" } ], "body-lg": [ "16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "headline-md": [ "22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.005em", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 max-w-7xl mx-auto px-margin lg:px-margin-lg flex items-center justify-between gap-gutter"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">NexusGest<span class="text-secondary">.bv</span></span><span class="font-mono-data text-mono-data text-on-surface-variant leading-none mt-space-2xs">Mijn NexusGest Portal</span></div></div><div class="hidden xl:flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-low rounded-lg text-on-surface"><span class="material-symbols-outlined text-secondary text-sm">verified_user</span><span class="font-mono-data text-mono-data uppercase tracking-wider text-on-surface-variant">SSL / eIDAS 256-bit</span></div></div><nav class="hidden lg:flex items-center gap-space-xs" data-active-classes="bg-surface-container text-on-surface font-semibold"><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="resumen-general" href="#">Resumen General</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="mis-expedientes" href="#">Mis Expedientes</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="documentos-subidas" href="#">Documentos &amp; Subidas</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="citas-asesor" href="#">Citas &amp; Asesor</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="facturas-pagos" href="#">Facturas &amp; Pagos</a></nav><div class="flex items-center gap-space-md"><div class="flex items-center bg-surface-container-low rounded-lg p-space-2xs text-on-surface-variant"><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm bg-surface-container-lowest text-on-surface shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" type="button">ES</button><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface" type="button">NL</button><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface" type="button">EN</button></div><button aria-label="Notificaciones del portal" class="relative p-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="text-right hidden sm:block"><p class="font-label-md text-label-md text-on-surface leading-tight">Alejandro Ramos</p><p class="font-mono-data text-mono-data text-on-surface-variant">KVK 84920193</p></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" src="https://lh3.googleusercontent.com/aida/AEtjO1VE8POL9nnf4cvlLj8Py1GsPsfUwePNkGHzqLy5Ckd7C-c0dfxCNE3n8ooZuwdqSHGZsKi0_QH2hsgj-8g-mh5cvDoyV9_l__67YW6YrnVy2l7QTmOICovoE_xUrjSKI15qju3P8ih21PhopDtOJaHjPYbUEE2sMYU0p7bBdtvNpjR2MS4Cz6HWDJ79NDNCK3_3xKsRtgxjyAodoptR5z5spYJLdQA615Md2bfipUq81Bd2L_4geLfaw5o"/></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-140px)]"><div class="flex flex-col w-full">
+<!-- Subtle decorative ambient glows (contained) -->
+<div class="relative w-full max-w-7xl mx-auto px-margin lg:px-margin-lg py-space-xl overflow-hidden">
+<div class="absolute -top-32 -right-24 w-96 h-96 bg-secondary-fixed/30 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-1/2 -left-20 w-80 h-80 bg-surface-container-high/40 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<!-- Contextual Bar: BSN, Status & eIDAS/Currence Security -->
+<div class="w-full flex flex-col md:flex-row md:items-center md:justify-between gap-space-md pb-space-lg mb-space-lg">
+<div class="flex flex-col gap-space-2xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="font-mono-data text-mono-data text-secondary bg-surface-container-high px-space-sm py-space-2xs rounded-lg uppercase tracking-wider font-semibold">
+            BSN: 9821.44.110
+          </span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">
+            • Cliente Titular: <strong class="text-on-surface font-semibold">Maria Popescu</strong>
+</span>
+<span class="inline-flex items-center gap-1.5 px-space-sm py-space-2xs bg-surface-container rounded-full text-on-surface font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+            Expediente Fiscal Activo 2026
+          </span>
+</div>
+<p class="font-body-md text-on-surface-variant text-body-md mt-space-2xs">
+          Gestión centralizada de honorarios profesionales, certificados de deducción Belastingdienst y pasarela iDEAL protegida.
+        </p>
+</div>
+<!-- Trust Gateway Badge -->
+<div class="flex items-center gap-space-md self-start md:self-auto bg-surface-container-lowest px-space-md py-space-sm rounded-xl shadow-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-lg">verified</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface uppercase tracking-wider">Currence iDEAL &amp; SEPA Instant</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Conexión Bancaria Cifrada 256-bit</span>
+</div>
+</div>
+</div>
+<!-- Quick Navigation / Sub-tabs Strip -->
+<div class="flex items-center gap-space-xs mb-space-2xl overflow-x-auto pb-space-2xs">
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary transition-colors flex items-center gap-space-xs shrink-0">
+<span class="material-symbols-outlined text-base">receipt_long</span>
+<span>Facturas &amp; Pagos</span>
+</button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors flex items-center gap-space-xs shrink-0">
+<span class="material-symbols-outlined text-base">account_balance_wallet</span>
+<span>Métodos &amp; Cuentas IBAN</span>
+</button>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors flex items-center gap-space-xs shrink-0">
+<span class="material-symbols-outlined text-base">verified_user</span>
+<span>Certificados de Desgravación (M-Form)</span>
+</button>
+<div class="ml-auto hidden xl:flex items-center gap-space-xs font-mono-data text-mono-data text-on-surface-variant">
+<span class="material-symbols-outlined text-base text-secondary">sync</span>
+<span>Última sincronización con De Nederlandsche Bank: Hoy, 09:42 CET</span>
+</div>
+</div>
+<!-- KPIs Metric Grid: Bento Layout -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-space-2xl">
+<!-- Card 1: Saldo Pendiente Inmediato -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Saldo por Liquidar</span>
+<span class="font-display-lg text-display-lg text-on-surface mt-space-xs font-headline-lg">85,00 €</span>
+</div>
+<span class="p-space-xs rounded-lg bg-surface-container text-secondary material-symbols-outlined">payments</span>
+</div>
+<div class="mt-space-md pt-space-sm flex items-center justify-between text-on-surface-variant font-mono-data text-mono-data">
+<span class="inline-flex items-center gap-1.5 text-on-surface font-label-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+            1 cuota activa
+          </span>
+<span>Vence: 25 Mar 2026</span>
+</div>
+</div>
+<!-- Card 2: Inversión en Gestoría 2026 -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Inversión Gestoría 2026</span>
+<span class="font-display-lg text-display-lg text-on-surface mt-space-xs font-headline-lg">205,00 €</span>
+</div>
+<span class="p-space-xs rounded-lg bg-surface-container text-on-surface material-symbols-outlined">pie_chart</span>
+</div>
+<div class="mt-space-md pt-space-sm flex items-center justify-between text-on-surface-variant font-mono-data text-mono-data">
+<span>Base: 169,42 €</span>
+<span class="font-semibold text-on-surface">BTW 21%: 35,58 €</span>
+</div>
+</div>
+<!-- Card 3: Deducción Fiscal Estimada M-Form -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Desgravación Estimada</span>
+<div class="flex items-baseline gap-space-xs mt-space-xs">
+<span class="font-display-lg text-display-lg text-on-surface font-headline-lg">100%</span>
+<span class="font-label-md text-label-md text-secondary font-semibold">Deducible</span>
+</div>
+</div>
+<span class="p-space-xs rounded-lg bg-surface-container text-secondary material-symbols-outlined">auto_awesome</span>
+</div>
+<div class="mt-space-md pt-space-sm flex items-center justify-between font-mono-data text-mono-data">
+<span class="text-on-surface-variant">Casilla Belastingdienst:</span>
+<span class="font-semibold text-on-surface">Box 1 / Aftrekpost</span>
+</div>
+</div>
+<!-- Card 4: Método de Pago Predeterminado -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Vía de Pago Principal</span>
+<div class="flex items-center gap-space-xs mt-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">iDEAL Instant</span>
+</div>
+</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-mono-data text-mono-data font-bold text-secondary">
+            ING
+          </div>
+</div>
+<div class="mt-space-md pt-space-sm flex items-center justify-between font-mono-data text-mono-data text-on-surface-variant">
+<span>ING Bank •••• 4091</span>
+<span class="text-secondary font-label-sm">Verificado</span>
+</div>
+</div>
+</div>
+<!-- Main Dynamic Content: Asymmetric Split Grid (8 cols Main + 4 cols Advisory/Sidebar) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-start">
+<!-- Left Panel: Next Installment Interactive Card & Invoices Ledger (8 columns) -->
+<div class="lg:col-span-8 flex flex-col gap-space-2xl min-w-0">
+<!-- Highlighted Active Payment Action Card -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-md relative overflow-hidden">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md pb-space-md">
+<div>
+<div class="flex items-center gap-space-xs mb-space-2xs">
+<span class="px-space-xs py-space-2xs rounded bg-surface-container text-secondary font-label-sm text-label-sm font-semibold uppercase tracking-wider">
+                  Cuota en Curso
+                </span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Ref: PL-HZ-2026-01</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">
+                Plan Fraccionado CAK / HollandZorg (Cuota 1 de 4)
+              </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-2xs">
+                Expediente de regulación de cobertura médica transfronteriza y recurso ante CAK.
+              </p>
+</div>
+<div class="sm:text-right shrink-0">
+<span class="font-mono-data text-mono-data text-on-surface-variant block">Total a liquidar</span>
+<span class="font-display-lg text-display-lg text-on-surface font-bold">85,00 €</span>
+<span class="font-mono-data text-mono-data text-secondary block font-medium">Sin recargo por fraccionamiento</span>
+</div>
+</div>
+<!-- Bank Selector for iDEAL -->
+<div class="mt-space-lg pt-space-lg bg-surface-container-low p-space-md rounded-xl">
+<label class="block font-label-md text-label-md text-on-surface mb-space-sm font-semibold">
+              Selecciona tu entidad holandesa para autorizar con iDEAL:
+            </label>
+<!-- Bank Grid Selector Buttons -->
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-space-xs" id="bank-selector-grid">
+<button class="bank-pill active flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container-lowest text-on-surface shadow-sm transition-all focus:outline-none ring-2 ring-secondary" data-bank="ING Bank" type="button">
+<span class="font-mono-data text-mono-data font-bold text-secondary">ING</span>
+<span class="font-label-sm text-label-sm mt-space-2xs">ING Bank</span>
+</button>
+<button class="bank-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface shadow-sm transition-all focus:outline-none" data-bank="ABN AMRO" type="button">
+<span class="font-mono-data text-mono-data font-bold">ABN</span>
+<span class="font-label-sm text-label-sm mt-space-2xs">ABN AMRO</span>
+</button>
+<button class="bank-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface shadow-sm transition-all focus:outline-none" data-bank="Rabobank" type="button">
+<span class="font-mono-data text-mono-data font-bold">RABO</span>
+<span class="font-label-sm text-label-sm mt-space-2xs">Rabobank</span>
+</button>
+<button class="bank-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface shadow-sm transition-all focus:outline-none" data-bank="bunq" type="button">
+<span class="font-mono-data text-mono-data font-bold text-secondary">bunq</span>
+<span class="font-label-sm text-label-sm mt-space-2xs">bunq BV</span>
+</button>
+<button class="bank-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface shadow-sm transition-all focus:outline-none" data-bank="SNS Bank" type="button">
+<span class="font-mono-data text-mono-data font-bold">SNS</span>
+<span class="font-label-sm text-label-sm mt-space-2xs">SNS Bank</span>
+</button>
+<button class="bank-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface shadow-sm transition-all focus:outline-none" data-bank="de Volksbank" type="button">
+<span class="font-mono-data text-mono-data font-bold">VOLKS</span>
+<span class="font-label-sm text-label-sm mt-space-2xs">Volksbank</span>
+</button>
+</div>
+<!-- Action Strip -->
+<div class="mt-space-lg flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-mono-data text-mono-data">
+<span class="material-symbols-outlined text-sm text-secondary">security</span>
+<span>Pasarela Currence Tokenized • Vencimiento: <strong>25/03/2026</strong></span>
+</div>
+<div class="flex items-center gap-space-sm w-full sm:w-auto">
+<button class="w-full sm:w-auto px-space-md py-space-sm rounded-lg font-label-md text-label-md bg-surface-container-lowest text-on-surface hover:bg-surface-container transition-colors shadow-sm text-center" type="button">
+                  Domiciliación SEPA
+                </button>
+<button class="w-full sm:w-auto px-space-xl py-space-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:bg-surface-container-highest hover:text-on-surface transition-all flex items-center justify-center gap-space-xs shadow-md" id="btn-pay-ideal" type="button">
+<span class="material-symbols-outlined text-base">bolt</span>
+<span id="ideal-button-label">Pagar 85,00 € con iDEAL (ING)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Official NexusGest Invoices & Transaction History Table -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col gap-space-lg">
+<!-- Table Controls & Filters -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Historial Oficial de Facturación NexusGest
+              </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+                Documentos tributarios timbrados con validez oficial ante la administración holandesa (Belastingdienst).
+              </p>
+</div>
+<!-- Filter Badges -->
+<div class="flex items-center gap-space-xs flex-wrap">
+<button class="px-space-sm py-space-2xs rounded-lg font-label-sm text-label-sm bg-primary text-on-primary font-semibold">
+                Todas (2)
+              </button>
+<button class="px-space-sm py-space-2xs rounded-lg font-label-sm text-label-sm bg-surface-container-low text-on-surface-variant hover:text-on-surface">
+                Pagadas (2)
+              </button>
+<button class="px-space-sm py-space-2xs rounded-lg font-label-sm text-label-sm bg-surface-container-low text-on-surface-variant hover:text-on-surface">
+                Pendientes (1)
+              </button>
+<div class="relative inline-block ml-space-xs">
+<select class="h-8 px-space-sm rounded-lg bg-surface-container-low font-label-sm text-label-sm text-on-surface focus:outline-none appearance-none pr-7">
+<option selected="">Año Fiscal 2026</option>
+<option>Año Fiscal 2025</option>
+<option>Histórico Completo</option>
+</select>
+<span class="material-symbols-outlined absolute right-1.5 top-1.5 pointer-events-none text-base text-on-surface-variant">arrow_drop_down</span>
+</div>
+</div>
+</div>
+<!-- Ledger Table -->
+<div class="overflow-x-auto -mx-space-xl px-space-xl">
+<table class="w-full text-left font-body-md text-body-md border-collapse min-w-[700px]">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-space-sm px-space-md rounded-l-lg">Nº Factura / Emisión</th>
+<th class="py-space-sm px-space-md">Concepto Profesional</th>
+<th class="py-space-sm px-space-md">Base + BTW</th>
+<th class="py-space-sm px-space-md">Total</th>
+<th class="py-space-sm px-space-md">Estado &amp; Vía</th>
+<th class="py-space-sm px-space-md rounded-r-lg text-right">Documentación</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-transparent">
+<!-- Record 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-space-md px-space-md">
+<span class="font-mono-data text-mono-data text-on-surface font-semibold block">FAC-2026-0020</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">28 Feb 2026</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-md text-label-md text-on-surface font-semibold block">
+                      Asesoría &amp; Preparación Declaración Renta M-Form 2025
+                    </span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">
+                      Exp. Expediente: 9821.44.110 • Asesor: Lars van Dijk
+                    </span>
+</td>
+<td class="py-space-md px-space-md font-mono-data text-mono-data">
+<span class="text-on-surface block">99,17 €</span>
+<span class="text-on-surface-variant">BTW 21%: 20,83 €</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">120,00 €</span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-space-2xs bg-surface-container rounded-md">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface uppercase font-medium">iDEAL (ING)</span>
+</div>
+<span class="block font-mono-data text-mono-data text-on-surface-variant mt-1">Tx: #CUR-99214</span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-space-xs rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors inline-flex items-center gap-1" title="Descargar PDF Oficial">
+<span class="material-symbols-outlined text-base">picture_as_pdf</span>
+<span class="font-label-sm text-label-sm hidden sm:inline">Factura</span>
+</button>
+<button class="p-space-xs rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors inline-flex items-center gap-1" title="Descargar Justificante de Pago">
+<span class="material-symbols-outlined text-base">receipt</span>
+<span class="font-label-sm text-label-sm hidden sm:inline">Recibo</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Record 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-space-md px-space-md">
+<span class="font-mono-data text-mono-data text-on-surface font-semibold block">FAC-2026-0008</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">15 Feb 2026</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-md text-label-md text-on-surface font-semibold block">
+                      Gestión y tramitación urgente recurso HollandZorg CAK
+                    </span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">
+                      Exp. CAK-NL-40819 • Resolución favorable obtenida
+                    </span>
+</td>
+<td class="py-space-md px-space-md font-mono-data text-mono-data">
+<span class="text-on-surface block">70,25 €</span>
+<span class="text-on-surface-variant">BTW 21%: 14,75 €</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">85,00 €</span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-space-2xs bg-surface-container rounded-md">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface uppercase font-medium">iDEAL (bunq)</span>
+</div>
+<span class="block font-mono-data text-mono-data text-on-surface-variant mt-1">Tx: #CUR-83912</span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-space-xs rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors inline-flex items-center gap-1" title="Descargar PDF Oficial">
+<span class="material-symbols-outlined text-base">picture_as_pdf</span>
+<span class="font-label-sm text-label-sm hidden sm:inline">Factura</span>
+</button>
+<button class="p-space-xs rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors inline-flex items-center gap-1" title="Descargar Justificante de Pago">
+<span class="material-symbols-outlined text-base">receipt</span>
+<span class="font-label-sm text-label-sm hidden sm:inline">Recibo</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Bottom Micro-Bar: Breakdown & Statement Download -->
+<div class="pt-space-md flex flex-col sm:flex-row items-center justify-between gap-space-md text-on-surface-variant font-mono-data text-mono-data">
+<span>2 facturas emitidas en el ejercicio fiscal 2026 • Auditoría aprobada</span>
+<button class="inline-flex items-center gap-space-xs text-secondary hover:text-on-secondary-fixed-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-base">download</span>
+<span>Descargar extracto contable anual (XML / CSV)</span>
+</button>
+</div>
+</div>
+<!-- Visual Trust Block: Interactive Guarantee Strip -->
+<div class="bg-surface-container p-space-lg rounded-xl flex flex-col md:flex-row items-center justify-between gap-space-lg">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container-lowest flex items-center justify-center text-secondary shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-2xl">shield</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Garantía Fiscal NexusGest B.V.
+              </h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Todos nuestros honorarios cuentan con certificado de deducción válida según el artículo 3.102 de la Ley Tributaria de Países Bajos (Wet IB 2001).
+              </p>
+</div>
+</div>
+<button class="px-space-md py-space-sm rounded-lg font-label-md text-label-md bg-surface-container-lowest text-on-surface hover:bg-surface-container-high transition-colors shrink-0 shadow-sm">
+            Ver Regulación
+          </button>
+</div>
+</div>
+<!-- Right Panel: Fiscal Advisory & Compliance Lateral Drawer (4 columns) -->
+<div class="lg:col-span-4 flex flex-col gap-space-xl">
+<!-- Card: Deductibility Guide Belastingdienst -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="p-space-xs rounded-lg bg-surface-container text-secondary">
+<span class="material-symbols-outlined">help_center</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Guía Belastingdienst</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">¿Cómo desgravar estos gastos?</h3>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Las facturas por asesoramiento en el <strong>M-Form</strong> y defensa administrativa ante el CAK se imputan directamente como gastos extraordinarios de gestión legal y migratoria.
+          </p>
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col gap-space-xs">
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface">
+<span>Casilla M-Form:</span>
+<span class="font-mono-data font-semibold">Rubriek 4.b (Juridisch/Fiscaal)</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface">
+<span>Ahorro fiscal estimado:</span>
+<span class="font-mono-data text-secondary font-bold">~ 37,05% en IRPF</span>
+</div>
+</div>
+<!-- 1-Click Certificate Download -->
+<button class="w-full py-space-sm px-space-md rounded-lg font-label-md text-label-md bg-secondary text-on-secondary hover:bg-on-secondary-fixed-variant transition-colors flex items-center justify-center gap-space-xs shadow-sm">
+<span class="material-symbols-outlined text-base">download_for_offline</span>
+<span>Certificado Fiscal Anual 2025/2026</span>
+</button>
+</div>
+<!-- Card: Payment Channels & Certified Processors -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+<h4 class="font-label-md text-label-md text-on-surface font-semibold">
+            Métodos Aceptados en NexusGest.bv
+          </h4>
+<div class="grid grid-cols-2 gap-space-xs">
+<div class="flex items-center gap-space-xs p-space-xs bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-secondary text-base">bolt</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">iDEAL Instantáneo</span>
+</div>
+<div class="flex items-center gap-space-xs p-space-xs bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-on-surface text-base">account_balance</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">SEPA Direct Debit</span>
+</div>
+<div class="flex items-center gap-space-xs p-space-xs bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant text-base">credit_card</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Bancontact</span>
+</div>
+<div class="flex items-center gap-space-xs p-space-xs bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant text-base">contactless</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Visa / Mastercard</span>
+</div>
+</div>
+<div class="pt-space-xs text-on-surface-variant font-mono-data text-mono-data">
+            Pagos procesados bajo licencia oficial del Banco Central de los Países Bajos (DNB).
+          </div>
+</div>
+<!-- Card: Quick Contact with Billing Desk -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
+              Departamento de Facturación
+            </span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-secondary">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+              En línea
+            </span>
+</div>
+<div class="flex items-center gap-space-md">
+<img class="w-12 h-12 rounded-full object-cover shrink-0" data-alt="Portrait photo of a professional Dutch legal accounting specialist, dressed in business formal navy attire, warm approachable smile, modern bright Amsterdam office background with soft neutral tones, high realism" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU6PvAJqhkbuWVxPFt9I_b3m-Hi0U2-sAgAqYJEhbQgHiEQNYQJGwEW_D8BE8YZSeXuuCpGO7zdYkwSnbDZftVzegyiY8v6MYm6zprbaUvmOybRGWXUt2l_ZCR2srtH19Z0n2_WBYRaPNHsY9NxutE2tIinK3DO6_OoSWuYmJURAI_86d9Z_mCwQHK-qBPm2A5Z2TAwYX4mWw7obxF-O0brpqewflvYRZENgYR8f39MhUzKUrEYFSz"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold leading-tight">Anouk Visser</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Gestión de Cobros &amp; Reclamaciones</span>
+<span class="font-mono-data text-mono-data text-secondary">facturas@nexusgest.nl</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<a class="w-full py-space-sm px-space-md rounded-lg font-label-md text-label-md bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center gap-space-xs text-center" href="mailto:facturas@nexusgest.nl">
+<span class="material-symbols-outlined text-base">mail</span>
+<span>Enviar consulta de factura</span>
+</a>
+<a class="w-full py-space-sm px-space-md rounded-lg font-label-md text-label-md bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center gap-space-xs text-center" href="#">
+<span class="material-symbols-outlined text-base">chat</span>
+<span>WhatsApp Directo Administración</span>
+</a>
+</div>
+</div>
+<!-- Office Compliance Note -->
+<div class="p-space-md bg-surface-container-low rounded-xl text-on-surface-variant font-mono-data text-mono-data flex flex-col gap-space-2xs">
+<div class="flex items-center justify-between text-on-surface">
+<span class="font-semibold">NexusGest B.V.</span>
+<span>KVK: 84920193</span>
+</div>
+<div>BTW-Id: NL864192039B01</div>
+<div class="text-on-surface-variant mt-space-2xs">Herengracht 450, 1017 CA Amsterdam</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Inline Script for interactive bank selection micro-interaction -->
+<script>
+    (function() {
+      const bankPills = document.querySelectorAll('.bank-pill');
+      const payButtonLabel = document.getElementById('ideal-button-label');
+      const btnPayIdeal = document.getElementById('btn-pay-ideal');
+
+      if (bankPills.length > 0 && payButtonLabel) {
+        bankPills.forEach(pill => {
+          pill.addEventListener('click', function() {
+            // Remove active style from all
+            bankPills.forEach(p => {
+              p.classList.remove('ring-2', 'ring-secondary', 'text-on-surface');
+              p.classList.add('text-on-surface-variant');
+            });
+            // Set active to selected
+            this.classList.add('ring-2', 'ring-secondary', 'text-on-surface');
+            this.classList.remove('text-on-surface-variant');
+
+            const bankName = this.getAttribute('data-bank');
+            payButtonLabel.textContent = `Pagar 85,00 € con iDEAL (${bankName})`;
+          });
+        });
+      }
+
+      if (btnPayIdeal) {
+        btnPayIdeal.addEventListener('click', function() {
+          const currentText = payButtonLabel.textContent;
+          payButtonLabel.textContent = 'Conectando con pasarela iDEAL...';
+          btnPayIdeal.classList.add('opacity-75', 'cursor-wait');
+
+          setTimeout(() => {
+            alert('Redirigiendo a la pasarela bancaria segura de Currence iDEAL. Por favor autoriza con la App de tu banco.');
+            payButtonLabel.textContent = currentText;
+            btnPayIdeal.classList.remove('opacity-75', 'cursor-wait');
+          }, 600);
+        });
+      }
+    })();
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="max-w-7xl mx-auto px-margin lg:px-margin-lg py-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs font-mono-data text-mono-data text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-secondary"></span><span>Asesor Activo: <strong class="font-label-md text-on-surface">Lars van Dijk (Senior Tax Adviseur)</strong></span></div><div class="hidden sm:flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-low rounded-lg text-on-surface"><span class="material-symbols-outlined text-secondary text-sm">chat</span><a class="font-label-sm text-label-sm text-on-surface hover:text-secondary" href="#">WhatsApp Asesor Directo</a></div></div><div class="flex items-center gap-space-lg"><a class="inline-flex items-center gap-space-xs font-label-md text-label-md text-secondary hover:text-on-secondary-fixed-variant" data-path="citas-asesor" href="#"><span class="material-symbols-outlined text-base">calendar_month</span><span>Agendar sesión de revisión</span></a><span class="font-mono-data text-mono-data text-on-surface-variant">© 2024 NexusGest B.V. • Amsterdam • Madrid</span></div></div></footer></body></html>

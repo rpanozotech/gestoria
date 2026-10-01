@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-tint": "#565e74", "surface-bright": "#f8f9ff", "inverse-on-surface": "#eaf1ff", "on-error-container": "#93000a", "inverse-primary": "#bec6e0", "on-primary-container": "#7c839b", "tertiary": "#000000", "on-surface-variant": "#45464d", "background": "#f8f9ff", "surface-container-highest": "#d3e4fe", "secondary-fixed": "#dbe1ff", "on-secondary-container": "#fefcff", "on-background": "#0b1c30", "surface-container": "#e5eeff", "error": "#ba1a1a", "on-primary-fixed-variant": "#3f465c", "primary": "#000000", "outline": "#76777d", "surface-dim": "#cbdbf5", "surface-variant": "#d3e4fe", "surface-container-high": "#dce9ff", "surface-container-lowest": "#ffffff", "primary-fixed": "#dae2fd", "on-primary-fixed": "#131b2e", "on-tertiary": "#ffffff", "on-error": "#ffffff", "on-surface": "#0b1c30", "error-container": "#ffdad6", "on-secondary-fixed-variant": "#003ea8", "on-tertiary-container": "#7073ff", "outline-variant": "#c6c6cd", "on-tertiary-fixed-variant": "#2f2ebe", "tertiary-container": "#07006c", "primary-fixed-dim": "#bec6e0", "on-tertiary-fixed": "#07006c", "tertiary-fixed": "#e1e0ff", "inverse-surface": "#213145", "secondary": "#0051d5", "on-secondary-fixed": "#00174b", "on-secondary": "#ffffff", "secondary-fixed-dim": "#b4c5ff", "tertiary-fixed-dim": "#c0c1ff", "surface": "#f8f9ff", "secondary-container": "#316bf3", "surface-container-low": "#eff4ff", "primary-container": "#131b2e", "on-primary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-lg": "1rem", "space-2xl": "2rem", "margin-md": "1.5rem", "gutter-lg": "1.5rem", "space-3xl": "3rem", "space-sm": "0.5rem", "space-xl": "1.5rem", "margin-lg": "2rem", "space-xs": "0.25rem", "margin": "1rem", "space-md": "0.75rem", "space-2xs": "0.125rem", "gutter": "1rem" }, "fontFamily": { "label-md": [ "Inter" ], "body-md": [ "Inter" ], "label-sm": [ "Inter" ], "headline-sm": [ "Plus Jakarta Sans" ], "mono-data": [ "JetBrains Mono" ], "headline-lg": [ "Plus Jakarta Sans" ], "display-lg": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "headline-md": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ] }, "fontSize": { "label-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "body-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.025em", "fontWeight": "600" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "mono-data": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "display-lg": [ "36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" } ], "body-lg": [ "16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "headline-md": [ "22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.005em", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 max-w-7xl mx-auto px-margin lg:px-margin-lg flex items-center justify-between gap-gutter"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">NexusGest<span class="text-secondary">.bv</span></span><span class="font-mono-data text-mono-data text-on-surface-variant leading-none mt-space-2xs">Mijn NexusGest Portal</span></div></div><div class="hidden xl:flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-low rounded-lg text-on-surface"><span class="material-symbols-outlined text-secondary text-sm">verified_user</span><span class="font-mono-data text-mono-data uppercase tracking-wider text-on-surface-variant">SSL / eIDAS 256-bit</span></div></div><nav class="hidden lg:flex items-center gap-space-xs" data-active-classes="bg-surface-container text-on-surface font-semibold"><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="resumen-general" href="#">Resumen General</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="mis-expedientes" href="#">Mis Expedientes</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="documentos-subidas" href="#">Documentos &amp; Subidas</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="citas-asesor" href="#">Citas &amp; Asesor</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="facturas-pagos" href="#">Facturas &amp; Pagos</a></nav><div class="flex items-center gap-space-md"><div class="flex items-center bg-surface-container-low rounded-lg p-space-2xs text-on-surface-variant"><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm bg-surface-container-lowest text-on-surface shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" type="button">ES</button><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface" type="button">NL</button><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface" type="button">EN</button></div><button aria-label="Notificaciones del portal" class="relative p-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="text-right hidden sm:block"><p class="font-label-md text-label-md text-on-surface leading-tight">Alejandro Ramos</p><p class="font-mono-data text-mono-data text-on-surface-variant">KVK 84920193</p></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" src="https://lh3.googleusercontent.com/aida/AEtjO1VE8POL9nnf4cvlLj8Py1GsPsfUwePNkGHzqLy5Ckd7C-c0dfxCNE3n8ooZuwdqSHGZsKi0_QH2hsgj-8g-mh5cvDoyV9_l__67YW6YrnVy2l7QTmOICovoE_xUrjSKI15qju3P8ih21PhopDtOJaHjPYbUEE2sMYU0p7bBdtvNpjR2MS4Cz6HWDJ79NDNCK3_3xKsRtgxjyAodoptR5z5spYJLdQA615Md2bfipUq81Bd2L_4geLfaw5o"/></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-140px)]"><div class="flex flex-col w-full">
+<!-- Top Command & Status Bar -->
+<section class="w-full bg-surface-container-lowest shadow-sm">
+<div class="max-w-7xl mx-auto px-margin lg:px-margin-lg py-space-xl">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+<!-- Header Left: Identity & Breadcrumbs -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="font-mono-data text-mono-data uppercase tracking-wider text-secondary px-space-xs py-space-2xs bg-secondary-fixed/50 rounded-DEFAULT">Expediente M-2025-9821</span>
+<span class="text-on-surface-variant font-mono-data text-mono-data">•</span>
+<div class="flex items-center gap-space-2xs text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-secondary">lock</span>
+<span class="font-mono-data text-mono-data">Cifrado eIDAS &amp; Belastingdienst Direct Vault</span>
+</div>
+</div>
+<div class="flex items-center gap-space-md flex-wrap">
+<h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Gestión &amp; Subidas Seguras</h1>
+<div class="inline-flex items-center gap-space-xs px-space-sm py-space-2xs bg-error-container text-on-error-container rounded-DEFAULT">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">1 Requisito Urgente</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Cliente: <strong class="text-on-surface">Maria Popescu</strong> • BSN: <span class="font-mono-data text-mono-data font-semibold text-on-surface">9821.44.110</span> • Gestora Senior: <span class="text-secondary font-medium">Elena Martínez</span>
+</p>
+</div>
+<!-- Filter & Procedure Selector -->
+<div class="flex items-center gap-space-md self-start lg:self-center">
+<div class="flex flex-col">
+<label class="font-label-sm text-label-sm uppercase text-on-surface-variant mb-space-2xs" for="procedure-filter">Filtrar por Trámite Activo</label>
+<div class="relative">
+<select class="h-10 pl-space-md pr-10 bg-surface-container-low text-on-surface font-label-md text-label-md rounded-DEFAULT shadow-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-lowest" id="procedure-filter">
+<option selected="" value="m-form">Declaración Renta M-Form 2025 (Urgente)</option>
+<option value="hollandzorg">Plan &amp; Subsidio Zorgtoeslag 2025</option>
+<option value="all">Ver Todos los Trámites (5 Archivos)</option>
+</select>
+<span class="material-symbols-outlined absolute right-space-sm top-2.5 text-on-surface-variant pointer-events-none text-base">expand_more</span>
+</div>
+</div>
+<div class="hidden sm:flex flex-col items-end pl-space-md">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Custodia Criptográfica</span>
+<span class="font-mono-data text-mono-data text-on-surface flex items-center gap-space-2xs mt-space-2xs">
+<span class="material-symbols-outlined text-sm text-secondary">verified</span>
+              AES-256 GCM
+            </span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Body Content Grid -->
+<div class="max-w-7xl mx-auto px-margin lg:px-margin-lg py-space-2xl w-full">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-start">
+<!-- LEFT / CENTRAL COLUMN: 8 Columns -->
+<div class="lg:col-span-8 flex flex-col gap-space-2xl">
+<!-- 1. PRIORITY ACTION CARD / DRAG & DROP ZONE -->
+<div class="bg-surface-container-lowest p-space-xl rounded-DEFAULT shadow-md flex flex-col gap-space-lg relative overflow-hidden">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-DEFAULT bg-error-container text-error flex items-center justify-center">
+<span class="material-symbols-outlined">priority_high</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-error font-semibold">Acción Requerida antes del 15 Mar 2026</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Falta: Jaaropgave 2025 (Certificado de Ingresos)</h2>
+</div>
+</div>
+<span class="font-mono-data text-mono-data px-space-sm py-space-2xs bg-surface-container rounded-DEFAULT text-on-surface-variant">Requisito Belastingdienst</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Para que Elena Martínez finalice el borrador formal de tu <strong class="text-on-surface">Declaración M-Form 2025</strong> con deducción por año de traslado internacional, necesitamos el extracto anual emitido por tu empleador neerlandés.
+          </p>
+<!-- Interactive Upload Dropzone -->
+<div class="group relative rounded-DEFAULT bg-surface-container-low hover:bg-surface-container p-space-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200" id="upload-dropzone">
+<input accept=".pdf,.png,.jpg,.jpeg" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" id="file-uploader" type="file"/>
+<div class="w-16 h-16 rounded-full bg-surface-container-lowest shadow-sm flex items-center justify-center mb-space-md group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-3xl text-secondary">cloud_upload</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Arrastra tu archivo Jaaropgave aquí o <span class="text-secondary underline">explora tus carpetas</span></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">Admite documentos oficiales en formato PDF, PNG o JPG escaneado (Máx. 25 MB por fichero)</p>
+<div class="mt-space-lg flex items-center gap-space-lg flex-wrap justify-center font-mono-data text-mono-data text-on-surface-variant">
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-sm text-secondary">auto_awesome</span>
+                Inspección IA OCR Inmediata
+              </span>
+<span>•</span>
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-sm text-secondary">shield</span>
+                Cotejo BSN Automático
+              </span>
+<span>•</span>
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-sm text-secondary">history_edu</span>
+                Auditoría Inmutable
+              </span>
+</div>
+</div>
+<!-- Real-Time AI Extraction Notice -->
+<div class="p-space-md bg-secondary-fixed/30 rounded-DEFAULT flex items-start gap-space-md">
+<span class="material-symbols-outlined text-secondary text-xl mt-0.5">smart_toy</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Validación Automática Previa de Datos Fiscales</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Al soltar el archivo, nuestro motor inteligente verificará al instante si el documento contiene tu BSN (<span class="font-mono-data">9821.44.110</span>), el año fiscal 2025 y los conceptos de retención (<em class="italic">Loonheffing</em>) antes de asignarlo a tu gestora.
+              </p>
+</div>
+</div>
+</div>
+<!-- 2. LIVE DOCUMENT VALIDATOR & AI EXTRACTION INSPECTOR -->
+<div class="bg-surface-container-lowest p-space-xl rounded-DEFAULT shadow-md flex flex-col gap-space-lg">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary">document_scanner</span>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Previsualización &amp; Extracción Asistida por IA</h3>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Documento analizado: Jaaropgave_Philips_2025_preview.pdf (842 KB)</span>
+</div>
+</div>
+<span class="px-space-sm py-space-2xs bg-surface-container rounded-DEFAULT font-mono-data text-mono-data text-secondary flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+              Extracción Completa 99.8%
+            </span>
+</div>
+<!-- Split Workspace View: Document Preview Mockup + AI Extracted Metadata -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-space-md bg-surface-container-low p-space-md rounded-DEFAULT">
+<!-- Left Mini Document Viewport -->
+<div class="md:col-span-5 bg-surface-container-lowest rounded-DEFAULT p-space-md shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between pb-space-xs">
+<span class="font-mono-data text-mono-data text-on-surface-variant uppercase tracking-wider">Philips NL B.V.</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Pág 1/1</span>
+</div>
+<!-- Mock Paper Graphic -->
+<div class="space-y-space-xs my-space-md opacity-80">
+<div class="flex justify-between items-center pb-space-xs">
+<div class="h-3 bg-on-surface-variant/20 rounded w-1/3"></div>
+<div class="h-2 bg-secondary rounded w-1/4"></div>
+</div>
+<div class="h-2 bg-on-surface-variant/15 rounded w-full"></div>
+<div class="h-2 bg-on-surface-variant/15 rounded w-5/6"></div>
+<div class="h-2 bg-on-surface-variant/15 rounded w-4/6"></div>
+<div class="p-space-xs bg-secondary-fixed/40 rounded my-space-sm">
+<div class="flex justify-between items-center text-[10px] font-mono-data text-on-surface">
+<span>BSN: 9821.44.110</span>
+<span class="text-secondary font-bold">MATCH</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-mono-data text-on-surface mt-1">
+<span>Loon voor loonheffing:</span>
+<span>€ 48.250,00</span>
+</div>
+</div>
+<div class="h-2 bg-on-surface-variant/15 rounded w-full"></div>
+<div class="h-2 bg-on-surface-variant/15 rounded w-3/4"></div>
+</div>
+<div class="pt-space-xs flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-secondary flex items-center gap-space-2xs cursor-pointer hover:underline">
+<span class="material-symbols-outlined text-sm">zoom_in</span> Ampliar visor
+                </span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Hash: e3b0c442...</span>
+</div>
+</div>
+<!-- Right: AI Metadata Extractor Panel -->
+<div class="md:col-span-7 bg-surface-container-lowest rounded-DEFAULT p-space-md shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Parámetros Fiscales Detectados</span>
+<span class="font-mono-data text-mono-data text-secondary font-medium">Validación Automática OK</span>
+</div>
+<div class="space-y-space-xs">
+<div class="flex items-center justify-between p-space-xs bg-surface-container-low rounded-DEFAULT">
+<span class="font-body-sm text-body-sm text-on-surface-variant">BSN Sujeto Pasivo</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                      9821.44.110
+                    </span>
+</div>
+<div class="flex items-center justify-between p-space-xs bg-surface-container-low rounded-DEFAULT">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Empleador / Pagador</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                      Philips Electronics NL
+                    </span>
+</div>
+<div class="flex items-center justify-between p-space-xs bg-surface-container-low rounded-DEFAULT">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Año Fiscal Computable</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                      2025 (Periodo M)
+                    </span>
+</div>
+<div class="flex items-center justify-between p-space-xs bg-surface-container-low rounded-DEFAULT">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Salario Bruto (Loon)</span>
+<span class="font-mono-data text-mono-data text-on-surface font-bold text-secondary">
+                      € 48.250,00
+                    </span>
+</div>
+<div class="flex items-center justify-between p-space-xs bg-surface-container-low rounded-DEFAULT">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Retención (Ingehouden loonheffing)</span>
+<span class="font-mono-data text-mono-data text-on-surface font-bold text-secondary">
+                      € 14.120,00
+                    </span>
+</div>
+</div>
+</div>
+<!-- Quick Confirmation Actions -->
+<div class="mt-space-md pt-space-sm flex flex-col sm:flex-row items-center gap-space-sm">
+<button class="w-full sm:w-auto flex-1 px-space-md py-space-sm bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md rounded-DEFAULT shadow-sm flex items-center justify-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-base">task_alt</span>
+                  Aprobar &amp; Remitir a Elena Martínez
+                </button>
+<button class="w-full sm:w-auto px-space-md py-space-sm bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md rounded-DEFAULT transition-colors" type="button">
+                  Reemplazar Archivo
+                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. DOCUMENT REPOSITORY & ARCHIVE -->
+<div class="bg-surface-container-lowest p-space-xl rounded-DEFAULT shadow-md flex flex-col gap-space-lg">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md pb-space-xs">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Bóveda de Documentos del Expediente</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Repositorio central con control de versiones y trazabilidad fiscal Belastingdienst</p>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container-low p-space-2xs rounded-DEFAULT">
+<button class="px-space-sm py-space-xs rounded-DEFAULT font-label-sm text-label-sm bg-surface-container-lowest text-on-surface shadow-sm">
+                Aportados por Ti (3)
+              </button>
+<button class="px-space-sm py-space-xs rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface">
+                Emitidos NexusGest (2)
+              </button>
+<button class="px-space-sm py-space-xs rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface">
+                Historial (7)
+              </button>
+</div>
+</div>
+<!-- Tabular Records List -->
+<div class="w-full overflow-x-auto">
+<div class="min-w-[650px] space-y-space-xs">
+<!-- Record Row 1: Passport -->
+<div class="p-space-md bg-surface-container-low hover:bg-surface-container transition-colors rounded-DEFAULT flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md min-w-0 flex-1">
+<div class="w-10 h-10 rounded-DEFAULT bg-secondary-fixed/50 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">badge</span>
+</div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Pasaporte_MariaPopescu_vigente.pdf</span>
+<span class="px-space-xs py-space-2xs bg-surface-container-lowest text-on-surface-variant font-mono-data text-mono-data rounded-DEFAULT shrink-0">1.8 MB</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                      Identidad eIDAS • Validado por Elena Martínez el 28 Feb 2026
+                    </p>
+</div>
+</div>
+<div class="flex items-center gap-space-lg shrink-0">
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-lowest rounded-DEFAULT">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface">Aprobado &amp; Vigente</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="p-space-xs hover:bg-surface-container-lowest rounded-DEFAULT text-on-surface-variant hover:text-on-surface transition-colors" title="Visualizar documento">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-space-xs hover:bg-surface-container-lowest rounded-DEFAULT text-on-surface-variant hover:text-on-surface transition-colors" title="Descargar copia certificada">
+<span class="material-symbols-outlined text-lg">download</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Record Row 2: DigiD Power of Attorney -->
+<div class="p-space-md bg-surface-container-low hover:bg-surface-container transition-colors rounded-DEFAULT flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md min-w-0 flex-1">
+<div class="w-10 h-10 rounded-DEFAULT bg-secondary-fixed/50 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">key</span>
+</div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">DigiD_Machtiging_Poder_Fiscal.xml</span>
+<span class="px-space-xs py-space-2xs bg-surface-container-lowest text-on-surface-variant font-mono-data text-mono-data rounded-DEFAULT shrink-0">124 KB</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                      Autorización Belastingdienst Directa • Registrado por NexusGest el 01 Mar 2026
+                    </p>
+</div>
+</div>
+<div class="flex items-center gap-space-lg shrink-0">
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-lowest rounded-DEFAULT">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface">Activo en Hacienda NL</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="p-space-xs hover:bg-surface-container-lowest rounded-DEFAULT text-on-surface-variant hover:text-on-surface transition-colors" title="Visualizar documento">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-space-xs hover:bg-surface-container-lowest rounded-DEFAULT text-on-surface-variant hover:text-on-surface transition-colors" title="Descargar copia certificada">
+<span class="material-symbols-outlined text-lg">download</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Record Row 3: Jaaropgave In Review -->
+<div class="p-space-md bg-secondary-fixed/20 hover:bg-secondary-fixed/30 transition-colors rounded-DEFAULT flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md min-w-0 flex-1">
+<div class="w-10 h-10 rounded-DEFAULT bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Jaaropgave_Philips_2025_preview.pdf</span>
+<span class="px-space-xs py-space-2xs bg-surface-container-lowest text-secondary font-mono-data text-mono-data rounded-DEFAULT shrink-0">Recién Subido</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                      Extracción preliminar efectuada • Pendiente de tu aprobación para archivar
+                    </p>
+</div>
+</div>
+<div class="flex items-center gap-space-lg shrink-0">
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-lowest rounded-DEFAULT">
+<span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-secondary">Listo para Firma</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="p-space-xs hover:bg-surface-container-lowest rounded-DEFAULT text-on-surface-variant hover:text-on-surface transition-colors" title="Visualizar documento">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-space-xs hover:bg-surface-container-lowest rounded-DEFAULT text-error hover:bg-error-container transition-colors" title="Eliminar y resubir">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Record Row 4: Official Resolution by NexusGest -->
+<div class="p-space-md bg-surface-container-low hover:bg-surface-container transition-colors rounded-DEFAULT flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md min-w-0 flex-1">
+<div class="w-10 h-10 rounded-DEFAULT bg-surface-container-highest text-on-surface flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">verified_user</span>
+</div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Resolucion_Acuerdo_HollandZorg_Firmada.pdf</span>
+<span class="px-space-xs py-space-2xs bg-surface-container-lowest text-on-surface-variant font-mono-data text-mono-data rounded-DEFAULT shrink-0">430 KB</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                      Emitido por NexusGest B.V. • Sello Digital Criptográfico de Elena Martínez
+                    </p>
+</div>
+</div>
+<div class="flex items-center gap-space-lg shrink-0">
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-lowest rounded-DEFAULT">
+<span class="material-symbols-outlined text-sm text-secondary">approval</span>
+<span class="font-label-sm text-label-sm text-on-surface">Emitido Oficial</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-space-xs bg-surface-container-lowest hover:bg-surface-container text-secondary font-label-sm text-label-sm rounded-DEFAULT flex items-center gap-space-2xs transition-colors" title="Descargar documento con firma digital">
+<span class="material-symbols-outlined text-sm">download</span>
+                      Descargar Certificado
+                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-sm text-on-surface-variant font-mono-data text-mono-data">
+<span>Almacenamiento seguro consumido: 2.39 MB de 500 MB</span>
+<span class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+              Sincronizado con Belastingdienst Portal
+            </span>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: 4 Columns (Guidance, Advisor Card, Regulatory Badges) -->
+<div class="lg:col-span-4 flex flex-col gap-space-xl">
+<!-- Direct Advisor Action Card -->
+<div class="bg-surface-container-lowest p-space-xl rounded-DEFAULT shadow-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<span class="font-mono-data text-mono-data uppercase tracking-wider text-secondary">Tu Gestora Asignada</span>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+<div class="flex items-center gap-space-md">
+<img alt="Elena Martínez" class="w-14 h-14 rounded-full object-cover shadow-sm" data-alt="Close-up professional portrait of Elena Martínez, a female Spanish tax advisor in Amsterdam wearing business formal attire, soft studio lighting, ultra-sharp corporate photography, neutral blue-grey backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGf03gbvQpZryXWZSfGc3LN9ZFlorDkq6R1fBSn_tTHX2JnQ2Ace4FrysJWMCy6_J_wqPzUY9yjt-NvgrNLD8g-PuJjVmCt_rC5jvBWR1BlobjXmbORFz0luM5DEGnS75QqUNuPctfCUC3yLS9TkHOuiSBsgCYdgrOa-S-_6Kiw8uqmnx7yduqUZzaxMSsgMx73U5YryGtj4C1Fl4B-PhvQpaI0HlPLhLggZxEVrRAdrSPtPaVDYsz"/>
+<div class="flex flex-col min-w-0">
+<h4 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Elena Martínez</h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Senior Tax &amp; Expat Specialist</span>
+<span class="font-mono-data text-mono-data text-secondary mt-space-2xs">Registro RB 49021-NL</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            "Hola Maria, una vez que apruebes el Jaaropgave de Philips, computaré las deducciones de mudanza internacional y te enviaré el borrador definitivo para firmar con tu DigiD."
+          </p>
+<a class="w-full py-space-sm px-space-md bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md rounded-DEFAULT flex items-center justify-center gap-space-xs transition-colors shadow-sm" href="#">
+<span class="material-symbols-outlined text-base">chat</span>
+            Consultar a Elena por WhatsApp
+          </a>
+<span class="text-center font-mono-data text-mono-data text-on-surface-variant">Respuesta promedio en horario hábil: &lt; 25 minutos</span>
+</div>
+<!-- Practical Helper: Where to find Jaaropgave -->
+<div class="bg-surface-container-low p-space-xl rounded-DEFAULT flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm text-secondary">
+<span class="material-symbols-outlined">help_outline</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">¿Dónde obtengo mi Jaaropgave?</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            El <em>Jaaropgave</em> (o <em>Jaaropgaaf</em>) es el certificado resumen anual que todas las empresas en Países Bajos deben entregar por ley antes de marzo:
+          </p>
+<ul class="space-y-space-sm text-on-surface font-body-sm text-body-sm">
+<li class="flex items-start gap-space-sm">
+<span class="font-mono-data text-secondary font-bold">1.</span>
+<span><strong>Portal del Empleado:</strong> Descárgalo desde la plataforma de nóminas de tu empresa (Workday, Visma Raet, AFAS o ADP).</span>
+</li>
+<li class="flex items-start gap-space-sm">
+<span class="font-mono-data text-secondary font-bold">2.</span>
+<span><strong>Departamento de RRHH:</strong> Pídelo como "Annual Tax Statement 2025" o "Jaaropgaaf 2025".</span>
+</li>
+<li class="flex items-start gap-space-sm">
+<span class="font-mono-data text-secondary font-bold">3.</span>
+<span><strong>Mijn Belastingdienst:</strong> Si tu empleador ya lo comunicó, Elena puede extraerlo automáticamente vía DigiD Machtiging.</span>
+</li>
+</ul>
+<div class="pt-space-xs">
+<button class="font-label-sm text-label-sm text-secondary font-semibold hover:underline flex items-center gap-space-2xs" type="button">
+<span class="material-symbols-outlined text-sm">download</span>
+              Descargar plantilla de solicitud a RRHH (inglés/neerlandés)
+            </button>
+</div>
+</div>
+<!-- Compliance & Legal Trust Section -->
+<div class="bg-surface-container-lowest p-space-xl rounded-DEFAULT shadow-md flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary">security</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Custodia &amp; Privacidad Legal</h4>
+</div>
+<div class="space-y-space-sm text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-base shrink-0 mt-0.5">verified</span>
+<span><strong>AVG / RGPD Certificado:</strong> Tus documentos personales se conservan en centros de datos con certificación ISO 27001 ubicados en Ámsterdam (Países Bajos).</span>
+</div>
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-base shrink-0 mt-0.5">lock_clock</span>
+<span><strong>Retención Fiscal Regulada:</strong> Custodia obligatoria durante el plazo estipulado por la autoridad tributaria neerlandesa (7 años para expedientes IRPF).</span>
+</div>
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-base shrink-0 mt-0.5">policy</span>
+<span><strong>Acceso Estricto:</strong> Únicamente el titular del BSN y la gestora colegiada Elena Martínez tienen acceso descifrado a los adjuntos.</span>
+</div>
+</div>
+<div class="pt-space-xs flex items-center justify-between font-mono-data text-mono-data text-on-surface-variant">
+<span>Certificado SSL Digicert EV</span>
+<span class="text-secondary">NexusGest BV</span>
+</div>
+</div>
+<!-- Visual Dutch Tax Office Sync Card -->
+<div class="relative rounded-DEFAULT p-space-lg bg-surface-container-high overflow-hidden shadow-sm flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-DEFAULT bg-surface-container-lowest flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-2xl text-secondary">account_balance</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Enlace Directo Belastingdienst</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Los documentos aprobados quedan sincronizados con el software oficial de la administración tributaria.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Interactive File Dropzone Micro-Feedback
+  const dropzone = document.getElementById('upload-dropzone');
+  const fileInput = document.getElementById('file-uploader');
+
+  if (dropzone && fileInput) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('bg-surface-container-highest');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('bg-surface-container-highest');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('bg-surface-container-highest');
+      if (e.dataTransfer.files.length > 0) {
+        alert('Archivo recibido para análisis IA: ' + e.dataTransfer.files[0].name);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        alert('Archivo seleccionado: ' + e.target.files[0].name + '. Iniciando extracción de BSN e ingresos...');
+      }
+    });
+  }
+</script></main><footer class="w-full bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="max-w-7xl mx-auto px-margin lg:px-margin-lg py-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs font-mono-data text-mono-data text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-secondary"></span><span>Asesor Activo: <strong class="font-label-md text-on-surface">Lars van Dijk (Senior Tax Adviseur)</strong></span></div><div class="hidden sm:flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-low rounded-lg text-on-surface"><span class="material-symbols-outlined text-secondary text-sm">chat</span><a class="font-label-sm text-label-sm text-on-surface hover:text-secondary" href="#">WhatsApp Asesor Directo</a></div></div><div class="flex items-center gap-space-lg"><a class="inline-flex items-center gap-space-xs font-label-md text-label-md text-secondary hover:text-on-secondary-fixed-variant" data-path="citas-asesor" href="#"><span class="material-symbols-outlined text-base">calendar_month</span><span>Agendar sesión de revisión</span></a><span class="font-mono-data text-mono-data text-on-surface-variant">© 2024 NexusGest B.V. • Amsterdam • Madrid</span></div></div></footer></body></html>
