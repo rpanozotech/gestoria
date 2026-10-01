@@ -7,6 +7,18 @@ export default function CRMClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'con_digid' | 'pendientes'>('todos');
 
+  // Catálogo de Servicios y Trámites
+  const [servicesCatalog, setServicesCatalog] = useState([
+    { id: '1', title: 'Declaración Fiscal M-Form', category: 'Fiscalidad / Belastingdienst', defaultFee: 180.00 },
+    { id: '2', title: 'Activación DigiD + Zorgtoeslag', category: 'Subsidios / Toeslagen', defaultFee: 85.00 },
+    { id: '3', title: 'Solicitud Subsidio Huurtoeslag (Alquiler)', category: 'Subsidios / Toeslagen', defaultFee: 95.00 },
+    { id: '4', title: 'Alta Eenmanszaak KVK y BTW-nummer', category: 'Empresas / KVK', defaultFee: 250.00 },
+    { id: '5', title: 'Recurso Bezwaarschrift Belastingdienst', category: 'Legal / Recursos', defaultFee: 120.00 },
+    { id: '6', title: 'Kindgebonden Budget (Ayuda Hijos)', category: 'Subsidios / Toeslagen', defaultFee: 80.00 },
+    { id: '7', title: 'Cambio de Cuenta Bancaria Belastingdienst', category: 'Gestión Administrativa', defaultFee: 45.00 },
+  ]);
+
+  // Lista de clientes con sus expedientes, presupuestos, facturas y citas internas
   const [clients, setClients] = useState<any[]>([
     {
       id: '1',
@@ -21,8 +33,52 @@ export default function CRMClientesPage() {
       digid_status: 'pendiente_activar',
       status: 'activo',
       notes: 'Requiere activación de DigiD y solicitud retroactiva de Zorgtoeslag.',
-      dossiers_count: 1,
-      invoices_count: 1,
+      dossiers: [
+        {
+          id: 'd1',
+          code: 'EXP-2026-0041',
+          title: 'Activación DigiD + Solicitud Zorgtoeslag 2026',
+          category: 'Subsidios / Toeslagen',
+          status: 'en_belastingdienst',
+          progress_percentage: 65,
+          fee: 85.00,
+          deadline: '2026-10-15',
+          description: 'Trámite de ayuda médica y código de activación ante Belastingdienst.',
+        },
+      ],
+      quotes: [
+        {
+          id: 'q1',
+          code: 'PRE-2026-0003',
+          concept: 'Gestión Solicitud Zorgtoeslag y Registro',
+          amount: 85.00,
+          total: 102.85,
+          status: 'enviado',
+          valid_until: '2026-11-15',
+        },
+      ],
+      invoices: [
+        {
+          id: 'i1',
+          code: 'FAC-2026-0002',
+          concept: 'Gestión Solicitud Zorgtoeslag y Registro',
+          total: 102.85,
+          status: 'emitida',
+          due_date: '2026-10-12',
+          payment_method: 'ideal',
+        },
+      ],
+      appointments: [
+        {
+          id: 'a1',
+          title: 'Seguimiento Telefónico Zorgtoeslag',
+          date: '2026-10-10',
+          time: '10:00',
+          modality: 'llamada',
+          status: 'confirmada',
+          notes: 'Llamar para verificar código de carta física.',
+        },
+      ],
     },
     {
       id: '2',
@@ -37,8 +93,52 @@ export default function CRMClientesPage() {
       digid_status: 'activo',
       status: 'activo',
       notes: 'Llegada en 2025. Declaración Modelo M (M-Form). Deducción por traslado internacional.',
-      dossiers_count: 1,
-      invoices_count: 1,
+      dossiers: [
+        {
+          id: 'd2',
+          code: 'EXP-2026-0042',
+          title: 'Declaración Fiscal M-Form (Migración 2025)',
+          category: 'Fiscalidad / Belastingdienst',
+          status: 'en_proceso',
+          progress_percentage: 40,
+          fee: 180.00,
+          deadline: '2026-11-01',
+          description: 'Cálculo de deducción por traslado internacional y declaración ante Belastingdienst.',
+        },
+      ],
+      quotes: [
+        {
+          id: 'q2',
+          code: 'PRE-2026-0001',
+          concept: 'Elaboración y Presentación Fiscal M-Form',
+          amount: 220.00,
+          total: 266.20,
+          status: 'convertido',
+          valid_until: '2026-10-30',
+        },
+      ],
+      invoices: [
+        {
+          id: 'i2',
+          code: 'FAC-2026-0001',
+          concept: 'Elaboración y Presentación Fiscal M-Form',
+          total: 266.20,
+          status: 'pagada',
+          due_date: '2026-10-15',
+          payment_method: 'ideal',
+        },
+      ],
+      appointments: [
+        {
+          id: 'a2',
+          title: 'Revisión M-Form Carlos Mendoza',
+          date: '2026-10-10',
+          time: '11:30',
+          modality: 'online_meet',
+          status: 'confirmada',
+          notes: 'Revisar certificado de retenciones de España.',
+        },
+      ],
     },
     {
       id: '3',
@@ -53,8 +153,22 @@ export default function CRMClientesPage() {
       digid_status: 'activo',
       status: 'activo',
       notes: 'Alta como ZZP en KVK y declaración trimestral de BTW.',
-      dossiers_count: 1,
-      invoices_count: 0,
+      dossiers: [
+        {
+          id: 'd3',
+          code: 'EXP-2026-0043',
+          title: 'Alta Eenmanszaak KVK y BTW-nummer',
+          category: 'Empresas / KVK',
+          status: 'completado',
+          progress_percentage: 100,
+          fee: 250.00,
+          deadline: '2026-09-28',
+          description: 'Registro mercantil neerlandés y alta censal en Belastingdienst.',
+        },
+      ],
+      quotes: [],
+      invoices: [],
+      appointments: [],
     },
     {
       id: '4',
@@ -69,32 +183,197 @@ export default function CRMClientesPage() {
       digid_status: 'activo',
       status: 'activo',
       notes: 'Subsidio de alquiler Huurtoeslag y seguro de salud HollandZorg.',
-      dossiers_count: 0,
-      invoices_count: 0,
+      dossiers: [],
+      quotes: [],
+      invoices: [],
+      appointments: [],
     },
   ]);
 
-  // Cliente seleccionado para la Ficha 360°
+  // Cliente seleccionado para la Ficha 360° en PANTALLA COMPLETA
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [active360Tab, setActive360Tab] = useState<'resumen' | 'personales' | 'facturacion' | 'citas' | 'ia'>('resumen');
+
+  // Estados de edición de notas
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [editedNotes, setEditedNotes] = useState('');
 
-  // Modal para crear nuevo trámite rápido dentro de la ficha 360°
+  // 1. MODAL NUEVO TRÁMITE (Con desplegable + añadir nuevo servicio a catálogo)
   const [showAddDossierModal, setShowAddDossierModal] = useState(false);
-  const [newDossierTitle, setNewDossierTitle] = useState('');
-  const [newDossierFee, setNewDossierFee] = useState<number>(90);
+  const [selectedCatalogServiceId, setSelectedCatalogServiceId] = useState(servicesCatalog[0].id);
+  const [dossierTitle, setDossierTitle] = useState(servicesCatalog[0].title);
+  const [dossierCategory, setDossierCategory] = useState(servicesCatalog[0].category);
+  const [dossierFee, setDossierFee] = useState<number>(servicesCatalog[0].defaultFee);
+  const [dossierDeadline, setDossierDeadline] = useState('2026-11-15');
+  const [isNewServiceMode, setIsNewServiceMode] = useState(false);
+  const [saveToCatalogToo, setSaveToCatalogToo] = useState(true);
 
-  useEffect(() => {
-    fetch('http://localhost:5000/api/clients')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.clients && data.clients.length > 0) {
-          setClients(data.clients);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  // 2. MODAL NUEVA CITA DESDE FICHA 360° (Cliente por defecto bloqueado, llamada por defecto)
+  const [showNewAptModal, setShowNewAptModal] = useState(false);
+  const [aptTitle, setAptTitle] = useState('Consulta Telefónica Gestoría');
+  const [aptDate, setAptDate] = useState('2026-10-15');
+  const [aptTime, setAptTime] = useState('11:00');
+  const [aptModality, setAptModality] = useState<'llamada' | 'presencial' | 'online_meet'>('llamada');
+
+  // 3. MODAL NUEVO PRESUPUESTO DESDE FICHA 360°
+  const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
+  const [quoteConcept, setQuoteConcept] = useState('Servicios de Gestión Fiscal');
+  const [quoteAmount, setQuoteAmount] = useState<number>(150);
+  const [quoteValidUntil, setQuoteValidUntil] = useState('2026-11-30');
+
+  // Actualizar campos al cambiar el desplegable de trámites
+  const handleCatalogSelectChange = (serviceId: string) => {
+    setSelectedCatalogServiceId(serviceId);
+    if (serviceId === '__NEW__') {
+      setIsNewServiceMode(true);
+      setDossierTitle('');
+      setDossierFee(100);
+      setDossierCategory('Nuevo Servicio');
+    } else {
+      setIsNewServiceMode(false);
+      const s = servicesCatalog.find((x) => x.id === serviceId);
+      if (s) {
+        setDossierTitle(s.title);
+        setDossierCategory(s.category);
+        setDossierFee(s.defaultFee);
+      }
+    }
+  };
+
+  // Guardar nuevo trámite
+  const handleSaveDossier = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient || !dossierTitle.trim()) return;
+
+    // Si marcó guardar en catálogo de servicios
+    if (isNewServiceMode && saveToCatalogToo) {
+      const newService = {
+        id: String(Date.now()),
+        title: dossierTitle,
+        category: dossierCategory,
+        defaultFee: dossierFee,
+      };
+      setServicesCatalog([...servicesCatalog, newService]);
+    }
+
+    const nextCount = (selectedClient.dossiers?.length || 0) + 1;
+    const year = new Date().getFullYear();
+    const newDossier = {
+      id: String(Date.now()),
+      code: `EXP-${year}-${String(nextCount).padStart(4, '0')}`,
+      title: dossierTitle,
+      category: dossierCategory,
+      status: 'en_proceso',
+      progress_percentage: 20,
+      fee: dossierFee,
+      deadline: dossierDeadline,
+      description: `Trámite registrado para ${selectedClient.full_name}.`,
+    };
+
+    const updatedClient = {
+      ...selectedClient,
+      dossiers: [newDossier, ...(selectedClient.dossiers || [])],
+    };
+
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    setShowAddDossierModal(false);
+  };
+
+  // Guardar nueva cita directamente en la ficha del cliente
+  const handleSaveAppointment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+
+    const newApt = {
+      id: String(Date.now()),
+      title: aptTitle,
+      date: aptDate,
+      time: aptTime,
+      modality: aptModality,
+      status: 'confirmada',
+      notes: `Cita con ${selectedClient.full_name} (${selectedClient.phone})`,
+    };
+
+    const updatedClient = {
+      ...selectedClient,
+      appointments: [newApt, ...(selectedClient.appointments || [])],
+    };
+
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    setShowNewAptModal(false);
+    setActive360Tab('citas');
+  };
+
+  // Guardar nuevo presupuesto directamente en la ficha del cliente
+  const handleSaveQuote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+
+    const nextCount = (selectedClient.quotes?.length || 0) + 1;
+    const year = new Date().getFullYear();
+    const subtotal = quoteAmount;
+    const tax = Math.round(subtotal * 0.21 * 100) / 100;
+    const total = Math.round((subtotal + tax) * 100) / 100;
+
+    const newQuote = {
+      id: String(Date.now()),
+      code: `PRE-${year}-${String(nextCount).padStart(4, '0')}`,
+      concept: quoteConcept,
+      amount: subtotal,
+      total: total,
+      status: 'enviado',
+      valid_until: quoteValidUntil,
+    };
+
+    const updatedClient = {
+      ...selectedClient,
+      quotes: [newQuote, ...(selectedClient.quotes || [])],
+    };
+
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    setShowNewQuoteModal(false);
+    setActive360Tab('facturacion');
+  };
+
+  // Convertir presupuesto a factura directamente aquí
+  const handleConvertQuoteInFicha = (quote: any) => {
+    const nextCount = (selectedClient.invoices?.length || 0) + 1;
+    const year = new Date().getFullYear();
+    const newInvoice = {
+      id: String(Date.now()),
+      code: `FAC-${year}-${String(nextCount).padStart(4, '0')}`,
+      concept: quote.concept,
+      total: quote.total,
+      status: 'emitida',
+      due_date: '2026-11-15',
+      payment_method: 'ideal',
+    };
+
+    const updatedQuotes = selectedClient.quotes.map((q: any) =>
+      q.id === quote.id ? { ...q, status: 'convertido' } : q
+    );
+
+    const updatedClient = {
+      ...selectedClient,
+      quotes: updatedQuotes,
+      invoices: [newInvoice, ...(selectedClient.invoices || [])],
+    };
+
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+  };
+
+  // Guardar notas del cliente
+  const handleSaveNotes = () => {
+    if (!selectedClient) return;
+    const updated = { ...selectedClient, notes: editedNotes };
+    setSelectedClient(updated);
+    setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+    setIsEditingNotes(false);
+  };
 
   const filteredClients = clients.filter((c) => {
     const matchesSearch =
@@ -109,36 +388,14 @@ export default function CRMClientesPage() {
     return true;
   });
 
-  const handleSaveNotes = () => {
-    if (!selectedClient) return;
-    const updated = { ...selectedClient, notes: editedNotes };
-    setSelectedClient(updated);
-    setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
-    setIsEditingNotes(false);
-  };
-
-  const handleAddDossierToClient = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDossierTitle.trim() || !selectedClient) return;
-
-    const updated = {
-      ...selectedClient,
-      dossiers_count: (selectedClient.dossiers_count || 0) + 1,
-    };
-    setSelectedClient(updated);
-    setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
-    setShowAddDossierModal(false);
-    setNewDossierTitle('');
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header & Controls */}
+      {/* Header & Controls del Directorio */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-container">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-on-surface">Directorio de Clientes</h1>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Base de datos de residentes, BSN, expediente fiscal y ficha completa 360°.
+            Base de datos de residentes, BSN, trámites, facturación y ficha completa 360° en pantalla completa.
           </p>
         </div>
 
@@ -237,7 +494,7 @@ export default function CRMClientesPage() {
                   </td>
                   <td className="px-5 py-3.5 text-center">
                     <span className="px-2 py-0.5 bg-surface-container-high rounded-full font-mono-data font-bold text-[11px]">
-                      {client.dossiers_count || 1}
+                      {client.dossiers?.length || 0}
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
@@ -248,10 +505,10 @@ export default function CRMClientesPage() {
                         setIsEditingNotes(false);
                         setActive360Tab('resumen');
                       }}
-                      className="h-8 px-3 bg-surface-container text-on-surface text-xs font-semibold rounded hover:bg-secondary hover:text-white transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                      className="h-8 px-3.5 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors inline-flex items-center gap-1.5 shadow-sm"
                     >
-                      <span className="material-symbols-outlined text-[15px]">visibility</span>
-                      <span>Ficha 360°</span>
+                      <span className="material-symbols-outlined text-[15px]">fullscreen</span>
+                      <span>Abrir Ficha 360°</span>
                     </button>
                   </td>
                 </tr>
@@ -261,189 +518,417 @@ export default function CRMClientesPage() {
         </div>
       </div>
 
-      {/* DRAWER / MODAL: FICHA 360° DEL CLIENTE */}
+      {/* ========================================================================= */}
+      {/* FICHA 360° EN PANTALLA COMPLETA (OCUPA TODA LA PANTALLA Y LA BARRA LATERAL) */}
+      {/* ========================================================================= */}
       {selectedClient && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-end">
-          <div className="bg-surface-container-lowest w-full max-w-2xl h-full shadow-2xl flex flex-col border-l border-outline-variant animate-in slide-in-from-right duration-200">
-            {/* Header Ficha 360 */}
-            <div className="p-6 border-b border-surface-container flex items-start justify-between bg-surface-container-low">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary-container text-white font-mono-data font-bold text-lg flex items-center justify-center shadow-sm">
+        <div className="fixed inset-0 z-[100] bg-surface flex flex-col w-screen h-screen overflow-hidden animate-in fade-in duration-150">
+          {/* Top Bar de la Ficha 360° Pantalla Completa */}
+          <header className="h-16 px-6 lg:px-10 bg-surface-container-lowest border-b border-surface-container-high flex items-center justify-between shadow-sm shrink-0">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSelectedClient(null)}
+                className="h-9 px-3 border border-outline-variant bg-surface hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                title="Volver al Directorio"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>Volver al Directorio</span>
+              </button>
+
+              <div className="h-6 w-px bg-surface-container"></div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary-container text-white font-mono-data font-bold text-sm flex items-center justify-center shadow-sm">
                   {selectedClient.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold tracking-tight text-on-surface">{selectedClient.full_name}</h2>
+                    <h2 className="text-base font-bold text-on-surface">{selectedClient.full_name}</h2>
                     <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded">
-                      CLIENTE ACTIVO
+                      BSN: {selectedClient.bsn}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-on-surface-variant mt-1">
-                    <span className="font-mono-data font-bold text-secondary">BSN: {selectedClient.bsn}</span>
-                    <span>·</span>
-                    <span>{selectedClient.city}</span>
-                    <span>·</span>
-                    <span>{selectedClient.phone}</span>
-                  </div>
+                  <p className="text-[11px] text-outline">
+                    {selectedClient.city} · {selectedClient.phone} · {selectedClient.email}
+                  </p>
                 </div>
               </div>
-
-              <button
-                onClick={() => setSelectedClient(null)}
-                className="w-8 h-8 rounded-md hover:bg-surface-container flex items-center justify-center text-outline"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
             </div>
 
-            {/* Quick Actions Strip inside 360 view */}
-            <div className="px-6 py-2.5 bg-surface border-b border-surface-container flex flex-wrap items-center gap-2">
+            {/* BOTONES DE ACCIÓN DIRECTA EN CABECERA (SIN SALIR DE LA PANTALLA) */}
+            <div className="flex items-center gap-2.5">
+              {/* Botón Nueva Cita Directa */}
               <button
-                onClick={() => setShowAddDossierModal(true)}
-                className="h-7 px-2.5 bg-secondary text-white rounded text-[11px] font-semibold flex items-center gap-1 hover:bg-blue-700 transition-colors shadow-sm"
+                onClick={() => {
+                  setAptModality('llamada'); // Por defecto llamada
+                  setAptTitle(`Consulta Telefónica con ${selectedClient.full_name}`);
+                  setShowNewAptModal(true);
+                }}
+                className="h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
               >
-                <span className="material-symbols-outlined text-[14px]">add</span>
-                <span>Nuevo Trámite</span>
+                <span className="material-symbols-outlined text-[17px]">phone_in_talk</span>
+                <span>+ Agendar Cita</span>
               </button>
-              <Link
-                href="/crm/facturacion"
-                className="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold flex items-center gap-1 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[14px]">receipt_long</span>
-                <span>Emitir Factura</span>
-              </Link>
-              <Link
-                href="/crm/agenda"
-                className="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold flex items-center gap-1 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[14px]">event</span>
-                <span>Agendar Cita</span>
-              </Link>
-              <Link
-                href="/crm/documentos-ia"
-                className="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold flex items-center gap-1 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[14px] text-secondary">auto_awesome</span>
-                <span>Carta Belastingdienst</span>
-              </Link>
-            </div>
 
-            {/* Sub-Tabs de Ficha 360° */}
-            <div className="flex border-b border-surface-container px-6 gap-2 bg-surface text-xs font-semibold">
+              {/* Botón Nuevo Presupuesto Directo */}
               <button
-                onClick={() => setActive360Tab('resumen')}
-                className={`py-3 px-3 border-b-2 transition-all ${
-                  active360Tab === 'resumen' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
-                }`}
+                onClick={() => {
+                  setQuoteConcept('Asesoría y Trámites Gestoría');
+                  setQuoteAmount(150);
+                  setShowNewQuoteModal(true);
+                }}
+                className="h-9 px-3.5 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
               >
-                Resumen & Trámites
+                <span className="material-symbols-outlined text-[17px]">description</span>
+                <span>+ Crear Presupuesto</span>
               </button>
+
+              {/* Botón Nuevo Trámite Directo */}
               <button
-                onClick={() => setActive360Tab('personales')}
-                className={`py-3 px-3 border-b-2 transition-all ${
-                  active360Tab === 'personales' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
-                }`}
+                onClick={() => {
+                  const first = servicesCatalog[0];
+                  setSelectedCatalogServiceId(first.id);
+                  setDossierTitle(first.title);
+                  setDossierCategory(first.category);
+                  setDossierFee(first.defaultFee);
+                  setIsNewServiceMode(false);
+                  setShowAddDossierModal(true);
+                }}
+                className="h-9 px-3.5 bg-secondary text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:bg-blue-700 transition-colors"
               >
-                Datos Personales
-              </button>
-              <button
-                onClick={() => setActive360Tab('facturacion')}
-                className={`py-3 px-3 border-b-2 transition-all ${
-                  active360Tab === 'facturacion' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
-                }`}
-              >
-                Facturas & Presupuestos
-              </button>
-              <button
-                onClick={() => setActive360Tab('ia')}
-                className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1 ${
-                  active360Tab === 'ia' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                <span>Actividad IA</span>
+                <span className="material-symbols-outlined text-[17px]">add_circle</span>
+                <span>+ Nuevo Trámite</span>
               </button>
             </div>
+          </header>
 
-            {/* Tab Contents */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
-              {active360Tab === 'resumen' && (
-                <div className="space-y-4">
-                  {/* Notes Card with interactive Edit */}
-                  <div className="p-4 bg-surface-container-low rounded-xl border border-surface-container">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold uppercase text-outline">Notas del Gestor:</span>
-                      <button
-                        onClick={() => setIsEditingNotes(!isEditingNotes)}
-                        className="text-secondary font-semibold text-[11px] hover:underline flex items-center gap-0.5"
-                      >
-                        <span className="material-symbols-outlined text-[13px]">edit</span>
-                        <span>{isEditingNotes ? 'Cancelar' : 'Editar Nota'}</span>
-                      </button>
-                    </div>
+          {/* Sub-Tabs de Navegación de la Ficha 360° */}
+          <div className="bg-surface-container-low px-6 lg:px-10 border-b border-surface-container flex gap-4 text-xs font-semibold shrink-0">
+            <button
+              onClick={() => setActive360Tab('resumen')}
+              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+                active360Tab === 'resumen' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">folder</span>
+              <span>Trámites & Expedientes ({selectedClient.dossiers?.length || 0})</span>
+            </button>
+            <button
+              onClick={() => setActive360Tab('facturacion')}
+              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+                active360Tab === 'facturacion' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+              <span>Presupuestos & Facturas ({selectedClient.quotes?.length || 0} / {selectedClient.invoices?.length || 0})</span>
+            </button>
+            <button
+              onClick={() => setActive360Tab('citas')}
+              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+                active360Tab === 'citas' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+              <span>Citas & Llamadas ({selectedClient.appointments?.length || 0})</span>
+            </button>
+            <button
+              onClick={() => setActive360Tab('personales')}
+              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+                active360Tab === 'personales' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">badge</span>
+              <span>Datos Fiscales & Personales</span>
+            </button>
+            <button
+              onClick={() => setActive360Tab('ia')}
+              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+                active360Tab === 'ia' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
+              <span>Historial & Actividad IA</span>
+            </button>
+          </div>
 
-                    {isEditingNotes ? (
-                      <div className="space-y-2 mt-2">
-                        <textarea
-                          rows={3}
-                          value={editedNotes}
-                          onChange={(e) => setEditedNotes(e.target.value)}
-                          className="w-full p-2 border border-outline-variant rounded bg-surface text-xs focus:border-secondary focus:outline-none"
-                        />
-                        <button
-                          onClick={handleSaveNotes}
-                          className="h-7 px-3 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700"
-                        >
-                          Guardar Nota
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="mt-1 text-on-surface leading-relaxed">{selectedClient.notes || 'Sin notas registradas.'}</p>
-                    )}
+          {/* Área Principal de Contenido de la Ficha 360° */}
+          <div className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-6">
+            {/* TAB 1: TRÁMITES & EXPEDIENTES */}
+            {active360Tab === 'resumen' && (
+              <div className="space-y-6 max-w-5xl">
+                {/* Notas del Gestor con edición en vivo */}
+                <div className="p-4 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase text-outline">Notas Internas del Gestor:</span>
+                    <button
+                      onClick={() => setIsEditingNotes(!isEditingNotes)}
+                      className="text-secondary font-semibold text-xs hover:underline flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">edit</span>
+                      <span>{isEditingNotes ? 'Cancelar' : 'Editar Nota'}</span>
+                    </button>
                   </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-bold text-sm text-on-surface">Expedientes y Trámites Activos</h4>
+                  {isEditingNotes ? (
+                    <div className="space-y-2 mt-2">
+                      <textarea
+                        rows={3}
+                        value={editedNotes}
+                        onChange={(e) => setEditedNotes(e.target.value)}
+                        className="w-full p-3 border border-outline-variant rounded-md bg-surface text-xs focus:border-secondary focus:outline-none"
+                      />
                       <button
-                        onClick={() => setShowAddDossierModal(true)}
-                        className="text-xs font-semibold text-secondary hover:underline"
+                        onClick={handleSaveNotes}
+                        className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700"
                       >
-                        + Añadir Trámite
+                        Guardar Nota
                       </button>
                     </div>
-
-                    <div className="p-4 rounded-xl border border-outline-variant bg-surface space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-mono-data font-bold text-secondary text-xs">EXP-2026-0041</span>
-                          <h5 className="font-bold text-sm mt-0.5">Activación DigiD + Solicitud Zorgtoeslag 2026</h5>
-                        </div>
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded">
-                          En Belastingdienst
-                        </span>
-                      </div>
-                      <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                        <div className="bg-secondary h-full rounded-full w-[65%]"></div>
-                      </div>
-                      <div className="flex justify-between text-[11px] text-outline font-mono-data">
-                        <span>Progreso: 65%</span>
-                        <span>Plazo objetivo: 15 Oct 2026</span>
-                      </div>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="text-xs text-on-surface leading-relaxed">{selectedClient.notes || 'Sin notas registradas.'}</p>
+                  )}
                 </div>
-              )}
 
-              {active360Tab === 'personales' && (
-                <div className="grid grid-cols-2 gap-4">
+                {/* Lista de Expedientes de este cliente */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-sm text-on-surface">Expedientes Activos del Cliente</h3>
+                    <button
+                      onClick={() => {
+                        const first = servicesCatalog[0];
+                        setSelectedCatalogServiceId(first.id);
+                        setDossierTitle(first.title);
+                        setDossierCategory(first.category);
+                        setDossierFee(first.defaultFee);
+                        setIsNewServiceMode(false);
+                        setShowAddDossierModal(true);
+                      }}
+                      className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">add</span>
+                      <span>Añadir Trámite</span>
+                    </button>
+                  </div>
+
+                  {selectedClient.dossiers && selectedClient.dossiers.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedClient.dossiers.map((dos: any) => (
+                        <div
+                          key={dos.id}
+                          className="p-5 rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono-data font-bold text-secondary text-xs">{dos.code}</span>
+                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded uppercase">
+                              {dos.status}
+                            </span>
+                          </div>
+
+                          <div>
+                            <h4 className="font-bold text-sm text-on-surface">{dos.title}</h4>
+                            <p className="text-xs text-on-surface-variant mt-1">{dos.description}</p>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[11px] text-outline font-mono-data">
+                              <span>Progreso: {dos.progress_percentage}%</span>
+                              <span>Plazo: {dos.deadline || 'Sin plazo'}</span>
+                            </div>
+                            <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-secondary h-full rounded-full" style={{ width: `${dos.progress_percentage}%` }}></div>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-surface-container flex items-center justify-between text-xs">
+                            <span className="text-outline">Tarifa:</span>
+                            <span className="font-mono-data font-bold text-on-surface">€ {parseFloat(dos.fee).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center bg-surface-container-lowest rounded-xl border border-dashed border-outline-variant text-xs text-outline">
+                      No hay trámites abiertos para este cliente todavía.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: PRESUPUESTOS & FACTURAS DE ESTE CLIENTE */}
+            {active360Tab === 'facturacion' && (
+              <div className="space-y-6 max-w-5xl">
+                {/* Presupuestos */}
+                <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-sm text-on-surface">Presupuestos de {selectedClient.full_name}</h3>
+                      <p className="text-xs text-on-surface-variant">Generación legal con IVA/BTW 21% y conversión en 1 clic a factura.</p>
+                    </div>
+                    <button
+                      onClick={() => setShowNewQuoteModal(true)}
+                      className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">add</span>
+                      <span>Crear Presupuesto</span>
+                    </button>
+                  </div>
+
+                  {selectedClient.quotes && selectedClient.quotes.length > 0 ? (
+                    <div className="divide-y divide-surface-container">
+                      {selectedClient.quotes.map((q: any) => (
+                        <div key={q.id} className="py-3 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-mono-data font-bold text-secondary text-xs">{q.code}</span>
+                            <p className="font-semibold text-on-surface mt-0.5">{q.concept}</p>
+                            <span className="text-[11px] text-outline font-mono-data">Válido hasta: {q.valid_until}</span>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <span className="font-mono-data font-bold text-sm text-on-surface block">
+                                € {parseFloat(q.total).toFixed(2)}
+                              </span>
+                              <span className="text-[10px] text-outline font-semibold uppercase">{q.status}</span>
+                            </div>
+
+                            {q.status !== 'convertido' && (
+                              <button
+                                onClick={() => handleConvertQuoteInFicha(q)}
+                                className="h-7 px-2.5 bg-secondary text-white rounded text-[11px] font-semibold hover:bg-blue-700 flex items-center gap-1 shadow-sm"
+                              >
+                                <span className="material-symbols-outlined text-[13px]">transform</span>
+                                <span>Convertir a Factura</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-outline py-2">No hay presupuestos emitidos aún.</p>
+                  )}
+                </div>
+
+                {/* Facturas */}
+                <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
+                  <h3 className="font-bold text-sm text-on-surface">Facturas Emitidas</h3>
+                  {selectedClient.invoices && selectedClient.invoices.length > 0 ? (
+                    <div className="divide-y divide-surface-container">
+                      {selectedClient.invoices.map((inv: any) => (
+                        <div key={inv.id} className="py-3 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-mono-data font-bold text-secondary">{inv.code}</span>
+                            <p className="font-semibold text-on-surface mt-0.5">{inv.concept}</p>
+                            <span className="text-[11px] text-outline font-mono-data">Vencimiento: {inv.due_date}</span>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="font-mono-data font-bold text-sm text-on-surface block">
+                              € {parseFloat(inv.total).toFixed(2)}
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                                inv.status === 'pagada' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                              }`}
+                            >
+                              {inv.status === 'pagada' ? 'PAGADA (iDEAL)' : 'PENDIENTE DE PAGO'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-outline py-2">No hay facturas emitidas aún.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: CITAS & AGENDA DE ESTE CLIENTE */}
+            {active360Tab === 'citas' && (
+              <div className="space-y-6 max-w-5xl">
+                <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-sm text-on-surface">Citas y Llamadas con {selectedClient.full_name}</h3>
+                      <p className="text-xs text-on-surface-variant">Llamadas telefónicas por defecto, videollamadas o reuniones en despacho.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setAptModality('llamada');
+                        setAptTitle(`Consulta Telefónica con ${selectedClient.full_name}`);
+                        setShowNewAptModal(true);
+                      }}
+                      className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded transition-colors flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">add</span>
+                      <span>Agendar Cita</span>
+                    </button>
+                  </div>
+
+                  {selectedClient.appointments && selectedClient.appointments.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {selectedClient.appointments.map((a: any) => (
+                        <div key={a.id} className="p-4 rounded-xl border border-surface-container bg-surface space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono-data font-bold text-xs text-secondary">{a.date} · {a.time}</span>
+                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold text-[10px] rounded uppercase">
+                              {a.status}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-xs text-on-surface">{a.title}</h4>
+                          <div className="flex items-center gap-2 pt-1 text-xs">
+                            {a.modality === 'llamada' ? (
+                              <a
+                                href={`tel:${selectedClient.phone}`}
+                                className="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-1 rounded"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">call</span>
+                                <span>Llamar al {selectedClient.phone}</span>
+                              </a>
+                            ) : a.modality === 'online_meet' ? (
+                              <span className="inline-flex items-center gap-1 text-indigo-700 font-semibold bg-indigo-50 px-2 py-1 rounded">
+                                <span className="material-symbols-outlined text-[14px]">videocam</span>
+                                <span>Videollamada</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-on-surface-variant font-semibold bg-surface-container px-2 py-1 rounded">
+                                <span className="material-symbols-outlined text-[14px]">business</span>
+                                <span>Solo Presencial</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-outline py-2">No hay citas registradas para este cliente.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: DATOS FISCALES & PERSONALES */}
+            {active360Tab === 'personales' && (
+              <div className="max-w-4xl bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-6">
+                <h3 className="font-bold text-sm text-on-surface">Datos Fiscales Neerlandeses y de Contacto</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="p-3 bg-surface rounded border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">BSN Oficial:</span>
-                    <p className="font-mono-data font-bold text-sm text-on-surface mt-1">{selectedClient.bsn}</p>
+                    <p className="font-mono-data font-bold text-sm text-secondary mt-1">{selectedClient.bsn}</p>
                   </div>
                   <div className="p-3 bg-surface rounded border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Documento / Pasaporte:</span>
                     <p className="font-mono-data font-bold text-sm text-on-surface mt-1">{selectedClient.id_document_number || 'RO9284102'}</p>
+                  </div>
+                  <div className="p-3 bg-surface rounded border border-surface-container">
+                    <span className="text-[10px] font-bold uppercase text-outline">Teléfono de Contacto:</span>
+                    <p className="font-semibold text-on-surface mt-1">{selectedClient.phone}</p>
+                  </div>
+                  <div className="p-3 bg-surface rounded border border-surface-container">
+                    <span className="text-[10px] font-bold uppercase text-outline">Correo Electrónico:</span>
+                    <p className="font-semibold text-on-surface mt-1">{selectedClient.email}</p>
                   </div>
                   <div className="p-3 bg-surface rounded border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Dirección en Países Bajos:</span>
@@ -454,110 +939,368 @@ export default function CRMClientesPage() {
                     <p className="font-mono-data font-bold text-on-surface mt-1">{selectedClient.iban || 'NL91INGB0001234567'}</p>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {active360Tab === 'facturacion' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase text-emerald-800">Factura FAC-2026-0001</span>
-                      <p className="font-semibold text-emerald-950 mt-0.5">Gestión M-Form Belastingdienst</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-mono-data font-bold text-base text-emerald-700">€ 266,20</span>
-                      <span className="block text-[10px] font-semibold text-emerald-800">Pagada vía iDEAL</span>
-                    </div>
-                  </div>
-
-                  <Link
-                    href="/crm/facturacion"
-                    className="block text-center p-3 rounded-lg border border-dashed border-secondary text-secondary font-semibold hover:bg-blue-50 transition-colors"
-                  >
-                    + Ir al Módulo de Facturación Completo
-                  </Link>
-                </div>
-              )}
-
-              {active360Tab === 'ia' && (
-                <div className="space-y-3">
-                  <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg flex items-start gap-3">
-                    <span className="material-symbols-outlined text-indigo-600 text-lg">auto_awesome</span>
-                    <div>
-                      <h5 className="font-bold text-indigo-950">Extracción inicial completada</h5>
-                      <p className="text-[11px] text-indigo-800 mt-0.5">Datos ingresados por lenguaje natural y validados con 96% de precisión.</p>
-                      <span className="font-mono-data text-[10px] text-indigo-600 mt-1 block">Modelo: OpenAI gpt-4o-mini</span>
-                    </div>
+            {/* TAB 5: ACTIVIDAD IA */}
+            {active360Tab === 'ia' && (
+              <div className="max-w-4xl space-y-4">
+                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-3 text-xs">
+                  <span className="material-symbols-outlined text-indigo-600 text-xl">auto_awesome</span>
+                  <div>
+                    <h5 className="font-bold text-indigo-950">Alta y Escaneo por Inteligencia Artificial</h5>
+                    <p className="text-indigo-800 mt-0.5">
+                      Expediente auditado y registrado con motor heurístico y OpenAI. 100% verificado por el gestor.
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Footer Ficha 360 */}
-            <div className="p-4 border-t border-surface-container bg-surface flex items-center justify-between">
-              <span className="text-[11px] text-outline">ID: {selectedClient.id}</span>
-              <button
-                onClick={() => setSelectedClient(null)}
-                className="h-8 px-4 bg-primary text-white text-xs font-semibold rounded hover:bg-slate-800 transition-colors"
-              >
-                Cerrar Ficha
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* MODAL AÑADIR TRÁMITE RÁPIDO */}
+      {/* ========================================================================= */}
+      {/* 1. MODAL NUEVO TRÁMITE (Desplegable + Precios + Guardar nuevo servicio) */}
+      {/* ========================================================================= */}
       {showAddDossierModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <form
-            onSubmit={handleAddDossierToClient}
-            className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4"
+            onSubmit={handleSaveDossier}
+            className="bg-surface-container-lowest max-w-lg w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-2 border-b border-surface-container">
-              <h3 className="font-bold text-sm text-on-surface">Nuevo Trámite para {selectedClient?.full_name}</h3>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary">assignment_add</span>
+                <h3 className="font-bold text-sm text-on-surface">
+                  Abrir Trámite para {selectedClient?.full_name}
+                </h3>
+              </div>
               <button type="button" onClick={() => setShowAddDossierModal(false)} className="text-outline">
                 <span className="material-symbols-outlined text-base">close</span>
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3.5 text-xs">
+              {/* DESPLEGABLE DE TRÁMITES Y SERVICIOS */}
               <div>
-                <label className="block text-outline uppercase font-semibold mb-1">Nombre del Trámite</label>
+                <label className="block text-outline uppercase font-semibold mb-1">
+                  Selecciona Trámite del Catálogo:
+                </label>
+                <select
+                  value={selectedCatalogServiceId}
+                  onChange={(e) => handleCatalogSelectChange(e.target.value)}
+                  className="w-full h-10 px-3 border border-outline-variant rounded-md bg-surface font-semibold text-on-surface focus:border-secondary focus:outline-none"
+                >
+                  {servicesCatalog.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.title} — € {s.defaultFee.toFixed(2)} ({s.category})
+                    </option>
+                  ))}
+                  <option value="__NEW__">+ Crear Nuevo Servicio Personalizado...</option>
+                </select>
+              </div>
+
+              {/* Si es nuevo servicio o edición del nombre */}
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">
+                  Nombre del Trámite en Expediente:
+                </label>
                 <input
                   required
                   type="text"
-                  placeholder="Ej. Solicitud Subsidio Huurtoeslag 2026"
-                  value={newDossierTitle}
-                  onChange={(e) => setNewDossierTitle(e.target.value)}
-                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                  value={dossierTitle}
+                  onChange={(e) => setDossierTitle(e.target.value)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-medium focus:border-secondary focus:outline-none"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-outline uppercase font-semibold mb-1">Categoría</label>
+                  <input
+                    type="text"
+                    value={dossierCategory}
+                    onChange={(e) => setDossierCategory(e.target.value)}
+                    className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-outline uppercase font-semibold mb-1">Precio / Honorarios (€)</label>
+                  <input
+                    required
+                    type="number"
+                    value={dossierFee}
+                    onChange={(e) => setDossierFee(parseFloat(e.target.value) || 0)}
+                    className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data font-bold text-secondary focus:border-secondary focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-outline uppercase font-semibold mb-1">Tarifa Gestoría (€)</label>
+                <label className="block text-outline uppercase font-semibold mb-1">Plazo Objetivo / Vencimiento</label>
                 <input
-                  required
-                  type="number"
-                  value={newDossierFee}
-                  onChange={(e) => setNewDossierFee(parseFloat(e.target.value) || 0)}
-                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data font-semibold focus:border-secondary focus:outline-none"
+                  type="date"
+                  value={dossierDeadline}
+                  onChange={(e) => setDossierDeadline(e.target.value)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
                 />
               </div>
+
+              {/* Opción para guardar permanentemente en el catálogo */}
+              {isNewServiceMode && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="saveCatalog"
+                    checked={saveToCatalogToo}
+                    onChange={(e) => setSaveToCatalogToo(e.target.checked)}
+                    className="accent-secondary"
+                  />
+                  <label htmlFor="saveCatalog" className="text-blue-900 font-semibold text-[11px] cursor-pointer">
+                    Guardar también este nuevo servicio en el catálogo para futuros clientes
+                  </label>
+                </div>
+              )}
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-3 border-t border-surface-container">
               <button
                 type="button"
                 onClick={() => setShowAddDossierModal(false)}
-                className="h-8 px-3 border border-outline-variant rounded text-xs font-semibold"
+                className="h-8 px-3 border border-outline-variant rounded text-xs font-semibold hover:bg-surface-container"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700"
+                className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-sm"
               >
-                Añadir al Expediente
+                Guardar Trámite
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. MODAL NUEVA CITA DIRECTA (Cliente bloqueado, llamada por defecto) */}
+      {/* ========================================================================= */}
+      {showNewAptModal && (
+        <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSaveAppointment}
+            className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-surface-container">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-600">event_available</span>
+                <h3 className="font-bold text-sm text-on-surface">Nueva Cita con {selectedClient?.full_name}</h3>
+              </div>
+              <button type="button" onClick={() => setShowNewAptModal(false)} className="text-outline">
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              {/* Cliente bloqueado por defecto */}
+              <div className="p-3 bg-surface-container-low rounded-lg border border-surface-container">
+                <span className="text-[10px] font-bold uppercase text-outline">Cliente Asignado:</span>
+                <p className="font-bold text-on-surface text-sm mt-0.5">{selectedClient?.full_name}</p>
+                <p className="text-[11px] text-outline font-mono-data">{selectedClient?.phone} · BSN: {selectedClient?.bsn}</p>
+              </div>
+
+              {/* Selector de Modalidad (Llamada por defecto) */}
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1.5">
+                  Modalidad de la Cita:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAptModality('llamada');
+                      setAptTitle(`Consulta Telefónica con ${selectedClient?.full_name}`);
+                    }}
+                    className={`p-2 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
+                      aptModality === 'llamada'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-900 font-bold ring-2 ring-emerald-500/20'
+                        : 'border-outline-variant bg-surface text-outline hover:bg-surface-container'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-base text-emerald-600">call</span>
+                    <span className="text-[10px]">Llamada (Defecto)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAptModality('presencial');
+                      setAptTitle(`Cita Presencial con ${selectedClient?.full_name}`);
+                    }}
+                    className={`p-2 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
+                      aptModality === 'presencial'
+                        ? 'border-secondary bg-blue-50 text-secondary font-bold ring-2 ring-blue-500/20'
+                        : 'border-outline-variant bg-surface text-outline hover:bg-surface-container'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-base text-secondary">business</span>
+                    <span className="text-[10px]">Solo Presencial</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAptModality('online_meet');
+                      setAptTitle(`Videollamada con ${selectedClient?.full_name}`);
+                    }}
+                    className={`p-2 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
+                      aptModality === 'online_meet'
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold ring-2 ring-indigo-500/20'
+                        : 'border-outline-variant bg-surface text-outline hover:bg-surface-container'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-base text-indigo-600">videocam</span>
+                    <span className="text-[10px]">Videollamada</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Motivo / Título de la Cita</label>
+                <input
+                  required
+                  type="text"
+                  value={aptTitle}
+                  onChange={(e) => setAptTitle(e.target.value)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-outline uppercase font-semibold mb-1">Fecha</label>
+                  <input
+                    required
+                    type="date"
+                    value={aptDate}
+                    onChange={(e) => setAptDate(e.target.value)}
+                    className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-outline uppercase font-semibold mb-1">Hora</label>
+                  <input
+                    required
+                    type="time"
+                    value={aptTime}
+                    onChange={(e) => setAptTime(e.target.value)}
+                    className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-surface-container">
+              <button
+                type="button"
+                onClick={() => setShowNewAptModal(false)}
+                className="h-8 px-3 border border-outline-variant rounded text-xs font-semibold hover:bg-surface-container"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold shadow-sm"
+              >
+                Confirmar Cita ({aptModality === 'llamada' ? 'Llamada' : aptModality === 'presencial' ? 'Presencial' : 'Videollamada'})
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. MODAL NUEVO PRESUPUESTO DIRECTO */}
+      {/* ========================================================================= */}
+      {showNewQuoteModal && (
+        <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSaveQuote}
+            className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-surface-container">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary">request_quote</span>
+                <h3 className="font-bold text-sm text-on-surface">Presupuesto para {selectedClient?.full_name}</h3>
+              </div>
+              <button type="button" onClick={() => setShowNewQuoteModal(false)} className="text-outline">
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Concepto del Servicio</label>
+                <input
+                  required
+                  type="text"
+                  value={quoteConcept}
+                  onChange={(e) => setQuoteConcept(e.target.value)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Base Imponible (€)</label>
+                <input
+                  required
+                  type="number"
+                  value={quoteAmount}
+                  onChange={(e) => setQuoteAmount(parseFloat(e.target.value) || 0)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data font-bold text-secondary focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div className="p-3 bg-surface-container-low rounded-lg font-mono-data text-xs space-y-1">
+                <div className="flex justify-between text-outline">
+                  <span>Base Imponible:</span>
+                  <span>€ {quoteAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-outline">
+                  <span>21% IVA / BTW:</span>
+                  <span>€ {(quoteAmount * 0.21).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-on-surface pt-1 border-t border-surface-container">
+                  <span>Total Presupuestado:</span>
+                  <span>€ {(quoteAmount * 1.21).toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Válido Hasta</label>
+                <input
+                  type="date"
+                  value={quoteValidUntil}
+                  onChange={(e) => setQuoteValidUntil(e.target.value)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-surface-container">
+              <button
+                type="button"
+                onClick={() => setShowNewQuoteModal(false)}
+                className="h-8 px-3 border border-outline-variant rounded text-xs font-semibold hover:bg-surface-container"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-sm"
+              >
+                Generar Presupuesto
               </button>
             </div>
           </form>
