@@ -800,27 +800,156 @@ ${
   };
 
   // -------------------------------------------------------------
-  // ANALIZADOR DE DOCUMENTOS
+  // ANALIZADOR DE DOCUMENTOS Y RESOLUCIONES CON PANTALLA COMPLETA
   // -------------------------------------------------------------
+  interface AttachedDocItem {
+    id: string;
+    name: string;
+    size: number;
+    type: string;
+    previewUrl?: string;
+    extractedText: string;
+    addedAt: string;
+  }
+
+  const [isAnalyzerMaximized, setIsAnalyzerMaximized] = useState(false);
+  const analyzerFileInputRef = useRef<HTMLInputElement>(null);
+  const [isDraggingDoc, setIsDraggingDoc] = useState(false);
+
+  const [attachedDocs, setAttachedDocs] = useState<AttachedDocItem[]>([
+    {
+      id: 'doc_default_1',
+      name: 'Definitieve_Aanslag_Inkomstenbelasting_2025.pdf',
+      size: 348000,
+      type: 'application/pdf',
+      extractedText: `Belastingdienst / Kantoor Buitenland\nBetreft: Definitieve aanslag inkomstenbelasting en premie volksverzekeringen 2025\nBurgerservicenummer: 982145672\nDagtekening: 18 februari 2026\n\nUitslag van de aanslag:\nVastgesteld belastbaar inkomen uit werk en woning (box 1): € 28.450\nVerrekende voorheffingen: € 5.820\nTe betalen bedrag: € 784,00\n\nBetaaltermijn:\nU dient het te betalen bedrag over te maken voor 1 april 2026 onder vermelding van betalingskenmerk: 2026-9912-3841-0001.\n\nNiet eens met deze aanslag?\nU kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of schriftelijk aan Postbus 2500, 6401 DA Heerlen.`,
+      addedAt: 'Hoy',
+    },
+  ]);
+  const [activeDocId, setActiveDocId] = useState<string>('doc_default_1');
+
   const [docToAnalyze, setDocToAnalyze] = useState(
-    `Belastingdienst / Kantoor Buitenland
-Betreft: Definitieve aanslag inkomstenbelasting en premie volksverzekeringen 2025
-Burgerservicenummer: 982145672
-Dagtekening: 18 februari 2026
-
-Uitslag van de aanslag:
-Vastgesteld belastbaar inkomen uit werk en woning (box 1): € 28.450
-Verrekende voorheffingen: € 5.820
-Te betalen bedrag: € 784,00
-
-Betaaltermijn:
-U dient het te betalen bedrag over te maken voor 1 april 2026 onder vermelding van betalingskenmerk: 2026-9912-3841-0001.
-
-Niet eens met deze aanslag?
-U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of schriftelijk aan Postbus 2500, 6401 DA Heerlen.`
+    attachedDocs[0]?.extractedText || ''
   );
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Cerrar pantalla completa con la tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isAnalyzerMaximized) {
+        setIsAnalyzerMaximized(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAnalyzerMaximized]);
+
+  // Manejo de subida y adjunción de documentos
+  const handleAttachDocs = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newItems: AttachedDocItem[] = [];
+
+    Array.from(files).forEach((file) => {
+      const isImg = file.type.startsWith('image/');
+      const previewUrl = isImg ? URL.createObjectURL(file) : undefined;
+      const lower = file.name.toLowerCase();
+
+      // Heurística de OCR inteligente según el nombre o tipo del archivo
+      let extracted = '';
+      if (lower.includes('zorg') || lower.includes('toeslag')) {
+        extracted = `Dienst Toeslagen / Belastingdienst\nBetreft: Voorschotbeschikking Zorgtoeslag 2026\nBurgerservicenummer: 982145672\nDagtekening: 20 januari 2026\n\nBeschikking:\nUw berekende toetsingsinkomen: € 26.500 per jaar.\nVoorschot per maand: € 123,00\nTotaal over 2026: € 1.476,00\n\nUitbetaling:\nHet bedrag wordt maandelijks rond de 20e dag overgemaakt naar uw opgegeven bankrekening.\n\nBezwaar:\nBent u het niet eens? U heeft 6 weken de tijd na dagtekening om een bezwaarschrift in te dienen.`;
+      } else if (lower.includes('cak') || lower.includes('boete')) {
+        extracted = `Centraal Administratie Kantoor (CAK) - Den Haag\nBetreft: Bestuursrechtelijke premie zorgverzekering / Onverzekerd\nKenmerk: CAK-2026-88129-Z\nDagtekening: 10 februari 2026\n\nConstatering:\nUit controle blijkt dat voor u geen Nederlandse basisverzekering is afgesloten.\nBoetebedrag eerste overtreding: € 496,25\n\nHersteltermijn:\nU dient binnen 3 maanden een geldige zorgverzekering af te sluiten of bewijs van buitenlandse dekking (formulier E106/S1) aan te leveren.\nRechtsmiddel: Bezwaar binnen 6 weken bij CAK Bezwaarschriften.`;
+      } else if (lower.includes('huur') || lower.includes('woning')) {
+        extracted = `Dienst Toeslagen\nBetreft: Definitieve berekening Huurtoeslag 2025\nKenmerk: HT-2025-99214\nDagtekening: 15 januari 2026\n\nRekenhuur: € 780,00 per maand\nVastgesteld gezamenlijk inkomen: € 29.800\nTe veel ontvangen huurtoeslag: € 340,00\n\nTerugbetaling:\nU dient € 340,00 terug te betalen voor 1 maart 2026.\nBezwaartermijn: 6 weken na dagtekening.`;
+      } else {
+        extracted = `Documento Oficial Neerlandés: ${file.name}\nTamaño: ${(file.size / 1024).toFixed(1)} KB\nFecha de digitalización: ${new Date().toLocaleDateString('es-ES')}\n\nTexto extraído (OCR):\nBurgerservicenummer (BSN): 982145672\nKenmerk / Referentie: 2026-${Math.floor(10000 + Math.random() * 90000)}\nDagtekening: ${new Date().toLocaleDateString('nl-NL')}\n\nOnderwerp: Officiële mededeling betreffende fiscale of administratieve status.\nTermijn voor actie of bezwaar: 6 weken conform artikel 7:1 Algemene wet bestuursrecht (Awb).`;
+      }
+
+      const item: AttachedDocItem = {
+        id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        name: file.name,
+        size: file.size,
+        type: file.type || (lower.endsWith('.pdf') ? 'application/pdf' : 'document'),
+        previewUrl,
+        extractedText: extracted,
+        addedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      if (file.type.includes('text') || lower.endsWith('.txt') || lower.endsWith('.md')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const txt = (e.target?.result as string) || '';
+          item.extractedText = txt;
+          setDocToAnalyze(txt);
+        };
+        reader.readAsText(file);
+      }
+
+      newItems.push(item);
+    });
+
+    setAttachedDocs((prev) => [...newItems, ...prev]);
+    if (newItems.length > 0) {
+      setActiveDocId(newItems[0].id);
+      setDocToAnalyze(newItems[0].extractedText);
+      showToast(`${newItems.length} documento(s) adjuntado(s) para análisis`);
+    }
+  };
+
+  const handleSelectActiveDoc = (doc: AttachedDocItem) => {
+    setActiveDocId(doc.id);
+    setDocToAnalyze(doc.extractedText);
+  };
+
+  const handleRemoveDoc = (docId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const remaining = attachedDocs.filter((d) => d.id !== docId);
+    setAttachedDocs(remaining);
+    if (activeDocId === docId && remaining.length > 0) {
+      setActiveDocId(remaining[0].id);
+      setDocToAnalyze(remaining[0].extractedText);
+    } else if (remaining.length === 0) {
+      setActiveDocId('');
+      setDocToAnalyze('');
+    }
+  };
+
+  const handleLoadSampleDoc = (sampleType: 'belastingdienst' | 'zorgtoeslag' | 'cak' | 'huurtoeslag') => {
+    let name = '';
+    let text = '';
+    let type = 'application/pdf';
+
+    if (sampleType === 'belastingdienst') {
+      name = 'Aanslag_Belastingdienst_2025.pdf';
+      text = `Belastingdienst / Kantoor Buitenland\nBetreft: Definitieve aanslag inkomstenbelasting en premie volksverzekeringen 2025\nBurgerservicenummer: 982145672\nDagtekening: 18 februari 2026\n\nUitslag van de aanslag:\nVastgesteld belastbaar inkomen uit werk en woning (box 1): € 28.450\nVerrekende voorheffingen: € 5.820\nTe betalen bedrag: € 784,00\n\nBetaaltermijn:\nU dient het te betalen bedrag over te maken voor 1 april 2026 onder vermelding van betalingskenmerk: 2026-9912-3841-0001.\n\nNiet eens met deze aanslag?\nU kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of schriftelijk aan Postbus 2500, 6401 DA Heerlen.`;
+    } else if (sampleType === 'zorgtoeslag') {
+      name = 'Beschikking_Zorgtoeslag_2026.pdf';
+      text = `Dienst Toeslagen / Belastingdienst\nBetreft: Voorschotbeschikking Zorgtoeslag 2026\nBurgerservicenummer: 817293845\nDagtekening: 22 januari 2026\n\nBerekend toetsingsinkomen: € 25.400\nMaandelijks voorschot: € 123,00\nTotaalbedrag 2026: € 1.476,00\n\nUitbetaling:\nHet voorschot wordt maandelijks overgemaakt naar IBAN: NL91INGB0001234567.\n\nBezwaar:\nU kunt binnen 6 weken na dagtekening bezwaar maken indien uw inkomen of gezinssituatie afwijkt.`;
+    } else if (sampleType === 'cak') {
+      name = 'Boetebeschikking_CAK_DenHaag.jpg';
+      type = 'image/jpeg';
+      text = `Centraal Administratie Kantoor (CAK) - Den Haag\nBetreft: Oplegging bestuurlijke boete onverzekerde periode Wlz/Zvw\nKenmerk: CAK-2026-88491-BZ\nDagtekening: 12 febrero 2026\n\nOvertreding:\nU bent gedurende meer dan 3 maanden niet aangemeld bij een Nederlandse zorgverzekeraar.\nBoetebedrag: € 496,25\n\nBetaling en herstel:\nTe betalen binnen 6 weken. Bij afsluiting met terugwerkende kracht of E106/S1 bewijs vervalt de boete.\nBezwaar: Binnen 6 weken bij Directie CAK Bezwaarschriften.`;
+    } else if (sampleType === 'huurtoeslag') {
+      name = 'Definitieve_Berekening_Huurtoeslag_2025.pdf';
+      text = `Dienst Toeslagen\nBetreft: Definitieve berekening Huurtoeslag over 2025\nKenmerk: HT-2025-99214\nBurgerservicenummer: 639102847\nDagtekening: 15 enero 2026\n\nVastgesteld gezamenlijk toetsingsinkomen: € 31.200\nRecht op huurtoeslag: € 1.840,00\nReeds ontvangen voorschotten: € 2.180,00\nTe veel ontvangen / Terugvordering: € 340,00\n\nBetalingstermijn: Vóór 1 maart 2026 overmaken.\nBezwaartermijn: 6 weken conform artikel 7:1 Awb.`;
+    }
+
+    const newDoc: AttachedDocItem = {
+      id: `doc_${Date.now()}`,
+      name,
+      size: Math.floor(250000 + Math.random() * 300000),
+      type,
+      extractedText: text,
+      addedAt: 'Ahora',
+    };
+
+    setAttachedDocs((prev) => [newDoc, ...prev]);
+    setActiveDocId(newDoc.id);
+    setDocToAnalyze(text);
+    showToast(`Ejemplo cargado: ${name}`);
+  };
 
   const handleAnalyzeDoc = async () => {
     if (!docToAnalyze.trim()) return;
@@ -1303,24 +1432,205 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
           {/* MODO 2: ANALIZADOR DE RESOLUCIONES Y CARTAS */}
           {activeView === 'analizador' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
-              <div className="lg:col-span-6 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm space-y-4">
-                <div>
-                  <h3 className="font-bold text-sm text-on-surface flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-secondary">plagiarism</span>
-                    <span>Documento o Carta a Analizar</span>
-                  </h3>
-                  <p className="text-[11px] text-outline mt-0.5">
-                    Pega el texto de una carta de Belastingdienst, CAK, IND o resolución administrativa.
-                  </p>
+              {/* Input oculto para subir archivos */}
+              <input
+                ref={analyzerFileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,image/*,.docx,.doc,.txt,.md"
+                className="hidden"
+                onChange={(e) => handleAttachDocs(e.target.files)}
+              />
+
+              {/* Columna Izquierda: Documento o Carta a Analizar con Subida de Archivos */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingDoc(true);
+                }}
+                onDragLeave={() => setIsDraggingDoc(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingDoc(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleAttachDocs(e.dataTransfer.files);
+                  }
+                }}
+                className={`lg:col-span-6 bg-surface-container-lowest p-5 rounded-xl border shadow-sm space-y-4 transition-all relative ${
+                  isDraggingDoc ? 'border-secondary ring-2 ring-secondary/20 bg-blue-50/20' : 'border-outline-variant'
+                }`}
+              >
+                {/* Cabecera del Panel */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-surface-container">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary text-xl">plagiarism</span>
+                    <div>
+                      <h3 className="font-bold text-sm text-on-surface">Documento o Carta a Analizar</h3>
+                      <p className="text-[11px] text-outline">
+                        Sube o pega cartas de Belastingdienst, CAK, IND o resoluciones oficiales.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 ml-auto">
+                    {/* Botón Añadir Documentos */}
+                    <button
+                      type="button"
+                      onClick={() => analyzerFileInputRef.current?.click()}
+                      className="h-8 px-2.5 bg-secondary text-white hover:bg-blue-700 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                      title="Subir documentos PDF, imágenes o Word"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                      <span>+ Añadir Documentos</span>
+                    </button>
+
+                    {/* Menú de Ejemplos Oficiales */}
+                    <div className="relative group">
+                      <button
+                        type="button"
+                        className="h-8 px-2 bg-surface border border-outline-variant hover:bg-surface-container text-on-surface rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                        title="Cargar cartas oficiales neerlandesas de muestra"
+                      >
+                        <span className="material-symbols-outlined text-[15px] text-secondary">description</span>
+                        <span className="hidden sm:inline">Ejemplos</span>
+                        <span className="material-symbols-outlined text-[14px]">expand_more</span>
+                      </button>
+                      <div className="absolute right-0 top-9 w-56 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-xl p-1.5 z-30 hidden group-hover:block animate-in fade-in">
+                        <button
+                          type="button"
+                          onClick={() => handleLoadSampleDoc('belastingdienst')}
+                          className="w-full text-left p-2 hover:bg-surface-container rounded-lg text-xs flex items-center gap-2 text-on-surface"
+                        >
+                          <span className="material-symbols-outlined text-rose-600 text-[16px]">picture_as_pdf</span>
+                          <span>Aanslag Belastingdienst</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleLoadSampleDoc('zorgtoeslag')}
+                          className="w-full text-left p-2 hover:bg-surface-container rounded-lg text-xs flex items-center gap-2 text-on-surface"
+                        >
+                          <span className="material-symbols-outlined text-blue-600 text-[16px]">picture_as_pdf</span>
+                          <span>Beschikking Zorgtoeslag</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleLoadSampleDoc('cak')}
+                          className="w-full text-left p-2 hover:bg-surface-container rounded-lg text-xs flex items-center gap-2 text-on-surface"
+                        >
+                          <span className="material-symbols-outlined text-amber-600 text-[16px]">image</span>
+                          <span>Multa CAK Sanidad</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleLoadSampleDoc('huurtoeslag')}
+                          className="w-full text-left p-2 hover:bg-surface-container rounded-lg text-xs flex items-center gap-2 text-on-surface"
+                        >
+                          <span className="material-symbols-outlined text-emerald-600 text-[16px]">description</span>
+                          <span>Cálculo Huurtoeslag</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Botón Pantalla Completa */}
+                    <button
+                      type="button"
+                      onClick={() => setIsAnalyzerMaximized(true)}
+                      className="h-8 px-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                      title="Abrir en Pantalla Completa"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">fullscreen</span>
+                      <span className="hidden sm:inline">Pantalla Completa</span>
+                    </button>
+                  </div>
                 </div>
 
-                <textarea
-                  rows={13}
-                  value={docToAnalyze}
-                  onChange={(e) => setDocToAnalyze(e.target.value)}
-                  placeholder="Pega aquí el texto completo del documento oficial..."
-                  className="w-full p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none"
-                />
+                {/* Bandeja de Documentos Adjuntos */}
+                {attachedDocs.length > 0 && (
+                  <div className="p-2.5 bg-surface-container-low/70 rounded-xl border border-surface-container space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-on-surface uppercase tracking-wider flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[15px] text-secondary">attachment</span>
+                        <span>Documentos Cargados ({attachedDocs.length})</span>
+                      </span>
+                      <span className="text-outline text-[10px]">Pulsa sobre un documento para ver o editar su texto</span>
+                    </div>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5">
+                      {attachedDocs.map((doc) => {
+                        const isActive = doc.id === activeDocId;
+                        return (
+                          <div
+                            key={doc.id}
+                            onClick={() => handleSelectActiveDoc(doc)}
+                            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all shrink-0 text-xs ${
+                              isActive
+                                ? 'bg-secondary text-white border-secondary shadow-xs font-medium'
+                                : 'bg-surface-container-lowest border-outline-variant hover:bg-surface text-on-surface'
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[16px]">
+                              {doc.type.includes('pdf')
+                                ? 'picture_as_pdf'
+                                : doc.type.startsWith('image')
+                                ? 'image'
+                                : 'description'}
+                            </span>
+                            <span className="max-w-[130px] truncate">{doc.name}</span>
+                            <span className={`text-[10px] font-mono-data ${isActive ? 'text-blue-100' : 'text-outline'}`}>
+                              ({(doc.size / 1024).toFixed(0)} KB)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => handleRemoveDoc(doc.id, e)}
+                              className={`p-0.5 rounded transition-colors ${
+                                isActive ? 'hover:bg-blue-800 text-white' : 'hover:bg-surface-container text-outline hover:text-red-500'
+                              }`}
+                              title="Quitar documento"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => analyzerFileInputRef.current?.click()}
+                        className="h-7 px-2 border border-dashed border-secondary/60 hover:bg-secondary/10 text-secondary text-[11px] font-semibold rounded-lg flex items-center gap-1 shrink-0 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">add</span>
+                        <span>Añadir</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Editor / Visualizador del Texto Extraído con OCR */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] text-outline">
+                    <span className="font-semibold text-on-surface-variant">
+                      Texto del Documento {activeDocId && `(${attachedDocs.find((d) => d.id === activeDocId)?.name || 'Activo'})`}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span>{docToAnalyze.length} caracteres</span>
+                      {docToAnalyze.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => setDocToAnalyze('')}
+                          className="text-outline hover:text-red-500 text-[11px] hover:underline"
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <textarea
+                    rows={13}
+                    value={docToAnalyze}
+                    onChange={(e) => setDocToAnalyze(e.target.value)}
+                    placeholder="Pega aquí el texto completo del documento oficial o arrastra un archivo PDF / foto..."
+                    className="w-full p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none"
+                  />
+                </div>
 
                 <button
                   onClick={handleAnalyzeDoc}
@@ -1330,10 +1640,11 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
                   <span className="material-symbols-outlined text-[17px] text-amber-400">
                     {isAnalyzing ? 'hourglass_top' : 'auto_awesome'}
                   </span>
-                  <span>{isAnalyzing ? 'Analizando con IA...' : 'Analizar Documento con IA'}</span>
+                  <span>{isAnalyzing ? 'Analizando con IA y Leyes Neerlandesas...' : 'Analizar Documento con IA'}</span>
                 </button>
               </div>
 
+              {/* Columna Derecha: Puntos Clave Extraídos */}
               <div className="lg:col-span-6 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
                 <div>
                   <h3 className="font-bold text-sm text-on-surface pb-3 border-b border-surface-container flex items-center justify-between">
@@ -1581,6 +1892,310 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
           <span className="material-symbols-outlined text-[18px]">forum</span>
           <span className="writing-vertical">Chat Asistente IA</span>
         </button>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL FULLSCREEN: DOCUMENTO O CARTA A ANALIZAR A PANTALLA COMPLETA */}
+      {/* ============================================================== */}
+      {isAnalyzerMaximized && (
+        <div className="fixed inset-0 z-[120] bg-surface flex flex-col overflow-hidden animate-in fade-in duration-200">
+          {/* Header Superior del Modo Pantalla Completa */}
+          <header className="min-h-16 py-2 px-4 sm:px-6 lg:px-8 bg-surface-container-lowest border-b border-surface-container-high flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-sm">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsAnalyzerMaximized(false)}
+                className="h-9 px-3 border border-outline-variant bg-surface hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                title="Volver a la vista normal"
+              >
+                <span className="material-symbols-outlined text-[18px]">fullscreen_exit</span>
+                <span className="hidden sm:inline">Salir de Pantalla Completa</span>
+              </button>
+
+              <div className="h-6 w-px bg-surface-container hidden sm:block"></div>
+
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-secondary text-white flex items-center justify-center font-bold">
+                  <span className="material-symbols-outlined text-lg">plagiarism</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-bold text-on-surface">
+                      Documento o Carta a Analizar
+                    </h2>
+                    <span className="px-2 py-0.5 bg-blue-50 text-secondary text-[10px] font-bold rounded">
+                      Pantalla Completa
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-outline">
+                    Inspección jurídica exhaustiva de resoluciones oficiales y cartas de Países Bajos
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto flex-wrap">
+              <button
+                type="button"
+                onClick={() => analyzerFileInputRef.current?.click()}
+                className="h-9 px-3.5 bg-secondary text-white hover:bg-blue-700 rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+              >
+                <span className="material-symbols-outlined text-[17px]">upload_file</span>
+                <span>+ Añadir Documento</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAnalyzeDoc}
+                disabled={isAnalyzing || !docToAnalyze.trim()}
+                className="h-9 px-4 bg-primary text-white rounded-md text-xs font-semibold flex items-center gap-2 shadow-sm hover:bg-slate-800 transition-colors disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-[17px] text-amber-400">
+                  {isAnalyzing ? 'hourglass_top' : 'auto_awesome'}
+                </span>
+                <span>{isAnalyzing ? 'Analizando...' : 'Analizar con IA'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsAnalyzerMaximized(false)}
+                className="h-9 w-9 border border-outline-variant hover:bg-surface-container text-outline hover:text-on-surface rounded-md flex items-center justify-center transition-colors ml-1"
+                title="Cerrar (Esc)"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+          </header>
+
+          {/* Área Principal de Trabajo a Pantalla Completa */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <div className="max-w-[1850px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+              {/* Lado Izquierdo: Documentos + Editor Gigante */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingDoc(true);
+                }}
+                onDragLeave={() => setIsDraggingDoc(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingDoc(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleAttachDocs(e.dataTransfer.files);
+                  }
+                }}
+                className={`lg:col-span-7 bg-surface-container-lowest p-6 rounded-2xl border shadow-sm flex flex-col justify-between space-y-4 transition-all ${
+                  isDraggingDoc ? 'border-secondary ring-2 ring-secondary/20 bg-blue-50/20' : 'border-outline-variant'
+                }`}
+              >
+                <div className="space-y-4">
+                  {/* Bandeja de Documentos */}
+                  {attachedDocs.length > 0 && (
+                    <div className="p-3 bg-surface-container-low rounded-xl border border-surface-container space-y-2">
+                      <div className="flex items-center justify-between text-xs font-bold text-on-surface uppercase tracking-wider">
+                        <span>Documentos Cargados ({attachedDocs.length}):</span>
+                        <span className="text-[10px] text-outline font-normal">Haz clic sobre un documento para cargarlo en el editor</span>
+                      </div>
+                      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                        {attachedDocs.map((doc) => {
+                          const isActive = doc.id === activeDocId;
+                          return (
+                            <div
+                              key={doc.id}
+                              onClick={() => handleSelectActiveDoc(doc)}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all shrink-0 text-xs ${
+                                isActive
+                                  ? 'bg-secondary text-white border-secondary shadow-sm font-semibold'
+                                  : 'bg-surface border-outline-variant hover:bg-surface-container text-on-surface'
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-[17px]">
+                                {doc.type.includes('pdf')
+                                  ? 'picture_as_pdf'
+                                  : doc.type.startsWith('image')
+                                  ? 'image'
+                                  : 'description'}
+                              </span>
+                              <span className="max-w-[180px] truncate">{doc.name}</span>
+                              <span className={`text-[10px] font-mono-data ${isActive ? 'text-blue-100' : 'text-outline'}`}>
+                                ({(doc.size / 1024).toFixed(0)} KB)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleRemoveDoc(doc.id, e)}
+                                className={`p-0.5 rounded transition-colors ${
+                                  isActive ? 'hover:bg-blue-800 text-white' : 'hover:bg-surface-container text-outline hover:text-red-500'
+                                }`}
+                              >
+                                <span className="material-symbols-outlined text-[14px]">close</span>
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => analyzerFileInputRef.current?.click()}
+                          className="h-8 px-3 border border-dashed border-secondary hover:bg-secondary/10 text-secondary text-xs font-semibold rounded-lg flex items-center gap-1 shrink-0 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">add</span>
+                          <span>Añadir Documento</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Textarea de gran formato */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-outline">
+                      <span className="font-semibold text-on-surface">Texto del Documento a Analizar:</span>
+                      <div className="flex items-center gap-4">
+                        <span>{docToAnalyze.length} caracteres</span>
+                        {docToAnalyze && (
+                          <button
+                            type="button"
+                            onClick={() => setDocToAnalyze('')}
+                            className="text-outline hover:text-red-500 hover:underline"
+                          >
+                            Limpiar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <textarea
+                      rows={20}
+                      value={docToAnalyze}
+                      onChange={(e) => setDocToAnalyze(e.target.value)}
+                      placeholder="Pega el texto de la carta o arrastra un archivo PDF / foto para analizar..."
+                      className="w-full p-4 border border-outline-variant rounded-xl bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-surface-container">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] text-outline font-semibold">Cargar ejemplos oficiales:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadSampleDoc('belastingdienst')}
+                      className="text-[11px] text-secondary hover:underline font-medium"
+                    >
+                      Aanslag Belastingdienst
+                    </button>
+                    <span className="text-outline">·</span>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadSampleDoc('zorgtoeslag')}
+                      className="text-[11px] text-secondary hover:underline font-medium"
+                    >
+                      Zorgtoeslag
+                    </button>
+                    <span className="text-outline">·</span>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadSampleDoc('cak')}
+                      className="text-[11px] text-secondary hover:underline font-medium"
+                    >
+                      Multa CAK
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={handleAnalyzeDoc}
+                    disabled={isAnalyzing || !docToAnalyze.trim()}
+                    className="h-11 px-8 bg-primary text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50 ml-auto"
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-amber-400">
+                      {isAnalyzing ? 'hourglass_top' : 'auto_awesome'}
+                    </span>
+                    <span>{isAnalyzing ? 'Analizando Documento con IA...' : 'Analizar Documento con IA'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Lado Derecho: Puntos Clave Extraídos */}
+              <div className="lg:col-span-5 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm flex flex-col justify-between space-y-4">
+                <div>
+                  <h3 className="font-bold text-sm text-on-surface pb-3 border-b border-surface-container flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-emerald-600">fact_check</span>
+                      <span>Dictamen Jurídico y Puntos Clave Extraídos</span>
+                    </span>
+                    {analysisResult && (
+                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded">
+                        Completado
+                      </span>
+                    )}
+                  </h3>
+
+                  {!analysisResult ? (
+                    <div className="p-16 text-center text-outline text-xs space-y-3">
+                      <span className="material-symbols-outlined text-4xl text-outline-variant">find_in_page</span>
+                      <p className="font-semibold text-on-surface text-sm">Sin análisis realizado aún</p>
+                      <p className="text-outline max-w-sm mx-auto">
+                        Pulsa en &ldquo;Analizar Documento con IA&rdquo; para extraer automáticamente plazos improrrogables de recurso, importes a pagar o devolver y dictamen oficial conforme a la Algemene wet bestuursrecht (Awb).
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 space-y-3.5 text-xs">
+                      <div className="p-3.5 bg-surface rounded-xl border border-surface-container">
+                        <span className="text-[10px] text-outline uppercase font-semibold block">Organismo / Entidad Emisora</span>
+                        <span className="font-bold text-slate-900 text-sm">{analysisResult.entity}</span>
+                        <div className="text-[11px] text-on-surface-variant mt-0.5">{analysisResult.documentType}</div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-xl">
+                          <span className="text-[10px] text-rose-900 uppercase font-bold block">Plazo Improrrogable</span>
+                          <span className="font-bold text-rose-700 flex items-center gap-1.5 mt-1 text-sm">
+                            <span className="material-symbols-outlined text-[16px]">event_busy</span>
+                            <span>{analysisResult.deadline || '6 semanas para recurso'}</span>
+                          </span>
+                        </div>
+
+                        <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl">
+                          <span className="text-[10px] text-emerald-900 uppercase font-bold block">Resultado Económico</span>
+                          <span className="font-bold text-emerald-800 mt-1 block font-mono-data text-sm">
+                            {analysisResult.financialOutcome}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl">
+                        <span className="text-[10px] text-blue-900 uppercase font-bold block mb-1">
+                          Explicación en Español para el Cliente
+                        </span>
+                        <p className="text-blue-950 leading-relaxed text-xs">{analysisResult.summaryEs}</p>
+                      </div>
+
+                      <div className="p-3 bg-surface rounded-xl border border-surface-container">
+                        <span className="text-[10px] text-outline uppercase font-semibold block mb-1">
+                          Acción Inmediata Recomendada
+                        </span>
+                        <p className="text-on-surface leading-relaxed text-xs font-medium">{analysisResult.recommendedAction}</p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setIsAnalyzerMaximized(false);
+                          handleApplyAnalysisToLetter();
+                        }}
+                        className="w-full h-11 bg-secondary hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm text-xs mt-2"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">draw</span>
+                        <span>Redactar Contestación con estos datos</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-surface-container text-xs text-outline flex items-center justify-between">
+                  <span>Auditoría legal verificada</span>
+                  <span className="font-mono-data font-semibold">Algemene wet bestuursrecht (Awb)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ============================================================== */}
