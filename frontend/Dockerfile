@@ -49,9 +49,13 @@ USER nextjs
 EXPOSE 3000
 
 # Healthcheck para Coolify. start-period generoso: Next tarda en levantar
-# el servidor standalone y un periodo corto provoke reinicios en cascada.
+# el servidor standalone y un periodo corto provoca reinicios en cascada.
+#
+# 127.0.0.1 y no localhost: en Alpine, localhost resuelve primero a [::1], y
+# si el servidor solo escucha en IPv4 el wget falla y el contenedor queda
+# unhealthy aunque la app responda.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"

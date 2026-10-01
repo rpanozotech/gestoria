@@ -40,8 +40,11 @@ USER nextjs
 
 EXPOSE 5000
 
-# Health check para Coolify
+# Health check para Coolify.
+# 127.0.0.1 y no localhost: en Alpine, localhost resuelve primero a [::1], y
+# si el servidor solo escucha en IPv4 el wget falla y el contenedor queda
+# unhealthy aunque la app responda.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:5000/health || exit 1
 
 CMD ["node", "dist/index.js"]
