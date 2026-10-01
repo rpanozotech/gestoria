@@ -22,3 +22,6 @@ Thumbs.db
 # Uploads & Storage (local volume)
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# TypeScript build cache
+*.tsbuildinfo
