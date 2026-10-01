@@ -86,21 +86,25 @@ export default function ContactoPage() {
                   </div>
 
                   <div className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
-                    <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-[24px]">location_on</span>
+                    <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-[24px]">schedule</span>
                     </div>
                     <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Oficina Principal</span>
-                      <span className="text-base font-bold text-slate-900">Keizersgracht 482</span>
-                      <span className="text-xs text-slate-500 block mt-0.5">1016 EG Amsterdam, Países Bajos</span>
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Horario de Atención</span>
+                      <span className="text-base font-bold text-slate-900">Lunes a Viernes: 09:00 – 19:00</span>
+                      <span className="text-xs text-slate-500 block mt-0.5">Soporte online y videollamadas con tu gestor</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-5 bg-blue-50 rounded-2xl border border-blue-200/70 text-xs text-slate-700 space-y-1.5">
-                  <p className="font-bold text-blue-900">Datos Oficiales de Registro:</p>
-                  <p>• Registro Mercantil KvK: <strong>84920194</strong></p>
-                  <p>• Número Fiscal BTW: <strong>NL863492019B01</strong></p>
+                  <p className="font-bold text-blue-900 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[18px] text-blue-600">verified</span>
+                    <span>Atención 100% Digital & Directa</span>
+                  </p>
+                  <p className="text-slate-600">
+                    Gestionamos todos tus trámites ante Belastingdienst, UWV y Gemeente de forma remota sin que tengas que desplazarte.
+                  </p>
                 </div>
               </div>
 

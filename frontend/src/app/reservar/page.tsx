@@ -111,7 +111,7 @@ export default function ReservarCitaPage() {
                       {[
                         { id: 'meet', label: 'Videollamada Google Meet', icon: 'videocam', desc: 'Enlace directo a tu correo' },
                         { id: 'phone', label: 'Llamada Telefónica', icon: 'call', desc: 'Te llamamos a tu móvil' },
-                        { id: 'office', label: 'Presencial (Despacho NL)', icon: 'apartment', desc: 'Keizersgracht 482, Amsterdam' },
+                        { id: 'office', label: 'Presencial', icon: 'apartment', desc: 'Atención presencial en Tilburg, Países Bajos' },
                       ].map((m) => (
                         <button
                           key={m.id}

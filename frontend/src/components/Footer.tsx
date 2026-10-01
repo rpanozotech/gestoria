@@ -22,9 +22,8 @@ export default function Footer() {
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
               “Tus trámites en Holanda, mucho más fáciles.” Asesoría fiscal, laboral y de extranjería para expatriados, jóvenes y profesionales en Países Bajos.
             </p>
-            <div className="pt-2 text-[11px] text-slate-500 space-y-1">
-              <p>KvK: 84920194 · BTW: NL863492019B01</p>
-              <p>Amsterdam · Rotterdam · Utrecht · Países Bajos</p>
+            <div className="pt-2 text-[11px] text-slate-500">
+              <p>Servicios de gestoría y asesoría para toda Holanda (Países Bajos)</p>
             </div>
           </div>
 

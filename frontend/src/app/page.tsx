@@ -1322,12 +1322,12 @@ export default function PublicHomePage() {
                 </div>
 
                 <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/70">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[22px]">location_on</span>
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[22px]">schedule</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-semibold">Oficina Central</p>
-                    <p className="text-sm font-bold text-slate-900">Keizersgracht 482, 1016 EG Amsterdam</p>
+                    <p className="text-xs text-slate-500 font-semibold">Horario de Atención</p>
+                    <p className="text-sm font-bold text-slate-900">Lunes a Viernes: 09:00 – 19:00</p>
                   </div>
                 </div>
               </div>

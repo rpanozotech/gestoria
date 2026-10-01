@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 export default function CalculadoraPage() {
   // 1. Calculadora M-Form
   const [monthsInNL, setMonthsInNL] = useState<number>(8);
-  const [grossIncome, setGrossIncome] = useState<number>(36000);
+  const [grossIncome, setGrossIncome] = useState<number>(27000);
   const [withheldTax, setWithheldTax] = useState<number>(7800);
   const [hasRelocation, setHasRelocation] = useState<boolean>(true);
 
@@ -93,7 +93,7 @@ export default function CalculadoraPage() {
                   <div className="space-y-6">
                     {/* SLIDER MESES */}
                     <div>
-                      <div className="flex justify-between text-sm font-semibold text-slate-800 mb-2">
+                      <div className="flex justify-between w-full text-sm font-semibold text-slate-800 mb-2">
                         <span>Meses vividos en Holanda este año:</span>
                         <span className="text-blue-600 font-extrabold text-base">{monthsInNL} meses</span>
                       </div>
@@ -105,39 +105,63 @@ export default function CalculadoraPage() {
                         onChange={(e) => setMonthsInNL(Number(e.target.value))}
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
+                      <input
+                        type="number"
+                        min="1"
+                        max="11"
+                        value={monthsInNL}
+                        onChange={(e) => setMonthsInNL(Number(e.target.value))}
+                        className="mt-2 mx-auto w-48 border border-slate-300 rounded p-1"
+                      />
                     </div>
 
                     {/* SLIDER INGRESOS BRUTOS */}
                     <div>
-                      <div className="flex justify-between text-sm font-semibold text-slate-800 mb-2">
+                      <div className="flex justify-between w-full text-sm font-semibold text-slate-800 mb-2">
                         <span>Ingreso bruto percibido en Holanda:</span>
-                        <span className="text-blue-600 font-extrabold text-base">{grossIncome.toLocaleString()} €</span>
+                        <span className="text-blue-600 font-extrabold text-base">{grossIncome.toLocaleString('es-ES')} €</span>
                       </div>
                       <input
                         type="range"
                         min="10000"
-                        max="90000"
+                        max="60000"
                         step="1000"
                         value={grossIncome}
                         onChange={(e) => setGrossIncome(Number(e.target.value))}
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
+                      <input
+                        type="number"
+                        min="10000"
+                        max="60000"
+                        value={grossIncome}
+                        onChange={(e) => setGrossIncome(Number(e.target.value))}
+                        className="mt-2 mx-auto w-48 border border-slate-300 rounded p-1"
+                      />
                     </div>
 
                     {/* SLIDER RETENCIONES */}
                     <div>
-                      <div className="flex justify-between text-sm font-semibold text-slate-800 mb-2">
+                      <div className="flex justify-between w-full text-sm font-semibold text-slate-800 mb-2">
                         <span>Impuestos retenidos en nómina (Loonheffing):</span>
-                        <span className="text-blue-600 font-extrabold text-base">{withheldTax.toLocaleString()} €</span>
+                        <span className="text-blue-600 font-extrabold text-base">{withheldTax.toLocaleString('es-ES')} €</span>
                       </div>
                       <input
                         type="range"
                         min="2000"
-                        max="35000"
+                        max="20000"
                         step="500"
                         value={withheldTax}
                         onChange={(e) => setWithheldTax(Number(e.target.value))}
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                      />
+                      <input
+                        type="number"
+                        min="2000"
+                        max="20000"
+                        value={withheldTax}
+                        onChange={(e) => setWithheldTax(Number(e.target.value))}
+                        className="mt-2 mx-auto w-48 border border-slate-300 rounded p-1"
                       />
                     </div>
 
