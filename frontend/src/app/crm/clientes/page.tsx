@@ -7,6 +7,9 @@ export default function CRMClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'con_digid' | 'pendientes'>('todos');
 
+  // Control de vista maximizada (por defecto FALSE para NO tapar la barra lateral izquierda)
+  const [isMaximized, setIsMaximized] = useState(false);
+
   // Catálogo de Servicios y Trámites
   const [servicesCatalog, setServicesCatalog] = useState([
     { id: '1', title: 'Declaración Fiscal M-Form', category: 'Fiscalidad / Belastingdienst', defaultFee: 180.00 },
@@ -18,7 +21,7 @@ export default function CRMClientesPage() {
     { id: '7', title: 'Cambio de Cuenta Bancaria Belastingdienst', category: 'Gestión Administrativa', defaultFee: 45.00 },
   ]);
 
-  // Lista de clientes con sus expedientes, presupuestos, facturas y citas internas
+  // Lista de clientes con sus datos, trámites, presupuestos, facturas y citas
   const [clients, setClients] = useState<any[]>([
     {
       id: '1',
@@ -190,7 +193,7 @@ export default function CRMClientesPage() {
     },
   ]);
 
-  // Cliente seleccionado para la Ficha 360° en PANTALLA COMPLETA
+  // Cliente seleccionado para la Ficha 360°
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [active360Tab, setActive360Tab] = useState<'resumen' | 'personales' | 'facturacion' | 'citas' | 'ia'>('resumen');
 
@@ -198,7 +201,7 @@ export default function CRMClientesPage() {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [editedNotes, setEditedNotes] = useState('');
 
-  // 1. MODAL NUEVO TRÁMITE (Con desplegable + añadir nuevo servicio a catálogo)
+  // 1. MODAL NUEVO TRÁMITE (Desplegable + añadir nuevo servicio a catálogo)
   const [showAddDossierModal, setShowAddDossierModal] = useState(false);
   const [selectedCatalogServiceId, setSelectedCatalogServiceId] = useState(servicesCatalog[0].id);
   const [dossierTitle, setDossierTitle] = useState(servicesCatalog[0].title);
@@ -208,14 +211,14 @@ export default function CRMClientesPage() {
   const [isNewServiceMode, setIsNewServiceMode] = useState(false);
   const [saveToCatalogToo, setSaveToCatalogToo] = useState(true);
 
-  // 2. MODAL NUEVA CITA DESDE FICHA 360° (Cliente por defecto bloqueado, llamada por defecto)
+  // 2. MODAL NUEVA CITA DIRECTA (Cliente bloqueado, llamada por defecto)
   const [showNewAptModal, setShowNewAptModal] = useState(false);
   const [aptTitle, setAptTitle] = useState('Consulta Telefónica Gestoría');
   const [aptDate, setAptDate] = useState('2026-10-15');
   const [aptTime, setAptTime] = useState('11:00');
   const [aptModality, setAptModality] = useState<'llamada' | 'presencial' | 'online_meet'>('llamada');
 
-  // 3. MODAL NUEVO PRESUPUESTO DESDE FICHA 360°
+  // 3. MODAL NUEVO PRESUPUESTO DIRECTO
   const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
   const [quoteConcept, setQuoteConcept] = useState('Servicios de Gestión Fiscal');
   const [quoteAmount, setQuoteAmount] = useState<number>(150);
@@ -245,7 +248,6 @@ export default function CRMClientesPage() {
     e.preventDefault();
     if (!selectedClient || !dossierTitle.trim()) return;
 
-    // Si marcó guardar en catálogo de servicios
     if (isNewServiceMode && saveToCatalogToo) {
       const newService = {
         id: String(Date.now()),
@@ -280,7 +282,7 @@ export default function CRMClientesPage() {
     setShowAddDossierModal(false);
   };
 
-  // Guardar nueva cita directamente en la ficha del cliente
+  // Guardar nueva cita
   const handleSaveAppointment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
@@ -306,7 +308,7 @@ export default function CRMClientesPage() {
     setActive360Tab('citas');
   };
 
-  // Guardar nuevo presupuesto directamente en la ficha del cliente
+  // Guardar nuevo presupuesto
   const handleSaveQuote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
@@ -338,7 +340,7 @@ export default function CRMClientesPage() {
     setActive360Tab('facturacion');
   };
 
-  // Convertir presupuesto a factura directamente aquí
+  // Convertir presupuesto a factura
   const handleConvertQuoteInFicha = (quote: any) => {
     const nextCount = (selectedClient.invoices?.length || 0) + 1;
     const year = new Date().getFullYear();
@@ -371,7 +373,7 @@ export default function CRMClientesPage() {
     if (!selectedClient) return;
     const updated = { ...selectedClient, notes: editedNotes };
     setSelectedClient(updated);
-    setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updated : c)));
     setIsEditingNotes(false);
   };
 
@@ -395,7 +397,7 @@ export default function CRMClientesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-on-surface">Directorio de Clientes</h1>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Base de datos de residentes, BSN, trámites, facturación y ficha completa 360° en pantalla completa.
+            Base de datos de residentes, BSN, trámites, facturación y ficha completa 360°.
           </p>
         </div>
 
@@ -507,8 +509,8 @@ export default function CRMClientesPage() {
                       }}
                       className="h-8 px-3.5 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors inline-flex items-center gap-1.5 shadow-sm"
                     >
-                      <span className="material-symbols-outlined text-[15px]">fullscreen</span>
-                      <span>Abrir Ficha 360°</span>
+                      <span className="material-symbols-outlined text-[15px]">visibility</span>
+                      <span>Ficha 360°</span>
                     </button>
                   </td>
                 </tr>
@@ -519,20 +521,24 @@ export default function CRMClientesPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* FICHA 360° EN PANTALLA COMPLETA (OCUPA TODA LA PANTALLA Y LA BARRA LATERAL) */}
+      {/* FICHA 360° DEL CLIENTE (MANTIENE LA BARRA LATERAL VISIBLE A LA IZQUIERDA) */}
       {/* ========================================================================= */}
       {selectedClient && (
-        <div className="fixed inset-0 z-[100] bg-surface flex flex-col w-screen h-screen overflow-hidden animate-in fade-in duration-150">
-          {/* Top Bar de la Ficha 360° Pantalla Completa */}
-          <header className="h-16 px-6 lg:px-10 bg-surface-container-lowest border-b border-surface-container-high flex items-center justify-between shadow-sm shrink-0">
-            <div className="flex items-center gap-4">
+        <div
+          className={`fixed top-0 bottom-0 right-0 ${
+            isMaximized ? 'left-0 z-[100]' : 'left-64 z-40'
+          } bg-surface flex flex-col overflow-hidden shadow-2xl border-l border-surface-container-high animate-in fade-in duration-150`}
+        >
+          {/* Top Bar de la Ficha 360° */}
+          <header className="h-16 px-6 lg:px-8 bg-surface-container-lowest border-b border-surface-container-high flex items-center justify-between shadow-sm shrink-0">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedClient(null)}
                 className="h-9 px-3 border border-outline-variant bg-surface hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                title="Volver al Directorio"
+                title="Cerrar y volver al listado"
               >
                 <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                <span>Volver al Directorio</span>
+                <span>Cerrar Ficha</span>
               </button>
 
               <div className="h-6 w-px bg-surface-container"></div>
@@ -549,14 +555,14 @@ export default function CRMClientesPage() {
                     </span>
                   </div>
                   <p className="text-[11px] text-outline">
-                    {selectedClient.city} · {selectedClient.phone} · {selectedClient.email}
+                    {selectedClient.city} · {selectedClient.phone}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* BOTONES DE ACCIÓN DIRECTA EN CABECERA (SIN SALIR DE LA PANTALLA) */}
-            <div className="flex items-center gap-2.5">
+            {/* BOTONES DE ACCIÓN DIRECTA */}
+            <div className="flex items-center gap-2">
               {/* Botón Nueva Cita Directa */}
               <button
                 onClick={() => {
@@ -564,9 +570,9 @@ export default function CRMClientesPage() {
                   setAptTitle(`Consulta Telefónica con ${selectedClient.full_name}`);
                   setShowNewAptModal(true);
                 }}
-                className="h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                className="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
               >
-                <span className="material-symbols-outlined text-[17px]">phone_in_talk</span>
+                <span className="material-symbols-outlined text-[16px]">phone_in_talk</span>
                 <span>+ Agendar Cita</span>
               </button>
 
@@ -577,9 +583,9 @@ export default function CRMClientesPage() {
                   setQuoteAmount(150);
                   setShowNewQuoteModal(true);
                 }}
-                className="h-9 px-3.5 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                className="h-9 px-3 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
               >
-                <span className="material-symbols-outlined text-[17px]">description</span>
+                <span className="material-symbols-outlined text-[16px]">description</span>
                 <span>+ Crear Presupuesto</span>
               </button>
 
@@ -594,19 +600,30 @@ export default function CRMClientesPage() {
                   setIsNewServiceMode(false);
                   setShowAddDossierModal(true);
                 }}
-                className="h-9 px-3.5 bg-secondary text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:bg-blue-700 transition-colors"
+                className="h-9 px-3 bg-secondary text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:bg-blue-700 transition-colors"
               >
-                <span className="material-symbols-outlined text-[17px]">add_circle</span>
+                <span className="material-symbols-outlined text-[16px]">add_circle</span>
                 <span>+ Nuevo Trámite</span>
+              </button>
+
+              {/* Botón Opcional Maximizar / Restaurar Barra Lateral */}
+              <button
+                onClick={() => setIsMaximized(!isMaximized)}
+                className="h-9 w-9 border border-outline-variant hover:bg-surface-container text-outline hover:text-on-surface rounded-md flex items-center justify-center transition-colors ml-1"
+                title={isMaximized ? "Mostrar barra lateral" : "Ocultar barra lateral (Pantalla completa total)"}
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {isMaximized ? 'fullscreen_exit' : 'fullscreen'}
+                </span>
               </button>
             </div>
           </header>
 
           {/* Sub-Tabs de Navegación de la Ficha 360° */}
-          <div className="bg-surface-container-low px-6 lg:px-10 border-b border-surface-container flex gap-4 text-xs font-semibold shrink-0">
+          <div className="bg-surface-container-low px-6 lg:px-8 border-b border-surface-container flex gap-4 text-xs font-semibold shrink-0">
             <button
               onClick={() => setActive360Tab('resumen')}
-              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
                 active360Tab === 'resumen' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
@@ -615,7 +632,7 @@ export default function CRMClientesPage() {
             </button>
             <button
               onClick={() => setActive360Tab('facturacion')}
-              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
                 active360Tab === 'facturacion' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
@@ -624,7 +641,7 @@ export default function CRMClientesPage() {
             </button>
             <button
               onClick={() => setActive360Tab('citas')}
-              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
                 active360Tab === 'citas' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
@@ -633,7 +650,7 @@ export default function CRMClientesPage() {
             </button>
             <button
               onClick={() => setActive360Tab('personales')}
-              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
                 active360Tab === 'personales' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
@@ -642,7 +659,7 @@ export default function CRMClientesPage() {
             </button>
             <button
               onClick={() => setActive360Tab('ia')}
-              className={`py-3.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
                 active360Tab === 'ia' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
@@ -652,7 +669,7 @@ export default function CRMClientesPage() {
           </div>
 
           {/* Área Principal de Contenido de la Ficha 360° */}
-          <div className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-6">
+          <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
             {/* TAB 1: TRÁMITES & EXPEDIENTES */}
             {active360Tab === 'resumen' && (
               <div className="space-y-6 max-w-5xl">
@@ -763,7 +780,7 @@ export default function CRMClientesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-on-surface">Presupuestos de {selectedClient.full_name}</h3>
-                      <p className="text-xs text-on-surface-variant">Generación legal con IVA/BTW 21% y conversión en 1 clic a factura.</p>
+                      <p className="text-xs text-on-surface-variant">Generación con IVA/BTW 21% y conversión en 1 clic a factura.</p>
                     </div>
                     <button
                       onClick={() => setShowNewQuoteModal(true)}
@@ -852,7 +869,7 @@ export default function CRMClientesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-on-surface">Citas y Llamadas con {selectedClient.full_name}</h3>
-                      <p className="text-xs text-on-surface-variant">Llamadas telefónicas por defecto, videollamadas o reuniones en despacho.</p>
+                      <p className="text-xs text-on-surface-variant">Llamada telefónica por defecto, o videollamada / reunión presencial.</p>
                     </div>
                     <button
                       onClick={() => {
