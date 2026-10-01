@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { exportDocumentToDocx } from '@/lib/docxExport';
 
-// Preset providers for quick setup
+// Presets de proveedores de IA
 const AI_PRESETS = [
   {
     id: 'openai',
@@ -80,6 +81,225 @@ const DEFAULT_CONFIG: AIConfig = {
   model: 'gpt-4o-mini',
 };
 
+// Interfaz para plantillas de documentos
+export interface DocumentTemplate {
+  id: string;
+  name: string;
+  category: 'belastingdienst' | 'toeslagen' | 'cak' | 'gemeente' | 'ind' | 'laboral' | 'contratos' | 'otro';
+  categoryLabel: string;
+  targetEntity: string;
+  description: string;
+  defaultLanguage: 'nl' | 'es';
+  defaultTone: 'juridico' | 'formal' | 'urgente';
+  promptGuidance: string;
+  templateContent: string;
+  isCustom?: boolean;
+}
+
+// Plantillas Oficiales Predeterminadas
+const DEFAULT_TEMPLATES: DocumentTemplate[] = [
+  {
+    id: 'tpl-belastingdienst-bezwaar',
+    name: 'Belastingdienst - Recurso / Bezwaarschrift (Awb art. 7:1)',
+    category: 'belastingdienst',
+    categoryLabel: 'Fiscal / Belastingdienst',
+    targetEntity: 'Belastingdienst / Postbus 2500, 6401 DA Heerlen',
+    description: 'Recurso formal contra liquidaciones provisionales o definitivas de IRPF o subsidios.',
+    defaultLanguage: 'nl',
+    defaultTone: 'juridico',
+    promptGuidance: 'Redactar bezwaarschrift formal conforme a la ley Awb con solicitud de suspensión de cobro.',
+    templateContent: `Belastingdienst
+Postbus 2500
+6401 DA Heerlen
+
+Datum: {{fecha}}
+Betreft: Formeel Bezwaarschrift ingevolge artikel 7:1 Algemene wet bestuursrecht (Awb)
+Kenmerk: Aanslag inkomstenbelasting / Beschikking Toeslagen
+Burgerservicenummer (BSN): {{bsn}}
+
+Geachte inspecteur der belastingen,
+
+Namens ondergetekende cliënt(e), {{cliente_nombre}}, woonachtig aan {{direccion}}, dien ik hierbij tijdig bezwaar in tegen de door uw dienst afgegeven beschikking.
+
+MOTIVERING VAN HET BEZWAAR:
+1. {{motivo}}
+2. Bijgaand treft u de bewijsstukken (jaaropgaven en salarisstroken) ter staving van ons standpunt.
+3. Op grond van de Awb verzoeken wij u om volledige heroverweging en herziening van de beschikking.
+4. Tevens verzoeken wij om uitstel van betaling (opschorting) hangende deze bezwaarprocedure.
+
+In afwachting van uw schriftelijke ontvangstbevestiging,
+
+Hoogachtend,
+
+NexusGest Advies & Gestoría B.V.
+{{gestor_nombre}} - Belastingadviseur
+KvK: 89123847 · Eindhoven`,
+  },
+  {
+    id: 'tpl-cak-zorg',
+    name: 'HollandZorg / CAK - Exención o Justificación Seguro Médico',
+    category: 'cak',
+    categoryLabel: 'Sanidad / CAK',
+    targetEntity: 'Het CAK / Postbus 84015, 2508 AA Den Haag',
+    description: 'Justificación de seguro médico europeo o subsanación de multas por no aseguramiento.',
+    defaultLanguage: 'nl',
+    defaultTone: 'juridico',
+    promptGuidance: 'Demostrar que el cliente dispone de cobertura médica legal conforme a la Zorgverzekeringswet.',
+    templateContent: `Het CAK
+Postbus 84015
+2508 AA Den Haag
+
+Datum: {{fecha}}
+Betreft: Bezwaar boete onverzekerd / Verzoek tot herziening bestuursrechtelijke premie
+BSN: {{bsn}}
+
+Geachte heer/mevrouw,
+
+Namens mijn cliënt(e), {{cliente_nombre}}, geboren en woonachtig aan {{direccion}}, wend ik mij tot u met betrekking tot de opgelegde boete inzake de zorgverzekeringsplicht.
+
+FEITELIJKE GRONDSLAG:
+{{motivo}}
+
+Cliënt(e) beschikt over een geldige buitenlandse / particuliere zorgpolis die volledige dekking biedt. Gezien bovenstaande verzoeken wij u de boete te vernietigen en de premie-inning stop te zetten.
+
+Met vriendelijke groet,
+
+NexusGest Advies & Gestoría B.V.
+{{gestor_nombre}}`,
+  },
+  {
+    id: 'tpl-rekeningnummer',
+    name: 'Belastingdienst - Cambio de Cuenta Bancaria (Rekeningnummer)',
+    category: 'belastingdienst',
+    categoryLabel: 'Fiscal / Cuentas',
+    targetEntity: 'Belastingdienst / Centrale Administratie, Utrecht',
+    description: 'Comunicación oficial de cuenta bancaria IBAN para devoluciones y cobro de toeslagen.',
+    defaultLanguage: 'nl',
+    defaultTone: 'formal',
+    promptGuidance: 'Notificación oficial de IBAN a nombre del contribuyente para ingresos de la Belastingdienst.',
+    templateContent: `Belastingdienst
+Postbus 2500
+6401 DA Heerlen
+
+Datum: {{fecha}}
+Betreft: Kennisgeving nieuw rekeningnummer voor uitbetalingen
+Burgerservicenummer (BSN): {{bsn}}
+
+Geachte heer/mevrouw,
+
+Hierbij verzoekt ondergetekende, {{cliente_nombre}}, woonachtig te {{direccion}}, om alle toekomstige teruggaven en toeslagen over te maken naar het navolgende bankrekeningnummer:
+
+Rekeninghouder: {{cliente_nombre}}
+IBAN: {{motivo}}
+
+Bijgaand treft u een kopie aan van het geldige identiteitsbewijs en een recent bankafschrift ter verificatie van de tenaamstelling.
+
+Met vriendelijke groet,
+
+{{cliente_nombre}}
+p/a NexusGest Advies & Gestoría`,
+  },
+  {
+    id: 'tpl-machtiging',
+    name: 'Poder de Representación y DigiD Machtiging (Volmacht)',
+    category: 'otro',
+    categoryLabel: 'Representación Legal',
+    targetEntity: 'Belastingdienst, Toeslagen, SVB, CAK en UWV',
+    description: 'Poder legal de representación para gestores fiscales ante entidades públicas neerlandesas.',
+    defaultLanguage: 'nl',
+    defaultTone: 'juridico',
+    promptGuidance: 'Modelo formal de volmacht según derecho neerlandés para trámites tributarios y administrativos.',
+    templateContent: `VOLMACHT EN VERKLARING VAN VERTEGENWOORDIGING
+(Machtiging Fiscale & Bestuursrechtelijke Zaken)
+
+Datum: {{fecha}}
+Plaats: Eindhoven, Nederland
+
+1. VOLMACHTGEVER (Cliënt):
+Naam: {{cliente_nombre}}
+Burgerservicenummer (BSN): {{bsn}}
+Adres: {{direccion}}
+
+2. GEVOLMAGTIGDE (Gestor / Belastingadviseur):
+NexusGest Advies & Gestoría B.V.
+KvK-nummer: 89123847
+Gevestigd te Eindhoven
+
+3. OMVANG VAN DE BEVOEGDHEID:
+Volmachtgever machtigt hierbij NexusGest B.V. om hem/haar rechtsgeldig te vertegenwoordigen bij de Belastingdienst, Dienst Toeslagen, SVB, CAK en Gemeenten voor:
+- Het indienen en wijzigen van belastingaangiften (M-Form, P-Form).
+- Het aanvragen, wijzigen en beheren van toeslagen (Zorgtoeslag, Huurtoeslag).
+- Het indienen van bezwaar- en beroepschriften ingevolge de Awb.
+- Het voeren van correspondentie en inzien van fiscale dossiers.
+
+Doel van deze machtiging: {{motivo}}
+
+Handtekening volmachtgever:                        Handtekening gemachtigde:
+_______________________                            _______________________`,
+  },
+  {
+    id: 'tpl-huurtoeslag',
+    name: 'Dienst Toeslagen - Recurso / Solicitud Huurtoeslag (Alquiler)',
+    category: 'toeslagen',
+    categoryLabel: 'Subsidios / Huurtoeslag',
+    targetEntity: 'Dienst Toeslagen / Postbus 4510, 6401 JA Heerlen',
+    description: 'Reclamación o revisión de subsidio de alquiler por ingresos computables o contrato de vivienda.',
+    defaultLanguage: 'nl',
+    defaultTone: 'juridico',
+    promptGuidance: 'Solicitud formal para el cálculo y abono del subsidio de vivienda en los Países Bajos.',
+    templateContent: `Dienst Toeslagen
+Postbus 4510
+6401 JA Heerlen
+
+Datum: {{fecha}}
+Betreft: Verzoek herziening toekenning Huurtoeslag
+BSN: {{bsn}}
+
+Geachte heer/mevrouw,
+
+Namens cliënt(e) {{cliente_nombre}}, woonachtig aan {{direccion}}, verzoek ik hierbij om herberekening van de huurtoeslag over het lopende/afgelopen kalenderjaar.
+
+TOELICHTING:
+{{motivo}}
+
+Bijgevoegd vindt u de huurovereenkomst, de specificatie van de kale huurprijs en servicekosten, alsmede actuele inkomensgegevens.
+
+Met vriendelijke groet,
+
+NexusGest Advies & Gestoría
+{{gestor_nombre}}`,
+  },
+  {
+    id: 'tpl-contrato-alquiler',
+    name: 'Contrato de Arrendamiento / Habitación (Huurovereenkomst)',
+    category: 'contratos',
+    categoryLabel: 'Contratos / Vivienda',
+    targetEntity: 'Arrendador y Arrendatario (Conforme BW Boek 7)',
+    description: 'Contrato de arrendamiento de vivienda o habitación conforme a la legislación civil neerlandesa.',
+    defaultLanguage: 'nl',
+    defaultTone: 'juridico',
+    promptGuidance: 'Contrato legal de arrendamiento conforme al Burgerlijk Wetboek Boek 7 neerlandés.',
+    templateContent: `HUUROVEREENKOMST WOONRUIMTE / KAMER
+Conform Boek 7 Burgerlijk Wetboek (Nederlands recht)
+
+DE ONDERGETEKENDEN:
+1. Verhuurder: NexusGest Wonen / Particuliere Verhuurder
+2. Huurder: {{cliente_nombre}}, BSN: {{bsn}}, thans wonende te {{direccion}}.
+
+ZIJN HET VOLGENDE OVEREENGEKOMEN:
+Artikel 1 - Het Gehuurde:
+Verhuurder verhuurt aan huurder de woonruimte gelegen te {{direccion}}.
+
+Artikel 2 - Duur en Beëindiging:
+De overeenkomst is aangegaan voor bepaalde tijd ingaande op {{fecha}}.
+
+Artikel 3 - Huurprijs en Betaling:
+De totale betalingsverplichting bedraagt: {{motivo}}. Betaling geschiedt maandelijks vóór de eerste dag van de maand.
+
+Aldus in tweevoud opgemaakt en ondertekend te Eindhoven op {{fecha}}.`,
+  },
+];
+
 const SAMPLE_CLIENTS = [
   { name: 'Maria Popescu', bsn: '982145672', address: 'Strijpsestraat 142, 5616 GP Eindhoven' },
   { name: 'Carlos Mendoza Ruiz', bsn: '817293845', address: 'Keizersgracht 321, 1016 EE Amsterdam' },
@@ -97,30 +317,115 @@ export default function DocumentosIAPage() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latencyMs?: number } | null>(null);
-  const [savedSuccessToast, setSavedSuccessToast] = useState(false);
 
-  // Cargar configuración guardada al montar
+  // Estados de Plantillas Personalizadas
+  const [customTemplates, setCustomTemplates] = useState<DocumentTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DEFAULT_TEMPLATES[0].id);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [isEditingTemplate, setIsEditingTemplate] = useState(false);
+  const [templateForm, setTemplateForm] = useState<Partial<DocumentTemplate>>({
+    name: '',
+    category: 'belastingdienst',
+    categoryLabel: 'Fiscal / Impuestos',
+    targetEntity: 'Belastingdienst / Postbus 2500, Heerlen',
+    description: '',
+    defaultLanguage: 'nl',
+    defaultTone: 'juridico',
+    promptGuidance: '',
+    templateContent: '',
+  });
+
+  // Toasts
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Cargar configuración guardada y plantillas personalizadas al montar
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('nexusgest_ai_config');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setConfig(parsed);
+      const savedConfig = localStorage.getItem('nexusgest_ai_config');
+      if (savedConfig) {
+        setConfig(JSON.parse(savedConfig));
+      }
+      const savedTemplates = localStorage.getItem('nexusgest_custom_templates');
+      if (savedTemplates) {
+        setCustomTemplates(JSON.parse(savedTemplates));
       }
     } catch {
       // ignore
     }
   }, []);
 
-  // Guardar configuración
+  // Lista combinada de todas las plantillas disponibles
+  const allTemplates = [...DEFAULT_TEMPLATES, ...customTemplates];
+  const activeTemplateObj = allTemplates.find((t) => t.id === selectedTemplateId) || DEFAULT_TEMPLATES[0];
+
+  // -------------------------------------------------------------
+  // ESTADOS DEL FORMULARIO DE GENERACIÓN
+  // -------------------------------------------------------------
+  const [clientName, setClientName] = useState('Maria Popescu');
+  const [bsn, setBsn] = useState('982145672');
+  const [address, setAddress] = useState('Strijpsestraat 142, 5616 GP Eindhoven');
+  const [details, setDetails] = useState(
+    'Discrepancia en el cálculo del toetsingsinkomen para el subsidio Zorgtoeslag. Aportamos nóminas y justificantes.'
+  );
+  const [language, setLanguage] = useState<'nl' | 'es'>('nl');
+  const [tone, setTone] = useState<'formal' | 'juridico' | 'urgente'>('juridico');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Reemplazar variables dinámicas en una plantilla
+  const replaceVariables = (text: string): string => {
+    const todayStr = new Date().toLocaleDateString(language === 'nl' ? 'nl-NL' : 'es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    return text
+      .replace(/\{\{fecha\}\}/g, todayStr)
+      .replace(/\{\{cliente_nombre\}\}/g, clientName || 'Maria Popescu')
+      .replace(/\{\{bsn\}\}/g, bsn || '982145672')
+      .replace(/\{\{direccion\}\}/g, address || 'Eindhoven, Nederland')
+      .replace(/\{\{motivo\}\}/g, details || 'Revisión formal de expediente')
+      .replace(/\{\{organismo\}\}/g, activeTemplateObj.targetEntity || 'Belastingdienst')
+      .replace(/\{\{gestor_nombre\}\}/g, 'Rony P. - Senior Consultant');
+  };
+
+  // Contenido de la carta generada
+  const [generatedLetter, setGeneratedLetter] = useState<string>(() =>
+    replaceVariables(DEFAULT_TEMPLATES[0].templateContent)
+  );
+
+  // Al cambiar de plantilla seleccionada
+  const handleSelectTemplate = (tplId: string) => {
+    setSelectedTemplateId(tplId);
+    const found = allTemplates.find((t) => t.id === tplId);
+    if (found) {
+      setLanguage(found.defaultLanguage);
+      setTone(found.defaultTone);
+      setGeneratedLetter(replaceVariables(found.templateContent));
+    }
+  };
+
+  // Seleccionar cliente rápido
+  const handlePickClient = (c: (typeof SAMPLE_CLIENTS)[0]) => {
+    setClientName(c.name);
+    setBsn(c.bsn);
+    setAddress(c.address);
+    showToast(`Datos fiscales de ${c.name} cargados en el documento`);
+  };
+
+  // Guardar configuración de IA
   const handleSaveConfig = () => {
     try {
       localStorage.setItem('nexusgest_ai_config', JSON.stringify(config));
-      setSavedSuccessToast(true);
-      setTimeout(() => setSavedSuccessToast(false), 3000);
+      showToast('Configuración de IA guardada y activada correctamente');
       setShowConfigModal(false);
     } catch (e) {
-      console.error('Error guardando configuración:', e);
+      console.error(e);
     }
   };
 
@@ -161,7 +466,7 @@ export default function DocumentosIAPage() {
     }
   };
 
-  // Selector de preset
+  // Selector de preset de IA
   const handleSelectPreset = (presetId: string) => {
     const preset = AI_PRESETS.find((p) => p.id === presetId);
     if (!preset) return;
@@ -175,74 +480,125 @@ export default function DocumentosIAPage() {
   };
 
   // -------------------------------------------------------------
-  // ESTADOS DEL GENERADOR DE CARTAS
+  // GESTIÓN DE PLANTILLAS PERSONALIZADAS
   // -------------------------------------------------------------
-  const [template, setTemplate] = useState('Belastingdienst - Recurso / Bezwaarschrift (Awb)');
-  const [clientName, setClientName] = useState('Maria Popescu');
-  const [bsn, setBsn] = useState('982145672');
-  const [address, setAddress] = useState('Strijpsestraat 142, 5616 GP Eindhoven');
-  const [details, setDetails] = useState('Solicitamos la revisión del cálculo del toetsingsinkomen computado para el subsidio Zorgtoeslag correspondiente al ejercicio fiscal anterior, aportando jaaropgaven actualizadas.');
-  const [language, setLanguage] = useState<'nl' | 'es'>('nl');
-  const [tone, setTone] = useState<'formal' | 'juridico' | 'urgente'>('juridico');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const [generatedLetter, setGeneratedLetter] = useState<string>(`Belastingdienst
+  const handleOpenCreateTemplate = () => {
+    setIsEditingTemplate(false);
+    setTemplateForm({
+      name: '',
+      category: 'belastingdienst',
+      categoryLabel: 'Fiscal / Impuestos',
+      targetEntity: 'Belastingdienst / Postbus 2500, Heerlen',
+      description: '',
+      defaultLanguage: 'nl',
+      defaultTone: 'juridico',
+      promptGuidance: '',
+      templateContent: `Belastingdienst
 Postbus 2500
 6401 DA Heerlen
 
-Datum: ${new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
-Betreft: Formeel Bezwaarschrift ingevolge artikel 7:1 Algemene wet bestuursrecht (Awb)
-Kenmerk / Beschikking: Zorgtoeslag & Inkomstenbelasting
-Burgerservicenummer (BSN): 982145672
+Datum: {{fecha}}
+Betreft: Kennisgeving / Bezwaarschrift
+BSN: {{bsn}}
 
-Geachte inspecteur der belastingen,
+Geachte heer/mevrouw,
 
-Namens ondergetekende cliënt(e), Maria Popescu, geboren te Roemenië en thans woonachtig aan de Strijpsestraat 142, 5616 GP te Eindhoven, teken ik hierbij tijdig formeel bezwaar aan tegen de door uw dienst vastgestelde beschikking aangaande de toegekende zorgtoeslag.
+Namens {{cliente_nombre}}, woonachtig te {{direccion}}, deel ik u het volgende mede:
 
-MOTIVERING EN RECHTSGRONDEN:
-1. Onjuiste vaststelling toetsingsinkomen: Het door uw dienst gehanteerde toetsingsinkomen over het betreffende belastingjaar strookt niet met de daadwerkelijk genoten inkomsten uit tegenwoordige arbeid.
-2. Bewijsstukken: Bijgaand treft u de relevante jaaropgaven, salarisspecificaties en de definitieve aangifte inkomstenbelasting aan ter staving van ons standpunt.
-3. Rechtsgrond Awb: Op grond van de Awb verzoeken wij u om volledige heroverweging van de bestreden beschikking en herberekening van het recht op toeslag.
-4. Uitstel van betaling: Voor zover er een terugvordering openstaat, verzoeken wij u hierbij tevens om opschorting van de betalingsverplichting hangende deze bezwaarprocedure.
+{{motivo}}
 
-CONCLUSIE:
-Cliënt(e) verzoekt het bezwaar gegrond te verklaren, de bestreden beschikking te vernietigen en een nieuwe beschikking vast te stellen in overeenstemming met de gecorrigeerde inkomensgegevens.
+Met vriendelijke groet,
 
-In afwachting van uw schriftelijke ontvangstbevestiging met dagtekening,
-
-Hoogachtend,
-
-NexusGest Advies & Gestoría B.V.
-Rony P. - Senior Belastingadviseur
-KvK: 89123847 · Eindhoven
-Contact: info@nexusgest.nl`);
-
-  // Seleccionar cliente rápido
-  const handlePickClient = (c: typeof SAMPLE_CLIENTS[0]) => {
-    setClientName(c.name);
-    setBsn(c.bsn);
-    setAddress(c.address);
+NexusGest Advies & Gestoría
+{{gestor_nombre}}`,
+    });
+    setShowTemplateModal(true);
   };
 
-  // Generar carta con IA
+  const handleOpenEditTemplate = () => {
+    if (!activeTemplateObj.isCustom) return;
+    setIsEditingTemplate(true);
+    setTemplateForm({ ...activeTemplateObj });
+    setShowTemplateModal(true);
+  };
+
+  const handleInsertVariable = (variableKey: string) => {
+    setTemplateForm((prev) => ({
+      ...prev,
+      templateContent: (prev.templateContent || '') + ` {{${variableKey}}} `,
+    }));
+  };
+
+  const handleSaveTemplate = () => {
+    if (!templateForm.name?.trim()) {
+      alert('Debes indicar un nombre para la plantilla.');
+      return;
+    }
+
+    let updatedTemplates: DocumentTemplate[] = [];
+
+    if (isEditingTemplate && templateForm.id) {
+      updatedTemplates = customTemplates.map((t) =>
+        t.id === templateForm.id ? ({ ...t, ...templateForm, isCustom: true } as DocumentTemplate) : t
+      );
+      showToast(`Plantilla "${templateForm.name}" actualizada con éxito`);
+    } else {
+      const newTemplate: DocumentTemplate = {
+        id: `custom-tpl-${Date.now()}`,
+        name: templateForm.name,
+        category: templateForm.category || 'otro',
+        categoryLabel: templateForm.categoryLabel || 'Personalizada',
+        targetEntity: templateForm.targetEntity || 'Organismo oficial',
+        description: templateForm.description || 'Plantilla creada por el gestor.',
+        defaultLanguage: templateForm.defaultLanguage || 'nl',
+        defaultTone: templateForm.defaultTone || 'juridico',
+        promptGuidance: templateForm.promptGuidance || '',
+        templateContent: templateForm.templateContent || '',
+        isCustom: true,
+      };
+      updatedTemplates = [...customTemplates, newTemplate];
+      setSelectedTemplateId(newTemplate.id);
+      setGeneratedLetter(replaceVariables(newTemplate.templateContent));
+      showToast(`¡Nueva plantilla "${newTemplate.name}" guardada y lista para usar!`);
+    }
+
+    setCustomTemplates(updatedTemplates);
+    localStorage.setItem('nexusgest_custom_templates', JSON.stringify(updatedTemplates));
+    setShowTemplateModal(false);
+  };
+
+  const handleDeleteCustomTemplate = (idToDelete: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta plantilla personalizada?')) return;
+    const updated = customTemplates.filter((t) => t.id !== idToDelete);
+    setCustomTemplates(updated);
+    localStorage.setItem('nexusgest_custom_templates', JSON.stringify(updated));
+    setSelectedTemplateId(DEFAULT_TEMPLATES[0].id);
+    setGeneratedLetter(replaceVariables(DEFAULT_TEMPLATES[0].templateContent));
+    showToast('Plantilla personalizada eliminada correctamente');
+  };
+
+  // -------------------------------------------------------------
+  // GENERACIÓN CON IA
+  // -------------------------------------------------------------
   const handleGenerate = async (customInstruction?: string) => {
     setIsGenerating(true);
     try {
       const promptText = customInstruction
-        ? `Modifica y refina la siguiente carta oficial legal holandesa según esta instrucción: "${customInstruction}".\n\nCarta actual:\n${generatedLetter}`
-        : `Redacta una carta oficial y formal para la administración de los Países Bajos con estos datos:
-- Tipo de trámite: ${template}
+        ? `Modifica la siguiente carta oficial holandesa según esta indicación precisa: "${customInstruction}".\n\nCarta actual:\n${generatedLetter}`
+        : `Redacta una carta oficial legal holandesa utilizando la siguiente plantilla y datos del caso:
+- Plantilla: ${activeTemplateObj.name}
+- Destinatario oficial: ${activeTemplateObj.targetEntity}
 - Cliente: ${clientName}
 - BSN: ${bsn}
 - Dirección en Países Bajos: ${address}
 - Hechos / Justificación: ${details}
-- Tono: ${tone === 'juridico' ? 'Jurídico riguroso conforme a la Algemene wet bestuursrecht (Awb)' : tone === 'urgente' ? 'Urgente y de requerimiento con solicitud de suspensión de plazos' : 'Formal administrativo cortés'}
-- Idioma: ${language === 'nl' ? 'Neerlandés formal (Zakelijk Nederlands)' : 'Español formal (Copia informativa traducida)'}
+- Tono: ${tone === 'juridico' ? 'Jurídico riguroso conforme a la Algemene wet bestuursrecht (Awb)' : tone === 'urgente' ? 'Urgente y de requerimiento con solicitud de suspensión de cobro' : 'Formal administrativo cortés'}
+- Idioma: ${language === 'nl' ? 'Neerlandés formal (Zakelijk Nederlands)' : 'Español formal (Copia informativa)'}
+- Indicaciones de la plantilla: ${activeTemplateObj.promptGuidance || 'Estructura formal con fecha, referencias y firma oficial'}
 
-Incluye encabezado formal con fecha de hoy, referencias completas, numeración de motivos, solicitud de acuse de recibo y firma de NexusGest Advies & Gestoría.`;
+Estructura requerida: Encabezado corporativo, fecha de hoy, número BSN, motivo numerado del recurso/solicitud, solicitud formal de acuse de recibo y firma de NexusGest Advies & Gestoría B.V.`;
 
-      const systemPrompt = `Eres un redactor jurídico y fiscal experto de NexusGest, una prestigiosa asesoría y gestoría en los Países Bajos (Eindhoven / Ámsterdam). Redactas documentos de máxima precisión conforme al derecho administrativo neerlandés (Algemene wet bestuursrecht - Awb), Belastingdienst, Toeslagen, SVB, CAK e IND.`;
+      const systemPrompt = `Eres un redactor jurídico y fiscal experto de NexusGest B.V. (gestoría y asesoría fiscal en Países Bajos). Redactas documentos de máxima solvencia legal conforme a la Algemene wet bestuursrecht (Awb) y directrices de la Belastingdienst, CAK, SVB y Dienst Toeslagen.`;
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
@@ -260,50 +616,72 @@ Incluye encabezado formal con fecha de hoy, referencias completas, numeración d
       const data = await res.json();
       if (data.text) {
         setGeneratedLetter(data.text);
+        showToast('Documento redactado con éxito por la IA');
       }
     } catch (err) {
-      console.error('Error generando documento:', err);
+      console.error(err);
+      showToast('Error al conectar con la IA. Se mantiene el borrador local.');
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // -------------------------------------------------------------
+  // EXPORTACIONES: WORD (.DOCX), PDF E IMPRESIÓN
+  // -------------------------------------------------------------
+  const handleExportWord = async () => {
+    setIsExportingDocx(true);
+    try {
+      await exportDocumentToDocx({
+        title: activeTemplateObj.name,
+        clientName,
+        bsn,
+        address,
+        content: generatedLetter,
+        language,
+      });
+      showToast('¡Documento descargado en formato Word (.docx)!');
+    } catch (err: any) {
+      alert(`Error al generar Word: ${err.message}`);
+    } finally {
+      setIsExportingDocx(false);
+    }
+  };
+
+  const handlePrintDocument = () => {
+    window.print();
   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedLetter);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    showToast('Texto copiado al portapapeles');
   };
 
   // -------------------------------------------------------------
-  // ESTADOS DEL CHAT ASISTENTE LEGAL
+  // CHAT ASISTENTE LEGAL
   // -------------------------------------------------------------
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     {
       role: 'assistant',
-      content: `¡Hola! Soy tu **Asistente Legal y Fiscal de NexusGest**. 
+      content: `¡Hola! Soy tu **Asistente Legal de Documentos NexusGest**.
 
 Puedo ayudarte a:
-- Redactar escritos y recursos a medida para la **Belastingdienst**, **Toeslagen**, **CAK** o **UWV**.
-- Explicar normativas y plazos legales en Países Bajos (ej: plazo de 6 semanas para *bezwaarschrift* según la ley Awb).
-- Traducir y adaptar documentos entre neerlandés y español con precisión terminológica.
-- Resolver dudas sobre subsidios (*Zorgtoeslag*, *Huurtoeslag*, *Kindgebonden budget*) y declaraciones de renta (*M-Form*, *P-Form*).
+- Redactar escritos a medida para la **Belastingdienst**, **Toeslagen**, **CAK** o **Gemeente**.
+- Crear cláusulas de contratos y cartas oficiales con normativas holandesas (Awb).
+- Traducir documentos del neerlandés al español manteniendo rigor legal.
 
 ${
   config.apiKey
-    ? `🟢 **IA Conectada**: Utilizando modelo \`${config.model}\` (${config.provider}).`
-    : `💡 *Nota: Estás usando el motor local de muestra. Puedes conectar tu API Key en el botón ⚙️ 'Configurar IA' para respuestas dinámicas completas.*`
+    ? `🟢 **IA Conectada**: \`${config.model}\` (${config.provider}).`
+    : `💡 *Nota: Modo local activo. Puedes añadir tu API Key y URL en el botón ⚙️ 'Configurar IA' para respuestas dinámicas completas.*`
 }`,
     },
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isChatSending, setIsChatSending] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (activeTab === 'chat') {
-      chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatMessages, activeTab]);
 
   const handleSendChatMessage = async (presetPrompt?: string) => {
     const textToSend = (presetPrompt || chatInput).trim();
@@ -315,7 +693,7 @@ ${
     setIsChatSending(true);
 
     try {
-      const systemPrompt = `Eres un asistente legal y fiscal experto en asesoría y gestoría de los Países Bajos (NexusGest). Conoces a fondo la legislación neerlandesa (Algemene wet bestuursrecht - Awb, Wet inkomstenbelasting 2001, Toeslagen, Zorgverzekeringswet, Wet werk en bijstand, requisitos KVK, y normativa IND). Proporciona respuestas estructuradas, profesionales, directas y accionables con referencias normativas y modelos de texto listos para usar si se solicita.`;
+      const systemPrompt = `Eres un asesor fiscal y redactor legal experto de NexusGest en los Países Bajos. Conoces la ley Awb, Belastingdienst, Toeslagen y contratos neerlandeses. Responde de forma estructurada, directa y lista para usar.`;
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
@@ -339,8 +717,7 @@ ${
         ...newMessages,
         {
           role: 'assistant',
-          content:
-            'Lo sentimos, hubo una dificultad al conectar con el motor de IA. Por favor verifica tu API Key y URL en Configurar IA.',
+          content: 'No fue posible completar la respuesta de IA. Verifica tu API Key y URL en Configurar IA.',
         },
       ]);
     } finally {
@@ -349,7 +726,7 @@ ${
   };
 
   // -------------------------------------------------------------
-  // ESTADOS DEL ANALIZADOR DE DOCUMENTOS
+  // ANALIZADOR DE DOCUMENTOS
   // -------------------------------------------------------------
   const [docToAnalyze, setDocToAnalyze] = useState(
     `Belastingdienst / Kantoor Buitenland
@@ -377,19 +754,17 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
     setAnalysisResult(null);
 
     try {
-      const systemPrompt = `Eres un perito experto en análisis de documentos oficiales de la administración pública de Países Bajos (Belastingdienst, CAK, IND, SVB).
-Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con la siguiente estructura:
+      const systemPrompt = `Eres un perito experto en análisis de resoluciones y cartas oficiales de Países Bajos. Devuelve EXCLUSIVAMENTE un JSON:
 {
-  "entity": "Nombre de la entidad u organismo emisor",
-  "documentType": "Tipo de carta o resolución oficial",
+  "entity": "Nombre del organismo emisor",
+  "documentType": "Tipo de carta o resolución",
   "bsn": "BSN detectado o null",
   "letterDate": "Fecha de la carta",
-  "deadline": "Fecha límite legal o plazo de contestación",
-  "financialOutcome": "Importe a pagar, a devolver o neutro",
-  "summaryEs": "Explicación clara en español de lo que significa esta carta para el cliente",
-  "riskLevel": "Bajo / Medio / Alto / Crítico",
-  "recommendedAction": "Paso concreto a seguir por el gestor",
-  "suggestedReplySubject": "Asunto para el escrito de respuesta o recurso"
+  "deadline": "Plazo límite de pago o de interposición de recurso",
+  "financialOutcome": "Importe a pagar o a devolver",
+  "summaryEs": "Explicación clara en español para el cliente",
+  "recommendedAction": "Acción inmediata recomendada por el gestor",
+  "suggestedReplySubject": "Asunto para el escrito de respuesta"
 }`;
 
       const res = await fetch('/api/ai/generate', {
@@ -400,7 +775,7 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
           apiUrl: config.apiUrl,
           model: config.model,
           systemPrompt,
-          prompt: `Analiza este documento neerlandés:\n\n${docToAnalyze}`,
+          prompt: `Analiza este documento:\n\n${docToAnalyze}`,
           temperature: 0.1,
         }),
       });
@@ -413,22 +788,20 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
       } catch {
         parsed = {
           entity: 'Belastingdienst (Administración Tributaria de los Países Bajos)',
-          documentType: 'Definitieve aanslag inkomstenbelasting (Liquidación definitiva de IRPF)',
+          documentType: 'Definitieve aanslag inkomstenbelasting 2025',
           bsn: '982145672',
           letterDate: '18 de febrero de 2026',
-          deadline: '1 de abril de 2026 (Plazo de pago) / 6 semanas desde dagtekening para recurso',
-          financialOutcome: '€ 784,00 a pagar por el contribuyente',
+          deadline: '1 de abril de 2026 / 6 semanas para recurso',
+          financialOutcome: '€ 784,00 a pagar',
           summaryEs:
-            'Liquidación definitiva del impuesto sobre la renta 2025. El resultado arroja una cuota a pagar de 784 €. Si el cliente no está de acuerdo con los ingresos computados de la box 1 (28.450 €), existe un plazo de 6 semanas naturales para presentar un Bezwaarschrift.',
-          riskLevel: 'Medio',
-          recommendedAction:
-            'Verificar con las nóminas (loonstroken) si el importe retenido coincide. Si hay discrepancia, presentar Bezwaarschrift y solicitar suspensión de pago (Uitstel van betaling).',
-          suggestedReplySubject: 'Bezwaarschrift inzake definitieve aanslag inkomstenbelasting 2025',
+            'Liquidación definitiva con resultado de 784 € a pagar. Si el cliente no está de acuerdo, existe plazo legal de 6 semanas naturales para recurrir (Bezwaarschrift).',
+          recommendedAction: 'Comprobar nóminas (loonstroken) e interponer bezwaarschrift si hay error en deducciones.',
         };
       }
       setAnalysisResult(parsed);
+      showToast('Análisis de documento completado');
     } catch {
-      // fallback
+      // ignore
     } finally {
       setIsAnalyzing(false);
     }
@@ -436,26 +809,25 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
 
   const handleApplyAnalysisToLetter = () => {
     if (!analysisResult) return;
-    setTemplate(`Belastingdienst - Recurso / Bezwaarschrift: ${analysisResult.documentType || 'Aanslag'}`);
-    if (analysisResult.bsn) setBsn(analysisResult.bsn);
     setDetails(
-      `Discrepancia en la resolución con fecha ${analysisResult.letterDate || 'reciente'}. ${analysisResult.summaryEs}. Solicitamos revisión de la cuota (${analysisResult.financialOutcome}) y suspensión de cobro.`
+      `Discrepancia en la resolución oficial (${analysisResult.documentType || 'Aanslag'}). ${analysisResult.summaryEs}. Solicitamos rectificación de la cuota (${analysisResult.financialOutcome}) y suspensión de cobro.`
     );
     setActiveTab('cartas');
+    handleGenerate('Redacta un bezwaarschrift formal respondiendo a la resolución analizada.');
   };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Toast de guardado */}
-      {savedSuccessToast && (
-        <div className="fixed top-20 right-8 z-50 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-bounce">
-          <span className="material-symbols-outlined">check_circle</span>
-          <div className="text-xs font-semibold">Configuración de IA guardada y activa correctamente</div>
+      {/* Toast de Notificaciones */}
+      {toastMessage && (
+        <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-indigo-500/40 animate-in fade-in duration-200 no-print">
+          <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
+          <span className="text-xs font-semibold">{toastMessage}</span>
         </div>
       )}
 
-      {/* Header Principal con Estado de IA y Botón de Ajustes */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-surface-container">
+      {/* Header Principal */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-surface-container no-print">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-on-surface">Asistente y Documentos IA</h1>
@@ -467,16 +839,26 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
             ) : (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-[11px] font-semibold rounded-full">
                 <span className="material-symbols-outlined text-[14px]">info</span>
-                <span>Modo Local (Sin API Key)</span>
+                <span>Modo Local / Demo</span>
               </span>
             )}
           </div>
           <p className="text-xs text-on-surface-variant mt-1">
-            Redacción legal neerlandesa (Awb), recursos ante Belastingdienst, HollandZorg, CAK y análisis inteligente de cartas oficiales.
+            Crea plantillas personalizadas, redacta con IA y exporta directamente en <strong>Word (.docx)</strong>,{' '}
+            <strong>PDF</strong> o <strong>Impresión oficial</strong>.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Botón para Crear Plantilla */}
+          <button
+            onClick={handleOpenCreateTemplate}
+            className="h-9 px-3.5 bg-secondary hover:bg-blue-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
+          >
+            <span className="material-symbols-outlined text-[18px]">add_circle</span>
+            <span>+ Nueva Plantilla</span>
+          </button>
+
           {/* Botón de Configurar IA */}
           <button
             onClick={() => {
@@ -492,7 +874,7 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
       </div>
 
       {/* Selector de Pestañas Principales */}
-      <div className="flex border-b border-surface-container gap-2">
+      <div className="flex border-b border-surface-container gap-2 no-print">
         <button
           onClick={() => setActiveTab('cartas')}
           className={`pb-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
@@ -502,7 +884,7 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
           }`}
         >
           <span className="material-symbols-outlined text-[18px]">edit_document</span>
-          <span>Generador de Cartas Oficiales & Recursos</span>
+          <span>Generador & Plantillas Oficiales</span>
         </button>
 
         <button
@@ -532,24 +914,91 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
       </div>
 
       {/* ============================================================== */}
-      {/* PESTAÑA 1: GENERADOR OFICIAL DE CARTAS Y RECURSOS              */}
+      {/* PESTAÑA 1: GENERADOR OFICIAL, PLANTILLAS & EXPORTACIONES       */}
       {/* ============================================================== */}
       {activeTab === 'cartas' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Controles del Generador (5 cols) */}
-          <div className="lg:col-span-5 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-secondary">gavel</span>
-                <span>Parámetros del Documento</span>
-              </h3>
-              <span className="text-[11px] text-outline font-mono-data">Normativa Awb</span>
+          <div className="lg:col-span-5 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4 no-print">
+            {/* Header de Plantillas con botón de Nueva Plantilla */}
+            <div className="flex items-center justify-between pb-2 border-b border-surface-container">
+              <div>
+                <h3 className="font-bold text-sm text-on-surface flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-secondary text-lg">folder_open</span>
+                  <span>Plantilla Seleccionada</span>
+                </h3>
+                <p className="text-[11px] text-outline">Elige una plantilla o crea la tuya propia</p>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleOpenCreateTemplate}
+                  className="px-2.5 py-1 bg-surface hover:bg-surface-container border border-outline-variant/70 text-secondary text-[11px] font-semibold rounded flex items-center gap-1 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[14px]">add</span>
+                  <span>Nueva</span>
+                </button>
+                {activeTemplateObj.isCustom && (
+                  <>
+                    <button
+                      onClick={handleOpenEditTemplate}
+                      title="Editar esta plantilla personalizada"
+                      className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCustomTemplate(activeTemplateObj.id)}
+                      title="Eliminar plantilla"
+                      className="p-1 hover:bg-rose-50 rounded text-rose-600 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Selector de Plantilla */}
+            <div>
+              <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                Catálogo de Plantillas Disponibles
+              </label>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => handleSelectTemplate(e.target.value)}
+                className="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none text-xs font-medium"
+              >
+                <optgroup label="📋 Plantillas Oficiales del Sistema">
+                  {DEFAULT_TEMPLATES.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </optgroup>
+                {customTemplates.length > 0 && (
+                  <optgroup label="⭐ Mis Plantillas Creadas">
+                    {customTemplates.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        ★ {t.name} ({t.categoryLabel})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+
+              {activeTemplateObj.isCustom && (
+                <div className="mt-1 flex items-center gap-1 text-[11px] text-indigo-700 dark:text-indigo-400 font-medium">
+                  <span className="material-symbols-outlined text-[14px]">star</span>
+                  <span>Esta es una plantilla personalizada creada por ti.</span>
+                </div>
+              )}
             </div>
 
             {/* Selector de Cliente Rápido */}
             <div>
               <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
-                Cliente Rápido (Autocompletar BSN y Domicilio)
+                Cliente Rápido (Autocompletar BSN y Dirección)
               </label>
               <div className="grid grid-cols-2 gap-1.5">
                 {SAMPLE_CLIENTS.map((c) => (
@@ -557,9 +1006,9 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
                     key={c.bsn}
                     type="button"
                     onClick={() => handlePickClient(c)}
-                    className={`text-left p-2 rounded border text-[11px] transition-all ${
+                    className={`text-left p-2 rounded-lg border text-[11px] transition-all ${
                       clientName === c.name
-                        ? 'border-secondary bg-secondary/5 font-semibold text-secondary'
+                        ? 'border-secondary bg-secondary/5 font-semibold text-secondary shadow-xs'
                         : 'border-outline-variant/60 hover:border-outline-variant bg-surface text-on-surface'
                     }`}
                   >
@@ -570,57 +1019,11 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
               </div>
             </div>
 
+            {/* Campos del Documento */}
             <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
-                  Plantilla Oficial Neerlandesa
-                </label>
-                <select
-                  value={template}
-                  onChange={(e) => setTemplate(e.target.value)}
-                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
-                >
-                  <option>Belastingdienst - Recurso / Bezwaarschrift (Awb)</option>
-                  <option>HollandZorg / CAK - Exención o Justificación Seguro Médico</option>
-                  <option>Belastingdienst - Notificación de Cuenta Bancaria (Rekeningnummer)</option>
-                  <option>Autorización de Representación y DigiD Machtiging</option>
-                  <option>Gemeente - Petición de Domiciliación y Registro BSN</option>
-                  <option>UWV - Recurso / Aclaración Prestación de Desempleo (WW)</option>
-                  <option>Escrito Legal a Medida / Notificación Formal Libre</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Idioma de Emisión</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setLanguage('nl')}
-                    className={`flex-1 h-8 rounded text-xs font-semibold transition-all ${
-                      language === 'nl'
-                        ? 'bg-secondary text-white shadow-sm'
-                        : 'bg-surface border border-outline-variant text-outline'
-                    }`}
-                  >
-                    Neerlandés Formal (Oficial)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLanguage('es')}
-                    className={`flex-1 h-8 rounded text-xs font-semibold transition-all ${
-                      language === 'es'
-                        ? 'bg-secondary text-white shadow-sm'
-                        : 'bg-surface border border-outline-variant text-outline'
-                    }`}
-                  >
-                    Español (Copia Informativa)
-                  </button>
-                </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Nombre Completo</label>
+                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Cliente</label>
                   <input
                     type="text"
                     value={clientName}
@@ -640,7 +1043,7 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
               </div>
 
               <div>
-                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Dirección Registrada (NL)</label>
+                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Dirección NL</label>
                 <input
                   type="text"
                   value={address}
@@ -649,42 +1052,46 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
                 />
               </div>
 
-              <div>
-                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Tono y Enfoque</label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setTone('juridico')}
-                    className={`h-7 rounded text-[11px] font-medium border ${
-                      tone === 'juridico'
-                        ? 'bg-indigo-50 border-indigo-400 text-indigo-700 font-semibold'
-                        : 'border-outline-variant/60 text-outline'
-                    }`}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Idioma del Escrito</label>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setLanguage('nl')}
+                      className={`flex-1 h-8 rounded text-xs font-semibold transition-all ${
+                        language === 'nl'
+                          ? 'bg-secondary text-white shadow-xs'
+                          : 'bg-surface border border-outline-variant text-outline'
+                      }`}
+                    >
+                      Neerlandés
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLanguage('es')}
+                      className={`flex-1 h-8 rounded text-xs font-semibold transition-all ${
+                        language === 'es'
+                          ? 'bg-secondary text-white shadow-xs'
+                          : 'bg-surface border border-outline-variant text-outline'
+                      }`}
+                    >
+                      Español
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Tono Legal</label>
+                  <select
+                    value={tone}
+                    onChange={(e: any) => setTone(e.target.value)}
+                    className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
                   >
-                    Awb Jurídico
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTone('formal')}
-                    className={`h-7 rounded text-[11px] font-medium border ${
-                      tone === 'formal'
-                        ? 'bg-indigo-50 border-indigo-400 text-indigo-700 font-semibold'
-                        : 'border-outline-variant/60 text-outline'
-                    }`}
-                  >
-                    Formal Cortés
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTone('urgente')}
-                    className={`h-7 rounded text-[11px] font-medium border ${
-                      tone === 'urgente'
-                        ? 'bg-indigo-50 border-indigo-400 text-indigo-700 font-semibold'
-                        : 'border-outline-variant/60 text-outline'
-                    }`}
-                  >
-                    Urgente
-                  </button>
+                    <option value="juridico">Awb Jurídico Riguroso</option>
+                    <option value="formal">Formal Administrativo</option>
+                    <option value="urgente">Urgente con Requerimiento</option>
+                  </select>
                 </div>
               </div>
 
@@ -696,12 +1103,13 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
                   rows={4}
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
-                  placeholder="Explica detalladamente la discrepancia o petición..."
+                  placeholder="Detalla los hechos, ingresos discrepantes o petición..."
                   className="w-full p-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs leading-relaxed"
                 />
               </div>
             </div>
 
+            {/* Botón de Generar Carta */}
             <button
               onClick={() => handleGenerate()}
               disabled={isGenerating}
@@ -713,84 +1121,120 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
               <span>
                 {isGenerating
                   ? `Redactando con ${config.model}...`
-                  : `Generar Carta Oficial con ${config.model}`}
+                  : `Generar / Redactar con ${config.model}`}
               </span>
             </button>
           </div>
 
-          {/* Vista Previa del Documento Oficial (7 cols) */}
-          <div className="lg:col-span-7 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+          {/* Vista Previa del Documento y Barra de Exportación (7 cols) */}
+          <div className="lg:col-span-7 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between print-area">
             <div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-container mb-4">
+              {/* Barra de Acciones de Exportación */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-container mb-4 no-print">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-outline text-lg">description</span>
                   <div>
-                    <span className="font-bold text-xs text-on-surface">Escrito Oficial Preparado</span>
+                    <span className="font-bold text-xs text-on-surface">Borrador Oficial del Documento</span>
                     <span className="text-[10px] text-outline ml-2 font-mono-data">
                       {language === 'nl' ? 'Neerlandés (NL)' : 'Español (ES)'}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* BOTONES PRINCIPALES: WORD (.DOCX), PDF E IMPRIMIR */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Descargar Word */}
+                  <button
+                    onClick={handleExportWord}
+                    disabled={isExportingDocx}
+                    title="Descargar archivo editable en Microsoft Word (.docx)"
+                    className="h-8 px-3 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">file_open</span>
+                    <span>{isExportingDocx ? 'Exportando Word...' : 'Descargar Word (.docx)'}</span>
+                  </button>
+
+                  {/* Imprimir / Guardar en PDF */}
+                  <button
+                    onClick={handlePrintDocument}
+                    title="Imprimir documento en papel o guardar como PDF oficial"
+                    className="h-8 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">print</span>
+                    <span>Imprimir / PDF</span>
+                  </button>
+
+                  {/* Copiar Texto */}
                   <button
                     onClick={handleCopy}
-                    className="h-8 px-3 rounded border border-outline-variant hover:bg-surface text-xs font-semibold text-on-surface flex items-center gap-1.5 transition-colors"
+                    className="h-8 px-2.5 rounded-lg border border-outline-variant hover:bg-surface text-xs font-semibold text-on-surface flex items-center gap-1 transition-colors"
                   >
                     <span className="material-symbols-outlined text-[15px]">{copied ? 'check' : 'content_copy'}</span>
                     <span>{copied ? '¡Copiado!' : 'Copiar'}</span>
                   </button>
-                  <button
-                    onClick={() => window.print()}
-                    className="h-8 px-3 rounded bg-secondary hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-                  >
-                    <span className="material-symbols-outlined text-[15px]">print</span>
-                    <span>Imprimir / PDF</span>
-                  </button>
                 </div>
               </div>
 
-              {/* Ajustes Rápidos Asistidos por IA */}
-              <div className="mb-3 p-2 bg-surface-container rounded-lg border border-outline-variant/40 flex flex-wrap items-center gap-2 text-[11px]">
+              {/* Botones de Refinamiento Rápido con IA */}
+              <div className="mb-3 p-2 bg-surface-container rounded-lg border border-outline-variant/40 flex flex-wrap items-center gap-2 text-[11px] no-print">
                 <span className="text-outline font-semibold flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px] text-amber-500">auto_fix_high</span>
                   <span>Refinar con IA:</span>
                 </span>
                 <button
-                  onClick={() => handleGenerate('Haz el texto aún más formal, citando los artículos pertinentes de la Algemene wet bestuursrecht (Awb).')}
+                  onClick={() =>
+                    handleGenerate('Haz el texto aún más formal y riguroso, citando los artículos pertinentes de la ley Awb.')
+                  }
                   disabled={isGenerating}
                   className="px-2.5 py-1 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium transition-colors"
                 >
                   + Citar Ley Awb
                 </button>
                 <button
-                  onClick={() => handleGenerate('Añade un párrafo solicitando expresamente la suspensión del cobro (verzoek om uitstel van betaling hangende bezwaar).')}
+                  onClick={() =>
+                    handleGenerate(
+                      'Añade un párrafo solicitando expresamente la suspensión del cobro (verzoek om uitstel van betaling).'
+                    )
+                  }
                   disabled={isGenerating}
                   className="px-2.5 py-1 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium transition-colors"
                 >
                   + Suspensión de Cobro
                 </button>
                 <button
-                  onClick={() => handleGenerate('Traduce todo el escrito al español manteniendo el formato legal formal.')}
+                  onClick={() =>
+                    handleGenerate('Traduce todo el escrito al español manteniendo el formato legal formal.')
+                  }
                   disabled={isGenerating}
                   className="px-2.5 py-1 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium transition-colors"
                 >
-                  🌐 Traducir al Español
+                  🌐 Traducir a Español
                 </button>
               </div>
 
-              {/* Visor Hoja A4 */}
-              <div className="p-8 bg-white border border-surface-container rounded-lg shadow-inner font-mono-data text-xs text-slate-800 leading-relaxed whitespace-pre-line min-h-[480px]">
-                {generatedLetter}
+              {/* Hoja de Documento A4 (Área Imprimible) */}
+              <div className="p-8 bg-white border border-surface-container rounded-xl shadow-inner font-mono-data text-xs text-slate-800 leading-relaxed whitespace-pre-line min-h-[500px] print-page-a4">
+                {/* Encabezado Corporativo Oficial */}
+                <div className="pb-4 mb-4 border-b border-slate-300">
+                  <div className="font-bold text-base text-slate-900 tracking-tight">NexusGest Advies & Gestoría B.V.</div>
+                  <div className="text-[10px] text-slate-500 font-sans mt-0.5">
+                    Fiscale Dienstverlening & Juridische Zaken · KvK: 89123847 · Eindhoven
+                  </div>
+                </div>
+
+                {/* Texto del Documento */}
+                <div className="font-sans text-xs leading-relaxed text-slate-900 whitespace-pre-line">
+                  {generatedLetter}
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-xs text-outline">
+            <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-xs text-outline no-print">
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px] text-emerald-600">verified</span>
-                <span>Conforme a la legislación neerlandesa (Algemene wet bestuursrecht)</span>
+                <span>Plantilla: {activeTemplateObj.name}</span>
               </span>
-              <span className="font-mono-data">NexusGest Legal AI</span>
+              <span className="font-mono-data">Exportable en Word (.docx) & PDF</span>
             </div>
           </div>
         </div>
@@ -800,7 +1244,7 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
       {/* PESTAÑA 2: CHAT ASISTENTE LEGAL & TRÁMITES                      */}
       {/* ============================================================== */}
       {activeTab === 'chat' && (
-        <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4 max-w-4xl mx-auto">
+        <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4 max-w-4xl mx-auto no-print">
           <div className="flex items-center justify-between pb-3 border-b border-surface-container">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
@@ -830,7 +1274,7 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
             </button>
           </div>
 
-          {/* Atajos Rápidos de Consulta */}
+          {/* Atajos Rápidos */}
           <div className="flex flex-wrap gap-1.5 text-[11px]">
             <span className="text-outline font-semibold py-1">Atajos rápidos:</span>
             {[
@@ -917,7 +1361,7 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
       {/* PESTAÑA 3: ANALIZADOR DE RESOLUCIONES Y CARTAS                 */}
       {/* ============================================================== */}
       {activeTab === 'analizador' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
           <div className="lg:col-span-6 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
             <div>
               <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
@@ -1030,10 +1474,199 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
       )}
 
       {/* ============================================================== */}
-      {/* MODAL DE CONFIGURACIÓN DE IA (API KEY & URL)                   */}
+      {/* MODAL 1: CREAR / EDITAR PLANTILLA PERSONALIZADA                */}
+      {/* ============================================================== */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 no-print">
+          <div className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white flex items-center justify-between border-b border-blue-900/50">
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-amber-300 text-2xl">post_add</span>
+                <div>
+                  <h3 className="font-bold text-base">
+                    {isEditingTemplate ? 'Editar Plantilla Personalizada' : 'Crear Nueva Plantilla de Documento'}
+                  </h3>
+                  <p className="text-[11px] text-blue-200">
+                    Define las variables y la estructura que la IA usará para redactar y exportar
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTemplateModal(false)}
+                className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white/80 hover:text-white"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                    Nombre de la Plantilla *
+                  </label>
+                  <input
+                    type="text"
+                    value={templateForm.name || ''}
+                    onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
+                    placeholder="Ej: Reclamación Huurtoeslag por Ingresos"
+                    className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface font-semibold text-xs focus:border-secondary focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                    Categoría / Ámbito
+                  </label>
+                  <select
+                    value={templateForm.category || 'belastingdienst'}
+                    onChange={(e: any) =>
+                      setTemplateForm({
+                        ...templateForm,
+                        category: e.target.value,
+                        categoryLabel: e.target.options[e.target.selectedIndex].text,
+                      })
+                    }
+                    className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
+                  >
+                    <option value="belastingdienst">Fiscal / Belastingdienst</option>
+                    <option value="toeslagen">Subsidios / Dienst Toeslagen</option>
+                    <option value="cak">Sanidad / CAK & HollandZorg</option>
+                    <option value="gemeente">Ayuntamiento / Gemeente (BRP)</option>
+                    <option value="ind">Extranjería / IND</option>
+                    <option value="laboral">Laboral / UWV & Contratos</option>
+                    <option value="contratos">Contratos de Arrendamiento</option>
+                    <option value="otro">Gestoría General</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                    Organismo o Destinatario Oficial
+                  </label>
+                  <input
+                    type="text"
+                    value={templateForm.targetEntity || ''}
+                    onChange={(e) => setTemplateForm({ ...templateForm, targetEntity: e.target.value })}
+                    placeholder="Ej: Dienst Toeslagen / Postbus 4510, Heerlen"
+                    className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Idioma</label>
+                    <select
+                      value={templateForm.defaultLanguage || 'nl'}
+                      onChange={(e: any) => setTemplateForm({ ...templateForm, defaultLanguage: e.target.value })}
+                      className="w-full h-9 px-2 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
+                    >
+                      <option value="nl">Neerlandés (NL)</option>
+                      <option value="es">Español (ES)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Tono</label>
+                    <select
+                      value={templateForm.defaultTone || 'juridico'}
+                      onChange={(e: any) => setTemplateForm({ ...templateForm, defaultTone: e.target.value })}
+                      className="w-full h-9 px-2 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
+                    >
+                      <option value="juridico">Awb Jurídico</option>
+                      <option value="formal">Formal</option>
+                      <option value="urgente">Urgente</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botones de Variables Dinámicas */}
+              <div>
+                <label className="block text-outline uppercase font-semibold text-[10px] mb-1.5">
+                  Insertar Variable Dinámica con 1 Clic
+                </label>
+                <div className="flex flex-wrap gap-1.5 p-2 bg-surface-container rounded-lg border border-surface-container-high">
+                  {[
+                    { key: 'cliente_nombre', label: 'Nombre Cliente' },
+                    { key: 'bsn', label: 'BSN' },
+                    { key: 'direccion', label: 'Dirección' },
+                    { key: 'fecha', label: 'Fecha Actual' },
+                    { key: 'organismo', label: 'Organismo' },
+                    { key: 'motivo', label: 'Hechos / Motivo' },
+                    { key: 'gestor_nombre', label: 'Firma Gestor' },
+                  ].map((v) => (
+                    <button
+                      key={v.key}
+                      type="button"
+                      onClick={() => handleInsertVariable(v.key)}
+                      className="px-2 py-1 bg-surface hover:bg-white text-secondary font-mono-data text-[10px] font-bold rounded border border-outline-variant/60 shadow-xs transition-colors"
+                    >
+                      + {`{{${v.key}}}`} ({v.label})
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cuerpo de la Plantilla */}
+              <div>
+                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                  Estructura y Texto Base de la Plantilla *
+                </label>
+                <textarea
+                  rows={8}
+                  value={templateForm.templateContent || ''}
+                  onChange={(e) => setTemplateForm({ ...templateForm, templateContent: e.target.value })}
+                  placeholder="Redacta la plantilla usando las etiquetas {{cliente_nombre}}, {{bsn}}, etc..."
+                  className="w-full p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              {/* Instrucción opcional para la IA */}
+              <div>
+                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                  Directriz Especial para la IA (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={templateForm.promptGuidance || ''}
+                  onChange={(e) => setTemplateForm({ ...templateForm, promptGuidance: e.target.value })}
+                  placeholder="Ej: Solicitar siempre suspensión de plazos y citar artículo 7:1 Awb"
+                  className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-surface border-t border-surface-container flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="h-9 px-4 rounded-lg border border-outline-variant hover:bg-surface-container text-xs font-semibold text-outline"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveTemplate}
+                className="h-9 px-5 rounded-lg bg-secondary hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">save</span>
+                <span>{isEditingTemplate ? 'Guardar Cambios' : 'Guardar Plantilla'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL 2: CONFIGURACIÓN DE IA (API KEY & URL)                   */}
       {/* ============================================================== */}
       {showConfigModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 no-print">
           <div className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
             {/* Modal Header */}
             <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-indigo-900/50">
@@ -1164,7 +1797,6 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
                   />
                 </div>
 
-                {/* Sugerencias de modelos para este proveedor */}
                 {AI_PRESETS.find((p) => p.id === config.provider)?.models && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     <span className="text-[10px] text-outline py-0.5">Sugeridos:</span>
@@ -1204,22 +1836,6 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
                   </div>
                 </div>
               )}
-
-              {/* Explicación / Dónde configurar en el servidor */}
-              <div className="p-3 bg-surface-container rounded-lg border border-surface-container-high text-[11px] text-outline space-y-1">
-                <div className="font-bold text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-indigo-600">terminal</span>
-                  <span>¿Prefieres configurarlo en el servidor (archivo .env)?</span>
-                </div>
-                <p>
-                  También puedes fijarlo a nivel de backend editando el archivo <code className="bg-surface px-1 py-0.5 rounded font-mono-data text-on-surface">.env</code> con:
-                </p>
-                <div className="bg-slate-900 text-emerald-400 p-2.5 rounded font-mono-data text-[10px] space-y-0.5 overflow-x-auto">
-                  <div>OPENAI_API_KEY=tu-api-key-secreta</div>
-                  <div>OPENAI_BASE_URL={config.apiUrl}</div>
-                  <div>OPENAI_MODEL={config.model}</div>
-                </div>
-              </div>
             </div>
 
             {/* Modal Footer */}
@@ -1230,7 +1846,7 @@ Analiza el documento pegado y devuelve EXCLUSIVAMENTE un objeto JSON válido con
                 disabled={isTesting}
                 className="w-full sm:w-auto h-10 px-4 rounded-lg border border-indigo-600 text-indigo-600 hover:bg-indigo-50 text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
-                <span className="material-symbols-outlined text-[16px] text-indigo-600">
+                <span className="material-symbols-outlined text-[16px]">
                   {isTesting ? 'hourglass_top' : 'speed'}
                 </span>
                 <span>{isTesting ? 'Comprobando endpoint...' : 'Probar Conexión Ahora'}</span>

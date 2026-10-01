@@ -34,3 +34,57 @@
 .font-mono-data {
   font-feature-settings: 'tnum' 1, 'cv05' 1;
 }
+
+/* ========================================================= */
+/* ESTILOS DE IMPRESIÓN OFICIAL PARA DOCUMENTOS Y CARTAS     */
+/* ========================================================= */
+@media print {
+  /* Ocultar barra lateral del CRM, menús, botones y áreas de control */
+  aside,
+  header,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  body,
+  html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt !important;
+  }
+
+  /* Ajustar el contenedor para ocupar toda la página A4 */
+  main,
+  .print-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: static !important;
+  }
+
+  .print-page-a4 {
+    margin: 0 !important;
+    padding: 20mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    page-break-after: avoid;
+    font-family: 'Calibri', 'Inter', -apple-system, sans-serif !important;
+    font-size: 10.5pt !important;
+    line-height: 1.5 !important;
+    color: #111827 !important;
+  }
+
+  /* Desactivar fondos grises de la interfaz */
+  * {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+}
