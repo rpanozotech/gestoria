@@ -396,7 +396,14 @@ export default function CRMClientesPage() {
 
   // Cliente seleccionado para la Ficha 360°
   const [selectedClient, setSelectedClient] = useState<any>(null);
-  const [active360Tab, setActive360Tab] = useState<'resumen' | 'documentos' | 'facturacion' | 'citas' | 'personales' | 'ia'>('resumen');
+  const [active360Tab, setActive360Tab] = useState<
+    'resumen' | 'personales' | 'servicios' | 'documentos' | 'presupuestos' | 'facturas' | 'citas' | 'tareas' | 'historial' | 'ia'
+  >('resumen');
+
+  // Estados de Tareas e Historial
+  const [newTaskInput, setNewTaskInput] = useState('');
+  const [taskFilter, setTaskFilter] = useState<'todas' | 'pendientes' | 'completadas'>('todas');
+  const [historyFilter, setHistoryFilter] = useState<'todos' | 'ia' | 'gestor' | 'sistema'>('todos');
 
   // Estados de edición de notas
   const [isEditingNotes, setIsEditingNotes] = useState(false);
@@ -538,6 +545,106 @@ export default function CRMClientesPage() {
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
     setIsEditingNotes(false);
     showToast('Notas del cliente guardadas');
+  };
+
+  // Helper para obtener tareas del cliente
+  const getClientTasks = (client: any) => {
+    if (client.tasks && client.tasks.length > 0) {
+      return client.tasks;
+    }
+    return [
+      { id: 't1', title: `Verificar documentación fiscal y DigiD de ${client.full_name}`, completed: false, due: '2026-10-15', priority: 'alta' },
+      { id: 't2', title: 'Comprobar justificantes bancarios e IBAN para Belastingdienst', completed: false, due: '2026-10-18', priority: 'media' },
+      { id: 't3', title: 'Confirmar recepción del formulario en sede electrónica', completed: true, due: '2026-10-04', priority: 'baja' },
+    ];
+  };
+
+  // Helper para obtener actividades del cliente
+  const getClientActivities = (client: any) => {
+    if (client.activity_log && client.activity_log.length > 0) {
+      return client.activity_log;
+    }
+    return [
+      {
+        id: 'act1',
+        time: '09:15',
+        date: 'Hoy',
+        type: 'ia',
+        badge: 'IA Registro',
+        title: `Expediente de ${client.full_name} sincronizado`,
+        desc: `Validación de identidad con BSN ${client.bsn || '—'} y comprobación de estado DigiD (${client.digid_status}).`,
+      },
+      {
+        id: 'act2',
+        time: '09:00',
+        date: 'Hoy',
+        type: 'sistema',
+        badge: 'Sistema',
+        title: 'Presupuesto y trámites en curso',
+        desc: `${client.dossiers?.length || 0} expediente(s) y ${client.quotes?.length || 0} presupuesto(s) activos en el CRM.`,
+      },
+      {
+        id: 'act3',
+        time: '08:45',
+        date: 'Hoy',
+        type: 'ia_audio',
+        badge: 'IA Audio',
+        title: 'Mensaje de WhatsApp procesado por IA',
+        desc: 'La IA extrajo la última consulta del cliente y estructuró las notas del gestor.',
+      },
+      {
+        id: 'act4',
+        time: '14:20',
+        date: 'Ayer',
+        type: 'gestor',
+        badge: 'Gestor',
+        title: 'Validación por Gestoría NexusGest',
+        desc: 'Elena Martínez revisó la documentación y comprobó los datos fiscales.',
+      },
+    ];
+  };
+
+  // Marcar o desmarcar tarea en Ficha 360°
+  const handleToggleTask = (taskId: string) => {
+    if (!selectedClient) return;
+    const currentTasks = getClientTasks(selectedClient);
+    const updatedTasks = currentTasks.map((t: any) =>
+      t.id === taskId ? { ...t, completed: !t.completed } : t
+    );
+    const updatedClient = { ...selectedClient, tasks: updatedTasks };
+    setSelectedClient(updatedClient);
+    setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
+  };
+
+  // Añadir nueva tarea en Ficha 360°
+  const handleAddNewTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient || !newTaskInput.trim()) return;
+    const currentTasks = getClientTasks(selectedClient);
+    const newTask = {
+      id: `task-${Date.now()}`,
+      title: newTaskInput.trim(),
+      completed: false,
+      due: 'Próxima semana',
+      priority: 'media',
+    };
+    const updatedTasks = [newTask, ...currentTasks];
+    const updatedClient = { ...selectedClient, tasks: updatedTasks };
+    setSelectedClient(updatedClient);
+    setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
+    setNewTaskInput('');
+    showToast('Nueva tarea añadida a la Ficha 360°');
+  };
+
+  // Eliminar tarea en Ficha 360°
+  const handleDeleteTask = (taskId: string) => {
+    if (!selectedClient) return;
+    const currentTasks = getClientTasks(selectedClient);
+    const updatedTasks = currentTasks.filter((t: any) => t.id !== taskId);
+    const updatedClient = { ...selectedClient, tasks: updatedTasks };
+    setSelectedClient(updatedClient);
+    setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
+    showToast('Tarea eliminada');
   };
 
   // GESTIÓN DE DOCUMENTOS: Subir archivo
@@ -1081,7 +1188,7 @@ export default function CRMClientesPage() {
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
     setShowNewQuoteModal(false);
-    setActive360Tab('facturacion');
+    setActive360Tab('presupuestos');
     showToast(`Presupuesto ${newQuote.code} generado.`);
   };
 
@@ -1353,59 +1460,107 @@ export default function CRMClientesPage() {
           </header>
 
           {/* Sub-Tabs de Navegación de la Ficha 360° */}
-          <div className="bg-surface-container-low px-4 sm:px-6 lg:px-8 border-b border-surface-container flex gap-2 sm:gap-4 text-xs font-semibold shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
+          <div className="bg-surface-container-low px-4 sm:px-6 lg:px-8 border-b border-surface-container flex gap-1 sm:gap-2 text-xs font-semibold shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
+            {/* 1. Resumen */}
             <button
               onClick={() => setActive360Tab('resumen')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
-                active360Tab === 'resumen' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'resumen' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">folder</span>
-              <span>Trámites ({selectedClient.dossiers?.length || 0})</span>
+              <span className="material-symbols-outlined text-[16px]">dashboard</span>
+              <span>Resumen</span>
             </button>
 
-            {/* TAB DOCUMENTOS */}
+            {/* 2. Datos Personales & BSN */}
+            <button
+              onClick={() => setActive360Tab('personales')}
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'personales' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">badge</span>
+              <span>Datos Personales & BSN</span>
+            </button>
+
+            {/* 3. Servicios / Trámites */}
+            <button
+              onClick={() => setActive360Tab('servicios')}
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'servicios' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">business_center</span>
+              <span>Servicios ({selectedClient.dossiers?.length || 0})</span>
+            </button>
+
+            {/* 4. Documentos */}
             <button
               onClick={() => setActive360Tab('documentos')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
-                active360Tab === 'documentos' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'documentos' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">description</span>
-              <span>Documentos & Archivos ({selectedClient.documents?.length || 0})</span>
+              <span className="material-symbols-outlined text-[16px]">folder_shared</span>
+              <span>Documentos ({selectedClient.documents?.length || 0})</span>
             </button>
 
+            {/* 5. Presupuestos */}
             <button
-              onClick={() => setActive360Tab('facturacion')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
-                active360Tab === 'facturacion' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              onClick={() => setActive360Tab('presupuestos')}
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'presupuestos' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">request_quote</span>
+              <span>Presupuestos ({selectedClient.quotes?.length || 0})</span>
+            </button>
+
+            {/* 6. Facturas */}
+            <button
+              onClick={() => setActive360Tab('facturas')}
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'facturas' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-              <span>Presupuestos & Facturas ({selectedClient.quotes?.length || 0} / {selectedClient.invoices?.length || 0})</span>
+              <span>Facturas ({selectedClient.invoices?.length || 0})</span>
             </button>
 
+            {/* 7. Citas */}
             <button
               onClick={() => setActive360Tab('citas')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
-                active360Tab === 'citas' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'citas' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">calendar_month</span>
               <span>Citas ({selectedClient.appointments?.length || 0})</span>
             </button>
 
+            {/* 8. Notas & Tareas */}
             <button
-              onClick={() => setActive360Tab('personales')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
-                active360Tab === 'personales' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              onClick={() => setActive360Tab('tareas')}
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'tareas' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">badge</span>
-              <span>Datos Fiscales</span>
+              <span className="material-symbols-outlined text-[16px]">checklist</span>
+              <span>Notas & Tareas ({getClientTasks(selectedClient).filter((t: any) => !t.completed).length})</span>
             </button>
 
-            {/* TAB ASISTENTE IA INTEGRAL */}
+            {/* 9. Historial & Actividad IA */}
+            <button
+              onClick={() => setActive360Tab('historial')}
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'historial' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px] text-secondary">history_edu</span>
+              <span>Historial & Actividad IA</span>
+            </button>
+
+            {/* 10. Asistente IA (Gestión Total) */}
             <button
               onClick={() => setActive360Tab('ia')}
               className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
@@ -1427,10 +1582,296 @@ export default function CRMClientesPage() {
                 : 'overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6'
             } no-scrollbar`}
           >
-            {/* TAB 1: TRÁMITES & EXPEDIENTES */}
+            {/* TAB 1: RESUMEN GENERAL 360° (DASHBOARD EJECUTIVO) */}
             {active360Tab === 'resumen' && (
               <div className="space-y-6 w-full">
-                {/* Notas del Gestor */}
+                {/* Main Workspace Grid (7 cols / 5 cols) */}
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                  {/* Columna Izquierda (7 cols on XL) */}
+                  <div className="xl:col-span-7 space-y-6">
+                    {/* Widget 1: Servicios Activos */}
+                    <div className="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-secondary text-2xl">business_center</span>
+                          <h3 className="font-bold text-sm text-on-surface">Servicios Activos ({selectedClient.dossiers?.length || 0})</h3>
+                        </div>
+                        <button
+                          onClick={() => setActive360Tab('servicios')}
+                          className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
+                        >
+                          <span>Ver catálogo completo</span>
+                          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {selectedClient.dossiers && selectedClient.dossiers.length > 0 ? (
+                          selectedClient.dossiers.map((d: any) => (
+                            <div key={d.id} className="p-4 bg-surface rounded-xl border border-surface-container space-y-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-outline">{d.category}</span>
+                                  <h4 className="font-bold text-xs text-on-surface">{d.title}</h4>
+                                </div>
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-secondary border border-secondary/20">
+                                  {d.status === 'completado' ? 'Completado' : 'En trámite con Belastingdienst'}
+                                </span>
+                              </div>
+
+                              {/* Matrix de detalles */}
+                              <div className="grid grid-cols-3 gap-2 py-2 bg-surface-container-lowest rounded-lg px-3 text-xs">
+                                <div>
+                                  <span className="text-[10px] text-outline block">Importe</span>
+                                  <span className="font-mono-data font-bold text-on-surface">€ {d.fee?.toFixed(2) || '0.00'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-outline block">Responsable</span>
+                                  <span className="font-medium text-on-surface">Elena Martínez</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-outline block">Plazo Estimado</span>
+                                  <span className="font-medium text-on-surface">{d.deadline || '3-5 días'}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between text-xs pt-1">
+                                <span className="text-on-surface-variant text-[11px] flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[15px] text-emerald-600">check_circle</span>
+                                  <span>Formulario DigiD / Trámite telemático enviado</span>
+                                </span>
+                                <button
+                                  onClick={() => setActive360Tab('servicios')}
+                                  className="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container text-on-surface text-[11px] font-semibold rounded"
+                                >
+                                  Ver expediente
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-6 text-outline text-xs">
+                            No hay servicios activos registrados para este cliente.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Widget 2: Documentación del Cliente */}
+                    <div className="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-secondary text-2xl">folder_shared</span>
+                          <h3 className="font-bold text-sm text-on-surface">Documentación del Cliente</h3>
+                        </div>
+                        <span className="text-xs font-mono-data text-outline">
+                          {selectedClient.documents?.length || 0} Archivos en Expediente
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Documento subido */}
+                        <div className="p-3 bg-surface rounded-xl border border-surface-container flex flex-col justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 bg-blue-50 text-secondary rounded-lg">
+                              <span className="material-symbols-outlined text-[20px]">description</span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="font-bold text-xs text-on-surface block truncate">Copia Pasaporte / DNI</span>
+                              <span className="text-[10px] text-outline block">Verificado por OCR IA</span>
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 mt-1">
+                                <span className="material-symbols-outlined text-[13px]">verified</span>
+                                <span>Documento Válido</span>
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setActive360Tab('documentos')}
+                            className="w-full py-1 bg-surface-container hover:bg-surface-container-high rounded text-[11px] font-semibold text-on-surface"
+                          >
+                            Abrir Archivo
+                          </button>
+                        </div>
+
+                        {/* Documento Faltante o Alerta */}
+                        <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/30 flex flex-col justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 bg-amber-500/20 text-amber-800 rounded-lg">
+                              <span className="material-symbols-outlined text-[20px]">pending_actions</span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-xs text-amber-900 block truncate">Jaaropgave 2025</span>
+                                <span className="px-1.5 py-0.2 bg-amber-200 text-amber-900 font-bold text-[9px] rounded uppercase">Pendiente</span>
+                              </div>
+                              <span className="text-[10px] text-amber-800 block mt-0.5">Certificado anual de ingresos laborales</span>
+                              <span className="text-[10px] text-amber-700 block">Requerido para Belastingdienst</span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => showToast(`Solicitud de Jaaropgave enviada por WhatsApp y Email a ${selectedClient.full_name}`)}
+                            className="w-full py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-semibold flex items-center justify-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">send</span>
+                            <span>Solicitar por WhatsApp / Email</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pt-1 flex justify-end">
+                        <button
+                          onClick={() => setActive360Tab('documentos')}
+                          className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
+                        >
+                          <span>Ver todos los documentos ({selectedClient.documents?.length || 0})</span>
+                          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Columna Derecha (5 cols on XL) */}
+                  <div className="xl:col-span-5 space-y-6">
+                    {/* Widget 3: Presupuesto Activo */}
+                    <div className="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-secondary text-2xl">receipt</span>
+                          <h3 className="font-bold text-sm text-on-surface">Presupuesto Activo</h3>
+                        </div>
+                        <span className="px-2 py-0.5 bg-blue-50 text-secondary font-mono-data font-bold text-xs rounded border border-secondary/20">
+                          {selectedClient.quotes?.[0]?.code || 'PRE-2026-0003'}
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 bg-surface rounded-xl border border-surface-container space-y-2 text-xs">
+                        <div className="flex items-center justify-between text-on-surface-variant">
+                          <span>{selectedClient.quotes?.[0]?.concept || 'Gestión Solicitud Zorgtoeslag y Registro'}</span>
+                          <span className="font-mono-data font-semibold text-on-surface">
+                            € {selectedClient.quotes?.[0]?.amount ? selectedClient.quotes[0].amount.toFixed(2) : '85.00'}
+                          </span>
+                        </div>
+                        <div className="h-px bg-surface-container" />
+                        <div className="flex items-center justify-between text-outline text-[11px]">
+                          <span>Subtotal</span>
+                          <span className="font-mono-data">€ {selectedClient.quotes?.[0]?.amount ? selectedClient.quotes[0].amount.toFixed(2) : '85.00'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-outline text-[11px]">
+                          <span>IVA (21% BTW)</span>
+                          <span className="font-mono-data">€ {selectedClient.quotes?.[0]?.tax_amount ? selectedClient.quotes[0].tax_amount.toFixed(2) : '17.85'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm font-bold text-on-surface pt-1 border-t border-surface-container">
+                          <span>Total Presupuesto</span>
+                          <span className="font-mono-data text-secondary">
+                            € {selectedClient.quotes?.[0]?.total ? selectedClient.quotes[0].total.toFixed(2) : '102.85'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {selectedClient.quotes && selectedClient.quotes.length > 0 && selectedClient.quotes[0].status !== 'convertido' ? (
+                        <button
+                          onClick={() => handleConvertQuoteInFicha(selectedClient.quotes[0])}
+                          className="w-full h-9 bg-secondary hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                          <span>Convertir en Factura Oficial (1 Clic)</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setActive360Tab('presupuestos')}
+                          className="w-full h-9 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                          <span>Ver todos los presupuestos</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Widget 4: Próxima Cita */}
+                    <div className="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-secondary text-2xl">event</span>
+                          <h3 className="font-bold text-sm text-on-surface">Próxima Cita</h3>
+                        </div>
+                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-bold text-[10px] rounded uppercase">
+                          Confirmada
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 bg-surface rounded-xl border border-surface-container flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-blue-50 text-secondary flex flex-col items-center justify-center shrink-0 border border-secondary/20">
+                          <span className="text-[10px] font-bold uppercase leading-none">OCT</span>
+                          <span className="text-base font-bold leading-none mt-1">10</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-mono-data font-bold text-xs text-on-surface">10:00 - 10:30 CET</span>
+                          <span className="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5 font-medium">
+                            <span className="material-symbols-outlined text-[15px] text-emerald-600">call</span>
+                            <span>Consulta Telefónica (Zorgtoeslag)</span>
+                          </span>
+                          <span className="text-[11px] text-outline block mt-0.5">Asesor: Elena Martínez</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`tel:${selectedClient.phone}`}
+                          className="flex-1 h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">call</span>
+                          <span>Llamar Ahora</span>
+                        </a>
+                        <button
+                          onClick={() => setActive360Tab('citas')}
+                          className="h-8 px-3 border border-outline-variant hover:bg-surface-container rounded-lg text-xs font-semibold text-on-surface"
+                          title="Gestionar citas"
+                        >
+                          Ver Citas
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Widget 5: Historial & Registro IA (Resumen) */}
+                    <div className="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-secondary text-2xl">auto_awesome</span>
+                          <h3 className="font-bold text-sm text-on-surface">Historial & Registro IA</h3>
+                        </div>
+                        <span className="text-[10px] font-bold text-outline uppercase">Hoy</span>
+                      </div>
+
+                      <div className="space-y-3 relative pl-4 before:content-[''] before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container-high">
+                        {getClientActivities(selectedClient).slice(0, 3).map((act: any) => (
+                          <div key={act.id} className="relative text-xs">
+                            <div className="w-2.5 h-2.5 rounded-full bg-secondary absolute -left-[14px] top-1" />
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono-data font-bold text-[11px] text-on-surface">{act.time}</span>
+                              <span className="px-1.5 py-0.2 bg-secondary/10 text-secondary text-[9px] font-bold rounded uppercase">
+                                {act.badge}
+                              </span>
+                            </div>
+                            <p className="text-on-surface-variant text-[11px] mt-0.5 leading-relaxed">{act.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => setActive360Tab('historial')}
+                        className="w-full text-center text-xs font-semibold text-secondary hover:underline pt-1 block"
+                      >
+                        Ver historial completo y auditoría →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: SERVICIOS & TRÁMITES */}
+            {active360Tab === 'servicios' && (
+              <div className="space-y-6 w-full">
+                {/* Notas rápidas */}
                 <div className="p-4 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold uppercase text-outline">Notas Internas del Gestor:</span>
@@ -1466,7 +1907,10 @@ export default function CRMClientesPage() {
                 {/* Expedientes Activos */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-sm text-on-surface">Expedientes Activos del Cliente</h3>
+                    <div>
+                      <h3 className="font-bold text-sm text-on-surface">Expedientes y Servicios Activos</h3>
+                      <p className="text-xs text-on-surface-variant">Gestión de trámites ante Belastingdienst, KVK y Toeslagen.</p>
+                    </div>
                     <button
                       onClick={() => {
                         const first = servicesCatalog[0];
@@ -1480,7 +1924,7 @@ export default function CRMClientesPage() {
                       className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
                     >
                       <span className="material-symbols-outlined text-[15px]">add</span>
-                      <span>Añadir Trámite</span>
+                      <span>+ Nuevo Trámite</span>
                     </button>
                   </div>
 
@@ -1699,22 +2143,22 @@ export default function CRMClientesPage() {
               </div>
             )}
 
-            {/* TAB 3: PRESUPUESTOS & FACTURAS */}
-            {active360Tab === 'facturacion' && (
-              <div className="space-y-6 max-w-5xl">
+            {/* TAB 5: PRESUPUESTOS (DEDICADA) */}
+            {active360Tab === 'presupuestos' && (
+              <div className="space-y-6 w-full">
                 {/* Presupuestos */}
                 <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-on-surface">Presupuestos de {selectedClient.full_name}</h3>
-                      <p className="text-xs text-on-surface-variant">Generación con IVA/BTW 21% y conversión en 1 clic a factura.</p>
+                      <p className="text-xs text-on-surface-variant">Generación oficial con IVA/BTW 21% y conversión en 1 clic a factura.</p>
                     </div>
                     <button
                       onClick={openQuoteModal}
-                      className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                      className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1 shadow-xs"
                     >
                       <span className="material-symbols-outlined text-[15px]">add</span>
-                      <span>Crear Presupuesto</span>
+                      <span>+ Crear Presupuesto</span>
                     </button>
                   </div>
 
@@ -1786,6 +2230,18 @@ export default function CRMClientesPage() {
                               <span className="material-symbols-outlined text-[13px] text-secondary">visibility</span>
                               <span>Ver Presupuesto</span>
                             </button>
+
+                            {q.status !== 'convertido' && (
+                              <button
+                                type="button"
+                                onClick={() => handleConvertQuoteInFicha(q)}
+                                className="h-7 px-2.5 bg-secondary text-white rounded text-[11px] font-semibold flex items-center gap-1 hover:bg-blue-700 transition-colors shadow-2xs"
+                                title="Convertir inmediatamente a factura oficial"
+                              >
+                                <span className="material-symbols-outlined text-[13px]">receipt_long</span>
+                                <span>A Factura</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1794,13 +2250,18 @@ export default function CRMClientesPage() {
                     <p className="text-xs text-outline py-2">No hay presupuestos emitidos aún.</p>
                   )}
                 </div>
+              </div>
+            )}
 
+            {/* TAB 6: FACTURAS OFICIALES (DEDICADA) */}
+            {active360Tab === 'facturas' && (
+              <div className="space-y-6 w-full">
                 {/* Facturas */}
                 <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-bold text-sm text-on-surface">Facturas de {selectedClient.full_name}</h3>
-                      <p className="text-xs text-on-surface-variant">Facturación legal con pasarela iDEAL y registro de pagos.</p>
+                      <h3 className="font-bold text-sm text-on-surface">Facturas Oficiales de {selectedClient.full_name}</h3>
+                      <p className="text-xs text-on-surface-variant">Facturación legal con pasarela iDEAL, desglose de 21% BTW y registro de cobros.</p>
                     </div>
                   </div>
 
@@ -1844,7 +2305,7 @@ export default function CRMClientesPage() {
                                   inv.status === 'pagada' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                                 }`}
                               >
-                                {inv.status === 'pagada' ? 'PAGADA (iDEAL)' : 'PENDIENTE DE PAGO'}
+                                {inv.status === 'pagada' ? 'PAGADA (iDEAL)' : 'EMITIDA / PENDIENTE'}
                               </span>
                             </div>
 
@@ -2011,7 +2472,268 @@ export default function CRMClientesPage() {
               </div>
             )}
 
-            {/* TAB 6: ASISTENTE IA DEL CLIENTE (PANTALLA COMPLETA) */}
+            {/* TAB 8: NOTAS & TAREAS DEL CLIENTE */}
+            {active360Tab === 'tareas' && (
+              <div className="space-y-6 w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Columna Izquierda: Notas del Gestor (5 cols) */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="p-5 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
+                          <span className="material-symbols-outlined text-secondary text-[18px]">edit_note</span>
+                          <span>Notas Internas del Gestor</span>
+                        </h3>
+                        <button
+                          onClick={() => setIsEditingNotes(!isEditingNotes)}
+                          className="text-secondary font-semibold text-xs hover:underline flex items-center gap-1"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">edit</span>
+                          <span>{isEditingNotes ? 'Cancelar' : 'Editar Nota'}</span>
+                        </button>
+                      </div>
+
+                      {isEditingNotes ? (
+                        <div className="space-y-3">
+                          <textarea
+                            rows={6}
+                            value={editedNotes}
+                            onChange={(e) => setEditedNotes(e.target.value)}
+                            placeholder="Escribe anotaciones confidenciales sobre este cliente, acuerdos con Belastingdienst, etc..."
+                            className="w-full p-3.5 border border-outline-variant rounded-xl bg-surface text-xs focus:border-secondary focus:outline-none leading-relaxed"
+                          />
+                          <button
+                            onClick={handleSaveNotes}
+                            className="h-9 px-4 bg-secondary text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors shadow-xs"
+                          >
+                            Guardar Notas del Gestor
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-surface rounded-xl border border-surface-container text-xs text-on-surface leading-relaxed min-h-[120px]">
+                          {selectedClient.notes ? (
+                            <p className="whitespace-pre-line">{selectedClient.notes}</p>
+                          ) : (
+                            <p className="text-outline italic">No hay notas registradas para este cliente todavía. Pulsa en Editar Nota para añadir indicaciones internas.</p>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-lg text-xs text-secondary flex items-start gap-2">
+                        <span className="material-symbols-outlined text-[16px] text-secondary mt-0.5">info</span>
+                        <span>Estas notas son 100% privadas y solo visibles para el equipo de gestores y el Asistente IA.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Columna Derecha: Checklist de Tareas del Expediente (7 cols) */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="p-5 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm space-y-4">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div>
+                          <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
+                            <span className="material-symbols-outlined text-secondary text-[18px]">checklist</span>
+                            <span>Checklist de Tareas del Expediente</span>
+                          </h3>
+                          <p className="text-xs text-on-surface-variant mt-0.5">
+                            Tareas pendientes de verificar antes de cerrar trámites en Belastingdienst.
+                          </p>
+                        </div>
+
+                        {/* Filtros de tareas */}
+                        <div className="flex items-center gap-1 bg-surface-container p-1 rounded-lg text-xs">
+                          <button
+                            onClick={() => setTaskFilter('todas')}
+                            className={`px-2.5 py-1 rounded font-semibold transition-colors ${
+                              taskFilter === 'todas' ? 'bg-surface text-on-surface shadow-2xs' : 'text-outline hover:text-on-surface'
+                            }`}
+                          >
+                            Todas ({getClientTasks(selectedClient).length})
+                          </button>
+                          <button
+                            onClick={() => setTaskFilter('pendientes')}
+                            className={`px-2.5 py-1 rounded font-semibold transition-colors ${
+                              taskFilter === 'pendientes' ? 'bg-secondary text-white shadow-2xs' : 'text-outline hover:text-on-surface'
+                            }`}
+                          >
+                            Pendientes ({getClientTasks(selectedClient).filter((t: any) => !t.completed).length})
+                          </button>
+                          <button
+                            onClick={() => setTaskFilter('completadas')}
+                            className={`px-2.5 py-1 rounded font-semibold transition-colors ${
+                              taskFilter === 'completadas' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-outline hover:text-on-surface'
+                            }`}
+                          >
+                            Completadas ({getClientTasks(selectedClient).filter((t: any) => t.completed).length})
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Formulario para añadir nueva tarea */}
+                      <form onSubmit={handleAddNewTask} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Añadir nueva tarea para este cliente (ej: 'Confirmar IBAN con Belastingdienst')..."
+                          value={newTaskInput}
+                          onChange={(e) => setNewTaskInput(e.target.value)}
+                          className="flex-1 h-10 px-3.5 border border-outline-variant rounded-xl bg-surface text-xs focus:border-secondary focus:outline-none"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newTaskInput.trim()}
+                          className="h-10 px-4 bg-secondary hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors shadow-xs shrink-0"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">add_task</span>
+                          <span>Añadir</span>
+                        </button>
+                      </form>
+
+                      {/* Lista de Tareas */}
+                      <div className="space-y-2 pt-2">
+                        {getClientTasks(selectedClient)
+                          .filter((t: any) => {
+                            if (taskFilter === 'pendientes') return !t.completed;
+                            if (taskFilter === 'completadas') return t.completed;
+                            return true;
+                          })
+                          .map((task: any) => (
+                            <div
+                              key={task.id}
+                              className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all ${
+                                task.completed
+                                  ? 'bg-surface-container-low/60 border-surface-container text-outline'
+                                  : 'bg-surface border-outline-variant text-on-surface hover:shadow-2xs'
+                              }`}
+                            >
+                              <label className="flex items-center gap-3 cursor-pointer min-w-0 flex-1">
+                                <input
+                                  type="checkbox"
+                                  checked={task.completed}
+                                  onChange={() => handleToggleTask(task.id)}
+                                  className="w-4 h-4 rounded text-secondary focus:ring-secondary cursor-pointer"
+                                />
+                                <span className={`text-xs font-medium leading-snug ${task.completed ? 'line-through text-outline' : 'text-on-surface'}`}>
+                                  {task.title}
+                                </span>
+                              </label>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span
+                                  className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
+                                    task.priority === 'alta'
+                                      ? 'bg-red-50 text-red-700 border border-red-200'
+                                      : task.priority === 'media'
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                      : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  }`}
+                                >
+                                  {task.priority || 'media'}
+                                </span>
+                                <span className="text-[10px] font-mono-data text-outline hidden sm:inline">
+                                  {task.due || 'Vence pronto'}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteTask(task.id)}
+                                  className="p-1 text-outline hover:text-red-600 transition-colors"
+                                  title="Eliminar tarea"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 9: HISTORIAL COMPLETO & ACTIVIDAD IA */}
+            {active360Tab === 'historial' && (
+              <div className="space-y-6 w-full">
+                <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-6">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                      <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
+                        <span className="material-symbols-outlined text-secondary text-[20px]">history_edu</span>
+                        <span>Historial Completo de Actividad & Registro IA</span>
+                      </h3>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        Registro de auditoría cronológico de todas las interacciones, audios de WhatsApp, trámites y eventos del expediente.
+                      </p>
+                    </div>
+
+                    {/* Filtros de historial */}
+                    <div className="flex items-center gap-1 bg-surface-container p-1 rounded-lg text-xs">
+                      <button
+                        onClick={() => setHistoryFilter('todos')}
+                        className={`px-3 py-1 rounded font-semibold transition-colors ${
+                          historyFilter === 'todos' ? 'bg-surface text-on-surface shadow-2xs' : 'text-outline hover:text-on-surface'
+                        }`}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        onClick={() => setHistoryFilter('ia')}
+                        className={`px-3 py-1 rounded font-semibold transition-colors ${
+                          historyFilter === 'ia' ? 'bg-secondary text-white shadow-2xs' : 'text-outline hover:text-on-surface'
+                        }`}
+                      >
+                        Automatizaciones IA
+                      </button>
+                      <button
+                        onClick={() => setHistoryFilter('gestor')}
+                        className={`px-3 py-1 rounded font-semibold transition-colors ${
+                          historyFilter === 'gestor' ? 'bg-secondary text-white shadow-2xs' : 'text-outline hover:text-on-surface'
+                        }`}
+                      >
+                        Gestor Manual
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Timeline Principal */}
+                  <div className="space-y-6 relative pl-6 before:content-[''] before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-surface-container-high">
+                    {getClientActivities(selectedClient)
+                      .filter((act: any) => {
+                        if (historyFilter === 'ia') return act.type?.includes('ia');
+                        if (historyFilter === 'gestor') return act.type === 'gestor' || act.type === 'sistema';
+                        return true;
+                      })
+                      .map((act: any) => (
+                        <div key={act.id} className="relative space-y-1.5">
+                          <div className="w-4 h-4 rounded-full bg-secondary border-2 border-surface-container-lowest absolute -left-[22px] top-1 shadow-xs" />
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono-data font-bold text-xs text-on-surface">{act.time}</span>
+                            <span className="text-[10px] font-mono-data text-outline">({act.date})</span>
+                            <span
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                                act.type === 'ia_audio'
+                                  ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                  : act.type === 'ia'
+                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                  : act.type === 'gestor'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-blue-50 text-blue-700 border border-blue-200'
+                              }`}
+                            >
+                              {act.badge}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-xs text-on-surface">{act.title}</h4>
+                          <p className="text-xs text-on-surface-variant leading-relaxed max-w-3xl bg-surface p-3 rounded-lg border border-surface-container">
+                            {act.desc}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 10: ASISTENTE IA DEL CLIENTE (PANTALLA COMPLETA) */}
             {active360Tab === 'ia' && (
               <div className="w-full flex-1 min-h-0 bg-surface-container-lowest rounded-2xl border border-indigo-200/80 shadow-md flex flex-col h-full overflow-hidden">
                 {/* Cabecera del Asistente */}
