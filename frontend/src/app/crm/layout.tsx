@@ -51,7 +51,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      {/* Sidebar fijo */}
+      {/* Sidebar fijo a la izquierda (z-50 para estar siempre visible) */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-surface-container-high z-50 flex flex-col justify-between">
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Brand header */}
@@ -140,8 +140,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Area */}
       <div className="pl-64 flex-1 flex flex-col min-w-0">
-        {/* Top Header */}
-        <header className="sticky top-0 h-16 bg-surface/90 backdrop-blur-md border-b border-surface-container-high z-40 px-8 flex items-center justify-between gap-6">
+        {/* Top Header del CRM general (z-30 para no interferir con la ficha 360) */}
+        <header className="sticky top-0 h-16 bg-surface/90 backdrop-blur-md border-b border-surface-container-high z-30 px-8 flex items-center justify-between gap-6">
           {/* Interactive Search Bar / Command Palette trigger */}
           <div className="flex-1 max-w-xl">
             <button
@@ -284,7 +284,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content View */}
-        <main className="flex-1 p-8 pb-16 bg-surface">
+        <main className="flex-1 px-8 py-5 pb-16 bg-surface">
           {children}
         </main>
       </div>

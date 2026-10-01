@@ -525,12 +525,13 @@ export default function CRMClientesPage() {
       {/* ========================================================================= */}
       {selectedClient && (
         <div
-          className={`fixed top-0 bottom-0 right-0 ${
+          className={`fixed inset-y-0 right-0 ${
             isMaximized ? 'left-0 z-[100]' : 'left-64 z-40'
-          } bg-surface flex flex-col overflow-hidden shadow-2xl border-l border-surface-container-high animate-in fade-in duration-150`}
+          } bg-surface flex flex-col overflow-hidden shadow-2xl border-l border-surface-container-high`}
+          style={{ top: 0, marginTop: 0, paddingTop: 0 }}
         >
           {/* Top Bar de la Ficha 360° */}
-          <header className="h-16 px-6 lg:px-8 bg-surface-container-lowest border-b border-surface-container-high flex items-center justify-between shadow-sm shrink-0">
+          <header className="h-16 m-0 px-6 lg:px-8 bg-surface-container-lowest border-b border-surface-container-high flex items-center justify-between shadow-sm shrink-0">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedClient(null)}
