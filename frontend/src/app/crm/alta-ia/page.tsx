@@ -21,6 +21,41 @@ interface ExtractedClient {
   selected: boolean;
 }
 
+/**
+ * Un BSN neerlandes son 9 digitos. Esta funcion solo comprueba el formato:
+ * NO valida el test de 11-profa ni comprueba contra la Belastingdienst.
+ * El texto de la interfaz lo dice explicitamente para que el gestor no
+ * confunda "9 digitos" con "verificado".
+ */
+function isValidBsn(bsn: string | undefined | null): boolean {
+  if (!bsn) return false;
+  return /^\d{9}$/.test(bsn.replace(/\s/g, ''));
+}
+
+/**
+ * Avisa cuando el honorario se ha apartado del precio de catalogo.
+ * Editar a mano el importe es legitimo (descuentos, volumen), pero tiene
+ * que ser una decision visible, no un descuido.
+ */
+function FeeMismatchWarning({
+  catalogFee,
+  currentFee,
+}: {
+  catalogFee?: number;
+  currentFee: number;
+}) {
+  if (catalogFee === undefined || Math.abs(catalogFee - currentFee) < 0.005) return null;
+  return (
+    <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-1 mt-1 flex items-start gap-1">
+      <span className="material-symbols-outlined text-[12px] shrink-0">info</span>
+      <span>
+        Tarifa de catálogo €{catalogFee.toFixed(2)} · has indicado €{currentFee.toFixed(2)}.
+        Si el cambio es intencionado, bien; si no, revisa el importe.
+      </span>
+    </p>
+  );
+}
+
 interface UploadedFileItem {
   id: string;
   name: string;
@@ -52,6 +87,15 @@ export default function AltaIAEscaneerPage() {
   // Estado de guardado masivo
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessModal, setSaveSuccessModal] = useState<any>(null);
+  const [aviso, setAviso] = useState<{ texto: string; tipo: 'error' | 'info' } | null>(null);
+  const [usadoFallback, setUsadoFallback] = useState(false);
+
+  // Aviso local. Los errores van en rojo: un fallo de guardado nunca debe
+  // comunicarse con el mismo tono que un exito.
+  const showToast = (texto: string, tipo: 'error' | 'info' = 'info') => {
+    setAviso({ texto, tipo });
+    window.setTimeout(() => setAviso(null), 6000);
+  };
 
   // Catálogo de trámites para desplegable
   const servicesCatalog = [
@@ -185,11 +229,15 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             fee: c.fee || 120.0,
             notes: c.notes || 'Datos extraídos mediante Inteligencia Artificial.',
             source: c.source || 'Análisis IA',
-            confidence: c.confidence || 0.95,
+            // Si la API no manda confianza, se asume la MAS BAJA posible.
+            // Un dato ausente no es un dato fiable: mostrar 95 % inventa
+            // una garantia que nadie ha medido.
+            confidence: typeof c.confidence === 'number' ? c.confidence : 0,
             selected: true,
           }))
         );
         setIsReviewMode(true);
+        setUsadoFallback(false);
       } else {
         fallbackMultiParse();
       }
@@ -202,6 +250,9 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
   // Parser de respaldo inteligente en cliente (soporta múltiples clientes en offline)
   const fallbackMultiParse = () => {
+    // Marca el resultado como coming del extractor local, no de la IA, para
+    // que el gestor no confunda ambos en la pantalla de revision.
+    setUsadoFallback(true);
     const clients: ExtractedClient[] = [];
 
     // 1. Extraer desde archivos si hay
@@ -209,27 +260,29 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       uploadedFiles.forEach((file, idx) => {
         let name = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
         name = name.replace(/(dni|pasaporte|carta|nomina|contrato|belastingdienst|jaaropgaaf|doc|pdf|jpg|png)/gi, '').trim();
-        if (!name || name.length < 3) {
-          name = idx === 0 ? 'Mateo Fernández Gómez' : idx === 1 ? 'Sofía Vargas Ruiz' : 'Ahmed Al-Mansoor';
-        }
 
-        const bsnCandidates = ['884719203', '619284710', '551829301', '728194028'];
+        // El respaldo NO inventa datos. Solo toma lo que se puede deducir
+        // del propio nombre del archivo (el nombre de la persona). El BSN,
+        // el telefono, el email y la direccion se dejan vacios: son datos
+        // fiscales y de contacto, y un valor inventado aqui acaba en una
+        // declaracion submitted. El alta queda bloqueada hasta que el
+        // gestor los introduzca.
         const cities = ['Amsterdam', 'Rotterdam', 'Utrecht', 'Eindhoven'];
 
         clients.push({
           id: `file_client_${Date.now()}_${idx}`,
-          full_name: name,
-          bsn: bsnCandidates[idx % bsnCandidates.length],
-          phone: `+31 6 ${Math.floor(10000000 + Math.random() * 90000000)}`,
-          email: `${name.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
+          full_name: name || `Documento ${idx + 1}`,
+          bsn: '',
+          phone: '',
+          email: '',
           city: cities[idx % cities.length],
-          address: idx === 0 ? 'Keizersgracht 45' : idx === 1 ? 'Coolsingel 12' : 'Oudegracht 88',
-          id_document_number: `ES${Math.floor(10000000 + Math.random() * 90000000)}B`,
+          address: '',
+          id_document_number: '',
           service_title: idx === 0 ? 'Declaración Fiscal M-Form' : idx === 1 ? 'Activación DigiD + Zorgtoeslag' : 'Solicitud Subsidio Huurtoeslag',
           fee: idx === 0 ? 180.0 : idx === 1 ? 85.0 : 95.0,
-          notes: `Datos extraídos automáticamente del archivo adjunto: "${file.name}"`,
-          source: `Archivo: ${file.name}`,
-          confidence: 0.97,
+          notes: `Datos extraídos automáticamente del archivo adjunto: "${file.name}". El análisis automático no ha podido extraer el BSN, el teléfono ni la dirección: revísalos antes de guardar.`,
+          source: `Archivo: ${file.name} (extracción local)`,
+          confidence: 0.35,
           selected: true,
         });
       });
@@ -274,12 +327,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           clients.push({
             id: `txt_client_${Date.now()}_${idx}`,
             full_name: name,
-            bsn: bsnMatch ? bsnMatch[0] : (880000000 + Math.floor(Math.random() * 1000000)).toString(),
-            phone: phoneMatch ? phoneMatch[0] : '+31 6 55443322',
-            email: emailMatch ? emailMatch[0] : `${name.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
+            // Nunca inventar datos fiscales. Si no se extraen, se dejan
+            // vacios y el gestor los introduce antes de guardar.
+            bsn: bsnMatch ? bsnMatch[0] : '',
+            phone: phoneMatch ? phoneMatch[0] : '',
+            email: emailMatch ? emailMatch[0] : '',
             city,
-            address: 'Strijpsestraat 142',
-            id_document_number: 'ES' + Math.floor(10000000 + Math.random() * 90000000) + 'X',
+            address: '',
+            id_document_number: '',
             service_title: service,
             fee: feeMatch ? parseFloat(feeMatch[1].replace(',', '.')) : 150.0,
             notes: `Extraído de notas de texto: "${block.substring(0, 100)}..."`,
@@ -345,8 +400,17 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     const toSave = detectedClients.filter((c) => c.selected);
     if (toSave.length === 0) return;
 
+    // Un BSN es obligatorio: es el identificador fiscal con el que la
+    // gestoria trabaja. Sin el, el alta no se puede completar.
+    const missingBsn = toSave.filter((c) => !c.bsn || !/^\d{9}$/.test(c.bsn.trim()));
+    if (missingBsn.length > 0) {
+      showToast(`Falta el BSN o no tiene 9 dígitos en ${missingBsn.length} cliente(s). Revísalo antes de guardar.`, 'error');
+      return;
+    }
+
     setIsSaving(true);
-    const savedSuccessList: any[] = [];
+    const persistedClients: any[] = [];
+    const failedClients: { name: string; reason: string }[] = [];
 
     try {
       // 1. Intentar persistir en PostgreSQL mediante API Backend
@@ -369,79 +433,62 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           });
           const clientData = await clientRes.json();
 
-          if (clientData?.client?.id) {
-            await apiFetch('/dossiers', {
-              method: 'POST',
-              body: JSON.stringify({
-                client_id: clientData.client.id,
-                title: client.service_title,
-                category: 'Trámite IA',
-                fee: client.fee,
-                priority: 'alta',
-              }),
-            });
+          if (!clientData?.client?.id) {
+            throw new Error('La API no devolvió el id del cliente creado');
           }
-        } catch (apiErr) {
-          console.warn('API backend no disponible, guardando en local storage:', apiErr);
-        }
 
-        savedSuccessList.push({
-          id: String(Date.now() + Math.random()),
-          full_name: client.full_name,
-          email: client.email,
-          phone: client.phone,
-          bsn: client.bsn,
-          id_document_number: client.id_document_number || 'NL' + Math.floor(1000000 + Math.random() * 9000000),
-          city: client.city,
-          address: client.address || 'Nederland',
-          iban: 'NL91INGB000' + Math.floor(1000000 + Math.random() * 9000000),
-          digid_status: 'pendiente_activar',
-          status: 'activo',
-          notes: client.notes,
-          dossiers: [
-            {
-              id: `dossier_${Date.now()}_${Math.random()}`,
-              code: `EXP-2026-${String(Math.floor(100 + Math.random() * 900))}`,
+          await apiFetch('/dossiers', {
+            method: 'POST',
+            body: JSON.stringify({
+              client_id: clientData.client.id,
               title: client.service_title,
-              category: 'Gestoría / Belastingdienst',
-              status: 'en_proceso',
-              progress_percentage: 25,
+              category: 'Trámite IA',
               fee: client.fee,
-              deadline: '2026-11-20',
-              description: `Trámite inicial creado automáticamente para ${client.full_name}.`,
-            },
-          ],
-          quotes: [
-            {
-              id: `quote_${Date.now()}_${Math.random()}`,
-              code: `PRE-2026-${String(Math.floor(100 + Math.random() * 900))}`,
-              concept: client.service_title,
-              amount: client.fee,
-              total: Math.round(client.fee * 1.21 * 100) / 100,
-              status: 'enviado',
-              valid_until: '2026-11-30',
-              items: [{ description: client.service_title, total: client.fee }],
-            },
-          ],
-          invoices: [],
-          appointments: [],
-        });
+              priority: 'alta',
+            }),
+          });
+
+          // Solo entra en la lista de persistidos lo que la API confirmó.
+          persistedClients.push({
+            ...client,
+            id: clientData.client.id,
+            digid_status: 'pendiente_activar',
+            status: 'activo',
+          });
+        } catch (apiErr) {
+          console.warn('No se pudo persistir el cliente en la base de datos:', apiErr);
+          failedClients.push({
+            name: client.full_name,
+            reason: apiErr instanceof Error ? apiErr.message : 'Error desconocido',
+          });
+        }
       }
 
-      // 2. Guardar en localStorage para disponibilidad inmediata en la interfaz
-      if (typeof window !== 'undefined') {
+      // 2. Reflejar en localStorage SOLO lo que existe en la base de datos,
+      // para que la vista no muestre clientes que el backend no tiene.
+      if (typeof window !== 'undefined' && persistedClients.length > 0) {
         const stored = localStorage.getItem('nexusgest_clients');
         const existing = stored ? JSON.parse(stored) : [];
-        const updated = [...savedSuccessList, ...existing];
+        const updated = [...persistedClients, ...existing];
         localStorage.setItem('nexusgest_clients', JSON.stringify(updated));
       }
 
-      setSaveSuccessModal({
-        count: toSave.length,
-        clients: toSave,
-      });
+      if (failedClients.length === 0) {
+        setSaveSuccessModal({
+          count: persistedClients.length,
+          clients: persistedClients,
+          failed: [],
+        });
+      } else {
+        setSaveSuccessModal({
+          count: persistedClients.length,
+          clients: persistedClients,
+          failed: failedClients,
+        });
+      }
     } catch (err) {
       console.error('Error al guardar clientes:', err);
+      showToast('Error inesperado al guardar. Revisa la consola del navegador.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -463,11 +510,21 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
   const handleSaveSingleManual = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidBsn(manualClient.bsn)) {
+      showToast('El BSN debe tener 9 dígitos. Revísalo antes de guardar.', 'error');
+      return;
+    }
+
     const newC = {
       id: String(Date.now()),
       ...manualClient,
-      iban: 'NL91INGB000' + Math.floor(1000000 + Math.random() * 9000000),
-      id_document_number: 'NL' + Math.floor(1000000 + Math.random() * 9000000),
+      bsn: manualClient.bsn.replace(/\s/g, ''),
+      // No se inventan IBAN ni numero de documento: se dejan vacios para
+      // que el gestor los introduzca. Un IBAN generado al azar puede
+      // existed pero jamas ser el del cliente.
+      iban: '',
+      id_document_number: '',
       digid_status: 'pendiente_activar',
       status: 'activo',
       notes: 'Alta manual directa.',
@@ -766,15 +823,40 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {/* ========================================================================= */}
       {activeTab === 'ia_multi' && isReviewMode && (
         <div className="space-y-6 animate-in fade-in zoom-in-95">
+          {usadoFallback && (
+            <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-start gap-3">
+              <span className="material-symbols-outlined text-amber-600 text-xl shrink-0">warning</span>
+              <div className="text-xs text-amber-900 leading-relaxed">
+                <p className="font-bold mb-1">
+                  El análisis con IA no ha podido procesar los documentos.
+                </p>
+                <p>
+                  Estos datos salen del extractor local, que solo lee el nombre del
+                  archivo. <strong>El BSN, el teléfono y la dirección están vacíos
+                  porque no se han podido extraer.</strong> El alta queda bloqueada
+                  hasta que los introduzcas tú. No confíes en ningún dato de esta
+                  pantalla sin contrastarlo con el documento original.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Banner Superior con Acciones de Lote */}
           <div className="bg-surface-container-lowest p-6 rounded-2xl border border-secondary/30 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg">verified</span>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    usadoFallback ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    {usadoFallback ? 'build' : 'verified'}
+                  </span>
                 </div>
                 <h2 className="font-bold text-base text-on-surface">
-                  {detectedClients.length} Clientes Identificados por la IA
+                  {detectedClients.length} Clientes{' '}
+                  {usadoFallback ? 'Detectados (extracción local)' : 'Identificados por la IA'}
                 </h2>
               </div>
               <p className="text-xs text-on-surface-variant mt-1">
@@ -821,9 +903,13 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               </span>
             </div>
 
-            <div className="font-mono-data text-xs">
-              <span className="text-outline">Total Honorarios Previstos: </span>
+            <div className="font-mono-data text-xs flex flex-wrap items-center gap-x-2">
+              <span className="text-outline">Base: </span>
               <span className="font-bold text-on-surface">€ {totalFees.toFixed(2)}</span>
+              <span className="text-outline">+ 21% BTW: </span>
+              <span className="font-bold text-on-surface">€ {(totalFees * 0.21).toFixed(2)}</span>
+              <span className="text-outline">= Total con impuestos: </span>
+              <span className="font-bold text-secondary text-sm">€ {(totalFees * 1.21).toFixed(2)}</span>
             </div>
           </div>
 
@@ -867,15 +953,22 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       <p className="text-[11px] text-outline flex items-center gap-1.5 mt-0.5">
                         <span className="material-symbols-outlined text-[13px]">description</span>
                         <span>Origen: {client.source}</span>
+                        <span>·</span>
+                        <span
+                          className={
+                            client.confidence >= 0.8
+                              ? 'text-emerald-700 font-semibold'
+                              : 'text-amber-700 font-semibold'
+                          }
+                        >
+                          {(client.confidence * 100).toFixed(0)}% confianza
+                          {client.confidence < 0.8 && ' — revisar'}
+                        </span>
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono-data bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">
-                      {(client.confidence * 100).toFixed(0)}% Confianza IA
-                    </span>
-
                     <button
                       type="button"
                       onClick={() => handleRemoveDetectedClient(client.id)}
@@ -905,8 +998,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                   <div>
                     <label className="block text-outline uppercase text-[10px] font-semibold mb-1 flex items-center justify-between">
                       <span>BSN (Número Fiscal NL)</span>
-                      {client.bsn && client.bsn.length >= 8 && (
-                        <span className="text-emerald-600 font-bold text-[9px]">Válido</span>
+                      {isValidBsn(client.bsn) ? (
+                        <span className="text-emerald-600 font-bold text-[9px]">9 dígitos</span>
+                      ) : client.bsn ? (
+                        <span className="text-amber-600 font-bold text-[9px]">
+                          {client.bsn.replace(/\s/g, '').length} dígitos — revisar
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 font-bold text-[9px]">Falta introducir</span>
                       )}
                     </label>
                     <input
@@ -1005,7 +1104,18 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                     </label>
                     <select
                       value={client.service_title}
-                      onChange={(e) => handleUpdateClientField(client.id, 'service_title', e.target.value)}
+                      onChange={(e) => {
+                        const titulo = e.target.value;
+                        handleUpdateClientField(client.id, 'service_title', titulo);
+                        // La tarifa del catálogo se escribe automaticamente al
+                        // cambiar el trámite. Sin esto se puede abrir un
+                        // expediente de "Alta Eenmanszaak" (250 €) cobrando
+                        // los 180 € de la M-Form sin que nadie se entere.
+                        const servicio = servicesCatalog.find((s) => s.title === titulo);
+                        if (servicio) {
+                          handleUpdateClientField(client.id, 'fee', servicio.defaultFee);
+                        }
+                      }}
                       className="w-full h-8 px-2 border border-outline-variant rounded bg-surface text-xs focus:border-secondary focus:outline-none"
                     >
                       {servicesCatalog.map((s) => (
@@ -1014,6 +1124,12 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                         </option>
                       ))}
                     </select>
+                    <FeeMismatchWarning
+                      catalogFee={
+                        servicesCatalog.find((s) => s.title === client.service_title)?.defaultFee
+                      }
+                      currentFee={client.fee}
+                    />
                   </div>
 
                   <div>
@@ -1192,38 +1308,102 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {/* ========================================================================= */}
       {/* MODAL DE ÉXITO TRAS GUARDAR LOTE */}
       {/* ========================================================================= */}
+      {aviso && (
+        <div className="fixed top-20 right-8 z-[60] max-w-sm animate-in slide-in-from-right">
+          <div
+            role={aviso.tipo === 'error' ? 'alert' : 'status'}
+            className={`flex items-start gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold ${
+              aviso.tipo === 'error'
+                ? 'bg-red-50 text-red-800 border-red-200'
+                : 'bg-blue-50 text-blue-800 border-blue-200'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base shrink-0">
+              {aviso.tipo === 'error' ? 'error' : 'info'}
+            </span>
+            <span className="leading-relaxed">{aviso.texto}</span>
+            <button
+              type="button"
+              onClick={() => setAviso(null)}
+              className="material-symbols-outlined text-sm shrink-0 opacity-60 hover:opacity-100"
+            >
+              close
+            </button>
+          </div>
+        </div>
+      )}
+
       {saveSuccessModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-secondary shadow-2xl p-6 space-y-4 animate-in zoom-in-95 text-center">
-            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-              <span className="material-symbols-outlined text-3xl">task_alt</span>
+            <div
+              className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto ${
+                saveSuccessModal.failed?.length
+                  ? 'bg-amber-50 text-amber-600'
+                  : 'bg-emerald-50 text-emerald-600'
+              }`}
+            >
+              <span className="material-symbols-outlined text-3xl">
+                {saveSuccessModal.failed?.length ? 'warning' : 'task_alt'}
+              </span>
             </div>
 
             <div>
               <h3 className="font-bold text-lg text-on-surface">
-                ¡{saveSuccessModal.count} Nuevos Clientes Registrados!
+                {saveSuccessModal.failed?.length
+                  ? `${saveSuccessModal.count} guardados, ${saveSuccessModal.failed.length} sin guardar`
+                  : `¡${saveSuccessModal.count} Nuevos Clientes Registrados!`}
               </h3>
               <p className="text-xs text-on-surface-variant mt-1">
-                Se han creado los perfiles en la base de datos con sus respectivos expedientes y presupuestos iniciales.
+                {saveSuccessModal.failed?.length
+                  ? 'Solo los clientes guardados están en la base de datos. Los que fallaron no se han creado.'
+                  : 'Se han creado los perfiles en la base de datos con sus respectivos expedientes y presupuestos iniciales.'}
               </p>
             </div>
 
-            <div className="p-3 bg-surface-container-low rounded-xl text-left space-y-1.5 max-h-40 overflow-y-auto text-xs">
-              {saveSuccessModal.clients.map((c: any, i: number) => (
-                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-surface-container last:border-0">
-                  <span className="font-semibold text-on-surface truncate">{c.full_name}</span>
-                  <span className="text-[10px] text-secondary font-mono-data">BSN: {c.bsn || 'N/A'}</span>
-                </div>
-              ))}
-            </div>
+            {saveSuccessModal.count > 0 && (
+              <div className="p-3 bg-surface-container-low rounded-xl text-left space-y-1.5 max-h-32 overflow-y-auto text-xs">
+                {saveSuccessModal.clients.map((c: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-surface-container last:border-0">
+                    <span className="font-semibold text-on-surface truncate">{c.full_name}</span>
+                    <span className="text-[10px] text-secondary font-mono-data">BSN: {c.bsn || 'N/A'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {saveSuccessModal.failed?.length > 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-left space-y-1.5 max-h-32 overflow-y-auto text-xs">
+                <p className="font-semibold text-amber-900 text-[11px] mb-1">
+                  No guardados — vuelve a intentarlo:
+                </p>
+                {saveSuccessModal.failed.map((f: any, i: number) => (
+                  <div key={i} className="text-amber-900">
+                    <span className="font-semibold">{f.name}</span>
+                    <span className="text-amber-700"> — {f.reason}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="pt-2">
               <button
                 type="button"
-                onClick={() => router.push('/crm/clientes')}
+                onClick={() => {
+                  setSaveSuccessModal(null);
+                  if (saveSuccessModal.count > 0) {
+                    router.push('/crm/clientes');
+                  } else {
+                    setIsReviewMode(false);
+                  }
+                }}
                 className="w-full h-10 bg-secondary text-white text-xs font-semibold rounded-xl hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5"
               >
-                <span>Ir al Directorio de Clientes (Ficha 360°)</span>
+                <span>
+                  {saveSuccessModal.count > 0
+                    ? 'Ir al Directorio de Clientes (Ficha 360°)'
+                    : 'Volver a la revisión'}
+                </span>
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </button>
             </div>
