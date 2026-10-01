@@ -193,6 +193,38 @@ export default function CRMClientesPage() {
     },
   ]);
 
+  // Sincronización con localStorage para persistir clientes añadidos por IA o formularios
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('nexusgest_clients');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setClients((prev) => {
+              const map = new Map();
+              prev.forEach((c) => map.set(String(c.id), c));
+              parsed.forEach((c: any) => map.set(String(c.id), c));
+              return Array.from(map.values());
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Error al leer clientes de localStorage:', err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && clients.length > 0) {
+      try {
+        localStorage.setItem('nexusgest_clients', JSON.stringify(clients));
+      } catch (err) {
+        console.warn('Error al guardar clientes en localStorage:', err);
+      }
+    }
+  }, [clients]);
+
   // Cliente seleccionado para la Ficha 360°
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [active360Tab, setActive360Tab] = useState<'resumen' | 'personales' | 'facturacion' | 'citas' | 'ia'>('resumen');
