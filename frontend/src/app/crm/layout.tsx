@@ -58,14 +58,14 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   ].filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-surface flex">
+    <div className="h-screen h-[100dvh] w-full bg-surface flex overflow-hidden">
       {/* Sidebar fijo a la izquierda en desktop, desplegable como cajón en tablet/móvil */}
       <aside
         className={`fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-surface-container-high z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="flex flex-col flex-1 overflow-y-auto">
+        <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar">
           {/* Brand header */}
           <div className="h-16 px-6 flex items-center justify-between border-b border-surface-container">
             <Link href="/" className="flex items-center gap-2.5">
@@ -169,10 +169,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Main Area (Responsive: pl-0 en móvil/tablet, lg:pl-64 en desktop) */}
-      <div className="lg:pl-64 pl-0 flex-1 flex flex-col min-w-0 w-full transition-all">
+      {/* Main Area (Responsive: pl-0 en móvil/tablet, lg:pl-64 en desktop, adaptado a pantalla completa) */}
+      <div className="lg:pl-64 pl-0 flex-1 flex flex-col h-full min-w-0 w-full transition-all overflow-hidden">
         {/* Top Header del CRM general */}
-        <header className="sticky top-0 h-16 bg-surface/90 backdrop-blur-md border-b border-surface-container-high z-30 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-6">
+        <header className="h-16 shrink-0 bg-surface/90 backdrop-blur-md border-b border-surface-container-high z-30 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-6">
           {/* Botón Hamburguesa Móvil + Interactive Search Bar */}
           <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
             <button
@@ -326,8 +326,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Content View */}
-        <main className="flex-1 px-3 sm:px-6 lg:px-8 py-4 sm:py-5 pb-16 bg-surface">
+        {/* Content View: Adaptado a pantalla completa sin scrollbar visible a la derecha */}
+        <main className="flex-1 h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-surface no-scrollbar">
           {children}
         </main>
       </div>

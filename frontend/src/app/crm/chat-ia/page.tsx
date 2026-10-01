@@ -359,7 +359,7 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
   ];
 
   return (
-    <div className="w-full flex flex-col h-[calc(100vh-6.5rem)] space-y-3">
+    <div className="w-full flex flex-col h-full min-h-0 space-y-3">
       {/* Toast de Notificaciones */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-indigo-500/40 animate-in fade-in duration-200 no-print">
@@ -479,7 +479,7 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 mt-3 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 mt-3 scroll-smooth no-scrollbar">
               {atajosCategorizados.map((cat, idx) => (
                 <div key={idx} className="space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold text-outline">
@@ -560,7 +560,7 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
           {/* VISOR DE MENSAJES CON AUTO-SCROLL SUAVE CONTINUO */}
           <div
             ref={chatScrollContainerRef}
-            className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 scroll-smooth bg-surface/30 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 print:bg-white print:border-none"
+            className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 scroll-smooth bg-surface/30 no-scrollbar print:bg-white print:border-none"
           >
             {chatMessages.map((msg, idx) => (
               <div

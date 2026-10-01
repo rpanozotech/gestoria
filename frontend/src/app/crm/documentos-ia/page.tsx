@@ -1020,7 +1020,7 @@ ${
   };
 
   return (
-    <div className="space-y-6 max-w-[1700px] mx-auto pb-12">
+    <div className="space-y-5 max-w-[1850px] mx-auto pb-6">
       {/* Toast de Notificaciones */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-indigo-500/40 animate-in fade-in duration-200 no-print">
@@ -1793,7 +1793,7 @@ ${
             {/* CONTENEDOR DE MENSAJES CON AUTO-SCROLL CONTINUO */}
             <div
               ref={chatScrollContainerRef}
-              className="flex-1 overflow-y-auto space-y-3 p-2 my-2 bg-surface/60 rounded-lg border border-surface-container scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
+              className="flex-1 overflow-y-auto space-y-3 p-2 my-2 bg-surface/60 rounded-lg border border-surface-container scroll-smooth no-scrollbar"
             >
               {chatMessages.map((msg, idx) => (
                 <div
