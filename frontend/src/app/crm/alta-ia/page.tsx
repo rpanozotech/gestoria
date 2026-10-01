@@ -530,32 +530,34 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-surface-container gap-2">
+      <div className="flex border-b border-surface-container gap-2 overflow-x-auto whitespace-nowrap scrollbar-none">
         <button
           onClick={() => {
             setActiveTab('ia_multi');
             setIsReviewMode(false);
           }}
-          className={`pb-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
+          className={`pb-3 px-3 sm:px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 ${
             activeTab === 'ia_multi'
               ? 'border-secondary text-secondary'
               : 'border-transparent text-outline hover:text-on-surface'
           }`}
         >
           <span className="material-symbols-outlined text-[17px]">auto_awesome</span>
-          <span>Archivos y Notas con IA (Detección de Varios Clientes)</span>
+          <span className="hidden sm:inline">Archivos y Notas con IA (Detección de Varios Clientes)</span>
+          <span className="sm:hidden">Archivos y Notas con IA</span>
         </button>
 
         <button
           onClick={() => setActiveTab('manual')}
-          className={`pb-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
+          className={`pb-3 px-3 sm:px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 ${
             activeTab === 'manual'
               ? 'border-secondary text-secondary'
               : 'border-transparent text-outline hover:text-on-surface'
           }`}
         >
           <span className="material-symbols-outlined text-[17px]">person_add</span>
-          <span>Formulario Manual Individual</span>
+          <span className="hidden sm:inline">Formulario Manual Individual</span>
+          <span className="sm:hidden">Formulario Manual</span>
         </button>
       </div>
 
@@ -804,7 +806,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           </div>
 
           {/* Barra de Selección Masiva y Resumen Financiero */}
-          <div className="flex items-center justify-between px-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-2 text-xs">
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 cursor-pointer font-semibold text-on-surface">
                 <input

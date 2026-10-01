@@ -305,183 +305,187 @@ export default function CRMFacturacionPage() {
       {/* TAB FACTURAS */}
       {tab === 'facturas' && (
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
-              <tr>
-                <th className="px-5 py-3">Nº Factura</th>
-                <th className="px-5 py-3">Cliente / BSN</th>
-                <th className="px-5 py-3">Concepto Principal</th>
-                <th className="px-5 py-3">Estado de Pago</th>
-                <th className="px-5 py-3">Vencimiento</th>
-                <th className="px-5 py-3 text-right">Total (Inc. BTW)</th>
-                <th className="px-5 py-3 text-right">Acción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-container">
-              {invoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-surface-container-low transition-colors">
-                  <td className="px-5 py-3.5 font-mono-data font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
-                      className="text-secondary hover:underline flex items-center gap-1.5 font-bold"
-                      title="Abrir factura oficial"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">description</span>
-                      <span>{inv.code}</span>
-                    </button>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="font-semibold text-on-surface">{inv.client_name}</div>
-                    <div className="text-[11px] text-outline font-mono-data">BSN: {inv.client_bsn}</div>
-                  </td>
-                  <td className="px-5 py-3.5 text-on-surface-variant font-medium">
-                    {inv.items[0]?.description || 'Servicios Fiscales Gestoría'}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    {inv.status === 'pagada' ? (
-                      <div>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Pagada (iDEAL)
-                        </span>
-                        <div className="text-[10px] text-outline font-mono-data mt-0.5">{inv.payment_reference}</div>
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pendiente de Cobro
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3.5 font-mono-data text-outline">
-                    {inv.due_date}
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-mono-data font-bold text-sm text-on-surface">
-                    € {inv.total.toFixed(2)}
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
+                <tr>
+                  <th className="px-5 py-3">Nº Factura</th>
+                  <th className="px-5 py-3">Cliente / BSN</th>
+                  <th className="px-5 py-3">Concepto Principal</th>
+                  <th className="px-5 py-3">Estado de Pago</th>
+                  <th className="px-5 py-3">Vencimiento</th>
+                  <th className="px-5 py-3 text-right">Total (Inc. BTW)</th>
+                  <th className="px-5 py-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-container">
+                {invoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-surface-container-low transition-colors">
+                    <td className="px-5 py-3.5 font-mono-data font-bold">
                       <button
                         type="button"
                         onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
-                        className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
-                        title="Ver detalle de factura"
+                        className="text-secondary hover:underline flex items-center gap-1.5 font-bold"
+                        title="Abrir factura oficial"
                       >
-                        <span className="material-symbols-outlined text-[14px] text-secondary">visibility</span>
-                        <span>Ver Factura</span>
+                        <span className="material-symbols-outlined text-[15px]">description</span>
+                        <span>{inv.code}</span>
                       </button>
-                      {inv.status !== 'pagada' && (
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="font-semibold text-on-surface">{inv.client_name}</div>
+                      <div className="text-[11px] text-outline font-mono-data">BSN: {inv.client_bsn}</div>
+                    </td>
+                    <td className="px-5 py-3.5 text-on-surface-variant font-medium">
+                      {inv.items[0]?.description || 'Servicios Fiscales Gestoría'}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {inv.status === 'pagada' ? (
+                        <div>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Pagada (iDEAL)
+                          </span>
+                          <div className="text-[10px] text-outline font-mono-data mt-0.5">{inv.payment_reference}</div>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pendiente de Cobro
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 font-mono-data text-outline">
+                      {inv.due_date}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono-data font-bold text-sm text-on-surface">
+                      € {inv.total.toFixed(2)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
-                          onClick={() => handleMarkAsPaid(inv.id)}
-                          className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                          onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
+                          className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+                          title="Ver detalle de factura"
                         >
-                          <span className="material-symbols-outlined text-[14px]">credit_card</span>
-                          <span>Cobro iDEAL</span>
+                          <span className="material-symbols-outlined text-[14px] text-secondary">visibility</span>
+                          <span>Ver Factura</span>
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        {inv.status !== 'pagada' && (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkAsPaid(inv.id)}
+                            className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">credit_card</span>
+                            <span>Cobro iDEAL</span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* TAB PRESUPUESTOS */}
       {tab === 'presupuestos' && (
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
-              <tr>
-                <th className="px-5 py-3">Nº Presupuesto</th>
-                <th className="px-5 py-3">Cliente</th>
-                <th className="px-5 py-3">Detalle</th>
-                <th className="px-5 py-3">Estado</th>
-                <th className="px-5 py-3">Válido Hasta</th>
-                <th className="px-5 py-3 text-right">Importe Total</th>
-                <th className="px-5 py-3 text-right">Acción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-container">
-              {quotes.map((q) => (
-                <tr key={q.id} className="hover:bg-surface-container-low transition-colors">
-                  <td className="px-5 py-3.5 font-mono-data font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDoc({ type: 'quote', data: q })}
-                      className="text-secondary hover:underline flex items-center gap-1.5 font-bold"
-                      title="Abrir presupuesto oficial"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">request_quote</span>
-                      <span>{q.code}</span>
-                    </button>
-                  </td>
-                  <td className="px-5 py-3.5 font-semibold text-on-surface">
-                    {q.client_name}
-                  </td>
-                  <td className="px-5 py-3.5 text-on-surface-variant font-medium">
-                    {q.items && q.items.length > 1 ? (
-                      <div className="space-y-1">
-                        <span className="font-semibold text-on-surface">
-                          {q.items.length} trámites seleccionados
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                          {q.items.map((it: any, idx: number) => (
-                            <span key={idx} className="inline-flex items-center gap-0.5 text-[10px] bg-surface-container px-1.5 py-0.5 rounded text-outline font-normal">
-                              {it.description}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <span>{q.items?.[0]?.description || 'Servicios Gestoría'}</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    {q.status === 'convertido' ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700">
-                        Convertido a Factura
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700">
-                        Enviado al Cliente
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3.5 font-mono-data text-outline">
-                    {q.valid_until}
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-mono-data font-bold text-sm">
-                    € {q.total.toFixed(2)}
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
+                <tr>
+                  <th className="px-5 py-3">Nº Presupuesto</th>
+                  <th className="px-5 py-3">Cliente</th>
+                  <th className="px-5 py-3">Detalle</th>
+                  <th className="px-5 py-3">Estado</th>
+                  <th className="px-5 py-3">Válido Hasta</th>
+                  <th className="px-5 py-3 text-right">Importe Total</th>
+                  <th className="px-5 py-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-container">
+                {quotes.map((q) => (
+                  <tr key={q.id} className="hover:bg-surface-container-low transition-colors">
+                    <td className="px-5 py-3.5 font-mono-data font-bold">
                       <button
                         type="button"
                         onClick={() => setSelectedDoc({ type: 'quote', data: q })}
-                        className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
-                        title="Ver detalle del presupuesto"
+                        className="text-secondary hover:underline flex items-center gap-1.5 font-bold"
+                        title="Abrir presupuesto oficial"
                       >
-                        <span className="material-symbols-outlined text-[14px] text-secondary">visibility</span>
-                        <span>Ver Presupuesto</span>
+                        <span className="material-symbols-outlined text-[15px]">request_quote</span>
+                        <span>{q.code}</span>
                       </button>
-                      {q.status !== 'convertido' && (
+                    </td>
+                    <td className="px-5 py-3.5 font-semibold text-on-surface">
+                      {q.client_name}
+                    </td>
+                    <td className="px-5 py-3.5 text-on-surface-variant font-medium">
+                      {q.items && q.items.length > 1 ? (
+                        <div className="space-y-1">
+                          <span className="font-semibold text-on-surface">
+                            {q.items.length} trámites seleccionados
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {q.items.map((it: any, idx: number) => (
+                              <span key={idx} className="inline-flex items-center gap-0.5 text-[10px] bg-surface-container px-1.5 py-0.5 rounded text-outline font-normal">
+                                {it.description}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <span>{q.items?.[0]?.description || 'Servicios Gestoría'}</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {q.status === 'convertido' ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700">
+                          Convertido a Factura
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                          Enviado al Cliente
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 font-mono-data text-outline">
+                      {q.valid_until}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono-data font-bold text-sm">
+                      € {q.total.toFixed(2)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
-                          onClick={() => handleConvertToInvoice(q)}
-                          className="h-7 px-3 bg-secondary hover:bg-blue-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                          onClick={() => setSelectedDoc({ type: 'quote', data: q })}
+                          className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+                          title="Ver detalle del presupuesto"
                         >
-                          <span className="material-symbols-outlined text-[13px]">transform</span>
-                          <span>Convertir a Factura</span>
+                          <span className="material-symbols-outlined text-[14px] text-secondary">visibility</span>
+                          <span>Ver Presupuesto</span>
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        {q.status !== 'convertido' && (
+                          <button
+                            type="button"
+                            onClick={() => handleConvertToInvoice(q)}
+                            className="h-7 px-3 bg-secondary hover:bg-blue-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">transform</span>
+                            <span>Convertir a Factura</span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -722,31 +726,32 @@ export default function CRMFacturacionPage() {
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
           <div className="bg-surface-container-lowest max-w-3xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95">
             {/* Barra de Herramientas Superior */}
-            <div className="bg-surface-container px-6 py-3 border-b border-surface-container-high flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+            <div className="bg-surface-container px-3 sm:px-6 py-2.5 sm:py-3 border-b border-surface-container-high flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
                 <span
-                  className={`px-2.5 py-1 rounded text-xs font-bold font-mono-data uppercase ${
+                  className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold font-mono-data uppercase ${
                     selectedDoc.type === 'invoice'
                       ? 'bg-emerald-100 text-emerald-800'
                       : 'bg-blue-100 text-blue-800'
                   }`}
                 >
-                  {selectedDoc.type === 'invoice' ? 'FACTURA OFICIAL (VERKOOPFACTUUR)' : 'PRESUPUESTO (OFFERTE)'}
+                  {selectedDoc.type === 'invoice' ? 'FACTURA (VERKOOPFACTUUR)' : 'PRESUPUESTO (OFFERTE)'}
                 </span>
-                <span className="font-mono-data font-bold text-sm text-on-surface">
+                <span className="font-mono-data font-bold text-xs sm:text-sm text-on-surface">
                   {selectedDoc.data.code}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="h-8 px-3 bg-surface border border-outline-variant hover:bg-surface-container text-on-surface rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                  className="h-7 sm:h-8 px-2 sm:px-3 bg-surface border border-outline-variant hover:bg-surface-container text-on-surface rounded-lg text-[11px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-colors shadow-xs"
                   title="Imprimir documento o guardar como PDF"
                 >
-                  <span className="material-symbols-outlined text-[15px]">print</span>
-                  <span>Imprimir / PDF</span>
+                  <span className="material-symbols-outlined text-[14px] sm:text-[15px]">print</span>
+                  <span className="hidden sm:inline">Imprimir / PDF</span>
+                  <span className="sm:hidden">PDF</span>
                 </button>
 
                 <button
@@ -756,18 +761,19 @@ export default function CRMFacturacionPage() {
                     setEmailSentToast(`Documento ${selectedDoc.data.code} enviado por correo electrónico a ${email}`);
                     setTimeout(() => setEmailSentToast(null), 4000);
                   }}
-                  className="h-8 px-3 bg-secondary text-white hover:bg-blue-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                  className="h-7 sm:h-8 px-2 sm:px-3 bg-secondary text-white hover:bg-blue-700 rounded-lg text-[11px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-colors shadow-xs"
                 >
-                  <span className="material-symbols-outlined text-[15px]">send</span>
-                  <span>Enviar por Email</span>
+                  <span className="material-symbols-outlined text-[14px] sm:text-[15px]">send</span>
+                  <span className="hidden sm:inline">Enviar por Email</span>
+                  <span className="sm:hidden">Email</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setSelectedDoc(null)}
-                  className="text-outline hover:text-on-surface p-1.5 rounded-lg hover:bg-surface"
+                  className="text-outline hover:text-on-surface p-1 sm:p-1.5 rounded-lg hover:bg-surface"
                 >
-                  <span className="material-symbols-outlined text-lg">close</span>
+                  <span className="material-symbols-outlined text-base sm:text-lg">close</span>
                 </button>
               </div>
             </div>

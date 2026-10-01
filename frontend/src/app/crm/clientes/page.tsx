@@ -657,41 +657,42 @@ export default function CRMClientesPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* FICHA 360° DEL CLIENTE (MANTIENE LA BARRA LATERAL VISIBLE A LA IZQUIERDA) */}
+      {/* ========================================================================= */}
+      {/* FICHA 360° DEL CLIENTE (RESPONSIVE: PANTALLA COMPLETA EN MÓVIL/TABLET) */}
       {/* ========================================================================= */}
       {selectedClient && (
         <div
           className={`fixed inset-y-0 right-0 ${
-            isMaximized ? 'left-0 z-[100]' : 'left-64 z-40'
-          } bg-surface flex flex-col overflow-hidden shadow-2xl border-l border-surface-container-high`}
+            isMaximized ? 'left-0 z-[100]' : 'left-0 lg:left-64 z-40'
+          } bg-surface flex flex-col overflow-hidden shadow-2xl border-l border-surface-container-high transition-all`}
           style={{ top: 0, marginTop: 0, paddingTop: 0 }}
         >
           {/* Top Bar de la Ficha 360° */}
-          <header className="h-16 m-0 px-6 lg:px-8 bg-surface-container-lowest border-b border-surface-container-high flex items-center justify-between shadow-sm shrink-0">
-            <div className="flex items-center gap-3">
+          <header className="min-h-16 py-2 px-4 sm:px-6 lg:px-8 bg-surface-container-lowest border-b border-surface-container-high flex flex-wrap items-center justify-between gap-3 shadow-sm shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
                 onClick={() => setSelectedClient(null)}
-                className="h-9 px-3 border border-outline-variant bg-surface hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                className="h-8 sm:h-9 px-2.5 sm:px-3 border border-outline-variant bg-surface hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
                 title="Cerrar y volver al listado"
               >
                 <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                <span>Cerrar Ficha</span>
+                <span className="hidden sm:inline">Cerrar Ficha</span>
               </button>
 
-              <div className="h-6 w-px bg-surface-container"></div>
+              <div className="h-6 w-px bg-surface-container hidden sm:block"></div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-primary-container text-white font-mono-data font-bold text-sm flex items-center justify-center shadow-sm">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary-container text-white font-mono-data font-bold text-xs sm:text-sm flex items-center justify-center shadow-sm shrink-0">
                   {selectedClient.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-on-surface">{selectedClient.full_name}</h2>
-                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                    <h2 className="text-sm sm:text-base font-bold text-on-surface truncate max-w-[180px] sm:max-w-none">{selectedClient.full_name}</h2>
+                    <span className="px-1.5 sm:px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded">
                       BSN: {selectedClient.bsn}
                     </span>
                   </div>
-                  <p className="text-[11px] text-outline">
+                  <p className="text-[10px] sm:text-[11px] text-outline truncate">
                     {selectedClient.city} · {selectedClient.phone}
                   </p>
                 </div>
@@ -699,7 +700,7 @@ export default function CRMClientesPage() {
             </div>
 
             {/* BOTONES DE ACCIÓN DIRECTA */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto flex-wrap">
               {/* Botón Nueva Cita Directa */}
               <button
                 onClick={() => {
@@ -707,19 +708,21 @@ export default function CRMClientesPage() {
                   setAptTitle(`Consulta Telefónica con ${selectedClient.full_name}`);
                   setShowNewAptModal(true);
                 }}
-                className="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                className="h-8 sm:h-9 px-2.5 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shadow-sm transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px]">phone_in_talk</span>
-                <span>+ Agendar Cita</span>
+                <span className="material-symbols-outlined text-[15px] sm:text-[16px]">phone_in_talk</span>
+                <span className="hidden md:inline">+ Agendar Cita</span>
+                <span className="md:hidden">+ Cita</span>
               </button>
 
               {/* Botón Nuevo Presupuesto Directo */}
               <button
                 onClick={openQuoteModal}
-                className="h-9 px-3 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                className="h-8 sm:h-9 px-2.5 sm:px-3 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shadow-sm transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px]">description</span>
-                <span>+ Crear Presupuesto</span>
+                <span className="material-symbols-outlined text-[15px] sm:text-[16px]">description</span>
+                <span className="hidden md:inline">+ Crear Presupuesto</span>
+                <span className="md:hidden">+ Presupuesto</span>
               </button>
 
               {/* Botón Nuevo Trámite Directo */}
@@ -733,16 +736,17 @@ export default function CRMClientesPage() {
                   setIsNewServiceMode(false);
                   setShowAddDossierModal(true);
                 }}
-                className="h-9 px-3 bg-secondary text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:bg-blue-700 transition-colors"
+                className="h-8 sm:h-9 px-2.5 sm:px-3 bg-secondary text-white rounded-md text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shadow-sm hover:bg-blue-700 transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px]">add_circle</span>
-                <span>+ Nuevo Trámite</span>
+                <span className="material-symbols-outlined text-[15px] sm:text-[16px]">add_circle</span>
+                <span className="hidden md:inline">+ Nuevo Trámite</span>
+                <span className="md:hidden">+ Trámite</span>
               </button>
 
-              {/* Botón Opcional Maximizar / Restaurar Barra Lateral */}
+              {/* Botón Opcional Maximizar / Restaurar Barra Lateral (visible solo en desktop) */}
               <button
                 onClick={() => setIsMaximized(!isMaximized)}
-                className="h-9 w-9 border border-outline-variant hover:bg-surface-container text-outline hover:text-on-surface rounded-md flex items-center justify-center transition-colors ml-1"
+                className="hidden lg:flex h-9 w-9 border border-outline-variant hover:bg-surface-container text-outline hover:text-on-surface rounded-md items-center justify-center transition-colors ml-1"
                 title={isMaximized ? "Mostrar barra lateral" : "Ocultar barra lateral (Pantalla completa total)"}
               >
                 <span className="material-symbols-outlined text-[18px]">
@@ -752,20 +756,20 @@ export default function CRMClientesPage() {
             </div>
           </header>
 
-          {/* Sub-Tabs de Navegación de la Ficha 360° */}
-          <div className="bg-surface-container-low px-6 lg:px-8 border-b border-surface-container flex gap-4 text-xs font-semibold shrink-0">
+          {/* Sub-Tabs de Navegación de la Ficha 360° (Desplazables horizontalmente en móvil) */}
+          <div className="bg-surface-container-low px-4 sm:px-6 lg:px-8 border-b border-surface-container flex gap-2 sm:gap-4 text-xs font-semibold shrink-0 overflow-x-auto whitespace-nowrap">
             <button
               onClick={() => setActive360Tab('resumen')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'resumen' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">folder</span>
-              <span>Trámites & Expedientes ({selectedClient.dossiers?.length || 0})</span>
+              <span>Trámites ({selectedClient.dossiers?.length || 0})</span>
             </button>
             <button
               onClick={() => setActive360Tab('facturacion')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'facturacion' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
@@ -774,35 +778,35 @@ export default function CRMClientesPage() {
             </button>
             <button
               onClick={() => setActive360Tab('citas')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'citas' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-              <span>Citas & Llamadas ({selectedClient.appointments?.length || 0})</span>
+              <span>Citas ({selectedClient.appointments?.length || 0})</span>
             </button>
             <button
               onClick={() => setActive360Tab('personales')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'personales' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">badge</span>
-              <span>Datos Fiscales & Personales</span>
+              <span>Datos Fiscales</span>
             </button>
             <button
               onClick={() => setActive360Tab('ia')}
-              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'ia' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
               <span className="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
-              <span>Historial & Actividad IA</span>
+              <span>Historial IA</span>
             </button>
           </div>
 
           {/* Área Principal de Contenido de la Ficha 360° */}
-          <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
             {/* TAB 1: TRÁMITES & EXPEDIENTES */}
             {active360Tab === 'resumen' && (
               <div className="space-y-6 max-w-5xl">

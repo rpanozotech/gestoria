@@ -8,11 +8,17 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Estados interactivos para Topbar
+  // Estados interactivos para Topbar y Responsive Drawer
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Cerrar menú móvil al navegar
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   // Atajo de teclado Cmd+K / Ctrl+K
   useEffect(() => {
@@ -25,6 +31,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         setShowSearchModal(false);
         setShowNotifications(false);
         setShowUserMenu(false);
+        setMobileMenuOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -52,8 +59,12 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      {/* Sidebar fijo a la izquierda (z-50 para estar siempre visible) */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-surface-container-high z-50 flex flex-col justify-between">
+      {/* Sidebar fijo a la izquierda en desktop, desplegable como cajón en tablet/móvil */}
+      <aside
+        className={`fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-surface-container-high z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
+          mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Brand header */}
           <div className="h-16 px-6 flex items-center justify-between border-b border-surface-container">
@@ -63,9 +74,19 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               </div>
               <span className="font-headline-sm text-base font-bold text-on-surface tracking-tight">NexusGest</span>
             </Link>
-            <span className="px-2 py-0.5 bg-surface-container text-on-surface-variant font-mono-data text-[10px] font-semibold rounded">
-              v2.4 Pro
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 bg-surface-container text-on-surface-variant font-mono-data text-[10px] font-semibold rounded">
+                v2.4 Pro
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="lg:hidden p-1 rounded-md text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
+                title="Cerrar menú"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
           </div>
 
           <div className="px-4 py-3">
@@ -82,6 +103,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium transition-all ${
                     isActive
                       ? 'bg-secondary-container text-white shadow-sm'
@@ -139,31 +161,51 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Area */}
-      <div className="pl-64 flex-1 flex flex-col min-w-0">
-        {/* Top Header del CRM general (z-30 para no interferir con la ficha 360) */}
-        <header className="sticky top-0 h-16 bg-surface/90 backdrop-blur-md border-b border-surface-container-high z-30 px-8 flex items-center justify-between gap-6">
-          {/* Interactive Search Bar / Command Palette trigger */}
-          <div className="flex-1 max-w-xl">
+      {/* Backdrop oscuro para móvil y tablet */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-200"
+        />
+      )}
+
+      {/* Main Area (Responsive: pl-0 en móvil/tablet, lg:pl-64 en desktop) */}
+      <div className="lg:pl-64 pl-0 flex-1 flex flex-col min-w-0 w-full transition-all">
+        {/* Top Header del CRM general */}
+        <header className="sticky top-0 h-16 bg-surface/90 backdrop-blur-md border-b border-surface-container-high z-30 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-6">
+          {/* Botón Hamburguesa Móvil + Interactive Search Bar */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 -ml-1 rounded-lg text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center shrink-0"
+              title="Abrir menú de navegación"
+            >
+              <span className="material-symbols-outlined text-[24px]">menu</span>
+            </button>
+
             <button
               onClick={() => setShowSearchModal(true)}
               className="w-full h-9 px-3 bg-surface-container-lowest border border-outline-variant text-outline text-xs rounded-md flex items-center justify-between hover:border-secondary hover:text-on-surface transition-colors shadow-sm"
             >
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">search</span>
-                <span>Buscar cliente, BSN, factura o trámite...</span>
+              <div className="flex items-center gap-2 truncate">
+                <span className="material-symbols-outlined text-[18px] shrink-0">search</span>
+                <span className="truncate">Buscar cliente, BSN o trámite...</span>
               </div>
-              <span className="px-1.5 py-0.5 bg-surface-container rounded text-[10px] font-mono-data">Ctrl+K</span>
+              <span className="hidden sm:inline px-1.5 py-0.5 bg-surface-container rounded text-[10px] font-mono-data shrink-0">
+                Ctrl+K
+              </span>
             </button>
           </div>
 
-          <div className="flex items-center gap-4 relative">
+          <div className="flex items-center gap-2 sm:gap-4 relative shrink-0">
             <Link
               href="/crm/alta-ia"
-              className="h-9 px-3.5 bg-primary text-on-primary rounded-md text-xs font-semibold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+              className="h-9 px-3 sm:px-3.5 bg-primary text-on-primary rounded-md text-xs font-semibold flex items-center gap-1.5 sm:gap-2 hover:bg-slate-800 transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
-              <span>+ Nuevo con IA</span>
+              <span className="hidden sm:inline">+ Nuevo con IA</span>
+              <span className="sm:hidden">Alta IA</span>
             </Link>
 
             {/* Notifications Button & Dropdown */}
@@ -285,7 +327,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content View */}
-        <main className="flex-1 px-8 py-5 pb-16 bg-surface">
+        <main className="flex-1 px-3 sm:px-6 lg:px-8 py-4 sm:py-5 pb-16 bg-surface">
           {children}
         </main>
       </div>

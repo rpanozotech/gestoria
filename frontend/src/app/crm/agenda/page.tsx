@@ -183,7 +183,7 @@ export default function CRMAgendaPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-2 border-t border-surface-container text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-surface-container text-xs">
               <div className="flex items-center gap-2">
                 {/* 1. Modalidad: Llamada telefónica */}
                 {apt.modality === 'llamada' && (

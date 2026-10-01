@@ -94,7 +94,13 @@ export default function ChatIAPage() {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latencyMs?: number } | null>(null);
 
   // Visibilidad del panel de atajos (para dar 100% de ancho total si el usuario lo desea)
-  const [showTopicsSidebar, setShowTopicsSidebar] = useState(true);
+  const [showTopicsSidebar, setShowTopicsSidebar] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setShowTopicsSidebar(true);
+    }
+  }, []);
 
   // Estados del Chat
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; timestamp?: string }>>([
@@ -390,11 +396,11 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
         </div>
 
         {/* Acciones del Header */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Alternar visibilidad del panel de atajos */}
           <button
             onClick={() => setShowTopicsSidebar(!showTopicsSidebar)}
-            className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border shadow-xs ${
+            className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-colors border shadow-xs ${
               showTopicsSidebar
                 ? 'bg-surface border-outline-variant text-on-surface hover:bg-surface-container'
                 : 'bg-secondary/10 border-secondary/30 text-secondary hover:bg-secondary/20'
@@ -403,36 +409,40 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
             <span className="material-symbols-outlined text-[16px]">
               {showTopicsSidebar ? 'left_panel_close' : 'left_panel_open'}
             </span>
-            <span>{showTopicsSidebar ? 'Ocultar Temas' : 'Mostrar Temas'}</span>
+            <span className="hidden sm:inline">{showTopicsSidebar ? 'Ocultar Temas' : 'Mostrar Temas'}</span>
+            <span className="sm:hidden">Temas</span>
           </button>
 
           {/* Enlace a Asistente de Documentos */}
           <Link
             href="/crm/documentos-ia"
-            className="h-8 px-3 bg-surface hover:bg-surface-container border border-outline-variant text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+            className="h-8 px-2.5 sm:px-3 bg-surface hover:bg-surface-container border border-outline-variant text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1 sm:gap-1.5 transition-colors shadow-xs"
           >
             <span className="material-symbols-outlined text-[16px] text-secondary">document_scanner</span>
-            <span>Documentos & Plantillas</span>
+            <span className="hidden md:inline">Documentos & Plantillas</span>
+            <span className="md:hidden">Plantillas</span>
           </Link>
 
           {/* Exportar a Word */}
           <button
             onClick={handleExportChatToWord}
             title="Exportar conversación a Microsoft Word (.docx)"
-            className="h-8 px-3 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+            className="h-8 px-2.5 sm:px-3 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1 sm:gap-1.5 transition-colors shadow-xs"
           >
             <span className="material-symbols-outlined text-[16px]">file_open</span>
-            <span>Exportar Word (.docx)</span>
+            <span className="hidden sm:inline">Exportar Word</span>
+            <span className="sm:hidden">Word</span>
           </button>
 
           {/* Imprimir / PDF */}
           <button
             onClick={() => window.print()}
             title="Imprimir o guardar en PDF"
-            className="h-8 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+            className="h-8 px-2.5 sm:px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1 sm:gap-1.5 transition-colors shadow-xs"
           >
             <span className="material-symbols-outlined text-[16px]">print</span>
-            <span>Imprimir / PDF</span>
+            <span className="hidden sm:inline">Imprimir / PDF</span>
+            <span className="sm:hidden">PDF</span>
           </button>
 
           {/* Configurar IA */}
@@ -441,10 +451,11 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
               setTestResult(null);
               setShowConfigModal(true);
             }}
-            className="h-8 px-3 bg-gradient-to-r from-slate-900 to-indigo-900 hover:from-slate-800 hover:to-indigo-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-all border border-indigo-700/40"
+            className="h-8 px-2.5 sm:px-3 bg-gradient-to-r from-slate-900 to-indigo-900 hover:from-slate-800 hover:to-indigo-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1 sm:gap-1.5 shadow-sm transition-all border border-indigo-700/40"
           >
             <span className="material-symbols-outlined text-[16px] text-amber-300">tune</span>
-            <span>Configurar IA</span>
+            <span className="hidden sm:inline">Configurar IA</span>
+            <span className="sm:hidden">IA</span>
           </button>
         </div>
       </div>
@@ -453,7 +464,7 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
       <div className="w-full flex-1 min-h-0 flex flex-col lg:flex-row gap-4 items-stretch overflow-hidden">
         {/* PANEL LATERAL DE CONSULTAS FRECUENTES (OPCIONAL/COLAPSABLE) */}
         {showTopicsSidebar && (
-          <aside className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col h-full bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant shadow-xs overflow-hidden no-print animate-in slide-in-from-left duration-200">
+          <aside className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col max-h-56 lg:max-h-none lg:h-full bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant shadow-xs overflow-hidden no-print animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between pb-2 border-b border-surface-container shrink-0">
               <h3 className="font-bold text-xs text-on-surface flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-secondary text-base">lightbulb</span>

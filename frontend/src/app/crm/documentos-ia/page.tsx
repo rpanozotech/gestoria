@@ -311,8 +311,8 @@ export default function DocumentosIAPage() {
   // Vista principal: generador de cartas o analizador
   const [activeView, setActiveView] = useState<'generador' | 'analizador'>('generador');
 
-  // Estado de la Barra Lateral del Chat Asistente (abierta por defecto)
-  const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(true);
+  // Estado de la Barra Lateral del Chat Asistente (abierta por defecto en pantallas grandes)
+  const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false);
 
   // Configuración de IA
   const [config, setConfig] = useState<AIConfig>(DEFAULT_CONFIG);
@@ -347,6 +347,9 @@ export default function DocumentosIAPage() {
 
   // Cargar configuración guardada y plantillas personalizadas al montar
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1280) {
+      setIsChatSidebarOpen(true);
+    }
     try {
       const savedConfig = localStorage.getItem('nexusgest_ai_config');
       if (savedConfig) {
@@ -920,7 +923,7 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Botón para Alternar Barra Lateral del Chat */}
           <button
             onClick={() => {
@@ -929,25 +932,27 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
                 setTimeout(() => scrollToBottom(true), 100);
               }
             }}
-            className={`h-9 px-3.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs border ${
+            className={`h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-lg text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-all shadow-xs border ${
               isChatSidebarOpen
                 ? 'bg-secondary/10 border-secondary/30 text-secondary hover:bg-secondary/20'
                 : 'bg-surface border-outline-variant hover:bg-surface-container text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[18px]">
+            <span className="material-symbols-outlined text-[17px] sm:text-[18px]">
               {isChatSidebarOpen ? 'vertical_split' : 'forum'}
             </span>
-            <span>{isChatSidebarOpen ? 'Barra Lateral Abierta' : 'Abrir Barra Lateral Chat'}</span>
+            <span className="hidden sm:inline">{isChatSidebarOpen ? 'Barra Lateral Abierta' : 'Abrir Barra Lateral Chat'}</span>
+            <span className="sm:hidden">{isChatSidebarOpen ? 'Cerrar Chat' : 'Abrir Chat'}</span>
           </button>
 
           {/* Botón para Crear Plantilla */}
           <button
             onClick={handleOpenCreateTemplate}
-            className="h-9 px-3.5 bg-secondary hover:bg-blue-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
+            className="h-8 sm:h-9 px-2.5 sm:px-3.5 bg-secondary hover:bg-blue-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1 sm:gap-1.5 shadow-sm transition-all"
           >
-            <span className="material-symbols-outlined text-[18px]">add_circle</span>
-            <span>+ Nueva Plantilla</span>
+            <span className="material-symbols-outlined text-[17px] sm:text-[18px]">add_circle</span>
+            <span className="hidden sm:inline">+ Nueva Plantilla</span>
+            <span className="sm:hidden">+ Plantilla</span>
           </button>
 
           {/* Botón de Configurar IA */}
@@ -956,10 +961,11 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
               setTestResult(null);
               setShowConfigModal(true);
             }}
-            className="h-9 px-3.5 bg-gradient-to-r from-slate-900 to-indigo-900 hover:from-slate-800 hover:to-indigo-800 text-white text-xs font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all border border-indigo-700/40"
+            className="h-8 sm:h-9 px-2.5 sm:px-3.5 bg-gradient-to-r from-slate-900 to-indigo-900 hover:from-slate-800 hover:to-indigo-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 sm:gap-2 shadow-sm transition-all border border-indigo-700/40"
           >
-            <span className="material-symbols-outlined text-[18px] text-amber-300">tune</span>
-            <span>Configurar IA (API Key & URL)</span>
+            <span className="material-symbols-outlined text-[17px] sm:text-[18px] text-amber-300">tune</span>
+            <span className="hidden md:inline">Configurar IA (API Key & URL)</span>
+            <span className="md:hidden">Configurar IA</span>
           </button>
         </div>
       </div>
