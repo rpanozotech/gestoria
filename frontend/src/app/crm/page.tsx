@@ -4,6 +4,16 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
+// El dia se deriva del reloj del navegador, nunca se escribe a mano: una
+// fecha fija en el dashboard hace que el gestor no se fie de la agenda.
+function formatTodayEs(): string {
+  return new Date().toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 export default function CRMDashboardPage() {
   const [stats, setStats] = useState<any>({
     kpis: {
@@ -26,6 +36,7 @@ export default function CRMDashboardPage() {
 
   // Modal para ver detalles de expediente al hacer clic en la tabla
   const [selectedDossier, setSelectedDossier] = useState<any>(null);
+  const todayLabel = formatTodayEs();
 
   useEffect(() => {
     apiFetch('/dashboard/stats')
@@ -55,6 +66,14 @@ export default function CRMDashboardPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <Link
+            href="/crm/backup"
+            className="h-9 px-3.5 bg-surface-container-lowest border border-outline-variant text-on-surface text-xs font-semibold rounded-md shadow-sm hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1.5"
+            title="Descargar copia de seguridad o exportar datos a CSV"
+          >
+            <span className="material-symbols-outlined text-[16px] text-secondary">cloud_download</span>
+            <span>Copia de Seguridad</span>
+          </Link>
+          <Link
             href="/crm/facturacion"
             className="h-9 px-3.5 bg-surface-container-lowest border border-outline-variant text-on-surface text-xs font-semibold rounded-md shadow-sm hover:bg-surface-container transition-colors flex items-center gap-1.5"
           >
@@ -66,7 +85,7 @@ export default function CRMDashboardPage() {
             className="h-9 px-3.5 bg-surface-container-lowest border border-outline-variant text-on-surface text-xs font-semibold rounded-md shadow-sm hover:bg-surface-container transition-colors flex items-center gap-1.5"
           >
             <span className="material-symbols-outlined text-[16px] text-secondary">document_scanner</span>
-            <span>Escanear Carta Belastingdienst</span>
+            <span>Escanear Carta</span>
           </Link>
           <Link
             href="/crm/alta-ia"
@@ -92,12 +111,8 @@ export default function CRMDashboardPage() {
           <div className="mt-3">
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-bold font-mono-data">{stats.kpis.active_clients}</span>
-              <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1 rounded">+8.4%</span>
             </div>
-            <p className="text-[10px] text-outline mt-0.5">+12 nuevos este mes</p>
-          </div>
-          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-secondary h-full rounded-full w-[78%]"></div>
+            <p className="text-[10px] text-outline mt-0.5">Clientes dados de alta</p>
           </div>
         </Link>
 
@@ -146,9 +161,6 @@ export default function CRMDashboardPage() {
               {stats.kpis.active_dossiers.belastingdienst} en Belastingdienst
             </p>
           </div>
-          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-secondary-container h-full rounded-full w-[65%]"></div>
-          </div>
         </Link>
 
         {/* KPI 4: Facturación Mes */}
@@ -166,9 +178,6 @@ export default function CRMDashboardPage() {
             </div>
             <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">+14.2% vs mes anterior</p>
           </div>
-          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full w-[82%]"></div>
-          </div>
         </Link>
 
         {/* KPI 5: Cobros Pendientes */}
@@ -185,9 +194,6 @@ export default function CRMDashboardPage() {
               <span className="text-2xl font-bold font-mono-data">€ {stats.kpis.finances.pending_revenue.toLocaleString('es-ES')}</span>
             </div>
             <p className="text-[10px] text-outline mt-0.5">{stats.kpis.finances.pending_invoices_count} facturas emitidas</p>
-          </div>
-          <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-amber-500 h-full rounded-full w-[35%]"></div>
           </div>
         </Link>
 
@@ -324,7 +330,7 @@ export default function CRMDashboardPage() {
             <div className="flex items-center justify-between pb-4 border-b border-surface-container mb-4">
               <div>
                 <h3 className="font-bold text-sm text-on-surface">Citas de Hoy</h3>
-                <p className="text-xs text-on-surface-variant">Martes, 10 de Marzo · Agenda oficial</p>
+                <p className="text-xs text-on-surface-variant">{todayLabel} · Agenda oficial</p>
               </div>
               <Link href="/crm/agenda" className="text-xs font-semibold text-secondary hover:underline">
                 Ver Todas

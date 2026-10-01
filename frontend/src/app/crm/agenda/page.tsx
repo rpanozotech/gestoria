@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 
@@ -270,8 +271,12 @@ export default function CRMAgendaPage() {
       });
     }
 
-    // Días del mes actual
-    const todayStr = '2026-10-10';
+    // Días del mes actual.
+    // OJO: toISOString() devuelve la fecha en UTC. Entre las 00:00 y las
+    // 02:00 hora de Amsterdam (UTC+2) eso es el dia ANTERIOR, y la agenda
+    // marcaria "hoy" en el dia equivocado. Se formatea en hora local.
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     for (let d = 1; d <= daysInCurrentMonth; d++) {
       const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       days.push({
@@ -344,6 +349,23 @@ export default function CRMAgendaPage() {
       )
     );
     showToast('Estado de la cita actualizado.');
+  };
+
+  const handleExportAgendaCsv = () => {
+    let csv = '\uFEFF"ID";"Titulo";"Cliente";"Telefono";"Fecha";"Hora";"Modalidad";"Estado";"Notas"\r\n';
+    appointments.forEach((a) => {
+      csv += `"${a.id}";"${a.title}";"${a.client_name}";"${a.client_phone || ''}";"${a.appointment_date}";"${a.appointment_time}";"${a.modality}";"${a.status}";"${(a.notes || '').replace(/"/g, '""')}"\r\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nexusgest-agenda-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    showToast(`¡${appointments.length} citas exportadas a CSV con éxito!`);
   };
 
   // Eliminar cita: llama al backend. Antes solo la quitaba de la pantalla.
@@ -551,6 +573,27 @@ export default function CRMAgendaPage() {
             <option value="online_meet">Google Meet</option>
             <option value="presencial">Presencial</option>
           </select>
+
+          {/* Botón Exportar CSV */}
+          <button
+            type="button"
+            onClick={handleExportAgendaCsv}
+            className="h-7 px-2 border border-outline-variant hover:bg-surface-container rounded-md text-[11px] font-semibold text-on-surface flex items-center gap-1 transition-colors"
+            title="Descargar agenda en CSV"
+          >
+            <span className="material-symbols-outlined text-[14px]">file_download</span>
+            <span className="hidden sm:inline">Exportar CSV</span>
+          </button>
+
+          {/* Enlace Backup */}
+          <Link
+            href="/crm/backup"
+            className="h-7 px-2 border border-outline-variant hover:bg-surface-container rounded-md text-[11px] font-semibold text-on-surface flex items-center gap-1 transition-colors"
+            title="Ir al Centro de Copias de Seguridad"
+          >
+            <span className="material-symbols-outlined text-[14px] text-secondary">cloud_download</span>
+            <span className="hidden sm:inline">Backup</span>
+          </Link>
 
           {/* Botón Nueva Cita */}
           <button

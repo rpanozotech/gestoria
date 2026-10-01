@@ -22,7 +22,12 @@ const config: Config = {
         'on-surface-variant': '#45464d',
         'inverse-surface': '#213145',
         'inverse-on-surface': '#eaf1ff',
-        'outline': '#76777d',
+        // AA en texto: #76777d daba 4.46:1 sobre las tarjetas blancas
+        // (el minimo es 4.5:1) y solo 4.05:1 sobre la sidebar. Con 387
+        // usos de text-outline —muchos a 9-11 px— fallar por una decima
+        // hacia que lo accesorio se lea peor que lo importante.
+        // #565e74 da 6.46:1 sobre blanco y 5.86:1 sobre la sidebar.
+        'outline': '#565e74',
         'outline-variant': '#c6c6cd',
         'surface-tint': '#565e74',
         'primary': '#0F172A',
