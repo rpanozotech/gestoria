@@ -79,6 +79,41 @@ export default function CRMFacturacionPage() {
     { id: '7', title: 'Cambio de Cuenta Bancaria Belastingdienst', category: 'Gestión Administrativa', defaultFee: 45.00 },
   ]);
 
+  // Visualizador oficial de presupuestos y facturas
+  const [selectedDoc, setSelectedDoc] = useState<{ type: 'quote' | 'invoice'; data: any } | null>(null);
+  const [emailSentToast, setEmailSentToast] = useState<string | null>(null);
+
+  const getDocTotals = (doc: any) => {
+    if (!doc) return { subtotal: 0, tax: 0, total: 0 };
+    const total = parseFloat(doc.total || 0);
+    const subtotal = doc.subtotal !== undefined
+      ? parseFloat(doc.subtotal)
+      : doc.amount !== undefined
+      ? parseFloat(doc.amount)
+      : Math.round((total / 1.21) * 100) / 100;
+    const tax = doc.tax_amount !== undefined
+      ? parseFloat(doc.tax_amount)
+      : Math.round((total - subtotal) * 100) / 100;
+    return { subtotal, tax, total };
+  };
+
+  const getDocItems = (doc: any) => {
+    if (!doc) return [];
+    if (doc.items && Array.isArray(doc.items) && doc.items.length > 0) {
+      return doc.items.map((it: any) => ({
+        description: it.description || it.title || doc.concept || 'Servicio Gestoría',
+        total: parseFloat(it.total || it.fee || 0),
+      }));
+    }
+    const { subtotal } = getDocTotals(doc);
+    return [
+      {
+        description: doc.concept || doc.items?.[0]?.description || 'Servicios y Asesoría Fiscal',
+        total: subtotal,
+      },
+    ];
+  };
+
   // Modal para crear nuevo presupuesto (Multi-trámite)
   const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
   const [newQuoteClient, setNewQuoteClient] = useState('Maria Popescu');
@@ -285,8 +320,16 @@ export default function CRMFacturacionPage() {
             <tbody className="divide-y divide-surface-container">
               {invoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-surface-container-low transition-colors">
-                  <td className="px-5 py-3.5 font-mono-data font-bold text-secondary">
-                    {inv.code}
+                  <td className="px-5 py-3.5 font-mono-data font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
+                      className="text-secondary hover:underline flex items-center gap-1.5 font-bold"
+                      title="Abrir factura oficial"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">description</span>
+                      <span>{inv.code}</span>
+                    </button>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="font-semibold text-on-surface">{inv.client_name}</div>
@@ -316,14 +359,27 @@ export default function CRMFacturacionPage() {
                     € {inv.total.toFixed(2)}
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    {inv.status !== 'pagada' && (
+                    <div className="flex items-center justify-end gap-1.5">
                       <button
-                        onClick={() => handleMarkAsPaid(inv.id)}
-                        className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold transition-colors"
+                        type="button"
+                        onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
+                        className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+                        title="Ver detalle de factura"
                       >
-                        Registrar Cobro iDEAL
+                        <span className="material-symbols-outlined text-[14px] text-secondary">visibility</span>
+                        <span>Ver Factura</span>
                       </button>
-                    )}
+                      {inv.status !== 'pagada' && (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkAsPaid(inv.id)}
+                          className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">credit_card</span>
+                          <span>Cobro iDEAL</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -350,8 +406,16 @@ export default function CRMFacturacionPage() {
             <tbody className="divide-y divide-surface-container">
               {quotes.map((q) => (
                 <tr key={q.id} className="hover:bg-surface-container-low transition-colors">
-                  <td className="px-5 py-3.5 font-mono-data font-bold text-primary">
-                    {q.code}
+                  <td className="px-5 py-3.5 font-mono-data font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDoc({ type: 'quote', data: q })}
+                      className="text-secondary hover:underline flex items-center gap-1.5 font-bold"
+                      title="Abrir presupuesto oficial"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">request_quote</span>
+                      <span>{q.code}</span>
+                    </button>
                   </td>
                   <td className="px-5 py-3.5 font-semibold text-on-surface">
                     {q.client_name}
@@ -392,15 +456,27 @@ export default function CRMFacturacionPage() {
                     € {q.total.toFixed(2)}
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    {q.status !== 'convertido' && (
+                    <div className="flex items-center justify-end gap-1.5">
                       <button
-                        onClick={() => handleConvertToInvoice(q)}
-                        className="h-7 px-3 bg-secondary hover:bg-blue-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                        type="button"
+                        onClick={() => setSelectedDoc({ type: 'quote', data: q })}
+                        className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+                        title="Ver detalle del presupuesto"
                       >
-                        <span className="material-symbols-outlined text-[13px]">transform</span>
-                        <span>Convertir a Factura</span>
+                        <span className="material-symbols-outlined text-[14px] text-secondary">visibility</span>
+                        <span>Ver Presupuesto</span>
                       </button>
-                    )}
+                      {q.status !== 'convertido' && (
+                        <button
+                          type="button"
+                          onClick={() => handleConvertToInvoice(q)}
+                          className="h-7 px-3 bg-secondary hover:bg-blue-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">transform</span>
+                          <span>Convertir a Factura</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -638,6 +714,277 @@ export default function CRMFacturacionPage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* MODAL VISUALIZADOR OFICIAL DE FACTURA O PRESUPUESTO */}
+      {selectedDoc && (
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-surface-container-lowest max-w-3xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95">
+            {/* Barra de Herramientas Superior */}
+            <div className="bg-surface-container px-6 py-3 border-b border-surface-container-high flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className={`px-2.5 py-1 rounded text-xs font-bold font-mono-data uppercase ${
+                    selectedDoc.type === 'invoice'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-blue-100 text-blue-800'
+                  }`}
+                >
+                  {selectedDoc.type === 'invoice' ? 'FACTURA OFICIAL (VERKOOPFACTUUR)' : 'PRESUPUESTO (OFFERTE)'}
+                </span>
+                <span className="font-mono-data font-bold text-sm text-on-surface">
+                  {selectedDoc.data.code}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="h-8 px-3 bg-surface border border-outline-variant hover:bg-surface-container text-on-surface rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                  title="Imprimir documento o guardar como PDF"
+                >
+                  <span className="material-symbols-outlined text-[15px]">print</span>
+                  <span>Imprimir / PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const email = selectedDoc.data.email || 'el cliente';
+                    setEmailSentToast(`Documento ${selectedDoc.data.code} enviado por correo electrónico a ${email}`);
+                    setTimeout(() => setEmailSentToast(null), 4000);
+                  }}
+                  className="h-8 px-3 bg-secondary text-white hover:bg-blue-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                >
+                  <span className="material-symbols-outlined text-[15px]">send</span>
+                  <span>Enviar por Email</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedDoc(null)}
+                  className="text-outline hover:text-on-surface p-1.5 rounded-lg hover:bg-surface"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Toast de notificación */}
+            {emailSentToast && (
+              <div className="bg-emerald-600 text-white text-xs px-6 py-2 flex items-center gap-2">
+                <span className="material-symbols-outlined text-base">check_circle</span>
+                <span>{emailSentToast}</span>
+              </div>
+            )}
+
+            {/* Hoja Documental (Diseño de Factura/Presupuesto Legal Neerlandés) */}
+            <div className="p-8 sm:p-10 space-y-8 bg-surface-container-lowest text-xs text-on-surface">
+              {/* Encabezado Corporativo y Legal */}
+              <div className="flex flex-col sm:flex-row justify-between gap-6 pb-6 border-b border-surface-container">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-secondary text-white font-bold flex items-center justify-center text-sm">
+                      NG
+                    </div>
+                    <span className="font-bold text-base tracking-tight text-on-surface">NexusGest Advies B.V.</span>
+                  </div>
+                  <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
+                    Gestoría y Asesoría Fiscal en Países Bajos<br />
+                    Keizersgracht 421, 1016 EK Amsterdam<br />
+                    KVK: 84920194 · BTW-id: NL849201940B01<br />
+                    IBAN: NL91 INGB 0001 2345 67 (ING Bank)
+                  </p>
+                </div>
+
+                <div className="text-left sm:text-right space-y-1">
+                  <h2 className="text-2xl font-black font-mono-data text-on-surface tracking-tight">
+                    {selectedDoc.data.code}
+                  </h2>
+                  <div className="text-[11px] text-outline font-mono-data">
+                    Fecha de emisión: {new Date().toLocaleDateString('es-ES')}
+                  </div>
+                  <div className="text-[11px] text-outline font-mono-data">
+                    {selectedDoc.type === 'invoice' ? 'Fecha de vencimiento: ' : 'Válido hasta: '}
+                    <strong>{selectedDoc.data.due_date || selectedDoc.data.valid_until || '2026-11-30'}</strong>
+                  </div>
+                  <div className="pt-1">
+                    {selectedDoc.type === 'invoice' ? (
+                      selectedDoc.data.status === 'pagada' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase">
+                          <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                          <span>Pagada vía iDEAL</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-100 text-amber-800 font-bold text-[10px] uppercase">
+                          <span className="material-symbols-outlined text-[13px]">schedule</span>
+                          <span>Pendiente de Pago</span>
+                        </span>
+                      )
+                    ) : selectedDoc.data.status === 'convertido' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-100 text-blue-800 font-bold text-[10px] uppercase">
+                        <span className="material-symbols-outlined text-[13px]">transform</span>
+                        <span>Convertido a Factura</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase">
+                        <span className="material-symbols-outlined text-[13px]">send</span>
+                        <span>Enviado al Cliente</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Datos del Cliente */}
+              <div className="p-4 bg-surface-container-low rounded-xl border border-surface-container">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-outline block mb-1.5">
+                  {selectedDoc.type === 'invoice' ? 'Facturado a:' : 'Presupuestado para:'}
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <h3 className="font-bold text-sm text-on-surface">
+                      {selectedDoc.data.client_name || selectedDoc.data.full_name || 'Maria Popescu'}
+                    </h3>
+                    <p className="text-xs text-on-surface-variant font-mono-data mt-0.5">
+                      BSN Oficial: <strong>{selectedDoc.data.client_bsn || selectedDoc.data.bsn || '982145672'}</strong>
+                    </p>
+                  </div>
+                  <div className="text-xs text-on-surface-variant space-y-0.5">
+                    <p>{selectedDoc.data.address || 'Strijpsestraat 142'}</p>
+                    <p>{selectedDoc.data.city || 'Eindhoven'}, Países Bajos</p>
+                    <p className="text-outline">{selectedDoc.data.email || 'cliente@nexusgest.nl'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabla de Conceptos / Trámites */}
+              <div className="border border-outline-variant/60 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
+                    <tr>
+                      <th className="px-4 py-2.5">Descripción del Trámite / Servicio</th>
+                      <th className="px-4 py-2.5 text-center">Cant.</th>
+                      <th className="px-4 py-2.5 text-right">Base (€)</th>
+                      <th className="px-4 py-2.5 text-center">BTW</th>
+                      <th className="px-4 py-2.5 text-right">Total (€)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-container">
+                    {getDocItems(selectedDoc.data).map((item: any, idx: number) => {
+                      const itemBase = item.total || 0;
+                      const itemBtw = Math.round(itemBase * 0.21 * 100) / 100;
+                      const itemTotal = Math.round((itemBase + itemBtw) * 100) / 100;
+                      return (
+                        <tr key={idx} className="hover:bg-surface-container-low/50">
+                          <td className="px-4 py-3 font-semibold text-on-surface">
+                            {item.description}
+                          </td>
+                          <td className="px-4 py-3 text-center font-mono-data text-outline">
+                            1
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono-data">
+                            € {itemBase.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-center font-mono-data text-outline">
+                            21%
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono-data font-bold text-on-surface">
+                            € {itemTotal.toFixed(2)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Resumen de Totales y Liquidación Fiscal */}
+              <div className="flex flex-col sm:flex-row justify-between gap-6 pt-2">
+                <div className="sm:max-w-xs space-y-2 text-[11px] text-outline">
+                  <p className="font-semibold text-on-surface">Información de Pago & Fiscalidad:</p>
+                  <p>
+                    Tipo impositivo aplicado: 21% BTW según legislación tributaria de los Países Bajos (Belastingdienst).
+                  </p>
+                  {selectedDoc.type === 'invoice' && selectedDoc.data.status === 'pagada' && (
+                    <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-800 font-mono-data text-[10px] space-y-0.5">
+                      <span className="font-bold block">Referencia iDEAL:</span>
+                      <span>{selectedDoc.data.payment_reference || 'IDL-TRX-2026-89472'}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="w-full sm:w-64 p-4 rounded-xl bg-surface-container-low font-mono-data text-xs space-y-2 border border-surface-container">
+                  <div className="flex justify-between text-outline">
+                    <span>Base Imponible:</span>
+                    <span>€ {getDocTotals(selectedDoc.data).subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-outline">
+                    <span>21% BTW (IVA NL):</span>
+                    <span>€ {getDocTotals(selectedDoc.data).tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-sm text-secondary pt-2 border-t border-surface-container">
+                    <span>Total a {selectedDoc.type === 'invoice' ? 'Pagar' : 'Presupuestar'}:</span>
+                    <span>€ {getDocTotals(selectedDoc.data).total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pie de Acciones Inferior */}
+            <div className="bg-surface-container px-6 py-3 border-t border-surface-container-high flex items-center justify-between">
+              <div className="text-[11px] text-outline">
+                Documento legal emitido por NexusGest · Países Bajos
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selectedDoc.type === 'invoice' && selectedDoc.data.status !== 'pagada' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleMarkAsPaid(selectedDoc.data.id);
+                      setSelectedDoc({
+                        ...selectedDoc,
+                        data: {
+                          ...selectedDoc.data,
+                          status: 'pagada',
+                          payment_reference: `IDL-PAY-${Math.floor(100000 + Math.random() * 900000)}`,
+                        },
+                      });
+                    }}
+                    className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">credit_card</span>
+                    <span>Registrar Cobro iDEAL</span>
+                  </button>
+                )}
+
+                {selectedDoc.type === 'quote' && selectedDoc.data.status !== 'convertido' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleConvertToInvoice(selectedDoc.data);
+                      setSelectedDoc(null);
+                    }}
+                    className="h-8 px-4 bg-secondary hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">transform</span>
+                    <span>Convertir a Factura Oficial</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedDoc(null)}
+                  className="h-8 px-4 border border-outline-variant hover:bg-surface-container-high rounded-lg text-xs font-semibold"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
