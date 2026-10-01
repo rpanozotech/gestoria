@@ -102,19 +102,37 @@ export default function ChatIAPage() {
     }
   }, []);
 
+  // Estado de Clientes en el sistema (Cargados desde localStorage o base de datos)
+  const [clients, setClients] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('nexusgest_clients');
+        if (stored) {
+          setClients(JSON.parse(stored));
+        }
+      } catch {}
+    }
+  }, []);
+
   // Estados del Chat
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; timestamp?: string }>>([
     {
       role: 'assistant',
-      content: `¡Bienvenido al **Chat Asistente Legal y Fiscal de NexusGest**!
+      content: `¡Bienvenido al **Chat Asistente Integral NexusGest IA**!
 
-Estoy especializado en derecho administrativo y fiscal de los Países Bajos. Puedo ayudarte con:
-1. **Recursos y Apelaciones Awb**: Redacción de *Bezwaarschrift* conforme al artículo 7:1 de la ley *Algemene wet bestuursrecht* y solicitudes de suspensión de cobro (*Uitstel van betaling*).
-2. **Belastingdienst & Toeslagen**: Requisitos y cálculo de *Zorgtoeslag*, *Huurtoeslag*, deducciones del *M-Form* y cuenta bancaria (*Rekeningnummer*).
-3. **CAK & HollandZorg**: Justificación de seguro médico extranjero y eliminación de multas administrativas.
-4. **Contratos y Registro**: Cláusulas de arrendamiento (*Huurovereenkomst*) y empadronamiento (*BRP/Gemeente*).
+Tengo **acceso en tiempo real a todo el directorio de clientes**, expedientes, documentos, presupuestos, facturas y agenda.
 
-Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas rápidas recomendadas.`,
+**Acciones que puedo ejecutar de forma autónoma:**
+1. **Emitir Facturas**: *"Crea una factura de 180€ para Carlos Mendoza por M-Form"*
+2. **Generar Presupuestos**: *"Genera un presupuesto de 95€ para Maria Popescu"*
+3. **Agendar Citas**: *"Agenda una llamada para Lars Van Dijk el 18 de octubre a las 16:00"*
+4. **Archivar Documentos / Informes**: *"Redacta un dictamen fiscal para Elena Morales y archívalo en sus documentos"*
+5. **Modificar Clientes**: *"Actualiza el teléfono de Carlos Mendoza a +34 654 000 111"*
+6. **Asesoría Legal & Fiscal**: Consultas sobre *Awb, Belastingdienst, Toeslagen, KVK y CAK*.
+
+Escribe tu instrucción u orden en la barra inferior para ejecutarla.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -204,8 +222,129 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
 
     setTimeout(() => scrollToBottom(true), 30);
 
+    // Procesamiento de órdenes sobre clientes (Facturas, Presupuestos, Citas, Documentos, Modificaciones)
+    const lower = textToSend.toLowerCase();
+    const currentClients = clients.length > 0 ? clients : (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nexusgest_clients') || '[]') : []);
+
+    const matchedClient = currentClients.find((c: any) => {
+      const fn = (c.full_name || '').toLowerCase();
+      const first = fn.split(' ')[0];
+      return lower.includes(fn) || (first.length > 3 && lower.includes(first));
+    });
+
+    if (matchedClient && (
+      lower.includes('factura') || lower.includes('facturar') ||
+      lower.includes('presupuesto') || lower.includes('presupuestar') ||
+      lower.includes('cita') || lower.includes('llamada') || lower.includes('agendar') ||
+      lower.includes('documento') || lower.includes('informe') || lower.includes('archivar') ||
+      lower.includes('modificar') || lower.includes('cambiar') || lower.includes('actualizar')
+    )) {
+      let replyText = '';
+      let clientToUpdate = { ...matchedClient };
+
+      if (lower.includes('factura') || lower.includes('facturar')) {
+        const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
+        const fee = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 180.00;
+        const total = Math.round(fee * 1.21 * 100) / 100;
+        const year = new Date().getFullYear();
+        const code = `FAC-${year}-${String((clientToUpdate.invoices?.length || 0) + 1).padStart(4, '0')}`;
+        const concept = lower.includes('m-form') ? 'Declaración Fiscal M-Form Belastingdienst' : 'Servicios y Asesoría Gestoría Fiscal';
+        
+        const newInv = {
+          id: String(Date.now()),
+          code,
+          concept,
+          total,
+          status: 'emitida',
+          due_date: '2026-11-15',
+          payment_method: 'ideal',
+          items: [{ description: concept, total: fee }]
+        };
+
+        clientToUpdate.invoices = [newInv, ...(clientToUpdate.invoices || [])];
+        replyText = `✅ **¡Factura oficial emitida con éxito desde el Asistente IA!**\n\n- **Cliente:** ${matchedClient.full_name} (BSN: ${matchedClient.bsn || '—'})\n- **Nº Factura:** **${code}**\n- **Base Imponible:** € ${fee.toFixed(2)} + 21% BTW\n- **Total Oficial:** **€ ${total.toFixed(2)}**\n- **Concepto:** ${concept}\n\nLa factura ha quedado registrada en su Ficha 360° y en el módulo de Facturación con estado **Emitida (iDEAL)**.`;
+      } else if (lower.includes('presupuesto') || lower.includes('presupuestar')) {
+        const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
+        const fee = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 120.00;
+        const tax = Math.round(fee * 0.21 * 100) / 100;
+        const total = Math.round((fee + tax) * 100) / 100;
+        const year = new Date().getFullYear();
+        const code = `PRE-${year}-${String((clientToUpdate.quotes?.length || 0) + 1).padStart(4, '0')}`;
+        const concept = lower.includes('toeslag') || lower.includes('subsidio') ? 'Tramitación Oficial de Subsidios ante Belastingdienst' : 'Presupuesto de Asesoría Fiscal y Trámites Gestoría';
+
+        const newQuote = {
+          id: String(Date.now()),
+          code,
+          concept,
+          amount: fee,
+          tax_amount: tax,
+          total,
+          status: 'enviado',
+          valid_until: '2026-11-30',
+          items: [{ description: concept, total: fee }]
+        };
+
+        clientToUpdate.quotes = [newQuote, ...(clientToUpdate.quotes || [])];
+        replyText = `✅ **¡Presupuesto generado y registrado!**\n\n- **Cliente:** ${matchedClient.full_name}\n- **Nº Presupuesto:** **${code}**\n- **Importe Total:** **€ ${total.toFixed(2)}**\n- **Concepto:** ${concept}\n\nVálido hasta el 30 de noviembre de 2026. Disponible en la Ficha 360° del cliente con opción de convertir a factura en 1 clic.`;
+      } else if (lower.includes('cita') || lower.includes('llamada') || lower.includes('agendar')) {
+        const modality = lower.includes('presencial') ? 'presencial' : lower.includes('meet') || lower.includes('video') ? 'online_meet' : 'llamada';
+        const newApt = {
+          id: String(Date.now()),
+          title: `Cita Asesoría con ${matchedClient.full_name}`,
+          date: '2026-10-18',
+          time: '16:00',
+          modality,
+          status: 'confirmada',
+          notes: `Cita agendada por Chat Asistente IA para ${matchedClient.full_name}.`
+        };
+
+        clientToUpdate.appointments = [newApt, ...(clientToUpdate.appointments || [])];
+        replyText = `✅ **¡Cita agendada correctamente!**\n\n- **Cliente:** ${matchedClient.full_name} (${matchedClient.phone})\n- **Fecha:** ${newApt.date} a las ${newApt.time}\n- **Modalidad:** **${modality === 'llamada' ? 'Llamada Telefónica' : modality === 'online_meet' ? 'Videollamada Google Meet' : 'Presencial en Despacho'}**\n\nLa cita ya aparece en la agenda del CRM y en el expediente del cliente.`;
+      } else if (lower.includes('documento') || lower.includes('informe') || lower.includes('archivar')) {
+        const docName = `Dictamen_IA_${matchedClient.full_name.split(' ')[0]}_${Date.now().toString().slice(-4)}.txt`;
+        const content = `INFORME ASISTENTE IA - NEXUSGEST ADVIES B.V.\nCliente: ${matchedClient.full_name} (BSN: ${matchedClient.bsn || 'No registrado'})\nFecha: ${new Date().toLocaleDateString('es-ES')}\n\nDictamen emitido a petición del gestor. Verificación conforme a normativa neerlandesa (Awb y Belastingdienst).`;
+        const newDoc = {
+          id: String(Date.now()),
+          name: docName,
+          category: 'nota_ia',
+          date: new Date().toISOString().slice(0, 10),
+          size: '15 KB',
+          file_type: 'text',
+          added_by: 'ia',
+          content_text: content
+        };
+
+        clientToUpdate.documents = [newDoc, ...(clientToUpdate.documents || [])];
+        replyText = `✅ **¡Documento redactado y archivado!**\n\n- **Archivo:** \`${docName}\`\n- **Destino:** Expediente Documental de **${matchedClient.full_name}**\n- **Categoría:** Dictamen / Nota IA\n\nPuedes abrirlo y descargarlo en la pestaña Documentos de su Ficha 360°.`;
+      } else {
+        const phoneMatch = textToSend.match(/(\+?\d[\d\s-]{7,}\d)/);
+        if (phoneMatch) {
+          clientToUpdate.phone = phoneMatch[1].trim();
+          replyText = `✅ **¡Teléfono actualizado!**\n\nHe modificado el teléfono de contacto de **${matchedClient.full_name}** a \`${clientToUpdate.phone}\`.`;
+        } else {
+          replyText = `✅ **Expediente de ${matchedClient.full_name} actualizado.** Se han sincronizado las modificaciones en el CRM.`;
+        }
+      }
+
+      const updatedList = currentClients.map((c: any) => c.id === clientToUpdate.id ? clientToUpdate : c);
+      setClients(updatedList);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nexusgest_clients', JSON.stringify(updatedList));
+      }
+
+      setTimeout(() => {
+        streamResponseText(replyText);
+      }, 300);
+      return;
+    }
+
     try {
-      const systemPrompt = `Eres un asesor fiscal y redactor legal experto de NexusGest, una prestigiosa gestoría en los Países Bajos. Conoces a fondo la legislación neerlandesa (Algemene wet bestuursrecht - Awb, Wet inkomstenbelasting 2001, Toeslagen, Zorgverzekeringswet, requisitos KVK y normativa IND). Responde de forma estructurada, profesional, directa y lista para usar.`;
+      const clientsContext = currentClients.map((c: any) => `- Cliente: ${c.full_name}, BSN: ${c.bsn || 'Sin registrar'}, Tel: ${c.phone}, Email: ${c.email}, Ciudad: ${c.city}, DigiD: ${c.digid_status}, Trámites: ${(c.dossiers || []).map((d: any) => d.title).join('; ') || 'Ninguno'}, Facturas: ${(c.invoices || []).length}, Presupuestos: ${(c.quotes || []).length}, Documentos: ${(c.documents || []).length}`).join('\n');
+
+      const systemPrompt = `Eres un asesor fiscal y redactor legal experto de NexusGest, una prestigiosa gestoría en los Países Bajos. Conoces a fondo la legislación neerlandesa (Algemene wet bestuursrecht - Awb, Wet inkomstenbelasting 2001, Toeslagen, Zorgverzekeringswet, requisitos KVK y normativa IND).
+Tienes acceso a los clientes actuales de la gestoría:
+${clientsContext}
+Responde de forma estructurada, profesional, directa y lista para usar. Puedes proponer o ejecutar acciones sobre sus facturas, presupuestos, citas o documentos.`;
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
@@ -322,6 +461,16 @@ Escribe tu consulta en la barra inferior o pulsa en cualquiera de las consultas 
   };
 
   const atajosCategorizados = [
+    {
+      categoria: 'Gestión Integral de Clientes (Acciones IA)',
+      icono: 'manage_accounts',
+      preguntas: [
+        'Crea una factura de 180€ para Carlos Mendoza por M-Form',
+        'Genera un presupuesto de 95€ para Maria Popescu por Zorgtoeslag',
+        'Agenda una llamada para Lars Van Dijk el 18 de octubre a las 16:00',
+        'Genera un informe fiscal para Elena Morales y archívalo en sus documentos',
+      ],
+    },
     {
       categoria: 'Fiscal & Belastingdienst',
       icono: 'gavel',

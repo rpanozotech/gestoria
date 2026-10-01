@@ -1,14 +1,47 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+
+interface ClientDocument {
+  id: string;
+  name: string;
+  category: 'identificacion' | 'fiscal_belastingdienst' | 'subsidios' | 'laboral_nominas' | 'bancario' | 'nota_ia' | 'contrato' | 'otro';
+  date: string;
+  size: string;
+  file_type: 'pdf' | 'image' | 'text' | 'word' | 'otro';
+  added_by: 'gestor' | 'ia' | 'cliente';
+  content_text?: string;
+  url?: string;
+}
+
+interface ClientAIAction {
+  type: 'invoice_created' | 'quote_created' | 'appointment_created' | 'document_created' | 'data_updated';
+  summary: string;
+  data: any;
+}
+
+interface ClientAIMessage {
+  id: string;
+  role: 'assistant' | 'user';
+  content: string;
+  timestamp: string;
+  actionExecuted?: ClientAIAction;
+}
 
 export default function CRMClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'con_digid' | 'pendientes'>('todos');
 
-  // Control de vista maximizada (por defecto FALSE para NO tapar la barra lateral izquierda)
+  // Control de vista maximizada
   const [isMaximized, setIsMaximized] = useState(false);
+
+  // Toast global
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   // Catálogo de Servicios y Trámites
   const [servicesCatalog, setServicesCatalog] = useState([
@@ -21,7 +54,7 @@ export default function CRMClientesPage() {
     { id: '7', title: 'Cambio de Cuenta Bancaria Belastingdienst', category: 'Gestión Administrativa', defaultFee: 45.00 },
   ]);
 
-  // Lista de clientes con sus datos, trámites, presupuestos, facturas y citas
+  // Lista de clientes con sus datos, trámites, presupuestos, facturas, citas y documentos
   const [clients, setClients] = useState<any[]>([
     {
       id: '1',
@@ -55,9 +88,11 @@ export default function CRMClientesPage() {
           code: 'PRE-2026-0003',
           concept: 'Gestión Solicitud Zorgtoeslag y Registro',
           amount: 85.00,
+          tax_amount: 17.85,
           total: 102.85,
           status: 'enviado',
           valid_until: '2026-11-15',
+          items: [{ description: 'Gestión Solicitud Zorgtoeslag y Registro', total: 85.00 }],
         },
       ],
       invoices: [
@@ -69,6 +104,7 @@ export default function CRMClientesPage() {
           status: 'emitida',
           due_date: '2026-10-12',
           payment_method: 'ideal',
+          items: [{ description: 'Gestión Solicitud Zorgtoeslag y Registro', total: 85.00 }],
         },
       ],
       appointments: [
@@ -80,6 +116,45 @@ export default function CRMClientesPage() {
           modality: 'llamada',
           status: 'confirmada',
           notes: 'Llamar para verificar código de carta física.',
+        },
+      ],
+      documents: [
+        {
+          id: 'doc-1',
+          name: 'DNI_Pasaporte_MariaPopescu.pdf',
+          category: 'identificacion',
+          date: '2026-10-02',
+          size: '1.2 MB',
+          file_type: 'pdf',
+          added_by: 'gestor',
+        },
+        {
+          id: 'doc-2',
+          name: 'Carta_Belastingdienst_Activacion_DigiD.pdf',
+          category: 'fiscal_belastingdienst',
+          date: '2026-10-05',
+          size: '450 KB',
+          file_type: 'pdf',
+          added_by: 'cliente',
+        },
+        {
+          id: 'doc-3',
+          name: 'Solicitud_Oficial_Zorgtoeslag_2026.pdf',
+          category: 'subsidios',
+          date: '2026-10-08',
+          size: '320 KB',
+          file_type: 'pdf',
+          added_by: 'gestor',
+        },
+        {
+          id: 'doc-4',
+          name: 'Nota_Resumen_IA_DigiD.txt',
+          category: 'nota_ia',
+          date: '2026-10-09',
+          size: '14 KB',
+          file_type: 'text',
+          added_by: 'ia',
+          content_text: 'RESUMEN TÉCNICO IA - CLIENTE MARIA POPESCU:\nEstado DigiD: Carta enviada por Belastingdienst. Código pendiente de activación física (plazo: 21 días).\nSubsidios: Solicitud de Zorgtoeslag lista para envío en cuanto se introduzca la clave SMS.',
         },
       ],
     },
@@ -115,9 +190,14 @@ export default function CRMClientesPage() {
           code: 'PRE-2026-0001',
           concept: 'Elaboración y Presentación Fiscal M-Form',
           amount: 220.00,
+          tax_amount: 46.20,
           total: 266.20,
           status: 'convertido',
           valid_until: '2026-10-30',
+          items: [
+            { description: 'Elaboración y Presentación Fiscal M-Form Belastingdienst', total: 180.00 },
+            { description: 'Revisión documentación de ingresos en origen', total: 40.00 },
+          ],
         },
       ],
       invoices: [
@@ -129,6 +209,10 @@ export default function CRMClientesPage() {
           status: 'pagada',
           due_date: '2026-10-15',
           payment_method: 'ideal',
+          items: [
+            { description: 'Elaboración y Presentación Fiscal M-Form Belastingdienst', total: 180.00 },
+            { description: 'Revisión documentación de ingresos en origen', total: 40.00 },
+          ],
         },
       ],
       appointments: [
@@ -140,6 +224,45 @@ export default function CRMClientesPage() {
           modality: 'online_meet',
           status: 'confirmada',
           notes: 'Revisar certificado de retenciones de España.',
+        },
+      ],
+      documents: [
+        {
+          id: 'doc-5',
+          name: 'Pasaporte_Espanol_CarlosMendoza.pdf',
+          category: 'identificacion',
+          date: '2026-09-20',
+          size: '980 KB',
+          file_type: 'pdf',
+          added_by: 'cliente',
+        },
+        {
+          id: 'doc-6',
+          name: 'Certificado_Retenciones_2025_Espana.pdf',
+          category: 'fiscal_belastingdienst',
+          date: '2026-10-01',
+          size: '1.4 MB',
+          file_type: 'pdf',
+          added_by: 'gestor',
+        },
+        {
+          id: 'doc-7',
+          name: 'Contrato_Laboral_Amsterdam_BV.pdf',
+          category: 'laboral_nominas',
+          date: '2026-10-03',
+          size: '2.1 MB',
+          file_type: 'pdf',
+          added_by: 'cliente',
+        },
+        {
+          id: 'doc-8',
+          name: 'Dictamen_IA_Deduccion_MForm.txt',
+          category: 'nota_ia',
+          date: '2026-10-06',
+          size: '18 KB',
+          file_type: 'text',
+          added_by: 'ia',
+          content_text: 'DICTAMEN TÉCNICO FISCAL IA:\nCliente Carlos Mendoza Ruiz (BSN 817293845).\nAplicación del régimen de migración M-Form: deducción aplicable por gastos de relocalización internacional conforme al art. 3.120 Wet inkomstenbelasting 2001.\nRecomendación: solicitar también la resolución de 30% Ruling en trámite conjunto con el empleador.',
         },
       ],
     },
@@ -172,6 +295,26 @@ export default function CRMClientesPage() {
       quotes: [],
       invoices: [],
       appointments: [],
+      documents: [
+        {
+          id: 'doc-9',
+          name: 'Uittreksel_Handelsregister_KVK.pdf',
+          category: 'contrato',
+          date: '2026-09-25',
+          size: '850 KB',
+          file_type: 'pdf',
+          added_by: 'gestor',
+        },
+        {
+          id: 'doc-10',
+          name: 'Declaracion_BTW_Q3_2026.pdf',
+          category: 'fiscal_belastingdienst',
+          date: '2026-10-02',
+          size: '420 KB',
+          file_type: 'pdf',
+          added_by: 'gestor',
+        },
+      ],
     },
     {
       id: '4',
@@ -190,10 +333,30 @@ export default function CRMClientesPage() {
       quotes: [],
       invoices: [],
       appointments: [],
+      documents: [
+        {
+          id: 'doc-11',
+          name: 'Huurcontract_Utrecht_Apartment.pdf',
+          category: 'contrato',
+          date: '2026-10-04',
+          size: '1.8 MB',
+          file_type: 'pdf',
+          added_by: 'cliente',
+        },
+        {
+          id: 'doc-12',
+          name: 'Poliza_HollandZorg_2026.pdf',
+          category: 'subsidios',
+          date: '2026-10-06',
+          size: '520 KB',
+          file_type: 'pdf',
+          added_by: 'gestor',
+        },
+      ],
     },
   ]);
 
-  // Sincronización con localStorage para persistir clientes añadidos por IA o formularios
+  // Sincronización con localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -204,7 +367,13 @@ export default function CRMClientesPage() {
             setClients((prev) => {
               const map = new Map();
               prev.forEach((c) => map.set(String(c.id), c));
-              parsed.forEach((c: any) => map.set(String(c.id), c));
+              parsed.forEach((c: any) => {
+                const existing = map.get(String(c.id));
+                map.set(String(c.id), {
+                  ...c,
+                  documents: c.documents && c.documents.length > 0 ? c.documents : existing?.documents || [],
+                });
+              });
               return Array.from(map.values());
             });
           }
@@ -227,13 +396,51 @@ export default function CRMClientesPage() {
 
   // Cliente seleccionado para la Ficha 360°
   const [selectedClient, setSelectedClient] = useState<any>(null);
-  const [active360Tab, setActive360Tab] = useState<'resumen' | 'personales' | 'facturacion' | 'citas' | 'ia'>('resumen');
+  const [active360Tab, setActive360Tab] = useState<'resumen' | 'documentos' | 'facturacion' | 'citas' | 'personales' | 'ia'>('resumen');
 
   // Estados de edición de notas
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [editedNotes, setEditedNotes] = useState('');
 
-  // 1. MODAL NUEVO TRÁMITE (Desplegable + añadir nuevo servicio a catálogo)
+  // MODAL EDICIÓN COMPLETA DEL CLIENTE
+  const [showEditClientModal, setShowEditClientModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    bsn: '',
+    id_document_number: '',
+    city: '',
+    address: '',
+    iban: '',
+    digid_status: 'sin_digid',
+    status: 'activo',
+    notes: '',
+  });
+
+  // MODAL DOCUMENTOS: SUBIDA DE ARCHIVOS
+  const [showUploadDocModal, setShowUploadDocModal] = useState(false);
+  const [uploadCategory, setUploadCategory] = useState<ClientDocument['category']>('identificacion');
+  const [uploadDocName, setUploadDocName] = useState('');
+  const [uploadTextNote, setUploadTextNote] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // MODAL NUEVO DOCUMENTO DE TEXTO / NOTA
+  const [showNewTextDocModal, setShowNewTextDocModal] = useState(false);
+  const [textDocTitle, setTextDocTitle] = useState('');
+  const [textDocCategory, setTextDocCategory] = useState<ClientDocument['category']>('nota_ia');
+  const [textDocContent, setTextDocContent] = useState('');
+
+  // MODAL VISUALIZADOR DE DOCUMENTO
+  const [previewDoc, setPreviewDoc] = useState<ClientDocument | null>(null);
+
+  // CHAT DEL ASISTENTE IA DEL CLIENTE (Ficha 360°)
+  const [clientAiMessages, setClientAiMessages] = useState<ClientAIMessage[]>([]);
+  const [clientAiInput, setClientAiInput] = useState('');
+  const [isClientAiSending, setIsClientAiSending] = useState(false);
+  const clientAiScrollRef = useRef<HTMLDivElement>(null);
+
+  // 1. MODAL NUEVO TRÁMITE
   const [showAddDossierModal, setShowAddDossierModal] = useState(false);
   const [selectedCatalogServiceId, setSelectedCatalogServiceId] = useState(servicesCatalog[0].id);
   const [dossierTitle, setDossierTitle] = useState(servicesCatalog[0].title);
@@ -243,7 +450,7 @@ export default function CRMClientesPage() {
   const [isNewServiceMode, setIsNewServiceMode] = useState(false);
   const [saveToCatalogToo, setSaveToCatalogToo] = useState(true);
 
-  // 2. MODAL NUEVA CITA DIRECTA (Cliente bloqueado, llamada por defecto)
+  // 2. MODAL NUEVA CITA DIRECTA
   const [showNewAptModal, setShowNewAptModal] = useState(false);
   const [aptTitle, setAptTitle] = useState('Consulta Telefónica Gestoría');
   const [aptDate, setAptDate] = useState('2026-10-15');
@@ -254,6 +461,419 @@ export default function CRMClientesPage() {
   const [selectedDoc, setSelectedDoc] = useState<{ type: 'quote' | 'invoice'; data: any } | null>(null);
   const [emailSentToast, setEmailSentToast] = useState<string | null>(null);
 
+  // 3. MODAL NUEVO PRESUPUESTO DIRECTO
+  const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
+  const [selectedQuoteServiceIds, setSelectedQuoteServiceIds] = useState<string[]>(['1']);
+  const [customQuoteFees, setCustomQuoteFees] = useState<{ [id: string]: number }>({});
+  const [quoteConcept, setQuoteConcept] = useState('Declaración Fiscal M-Form');
+  const [isConceptManuallyEdited, setIsConceptManuallyEdited] = useState(false);
+  const [quoteValidUntil, setQuoteValidUntil] = useState('2026-11-30');
+
+  // Abrir Ficha 360° al pulsar sobre el cliente
+  const handleOpenClient = (client: any) => {
+    setSelectedClient(client);
+    setEditedNotes(client.notes || '');
+    setIsEditingNotes(false);
+    setActive360Tab('resumen');
+
+    // Inicializar chat IA del cliente si está vacío
+    setClientAiMessages([
+      {
+        id: 'init-msg',
+        role: 'assistant',
+        content: `👋 ¡Hola! Soy tu **Asistente IA especializado para ${client.full_name}**.\n\nTengo acceso en tiempo real a todo su expediente:\n- **BSN Oficial:** \`${client.bsn || 'Sin registrar'}\` · **DigiD:** \`${client.digid_status}\`\n- **Expedientes activos:** ${client.dossiers?.length || 0} trámites\n- **Documentos en archivo:** ${client.documents?.length || 0} archivos\n- **Facturación:** ${client.quotes?.length || 0} presupuestos / ${client.invoices?.length || 0} facturas\n- **Citas agendadas:** ${client.appointments?.length || 0} citas\n\n¿En qué puedo ayudarte? Puedes pedirme que **emita una factura**, **genere un presupuesto**, **agende una cita**, **modifique sus datos** o **redacte y archive un documento** en su carpeta.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+  };
+
+  // Abrir Modal de Edición de Datos
+  const handleOpenEditClient = (client: any) => {
+    setEditFormData({
+      full_name: client.full_name || '',
+      email: client.email || '',
+      phone: client.phone || '',
+      bsn: client.bsn || '',
+      id_document_number: client.id_document_number || '',
+      city: client.city || '',
+      address: client.address || '',
+      iban: client.iban || '',
+      digid_status: client.digid_status || 'sin_digid',
+      status: client.status || 'activo',
+      notes: client.notes || '',
+    });
+    setShowEditClientModal(true);
+  };
+
+  // Guardar Edición Completa del Cliente
+  const handleSaveClientEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+
+    const updatedClient = {
+      ...selectedClient,
+      ...editFormData,
+    };
+
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    setShowEditClientModal(false);
+    showToast(`¡Datos de ${updatedClient.full_name} actualizados con éxito!`);
+
+    // Intentar persistir en backend
+    try {
+      await fetch(`http://localhost:5000/api/clients/${updatedClient.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editFormData),
+      });
+    } catch {}
+  };
+
+  // Guardar notas internas rápidas
+  const handleSaveNotes = () => {
+    if (!selectedClient) return;
+    const updatedClient = { ...selectedClient, notes: editedNotes };
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    setIsEditingNotes(false);
+    showToast('Notas del cliente guardadas');
+  };
+
+  // GESTIÓN DE DOCUMENTOS: Subir archivo
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedClient) return;
+
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    const sizeKb = Math.round(file.size / 1024);
+    const sizeStr = file.size > 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const fileType: ClientDocument['file_type'] = ext === 'pdf' ? 'pdf' : ['png', 'jpg', 'jpeg'].includes(ext) ? 'image' : ['doc', 'docx'].includes(ext) ? 'word' : 'text';
+
+    if (file.type.startsWith('text') || ext === 'txt' || ext === 'md') {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        saveUploadedDoc(file.name, sizeStr, fileType, event.target?.result as string);
+      };
+      reader.readAsText(file);
+    } else {
+      saveUploadedDoc(file.name, sizeStr, fileType);
+    }
+  };
+
+  const saveUploadedDoc = (name: string, size: string, fileType: ClientDocument['file_type'], textContent?: string) => {
+    const newDoc: ClientDocument = {
+      id: String(Date.now()),
+      name: uploadDocName.trim() || name,
+      category: uploadCategory,
+      date: new Date().toISOString().slice(0, 10),
+      size: size,
+      file_type: fileType,
+      added_by: 'gestor',
+      content_text: textContent || uploadTextNote,
+    };
+
+    const updatedClient = {
+      ...selectedClient,
+      documents: [newDoc, ...(selectedClient.documents || [])],
+    };
+
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    setShowUploadDocModal(false);
+    setUploadDocName('');
+    setUploadTextNote('');
+    showToast(`Documento "${newDoc.name}" añadido al expediente.`);
+  };
+
+  // Crear Documento de Texto / Nota Escrita
+  const handleSaveTextDocument = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient || !textDocTitle.trim()) return;
+
+    const docName = textDocTitle.toLowerCase().endsWith('.txt') ? textDocTitle : `${textDocTitle}.txt`;
+    const newDoc: ClientDocument = {
+      id: String(Date.now()),
+      name: docName,
+      category: textDocCategory,
+      date: new Date().toISOString().slice(0, 10),
+      size: `${Math.max(1, Math.round(textDocContent.length / 100))} KB`,
+      file_type: 'text',
+      added_by: 'gestor',
+      content_text: textDocContent,
+    };
+
+    const updatedClient = {
+      ...selectedClient,
+      documents: [newDoc, ...(selectedClient.documents || [])],
+    };
+
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    setShowNewTextDocModal(false);
+    setTextDocTitle('');
+    setTextDocContent('');
+    showToast(`Documento de texto "${docName}" guardado.`);
+  };
+
+  // Generación Automática de Documentos con IA
+  const handleGenerateAIDocument = (docType: string) => {
+    if (!selectedClient) return;
+
+    let title = '';
+    let category: ClientDocument['category'] = 'nota_ia';
+    let content = '';
+
+    if (docType === 'informe_general') {
+      title = `Informe_General_${selectedClient.full_name.replace(/\s+/g, '_')}.txt`;
+      category = 'nota_ia';
+      content = `========================================================================\nINFORME EJECUTIVO FISCAL Y ADMINISTRATIVO - NEXUSGEST ADVIES B.V.\n========================================================================\nFecha: ${new Date().toLocaleDateString('es-ES')}\nCliente: ${selectedClient.full_name} · BSN: ${selectedClient.bsn || 'No registrado'}\nEmail: ${selectedClient.email} · Teléfono: ${selectedClient.phone}\nDirección: ${selectedClient.address || '—'}, ${selectedClient.city || 'Países Bajos'}\n\n1. ESTADO DE EXPEDIENTES:\n${(selectedClient.dossiers || []).map((d: any) => `- ${d.code}: ${d.title} (${d.status}, Progreso: ${d.progress_percentage}%, Tarifa: € ${d.fee})`).join('\n') || '- Sin expedientes abiertos.'}\n\n2. HISTORIAL DE FACTURACIÓN:\nPresupuestos: ${(selectedClient.quotes || []).length} emitidos.\nFacturas: ${(selectedClient.invoices || []).length} registradas.\n\n3. EVALUACIÓN Y RECOMENDACIÓN IA:\nExpediente auditado bajo normativa de la Belastingdienst y Algemene wet bestuursrecht (Awb). Se aconseja mantener actualizada la cuenta IBAN y verificar notificaciones en Mijn Belastingdienst.`;
+    } else if (docType === 'carta_belastingdienst') {
+      title = `Escrito_Belastingdienst_${selectedClient.bsn || 'BSN'}.txt`;
+      category = 'fiscal_belastingdienst';
+      content = `Aan: Belastingdienst / Toeslagen\nPostbus 450, 6400 AL Heerlen\n\nBetreft: Notificatie en verificatie gegevens - BSN ${selectedClient.bsn || '—'}\nDatum: ${new Date().toLocaleDateString('nl-NL')}\n\nGeachte inspecteur,\n\nNamens cliënt(e) ${selectedClient.full_name}, geboren en geregistreerd onder BSN ${selectedClient.bsn || '—'}, delen wij u mede dat de documentatie ter zake van de belastingaangifte en toeslagen is gecontroleerd.\n\nHoogachtend,\nNexusGest Advies B.V.`;
+    }
+
+    const newDoc: ClientDocument = {
+      id: String(Date.now()),
+      name: title,
+      category: category,
+      date: new Date().toISOString().slice(0, 10),
+      size: `${Math.round(content.length / 100)} KB`,
+      file_type: 'text',
+      added_by: 'ia',
+      content_text: content,
+    };
+
+    const updatedClient = {
+      ...selectedClient,
+      documents: [newDoc, ...(selectedClient.documents || [])],
+    };
+
+    setSelectedClient(updatedClient);
+    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    showToast(`Documento generado por IA: "${title}".`);
+  };
+
+  // Eliminar Documento
+  const handleDeleteDocument = (docId: string) => {
+    if (!selectedClient) return;
+    if (confirm('¿Deseas eliminar este documento del expediente del cliente?')) {
+      const updatedDocs = (selectedClient.documents || []).filter((d: any) => d.id !== docId);
+      const updatedClient = { ...selectedClient, documents: updatedDocs };
+      setSelectedClient(updatedClient);
+      setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+      showToast('Documento eliminado.');
+    }
+  };
+
+  // ASISTENTE IA: Procesar órdenes sobre el cliente (Facturas, Presupuestos, Citas, Modificaciones, Documentos)
+  const handleSendClientAiMessage = async (overridePrompt?: string) => {
+    const textToSend = overridePrompt || clientAiInput;
+    if (!textToSend.trim() || !selectedClient) return;
+
+    const userMsg: ClientAIMessage = {
+      id: String(Date.now()),
+      role: 'user',
+      content: textToSend,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    const nextMsgs = [...clientAiMessages, userMsg];
+    setClientAiMessages(nextMsgs);
+    if (!overridePrompt) setClientAiInput('');
+    setIsClientAiSending(true);
+
+    // Motor de ejecución de acciones con IA
+    setTimeout(() => {
+      const lower = textToSend.toLowerCase();
+      let aiReply = '';
+      let executedAction: ClientAIAction | undefined = undefined;
+
+      // ACCIÓN 1: CREAR FACTURA
+      if (lower.includes('factura') || lower.includes('facturar') || lower.includes('cobro')) {
+        const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
+        const fee = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 150.00;
+        const total = Math.round(fee * 1.21 * 100) / 100;
+        const year = new Date().getFullYear();
+        const code = `FAC-${year}-${String((selectedClient.invoices?.length || 0) + 1).padStart(4, '0')}`;
+        const concept = lower.includes('m-form')
+          ? 'Declaración Fiscal M-Form Belastingdienst'
+          : lower.includes('zorgtoeslag')
+          ? 'Gestión Solicitud Zorgtoeslag'
+          : lower.includes('huurtoeslag')
+          ? 'Gestión Subsidio de Alquiler Huurtoeslag'
+          : 'Asesoría y Servicios Gestoría Fiscal';
+
+        const newInvoice = {
+          id: String(Date.now()),
+          code,
+          concept,
+          total,
+          status: 'emitida',
+          due_date: '2026-11-15',
+          payment_method: 'ideal',
+          items: [{ description: concept, total: fee }],
+        };
+
+        const updated = {
+          ...selectedClient,
+          invoices: [newInvoice, ...(selectedClient.invoices || [])],
+        };
+        setSelectedClient(updated);
+        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+
+        executedAction = {
+          type: 'invoice_created',
+          summary: `Factura oficial ${code} emitida por € ${total.toFixed(2)}`,
+          data: newInvoice,
+        };
+
+        aiReply = `✅ **¡Factura oficial emitida con éxito!**\n\nHe generado la factura **${code}** para **${selectedClient.full_name}** por un importe base de **€ ${fee.toFixed(2)}** (+ 21% BTW = **€ ${total.toFixed(2)}**).\nConcepto: *${concept}*.\nEstado: **Emitida / Pendiente de Pago (iDEAL)**. Puedes verla en la pestaña de facturación o pulsar el botón a continuación.`;
+      }
+      // ACCIÓN 2: CREAR PRESUPUESTO
+      else if (lower.includes('presupuesto') || lower.includes('presupuestar') || lower.includes('cotizacion')) {
+        const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
+        const fee = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 120.00;
+        const tax = Math.round(fee * 0.21 * 100) / 100;
+        const total = Math.round((fee + tax) * 100) / 100;
+        const year = new Date().getFullYear();
+        const code = `PRE-${year}-${String((selectedClient.quotes?.length || 0) + 1).padStart(4, '0')}`;
+        const concept = lower.includes('m-form')
+          ? 'Elaboración y Presentación Fiscal M-Form'
+          : lower.includes('subsidio') || lower.includes('toeslag')
+          ? 'Tramitación de Subsidios ante Belastingdienst'
+          : 'Presupuesto de Asesoría y Gestoría Fiscal';
+
+        const newQuote = {
+          id: String(Date.now()),
+          code,
+          concept,
+          amount: fee,
+          tax_amount: tax,
+          total,
+          status: 'enviado',
+          valid_until: '2026-11-30',
+          items: [{ description: concept, total: fee }],
+        };
+
+        const updated = {
+          ...selectedClient,
+          quotes: [newQuote, ...(selectedClient.quotes || [])],
+        };
+        setSelectedClient(updated);
+        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+
+        executedAction = {
+          type: 'quote_created',
+          summary: `Presupuesto ${code} generado por € ${total.toFixed(2)}`,
+          data: newQuote,
+        };
+
+        aiReply = `✅ **Presupuesto creado y registrado:**\n\nHe preparado el presupuesto **${code}** para **${selectedClient.full_name}** por un total de **€ ${total.toFixed(2)}** (Base: € ${fee.toFixed(2)} + BTW 21%).\nVálido hasta: 30 de noviembre de 2026. Ha quedado guardado en su sección de presupuestos.`;
+      }
+      // ACCIÓN 3: AGENDAR CITA
+      else if (lower.includes('cita') || lower.includes('llamada') || lower.includes('reunión') || lower.includes('agendar')) {
+        const modality = lower.includes('presencial') ? 'presencial' : lower.includes('meet') || lower.includes('video') ? 'online_meet' : 'llamada';
+        const newApt = {
+          id: String(Date.now()),
+          title: `Cita Asesoría con ${selectedClient.full_name}`,
+          date: '2026-10-16',
+          time: '11:00',
+          modality: modality,
+          status: 'confirmada',
+          notes: `Cita programada mediante el Asistente IA para ${selectedClient.full_name}.`,
+        };
+
+        const updated = {
+          ...selectedClient,
+          appointments: [newApt, ...(selectedClient.appointments || [])],
+        };
+        setSelectedClient(updated);
+        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+
+        executedAction = {
+          type: 'appointment_created',
+          summary: `Cita registrada para el ${newApt.date} a las ${newApt.time} (${modality})`,
+          data: newApt,
+        };
+
+        aiReply = `✅ **Cita agendada en calendario:**\n\nHe programado la cita para el **${newApt.date} a las ${newApt.time}** con **${selectedClient.full_name}**.\nModalidad: **${modality === 'llamada' ? 'Llamada Telefónica (Prioritaria)' : modality === 'online_meet' ? 'Videollamada Google Meet' : 'Presencial en Despacho'}**.\nPuedes consultarla en la pestaña Citas o en el módulo Agenda general.`;
+      }
+      // ACCIÓN 4: GENERAR Y ARCHIVAR DOCUMENTO / NOTA EN SU EXPEDIENTE
+      else if (lower.includes('documento') || lower.includes('informe') || lower.includes('archivar') || lower.includes('resumen') || lower.includes('redacta')) {
+        const docTitle = `Informe_Asistente_IA_${Date.now().toString().slice(-4)}.txt`;
+        const contentText = `INFORME ASISTENCIAL DE EXPEDIENTE - NEXUSGEST IA\nCliente: ${selectedClient.full_name} (BSN: ${selectedClient.bsn})\nFecha: ${new Date().toLocaleDateString('es-ES')}\n\nResumen de Situación:\n- Domicilio: ${selectedClient.address}, ${selectedClient.city}\n- Trámites en curso: ${(selectedClient.dossiers || []).length}\n- Estado DigiD: ${selectedClient.digid_status}\n- Facturas emitidas: ${(selectedClient.invoices || []).length}\n\nConclusiones y Próximos Pasos:\nEl cliente cuenta con expediente regularizado. Se procede al archivo documental en el sistema de gestión.`;
+
+        const newDoc: ClientDocument = {
+          id: String(Date.now()),
+          name: docTitle,
+          category: 'nota_ia',
+          date: new Date().toISOString().slice(0, 10),
+          size: `${Math.round(contentText.length / 100)} KB`,
+          file_type: 'text',
+          added_by: 'ia',
+          content_text: contentText,
+        };
+
+        const updated = {
+          ...selectedClient,
+          documents: [newDoc, ...(selectedClient.documents || [])],
+        };
+        setSelectedClient(updated);
+        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+
+        executedAction = {
+          type: 'document_created',
+          summary: `Documento "${docTitle}" guardado en la carpeta del cliente`,
+          data: newDoc,
+        };
+
+        aiReply = `✅ **Documento redactado y archivado:**\n\nHe generado el documento **"${docTitle}"** y lo he guardado automáticamente en el apartado **Documentos** de ${selectedClient.full_name}.\nPuedes abrirlo, previsualizarlo o descargarlo desde la pestaña Documentos.`;
+      }
+      // ACCIÓN 5: MODIFICAR DATOS DEL CLIENTE
+      else if (lower.includes('cambiar') || lower.includes('modificar') || lower.includes('actualizar') || lower.includes('telefono') || lower.includes('teléfono') || lower.includes('direccion') || lower.includes('dirección')) {
+        let fieldUpdated = 'Datos de contacto';
+        let updated = { ...selectedClient };
+
+        const phoneMatch = textToSend.match(/(\+?\d[\d\s-]{7,}\d)/);
+        if (phoneMatch) {
+          updated.phone = phoneMatch[1].trim();
+          fieldUpdated = `Teléfono a ${updated.phone}`;
+        }
+
+        setSelectedClient(updated);
+        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+
+        executedAction = {
+          type: 'data_updated',
+          summary: `Datos actualizados: ${fieldUpdated}`,
+          data: updated,
+        };
+
+        aiReply = `✅ **Datos modificados:**\n\nHe actualizado la ficha de **${selectedClient.full_name}**. Se ha registrado el cambio (${fieldUpdated}) tanto en la Ficha 360° como en la base de datos del CRM.`;
+      }
+      // CONSULTA GENERAL SOBRE EL CLIENTE
+      else {
+        aiReply = `📋 **Expediente de ${selectedClient.full_name}:**\n\n- **Identificación:** BSN: \`${selectedClient.bsn || '—'}\` · Pasaporte/ID: \`${selectedClient.id_document_number || '—'}\`\n- **Contacto:** ${selectedClient.phone} · ${selectedClient.email}\n- **Domicilio:** ${selectedClient.address || '—'}, ${selectedClient.city || '—'}\n- **DigiD:** ${selectedClient.digid_status === 'activo' ? '🟢 Activo' : selectedClient.digid_status === 'pendiente_activar' ? '🟡 Código Pendiente' : '⚪ Sin DigiD'}\n- **Trámites:** ${(selectedClient.dossiers || []).map((d: any) => `\n  • ${d.code}: ${d.title} (${d.status})`).join('') || 'Sin trámites activos'}\n- **Documentos:** ${(selectedClient.documents || []).length} archivos en su carpeta.\n\nPuedo crear facturas, presupuestos, agendar citas o modificar cualquiera de estos campos.`;
+      }
+
+      setClientAiMessages((prev) => [
+        ...prev,
+        {
+          id: String(Date.now()),
+          role: 'assistant',
+          content: aiReply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          actionExecuted: executedAction,
+        },
+      ]);
+      setIsClientAiSending(false);
+    }, 600);
+  };
+
+  // Helpers para presupuestos
   const getDocTotals = (doc: any) => {
     if (!doc) return { subtotal: 0, tax: 0, total: 0 };
     const total = parseFloat(doc.total || 0);
@@ -285,15 +905,6 @@ export default function CRMClientesPage() {
     ];
   };
 
-  // 3. MODAL NUEVO PRESUPUESTO DIRECTO (Multi-trámite)
-  const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
-  const [selectedQuoteServiceIds, setSelectedQuoteServiceIds] = useState<string[]>(['1']);
-  const [customQuoteFees, setCustomQuoteFees] = useState<{ [id: string]: number }>({});
-  const [quoteConcept, setQuoteConcept] = useState('Declaración Fiscal M-Form');
-  const [isConceptManuallyEdited, setIsConceptManuallyEdited] = useState(false);
-  const [quoteValidUntil, setQuoteValidUntil] = useState('2026-11-30');
-
-  // Helpers para presupuestos multi-trámite
   const getSelectedQuoteItems = () => {
     return servicesCatalog
       .filter((s) => selectedQuoteServiceIds.includes(s.id))
@@ -354,7 +965,6 @@ export default function CRMClientesPage() {
     setShowNewQuoteModal(true);
   };
 
-  // Actualizar campos al cambiar el desplegable de trámites
   const handleCatalogSelectChange = (serviceId: string) => {
     setSelectedCatalogServiceId(serviceId);
     if (serviceId === '__NEW__') {
@@ -373,7 +983,6 @@ export default function CRMClientesPage() {
     }
   };
 
-  // Guardar nuevo trámite
   const handleSaveDossier = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient || !dossierTitle.trim()) return;
@@ -410,9 +1019,9 @@ export default function CRMClientesPage() {
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
     setShowAddDossierModal(false);
+    showToast(`Trámite ${newDossier.code} asignado.`);
   };
 
-  // Guardar nueva cita
   const handleSaveAppointment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
@@ -436,9 +1045,9 @@ export default function CRMClientesPage() {
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
     setShowNewAptModal(false);
     setActive360Tab('citas');
+    showToast('Cita agendada.');
   };
 
-  // Guardar nuevo presupuesto multi-trámite
   const handleSaveQuote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
@@ -473,9 +1082,9 @@ export default function CRMClientesPage() {
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
     setShowNewQuoteModal(false);
     setActive360Tab('facturacion');
+    showToast(`Presupuesto ${newQuote.code} generado.`);
   };
 
-  // Convertir presupuesto a factura
   const handleConvertQuoteInFicha = (quote: any) => {
     const nextCount = (selectedClient.invoices?.length || 0) + 1;
     const year = new Date().getFullYear();
@@ -502,50 +1111,56 @@ export default function CRMClientesPage() {
 
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    showToast(`Presupuesto convertido a Factura ${newInvoice.code}`);
   };
 
-  // Guardar notas del cliente
-  const handleSaveNotes = () => {
-    if (!selectedClient) return;
-    const updated = { ...selectedClient, notes: editedNotes };
-    setSelectedClient(updated);
-    setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
-    setIsEditingNotes(false);
-  };
-
+  // Filtrado de la tabla principal
   const filteredClients = clients.filter((c) => {
-    const matchesSearch =
+    const matchSearch =
       c.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.bsn?.includes(searchTerm) ||
-      c.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      c.bsn?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.city?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (!matchesSearch) return false;
-    if (filterStatus === 'activos') return c.status === 'activo';
-    if (filterStatus === 'con_digid') return c.digid_status === 'activo';
-    if (filterStatus === 'pendientes') return c.digid_status === 'pendiente_activar';
-    return true;
+    if (filterStatus === 'activos') return matchSearch && c.status === 'activo';
+    if (filterStatus === 'con_digid') return matchSearch && c.digid_status === 'activo';
+    if (filterStatus === 'pendientes') return matchSearch && c.digid_status === 'pendiente_activar';
+    return matchSearch;
   });
 
   return (
     <div className="space-y-6">
-      {/* Header & Controls del Directorio */}
+      {/* Toast de Notificaciones */}
+      {toastMessage && (
+        <div className="fixed top-20 right-8 z-[200] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-secondary/40 animate-in fade-in duration-200">
+          <span className="material-symbols-outlined text-secondary text-xl">check_circle</span>
+          <span className="text-xs font-semibold">{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-container">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-on-surface">Directorio de Clientes</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-on-surface">Directorio de Clientes</h1>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-secondary/10 text-secondary">
+              Gestión Integral 360°
+            </span>
+          </div>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Base de datos de residentes, BSN, trámites, facturación y ficha completa 360°.
+            Pulsa sobre cualquier cliente para abrir su Ficha 360°, editar sus datos, gestionar documentos o activar al Asistente IA.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">search</span>
+            <span className="material-symbols-outlined absolute left-3 top-2.5 text-outline text-base">search</span>
             <input
               type="text"
-              placeholder="Buscar por nombre o BSN..."
+              placeholder="Buscar por nombre, BSN, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-9 pl-9 pr-4 text-xs border border-outline-variant rounded-md bg-surface-container-lowest focus:border-secondary focus:outline-none w-56"
+              className="h-9 pl-9 pr-4 text-xs bg-surface-container-lowest border border-outline-variant rounded-md focus:border-secondary focus:outline-none w-64 shadow-xs"
             />
           </div>
 
@@ -587,9 +1202,9 @@ export default function CRMClientesPage() {
         </button>
       </div>
 
-      {/* Grid: Clients Directory Table */}
+      {/* Grid: Clients Directory Table (CLICK EN FILA ABRE CLIENTE) */}
       <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left text-xs">
             <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
               <tr>
@@ -598,14 +1213,23 @@ export default function CRMClientesPage() {
                 <th className="px-5 py-3">Ciudad / Dirección</th>
                 <th className="px-5 py-3">Estado DigiD</th>
                 <th className="px-5 py-3 text-center">Trámites</th>
+                <th className="px-5 py-3 text-center">Documentos</th>
                 <th className="px-5 py-3 text-right">Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container">
               {filteredClients.map((client) => (
-                <tr key={client.id} className="hover:bg-surface-container-low transition-colors">
+                <tr
+                  key={client.id}
+                  onClick={() => handleOpenClient(client)}
+                  className="hover:bg-blue-50/50 cursor-pointer transition-colors group"
+                  title="Pulsar para abrir Ficha 360°"
+                >
                   <td className="px-5 py-3.5">
-                    <div className="font-bold text-on-surface text-sm">{client.full_name}</div>
+                    <div className="font-bold text-on-surface text-sm group-hover:text-secondary flex items-center gap-1.5 transition-colors">
+                      <span className="material-symbols-outlined text-[18px] text-secondary">account_circle</span>
+                      <span>{client.full_name}</span>
+                    </div>
                     <div className="text-[11px] text-outline mt-0.5">{client.email} · {client.phone}</div>
                   </td>
                   <td className="px-5 py-3.5 font-mono-data font-bold text-secondary">
@@ -635,19 +1259,26 @@ export default function CRMClientesPage() {
                       {client.dossiers?.length || 0}
                     </span>
                   </td>
+                  <td className="px-5 py-3.5 text-center">
+                    <span className="px-2 py-0.5 bg-blue-50 text-secondary border border-secondary/20 rounded-full font-mono-data font-bold text-[11px] inline-flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">description</span>
+                      <span>{client.documents?.length || 0}</span>
+                    </span>
+                  </td>
                   <td className="px-5 py-3.5 text-right">
-                    <button
-                      onClick={() => {
-                        setSelectedClient(client);
-                        setEditedNotes(client.notes || '');
-                        setIsEditingNotes(false);
-                        setActive360Tab('resumen');
-                      }}
-                      className="h-8 px-3.5 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">visibility</span>
-                      <span>Ficha 360°</span>
-                    </button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenClient(client);
+                        }}
+                        className="h-8 px-3.5 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">visibility</span>
+                        <span>Ficha 360°</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -657,8 +1288,7 @@ export default function CRMClientesPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* ========================================================================= */}
-      {/* FICHA 360° DEL CLIENTE (RESPONSIVE: PANTALLA COMPLETA EN MÓVIL/TABLET) */}
+      {/* FICHA 360° DEL CLIENTE (PANTALLA COMPLETA CON DOCUMENTOS, EDICIÓN Y ASISTENTE IA) */}
       {/* ========================================================================= */}
       {selectedClient && (
         <div
@@ -676,78 +1306,44 @@ export default function CRMClientesPage() {
                 title="Cerrar y volver al listado"
               >
                 <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                <span className="hidden sm:inline">Cerrar Ficha</span>
+                <span className="hidden sm:inline">Cerrar</span>
               </button>
 
-              <div className="h-6 w-px bg-surface-container hidden sm:block"></div>
+              <div className="h-6 w-px bg-surface-container-high shrink-0" />
 
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary-container text-white font-mono-data font-bold text-xs sm:text-sm flex items-center justify-center shadow-sm shrink-0">
-                  {selectedClient.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-on-surface truncate">
+                    {selectedClient.full_name}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono-data font-bold bg-blue-50 text-secondary border border-secondary/20">
+                    BSN: {selectedClient.bsn || 'Sin BSN'}
+                  </span>
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                    <h2 className="text-sm sm:text-base font-bold text-on-surface truncate max-w-[180px] sm:max-w-none">{selectedClient.full_name}</h2>
-                    <span className="px-1.5 sm:px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded">
-                      BSN: {selectedClient.bsn}
-                    </span>
-                  </div>
-                  <p className="text-[10px] sm:text-[11px] text-outline truncate">
-                    {selectedClient.city} · {selectedClient.phone}
-                  </p>
-                </div>
+                <p className="text-xs text-on-surface-variant truncate">
+                  {selectedClient.email} · {selectedClient.phone} · {selectedClient.city}
+                </p>
               </div>
             </div>
 
-            {/* BOTONES DE ACCIÓN DIRECTA */}
-            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto flex-wrap">
-              {/* Botón Nueva Cita Directa */}
+            {/* Acciones principales de cabecera */}
+            <div className="flex items-center gap-2">
+              {/* BOTÓN EDITAR CLIENTE */}
               <button
-                onClick={() => {
-                  setAptModality('llamada'); // Por defecto llamada
-                  setAptTitle(`Consulta Telefónica con ${selectedClient.full_name}`);
-                  setShowNewAptModal(true);
-                }}
-                className="h-8 sm:h-9 px-2.5 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shadow-sm transition-colors"
+                type="button"
+                onClick={() => handleOpenEditClient(selectedClient)}
+                className="h-8 sm:h-9 px-3 bg-secondary text-white text-xs font-semibold rounded-md shadow-xs hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+                title="Editar todos los datos del cliente"
               >
-                <span className="material-symbols-outlined text-[15px] sm:text-[16px]">phone_in_talk</span>
-                <span className="hidden md:inline">+ Agendar Cita</span>
-                <span className="md:hidden">+ Cita</span>
+                <span className="material-symbols-outlined text-[16px]">edit</span>
+                <span>Editar Datos</span>
               </button>
 
-              {/* Botón Nuevo Presupuesto Directo */}
-              <button
-                onClick={openQuoteModal}
-                className="h-8 sm:h-9 px-2.5 sm:px-3 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shadow-sm transition-colors"
-              >
-                <span className="material-symbols-outlined text-[15px] sm:text-[16px]">description</span>
-                <span className="hidden md:inline">+ Crear Presupuesto</span>
-                <span className="md:hidden">+ Presupuesto</span>
-              </button>
-
-              {/* Botón Nuevo Trámite Directo */}
-              <button
-                onClick={() => {
-                  const first = servicesCatalog[0];
-                  setSelectedCatalogServiceId(first.id);
-                  setDossierTitle(first.title);
-                  setDossierCategory(first.category);
-                  setDossierFee(first.defaultFee);
-                  setIsNewServiceMode(false);
-                  setShowAddDossierModal(true);
-                }}
-                className="h-8 sm:h-9 px-2.5 sm:px-3 bg-secondary text-white rounded-md text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shadow-sm hover:bg-blue-700 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[15px] sm:text-[16px]">add_circle</span>
-                <span className="hidden md:inline">+ Nuevo Trámite</span>
-                <span className="md:hidden">+ Trámite</span>
-              </button>
-
-              {/* Botón Opcional Maximizar / Restaurar Barra Lateral (visible solo en desktop) */}
+              {/* Botón Maximizar / Pantalla completa */}
               <button
                 onClick={() => setIsMaximized(!isMaximized)}
-                className="hidden lg:flex h-9 w-9 border border-outline-variant hover:bg-surface-container text-outline hover:text-on-surface rounded-md items-center justify-center transition-colors ml-1"
-                title={isMaximized ? "Mostrar barra lateral" : "Ocultar barra lateral (Pantalla completa total)"}
+                className="h-8 sm:h-9 w-8 sm:w-9 rounded-md border border-outline-variant hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
+                title={isMaximized ? "Restaurar vista lateral" : "Pantalla completa"}
               >
                 <span className="material-symbols-outlined text-[18px]">
                   {isMaximized ? 'fullscreen_exit' : 'fullscreen'}
@@ -756,8 +1352,8 @@ export default function CRMClientesPage() {
             </div>
           </header>
 
-          {/* Sub-Tabs de Navegación de la Ficha 360° (Desplazables horizontalmente en móvil) */}
-          <div className="bg-surface-container-low px-4 sm:px-6 lg:px-8 border-b border-surface-container flex gap-2 sm:gap-4 text-xs font-semibold shrink-0 overflow-x-auto whitespace-nowrap">
+          {/* Sub-Tabs de Navegación de la Ficha 360° */}
+          <div className="bg-surface-container-low px-4 sm:px-6 lg:px-8 border-b border-surface-container flex gap-2 sm:gap-4 text-xs font-semibold shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
             <button
               onClick={() => setActive360Tab('resumen')}
               className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
@@ -767,6 +1363,18 @@ export default function CRMClientesPage() {
               <span className="material-symbols-outlined text-[16px]">folder</span>
               <span>Trámites ({selectedClient.dossiers?.length || 0})</span>
             </button>
+
+            {/* TAB DOCUMENTOS */}
+            <button
+              onClick={() => setActive360Tab('documentos')}
+              className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'documentos' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">description</span>
+              <span>Documentos & Archivos ({selectedClient.documents?.length || 0})</span>
+            </button>
+
             <button
               onClick={() => setActive360Tab('facturacion')}
               className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
@@ -776,6 +1384,7 @@ export default function CRMClientesPage() {
               <span className="material-symbols-outlined text-[16px]">receipt_long</span>
               <span>Presupuestos & Facturas ({selectedClient.quotes?.length || 0} / {selectedClient.invoices?.length || 0})</span>
             </button>
+
             <button
               onClick={() => setActive360Tab('citas')}
               className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
@@ -785,6 +1394,7 @@ export default function CRMClientesPage() {
               <span className="material-symbols-outlined text-[16px]">calendar_month</span>
               <span>Citas ({selectedClient.appointments?.length || 0})</span>
             </button>
+
             <button
               onClick={() => setActive360Tab('personales')}
               className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
@@ -794,14 +1404,18 @@ export default function CRMClientesPage() {
               <span className="material-symbols-outlined text-[16px]">badge</span>
               <span>Datos Fiscales</span>
             </button>
+
+            {/* TAB ASISTENTE IA INTEGRAL */}
             <button
               onClick={() => setActive360Tab('ia')}
               className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
-                active360Tab === 'ia' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+                active360Tab === 'ia'
+                  ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                  : 'border-transparent text-outline hover:text-on-surface'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
-              <span>Historial IA</span>
+              <span className="material-symbols-outlined text-[16px] text-indigo-600 animate-pulse">smart_toy</span>
+              <span className="font-bold text-indigo-950">Asistente IA (Gestión Total)</span>
             </button>
           </div>
 
@@ -810,7 +1424,7 @@ export default function CRMClientesPage() {
             {/* TAB 1: TRÁMITES & EXPEDIENTES */}
             {active360Tab === 'resumen' && (
               <div className="space-y-6 max-w-5xl">
-                {/* Notas del Gestor con edición en vivo */}
+                {/* Notas del Gestor */}
                 <div className="p-4 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold uppercase text-outline">Notas Internas del Gestor:</span>
@@ -843,7 +1457,7 @@ export default function CRMClientesPage() {
                   )}
                 </div>
 
-                {/* Lista de Expedientes de este cliente */}
+                {/* Expedientes Activos */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-sm text-on-surface">Expedientes Activos del Cliente</h3>
@@ -909,7 +1523,177 @@ export default function CRMClientesPage() {
               </div>
             )}
 
-            {/* TAB 2: PRESUPUESTOS & FACTURAS DE ESTE CLIENTE */}
+            {/* TAB 2: DOCUMENTOS & ARCHIVOS POR CLIENTE (NUEVO) */}
+            {active360Tab === 'documentos' && (
+              <div className="space-y-6 max-w-5xl">
+                {/* Cabecera de gestión documental */}
+                <div className="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-secondary text-[18px]">folder_shared</span>
+                      <span>Expediente Documental de {selectedClient.full_name}</span>
+                    </h3>
+                    <p className="text-xs text-on-surface-variant mt-0.5">
+                      Sube PDFs, fotos, DNI o contratos. También puedes crear notas de texto o permitir a la IA archivar dictámenes.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Input oculto para subida de archivos directa */}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileInputChange}
+                      className="hidden"
+                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt,.csv"
+                    />
+
+                    {/* Botón Subir Archivo */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadDocName('');
+                        setShowUploadDocModal(true);
+                      }}
+                      className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-xs"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">upload_file</span>
+                      <span>Subir Documento</span>
+                    </button>
+
+                    {/* Botón Añadir Nota / Archivo de Texto */}
+                    <button
+                      type="button"
+                      onClick={() => setShowNewTextDocModal(true)}
+                      className="h-8 px-3 bg-surface-container-high border border-outline-variant hover:bg-surface-container text-on-surface text-xs font-semibold rounded transition-colors flex items-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-[15px] text-emerald-600">note_add</span>
+                      <span>+ Nota / Texto</span>
+                    </button>
+
+                    {/* Botón Generar con IA */}
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateAIDocument('informe_general')}
+                      className="h-8 px-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-900 text-xs font-semibold rounded transition-colors flex items-center gap-1.5"
+                      title="La IA redacta un informe y lo archiva en los documentos de este cliente"
+                    >
+                      <span className="material-symbols-outlined text-[15px] text-indigo-600">auto_awesome</span>
+                      <span>Generar Informe IA</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de Documentos del Cliente */}
+                {selectedClient.documents && selectedClient.documents.length > 0 ? (
+                  <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+                    <div className="divide-y divide-surface-container">
+                      {selectedClient.documents.map((doc: ClientDocument) => (
+                        <div
+                          key={doc.id}
+                          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-container-low transition-colors"
+                        >
+                          <div className="flex items-start gap-3 min-w-0">
+                            {/* Icono por tipo */}
+                            <div className="p-2.5 rounded-lg bg-surface-container text-on-surface shrink-0 flex items-center justify-center">
+                              {doc.file_type === 'pdf' ? (
+                                <span className="material-symbols-outlined text-red-500 text-2xl">picture_as_pdf</span>
+                              ) : doc.file_type === 'image' ? (
+                                <span className="material-symbols-outlined text-blue-500 text-2xl">image</span>
+                              ) : doc.file_type === 'word' ? (
+                                <span className="material-symbols-outlined text-indigo-500 text-2xl">description</span>
+                              ) : (
+                                <span className="material-symbols-outlined text-emerald-600 text-2xl">article</span>
+                              )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-xs sm:text-sm text-on-surface truncate">{doc.name}</h4>
+                              <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-outline">
+                                <span className="font-mono-data font-semibold text-secondary">{doc.size}</span>
+                                <span>·</span>
+                                <span>{doc.date}</span>
+                                <span>·</span>
+                                <span className="px-1.5 py-0.2 rounded font-semibold text-[10px] uppercase bg-surface-container text-on-surface">
+                                  {doc.category.replace('_', ' ')}
+                                </span>
+                                {doc.added_by === 'ia' && (
+                                  <span className="px-1.5 py-0.2 rounded font-bold text-[10px] bg-indigo-100 text-indigo-800 flex items-center gap-0.5">
+                                    <span className="material-symbols-outlined text-[11px]">auto_awesome</span>
+                                    <span>Generado por IA</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Botones de acción sobre el documento */}
+                          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewDoc(doc)}
+                              className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high rounded text-[11px] font-semibold flex items-center gap-1 text-on-surface transition-colors"
+                              title="Previsualizar documento"
+                            >
+                              <span className="material-symbols-outlined text-[13px] text-secondary">visibility</span>
+                              <span>Ver / Leer</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (doc.content_text) {
+                                  const blob = new Blob([doc.content_text], { type: 'text/plain;charset=utf-8' });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = doc.name;
+                                  a.click();
+                                } else {
+                                  alert(`Descargando archivo: ${doc.name}`);
+                                }
+                              }}
+                              className="h-7 px-2.5 border border-outline-variant hover:bg-surface-container rounded text-[11px] font-semibold flex items-center gap-1 text-on-surface transition-colors"
+                              title="Descargar archivo"
+                            >
+                              <span className="material-symbols-outlined text-[13px]">download</span>
+                              <span>Descargar</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDocument(doc.id)}
+                              className="h-7 w-7 text-outline hover:text-error hover:bg-red-50 rounded flex items-center justify-center transition-colors"
+                              title="Eliminar documento"
+                            >
+                              <span className="material-symbols-outlined text-[15px]">delete</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-10 text-center bg-surface-container-lowest rounded-xl border border-dashed border-outline-variant space-y-3">
+                    <span className="material-symbols-outlined text-4xl text-outline">folder_off</span>
+                    <h4 className="font-bold text-sm text-on-surface">No hay documentos en este expediente</h4>
+                    <p className="text-xs text-outline max-w-sm mx-auto">
+                      Puedes subir fotos, contratos o PDFs, redactar una nota interna o pulsar en &quot;Generar Informe IA&quot; para crear dictámenes automáticos.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-8 px-4 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">upload_file</span>
+                      <span>Subir Primer Archivo</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: PRESUPUESTOS & FACTURAS */}
             {active360Tab === 'facturacion' && (
               <div className="space-y-6 max-w-5xl">
                 {/* Presupuestos */}
@@ -949,24 +1733,13 @@ export default function CRMClientesPage() {
                                   },
                                 })
                               }
-                              className="font-mono-data font-bold text-secondary text-xs hover:underline flex items-center gap-1.5"
-                              title="Abrir presupuesto oficial"
+                              className="font-mono-data font-bold text-secondary hover:underline flex items-center gap-1"
                             >
                               <span className="material-symbols-outlined text-[14px]">request_quote</span>
                               <span>{q.code}</span>
                             </button>
                             <p className="font-semibold text-on-surface mt-0.5">{q.concept}</p>
-                            {q.items && q.items.length > 1 && (
-                              <div className="flex flex-wrap gap-1 mt-1.5">
-                                {q.items.map((it: any, idx: number) => (
-                                  <span key={idx} className="inline-flex items-center gap-1 text-[10px] bg-surface-container px-2 py-0.5 rounded text-on-surface-variant font-medium">
-                                    <span className="material-symbols-outlined text-[11px] text-secondary">check_circle</span>
-                                    {it.description} (€{parseFloat(it.total).toFixed(2)})
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            <span className="text-[11px] text-outline font-mono-data mt-1 block">Válido hasta: {q.valid_until}</span>
+                            <span className="text-[11px] text-outline font-mono-data">Válido hasta: {q.valid_until}</span>
                           </div>
 
                           <div className="flex items-center gap-3">
@@ -974,7 +1747,15 @@ export default function CRMClientesPage() {
                               <span className="font-mono-data font-bold text-sm text-on-surface block">
                                 € {parseFloat(q.total).toFixed(2)}
                               </span>
-                              <span className="text-[10px] text-outline font-semibold uppercase">{q.status}</span>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                                  q.status === 'convertido'
+                                    ? 'bg-blue-50 text-blue-700'
+                                    : 'bg-emerald-50 text-emerald-700'
+                                }`}
+                              >
+                                {q.status === 'convertido' ? 'CONVERTIDO A FACTURA' : 'ENVIADO AL CLIENTE'}
+                              </span>
                             </div>
 
                             <button
@@ -994,21 +1775,11 @@ export default function CRMClientesPage() {
                                 })
                               }
                               className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high rounded text-[11px] font-semibold flex items-center gap-1 text-on-surface transition-colors"
-                              title="Ver detalle del presupuesto"
+                              title="Ver detalle de presupuesto"
                             >
                               <span className="material-symbols-outlined text-[13px] text-secondary">visibility</span>
-                              <span>Ver</span>
+                              <span>Ver Presupuesto</span>
                             </button>
-
-                            {q.status !== 'convertido' && (
-                              <button
-                                onClick={() => handleConvertQuoteInFicha(q)}
-                                className="h-7 px-2.5 bg-secondary text-white rounded text-[11px] font-semibold hover:bg-blue-700 flex items-center gap-1 shadow-sm"
-                              >
-                                <span className="material-symbols-outlined text-[13px]">transform</span>
-                                <span>Convertir a Factura</span>
-                              </button>
-                            )}
                           </div>
                         </div>
                       ))}
@@ -1020,12 +1791,18 @@ export default function CRMClientesPage() {
 
                 {/* Facturas */}
                 <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
-                  <h3 className="font-bold text-sm text-on-surface">Facturas Emitidas</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-sm text-on-surface">Facturas de {selectedClient.full_name}</h3>
+                      <p className="text-xs text-on-surface-variant">Facturación legal con pasarela iDEAL y registro de pagos.</p>
+                    </div>
+                  </div>
+
                   {selectedClient.invoices && selectedClient.invoices.length > 0 ? (
                     <div className="divide-y divide-surface-container">
                       {selectedClient.invoices.map((inv: any) => (
                         <div key={inv.id} className="py-3 flex items-center justify-between text-xs">
-                          <div>
+                          <div className="flex-1 pr-4">
                             <button
                               type="button"
                               onClick={() =>
@@ -1042,10 +1819,9 @@ export default function CRMClientesPage() {
                                   },
                                 })
                               }
-                              className="font-mono-data font-bold text-secondary text-xs hover:underline flex items-center gap-1.5"
-                              title="Abrir factura oficial"
+                              className="font-mono-data font-bold text-secondary hover:underline flex items-center gap-1"
                             >
-                              <span className="material-symbols-outlined text-[14px]">description</span>
+                              <span className="material-symbols-outlined text-[14px]">receipt</span>
                               <span>{inv.code}</span>
                             </button>
                             <p className="font-semibold text-on-surface mt-0.5">{inv.concept}</p>
@@ -1099,7 +1875,7 @@ export default function CRMClientesPage() {
               </div>
             )}
 
-            {/* TAB 3: CITAS & AGENDA DE ESTE CLIENTE */}
+            {/* TAB 4: CITAS & AGENDA */}
             {active360Tab === 'citas' && (
               <div className="space-y-6 max-w-5xl">
                 <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
@@ -1163,18 +1939,33 @@ export default function CRMClientesPage() {
               </div>
             )}
 
-            {/* TAB 4: DATOS FISCALES & PERSONALES */}
+            {/* TAB 5: DATOS FISCALES & PERSONALES */}
             {active360Tab === 'personales' && (
               <div className="max-w-4xl bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-6">
-                <h3 className="font-bold text-sm text-on-surface">Datos Fiscales Neerlandeses y de Contacto</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm text-on-surface">Datos Fiscales Neerlandeses y de Contacto</h3>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEditClient(selectedClient)}
+                    className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-xs"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">edit</span>
+                    <span>Modificar Datos</span>
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="p-3 bg-surface rounded border border-surface-container">
+                    <span className="text-[10px] font-bold uppercase text-outline">Nombre Completo:</span>
+                    <p className="font-bold text-sm text-on-surface mt-1">{selectedClient.full_name}</p>
+                  </div>
+                  <div className="p-3 bg-surface rounded border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">BSN Oficial:</span>
-                    <p className="font-mono-data font-bold text-sm text-secondary mt-1">{selectedClient.bsn}</p>
+                    <p className="font-mono-data font-bold text-sm text-secondary mt-1">{selectedClient.bsn || '—'}</p>
                   </div>
                   <div className="p-3 bg-surface rounded border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Documento / Pasaporte:</span>
-                    <p className="font-mono-data font-bold text-sm text-on-surface mt-1">{selectedClient.id_document_number || 'RO9284102'}</p>
+                    <p className="font-mono-data font-bold text-sm text-on-surface mt-1">{selectedClient.id_document_number || '—'}</p>
                   </div>
                   <div className="p-3 bg-surface rounded border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Teléfono de Contacto:</span>
@@ -1185,28 +1976,218 @@ export default function CRMClientesPage() {
                     <p className="font-semibold text-on-surface mt-1">{selectedClient.email}</p>
                   </div>
                   <div className="p-3 bg-surface rounded border border-surface-container">
+                    <span className="text-[10px] font-bold uppercase text-outline">Ciudad:</span>
+                    <p className="font-semibold text-on-surface mt-1">{selectedClient.city || 'Países Bajos'}</p>
+                  </div>
+                  <div className="p-3 bg-surface rounded border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Dirección en Países Bajos:</span>
                     <p className="font-semibold text-on-surface mt-1">{selectedClient.address || '—'}</p>
                   </div>
                   <div className="p-3 bg-surface rounded border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Cuenta Bancaria (IBAN):</span>
-                    <p className="font-mono-data font-bold text-on-surface mt-1">{selectedClient.iban || 'NL91INGB0001234567'}</p>
+                    <p className="font-mono-data font-bold text-on-surface mt-1">{selectedClient.iban || '—'}</p>
+                  </div>
+                  <div className="p-3 bg-surface rounded border border-surface-container">
+                    <span className="text-[10px] font-bold uppercase text-outline">Estado DigiD:</span>
+                    <p className="font-bold text-sm mt-1">
+                      {selectedClient.digid_status === 'activo'
+                        ? '🟢 Activo'
+                        : selectedClient.digid_status === 'pendiente_activar'
+                        ? '🟡 Pendiente de activación'
+                        : '⚪ Sin DigiD'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-surface rounded border border-surface-container">
+                    <span className="text-[10px] font-bold uppercase text-outline">Estado del Cliente:</span>
+                    <p className="font-bold text-sm mt-1 uppercase text-secondary">{selectedClient.status}</p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 5: ACTIVIDAD IA */}
+            {/* TAB 6: ASISTENTE IA DEL CLIENTE (INTERACTIVO TOTAL) */}
             {active360Tab === 'ia' && (
-              <div className="max-w-4xl space-y-4">
-                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-3 text-xs">
-                  <span className="material-symbols-outlined text-indigo-600 text-xl">auto_awesome</span>
-                  <div>
-                    <h5 className="font-bold text-indigo-950">Alta y Escaneo por Inteligencia Artificial</h5>
-                    <p className="text-indigo-800 mt-0.5">
-                      Expediente auditado y registrado con motor heurístico y OpenAI. 100% verificado por el gestor.
-                    </p>
+              <div className="max-w-4xl bg-surface-container-lowest rounded-2xl border border-indigo-200/80 shadow-md flex flex-col h-[620px] overflow-hidden">
+                {/* Cabecera del Asistente */}
+                <div className="p-4 bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-indigo-300 text-2xl">smart_toy</span>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
+                        <span>Asistente IA para {selectedClient.full_name}</span>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/30 text-emerald-300 font-mono-data">
+                          EN LÍNEA
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Capacidad de lectura de expediente, emisión de facturas/presupuestos, citas y archivo documental.
+                      </p>
+                    </div>
                   </div>
+
+                  <span className="text-[10px] font-mono-data text-indigo-300 bg-white/10 px-2 py-1 rounded">
+                    BSN: {selectedClient.bsn}
+                  </span>
+                </div>
+
+                {/* Atajos Rápidos de Acción */}
+                <div className="p-2.5 bg-indigo-50/60 border-b border-indigo-100 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0 text-xs">
+                  <span className="text-[11px] font-bold text-indigo-950 shrink-0">Acciones Directas:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleSendClientAiMessage('Crea un presupuesto oficial de 180€ para este cliente')}
+                    className="px-2.5 py-1 bg-white hover:bg-indigo-100/80 text-indigo-900 border border-indigo-200 rounded-md font-semibold text-[11px] transition-colors shrink-0 flex items-center gap-1 shadow-2xs"
+                  >
+                    <span className="material-symbols-outlined text-[13px] text-indigo-600">request_quote</span>
+                    <span>Crear Presupuesto</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSendClientAiMessage('Emite una factura oficial por 150€ con IVA incluido')}
+                    className="px-2.5 py-1 bg-white hover:bg-emerald-100/80 text-emerald-900 border border-emerald-200 rounded-md font-semibold text-[11px] transition-colors shrink-0 flex items-center gap-1 shadow-2xs"
+                  >
+                    <span className="material-symbols-outlined text-[13px] text-emerald-600">receipt</span>
+                    <span>Emitir Factura</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSendClientAiMessage('Agenda una llamada telefónica para el cliente el 16 de octubre a las 11:00')}
+                    className="px-2.5 py-1 bg-white hover:bg-blue-100/80 text-blue-900 border border-blue-200 rounded-md font-semibold text-[11px] transition-colors shrink-0 flex items-center gap-1 shadow-2xs"
+                  >
+                    <span className="material-symbols-outlined text-[13px] text-blue-600">call</span>
+                    <span>Agendar Cita</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSendClientAiMessage('Genera un dictamen resumen de su situación y guárdalo en sus documentos')}
+                    className="px-2.5 py-1 bg-white hover:bg-purple-100/80 text-purple-900 border border-purple-200 rounded-md font-semibold text-[11px] transition-colors shrink-0 flex items-center gap-1 shadow-2xs"
+                  >
+                    <span className="material-symbols-outlined text-[13px] text-purple-600">description</span>
+                    <span>Archivar Informe</span>
+                  </button>
+                </div>
+
+                {/* Mensajes del Chat */}
+                <div
+                  ref={clientAiScrollRef}
+                  className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-surface/40 no-scrollbar"
+                >
+                  {clientAiMessages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-2xl p-3.5 text-xs shadow-xs leading-relaxed ${
+                          m.role === 'user'
+                            ? 'bg-secondary text-white rounded-br-none'
+                            : 'bg-surface-container-lowest text-on-surface border border-outline-variant rounded-bl-none'
+                        }`}
+                      >
+                        <div className="whitespace-pre-line font-medium">{m.content}</div>
+
+                        {/* Widget de acción ejecutada */}
+                        {m.actionExecuted && (
+                          <div className="mt-3 pt-2.5 border-t border-surface-container/60 bg-surface-container-low/50 p-2.5 rounded-lg flex items-center justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-emerald-600 text-lg">check_circle</span>
+                              <span className="font-bold text-on-surface">{m.actionExecuted.summary}</span>
+                            </div>
+                            {m.actionExecuted.type === 'invoice_created' && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedDoc({
+                                    type: 'invoice',
+                                    data: {
+                                      ...m.actionExecuted!.data,
+                                      client_name: selectedClient.full_name,
+                                      client_bsn: selectedClient.bsn,
+                                    },
+                                  })
+                                }
+                                className="px-2.5 py-1 bg-secondary text-white rounded font-semibold text-[11px] hover:bg-blue-700"
+                              >
+                                Ver Factura
+                              </button>
+                            )}
+                            {m.actionExecuted.type === 'quote_created' && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedDoc({
+                                    type: 'quote',
+                                    data: {
+                                      ...m.actionExecuted!.data,
+                                      client_name: selectedClient.full_name,
+                                      client_bsn: selectedClient.bsn,
+                                    },
+                                  })
+                                }
+                                className="px-2.5 py-1 bg-secondary text-white rounded font-semibold text-[11px] hover:bg-blue-700"
+                              >
+                                Ver Presupuesto
+                              </button>
+                            )}
+                            {m.actionExecuted.type === 'document_created' && (
+                              <button
+                                type="button"
+                                onClick={() => setActive360Tab('documentos')}
+                                className="px-2.5 py-1 bg-indigo-600 text-white rounded font-semibold text-[11px] hover:bg-indigo-700"
+                              >
+                                Ir a Documentos
+                              </button>
+                            )}
+                            {m.actionExecuted.type === 'appointment_created' && (
+                              <button
+                                type="button"
+                                onClick={() => setActive360Tab('citas')}
+                                className="px-2.5 py-1 bg-emerald-600 text-white rounded font-semibold text-[11px] hover:bg-emerald-700"
+                              >
+                                Ver Citas
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-outline mt-1 font-mono-data px-1">{m.timestamp}</span>
+                    </div>
+                  ))}
+                  {isClientAiSending && (
+                    <div className="flex items-center gap-2 text-xs text-outline font-medium p-2">
+                      <span className="material-symbols-outlined text-indigo-600 animate-spin text-base">progress_activity</span>
+                      <span>El Asistente IA está analizando el expediente y ejecutando tu orden...</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Input de comandos para el asistente */}
+                <div className="p-3 bg-surface-container-lowest border-t border-surface-container shrink-0">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSendClientAiMessage();
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      type="text"
+                      placeholder={`Escribe una orden para ${selectedClient.full_name} (ej: "Emite factura de 180€", "Agenda llamada para el viernes")...`}
+                      value={clientAiInput}
+                      onChange={(e) => setClientAiInput(e.target.value)}
+                      className="flex-1 h-10 px-3.5 border border-outline-variant rounded-xl bg-surface text-xs focus:border-indigo-600 focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isClientAiSending || !clientAiInput.trim()}
+                      className="h-10 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                    >
+                      <span>Ejecutar</span>
+                      <span className="material-symbols-outlined text-[15px]">send</span>
+                    </button>
+                  </form>
                 </div>
               </div>
             )}
@@ -1215,7 +2196,364 @@ export default function CRMClientesPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* 1. MODAL NUEVO TRÁMITE (Desplegable + Precios + Guardar nuevo servicio) */}
+      {/* MODAL 1: EDITAR DATOS COMPLETOS DEL CLIENTE */}
+      {/* ========================================================================= */}
+      {showEditClientModal && (
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSaveClientEdit}
+            className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar animate-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-surface-container">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary text-2xl">edit_note</span>
+                <div>
+                  <h3 className="font-bold text-sm text-on-surface">Editar Ficha del Cliente</h3>
+                  <p className="text-[11px] text-outline">Modifica datos personales, fiscales o estado de DigiD.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditClientModal(false)}
+                className="text-outline hover:text-on-surface"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Nombre Completo *</label>
+                <input
+                  required
+                  type="text"
+                  value={editFormData.full_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Número BSN</label>
+                <input
+                  type="text"
+                  value={editFormData.bsn}
+                  onChange={(e) => setEditFormData({ ...editFormData, bsn: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data font-semibold text-secondary focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Correo Electrónico</label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Teléfono</label>
+                <input
+                  type="text"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Pasaporte / DNI</label>
+                <input
+                  type="text"
+                  value={editFormData.id_document_number}
+                  onChange={(e) => setEditFormData({ ...editFormData, id_document_number: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Ciudad (NL)</label>
+                <input
+                  type="text"
+                  value={editFormData.city}
+                  onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-outline uppercase font-semibold mb-1">Dirección en Países Bajos</label>
+                <input
+                  type="text"
+                  value={editFormData.address}
+                  onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Cuenta IBAN</label>
+                <input
+                  type="text"
+                  value={editFormData.iban}
+                  onChange={(e) => setEditFormData({ ...editFormData, iban: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Estado DigiD</label>
+                <select
+                  value={editFormData.digid_status}
+                  onChange={(e) => setEditFormData({ ...editFormData, digid_status: e.target.value })}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                >
+                  <option value="activo">Activo</option>
+                  <option value="pendiente_activar">Pendiente de activación</option>
+                  <option value="sin_digid">Sin DigiD</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-outline uppercase font-semibold mb-1">Notas Internas</label>
+                <textarea
+                  rows={2}
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  className="w-full p-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-surface-container">
+              <button
+                type="button"
+                onClick={() => setShowEditClientModal(false)}
+                className="h-8 px-4 border border-outline-variant rounded text-xs font-semibold hover:bg-surface-container"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="h-8 px-5 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-xs"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: SUBIR DOCUMENTO AL CLIENTE */}
+      {/* ========================================================================= */}
+      {showUploadDocModal && (
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-2 border-b border-surface-container">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary text-xl">upload_file</span>
+                <h3 className="font-bold text-sm text-on-surface">Subir Documento al Expediente</h3>
+              </div>
+              <button type="button" onClick={() => setShowUploadDocModal(false)} className="text-outline">
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Nombre o Título del Documento</label>
+                <input
+                  type="text"
+                  placeholder="ej: Contrato_Alquiler_Utrecht.pdf"
+                  value={uploadDocName}
+                  onChange={(e) => setUploadDocName(e.target.value)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Categoría</label>
+                <select
+                  value={uploadCategory}
+                  onChange={(e) => setUploadCategory(e.target.value as any)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                >
+                  <option value="identificacion">Identificación (DNI / Pasaporte)</option>
+                  <option value="fiscal_belastingdienst">Fiscal / Belastingdienst</option>
+                  <option value="subsidios">Subsidios / Toeslagen</option>
+                  <option value="laboral_nominas">Laboral / Nóminas</option>
+                  <option value="bancario">Bancario / Extractos</option>
+                  <option value="contrato">Contratos / Acuerdos</option>
+                  <option value="otro">Otros Documentos</option>
+                </select>
+              </div>
+
+              {/* Botón de exploración de archivos */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="p-6 border-2 border-dashed border-outline-variant hover:border-secondary rounded-xl text-center cursor-pointer bg-surface/50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-3xl text-secondary block mb-1">cloud_upload</span>
+                <span className="font-semibold text-xs text-on-surface block">Selecciona un archivo desde tu equipo</span>
+                <span className="text-[11px] text-outline mt-0.5 block">Formatos: PDF, Imágenes, Word, TXT (hasta 15 MB)</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-surface-container">
+              <button
+                type="button"
+                onClick={() => setShowUploadDocModal(false)}
+                className="h-8 px-4 border border-outline-variant rounded text-xs font-semibold hover:bg-surface-container"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 3: CREAR DOCUMENTO DE TEXTO O NOTA INTERNA */}
+      {/* ========================================================================= */}
+      {showNewTextDocModal && (
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSaveTextDocument}
+            className="bg-surface-container-lowest max-w-lg w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-surface-container">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-600 text-xl">note_add</span>
+                <h3 className="font-bold text-sm text-on-surface">Nuevo Documento de Texto / Nota</h3>
+              </div>
+              <button type="button" onClick={() => setShowNewTextDocModal(false)} className="text-outline">
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Título del Documento *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="ej: Nota_Aclaratoria_Ingresos.txt"
+                  value={textDocTitle}
+                  onChange={(e) => setTextDocTitle(e.target.value)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Categoría</label>
+                <select
+                  value={textDocCategory}
+                  onChange={(e) => setTextDocCategory(e.target.value as any)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                >
+                  <option value="nota_ia">Nota Interna / Resumen</option>
+                  <option value="fiscal_belastingdienst">Fiscal / Belastingdienst</option>
+                  <option value="subsidios">Subsidios / Toeslagen</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Contenido del Documento / Texto</label>
+                <textarea
+                  rows={6}
+                  required
+                  placeholder="Escribe aquí el contenido del documento, transcripción, dictamen o nota para este cliente..."
+                  value={textDocContent}
+                  onChange={(e) => setTextDocContent(e.target.value)}
+                  className="w-full p-3 border border-outline-variant rounded bg-surface font-mono-data text-xs focus:border-secondary focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-surface-container">
+              <button
+                type="button"
+                onClick={() => setShowNewTextDocModal(false)}
+                className="h-8 px-4 border border-outline-variant rounded text-xs font-semibold hover:bg-surface-container"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="h-8 px-5 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-xs"
+              >
+                Guardar en Documentos
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: VISUALIZADOR DE DOCUMENTO */}
+      {/* ========================================================================= */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-[130] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95">
+            <div className="p-4 border-b border-surface-container flex items-center justify-between bg-surface-container-low shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary text-xl">description</span>
+                <div>
+                  <h3 className="font-bold text-sm text-on-surface">{previewDoc.name}</h3>
+                  <span className="text-[10px] text-outline uppercase font-mono-data">
+                    {previewDoc.size} · {previewDoc.date} · Añadido por: {previewDoc.added_by}
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setPreviewDoc(null)} className="text-outline hover:text-on-surface">
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="p-6 flex-1 overflow-y-auto font-mono-data text-xs leading-relaxed bg-surface/30 whitespace-pre-wrap">
+              {previewDoc.content_text || `[Archivo Binario: ${previewDoc.name}]\nDocumento digital verificado en el sistema NexusGest.\nTipo: ${previewDoc.file_type.toUpperCase()} · Tamaño: ${previewDoc.size}\nCliente asignado: ${selectedClient?.full_name}\n\nPara consultar el contenido gráfico o PDF original, puedes descargar el archivo a tu dispositivo.`}
+            </div>
+
+            <div className="p-3 bg-surface-container-low border-t border-surface-container flex items-center justify-between shrink-0">
+              <span className="text-[11px] text-outline">NexusGest Storage Engine</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="h-8 px-3 border border-outline-variant hover:bg-surface-container text-xs font-semibold rounded flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[15px]">print</span>
+                  <span>Imprimir</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (previewDoc.content_text) {
+                      const blob = new Blob([previewDoc.content_text], { type: 'text/plain;charset=utf-8' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = previewDoc.name;
+                      a.click();
+                    }
+                  }}
+                  className="h-8 px-4 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[15px]">download</span>
+                  <span>Descargar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 5: NUEVO TRÁMITE / EXPEDIENTE */}
       {/* ========================================================================= */}
       {showAddDossierModal && (
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1236,7 +2574,6 @@ export default function CRMClientesPage() {
             </div>
 
             <div className="space-y-3.5 text-xs">
-              {/* DESPLEGABLE DE TRÁMITES Y SERVICIOS */}
               <div>
                 <label className="block text-outline uppercase font-semibold mb-1">
                   Selecciona Trámite del Catálogo:
@@ -1255,7 +2592,6 @@ export default function CRMClientesPage() {
                 </select>
               </div>
 
-              {/* Si es nuevo servicio o edición del nombre */}
               <div>
                 <label className="block text-outline uppercase font-semibold mb-1">
                   Nombre del Trámite en Expediente:
@@ -1301,7 +2637,6 @@ export default function CRMClientesPage() {
                 />
               </div>
 
-              {/* Opción para guardar permanentemente en el catálogo */}
               {isNewServiceMode && (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
                   <input
@@ -1338,7 +2673,7 @@ export default function CRMClientesPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. MODAL NUEVA CITA DIRECTA (Cliente bloqueado, llamada por defecto) */}
+      {/* MODAL 6: NUEVA CITA DIRECTA */}
       {/* ========================================================================= */}
       {showNewAptModal && (
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1357,14 +2692,12 @@ export default function CRMClientesPage() {
             </div>
 
             <div className="space-y-3.5 text-xs">
-              {/* Cliente bloqueado por defecto */}
               <div className="p-3 bg-surface-container-low rounded-lg border border-surface-container">
                 <span className="text-[10px] font-bold uppercase text-outline">Cliente Asignado:</span>
                 <p className="font-bold text-on-surface text-sm mt-0.5">{selectedClient?.full_name}</p>
                 <p className="text-[11px] text-outline font-mono-data">{selectedClient?.phone} · BSN: {selectedClient?.bsn}</p>
               </div>
 
-              {/* Selector de Modalidad (Llamada por defecto) */}
               <div>
                 <label className="block text-outline uppercase font-semibold mb-1.5">
                   Modalidad de la Cita:
@@ -1475,13 +2808,13 @@ export default function CRMClientesPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* 3. MODAL NUEVO PRESUPUESTO DIRECTO (MULTI-TRÁMITE VINCULADO AL CATÁLOGO) */}
+      {/* MODAL 7: NUEVO PRESUPUESTO */}
       {/* ========================================================================= */}
       {showNewQuoteModal && (
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <form
             onSubmit={handleSaveQuote}
-            className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95"
+            className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar animate-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-3 border-b border-surface-container">
               <div className="flex items-center gap-2.5">
@@ -1505,7 +2838,6 @@ export default function CRMClientesPage() {
             </div>
 
             <div className="space-y-4 text-xs">
-              {/* Selector Multi-trámite */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-outline uppercase font-semibold flex items-center gap-1.5">
@@ -1531,8 +2863,7 @@ export default function CRMClientesPage() {
                   </div>
                 </div>
 
-                {/* Grid de trámites del catálogo */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1 border border-outline-variant/60 rounded-xl bg-surface">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto no-scrollbar p-1 border border-outline-variant/60 rounded-xl bg-surface">
                   {servicesCatalog.map((s) => {
                     const isSelected = selectedQuoteServiceIds.includes(s.id);
                     return (
@@ -1541,14 +2872,14 @@ export default function CRMClientesPage() {
                         onClick={() => toggleQuoteService(s.id)}
                         className={`cursor-pointer p-2.5 rounded-lg border transition-all flex items-start gap-2.5 ${
                           isSelected
-                            ? 'border-secondary bg-blue-50/70 dark:bg-blue-950/25 shadow-xs'
+                            ? 'border-secondary bg-blue-50/70 shadow-xs'
                             : 'border-surface-container bg-surface-container-lowest hover:border-outline-variant hover:bg-surface-container-low'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => {}} // Manejado por onClick del contenedor
+                          onChange={() => {}}
                           className="mt-0.5 rounded text-secondary focus:ring-secondary cursor-pointer"
                         />
                         <div className="flex-1 min-w-0">
@@ -1566,13 +2897,12 @@ export default function CRMClientesPage() {
                 </div>
               </div>
 
-              {/* Trámites seleccionados con ajuste de honorarios */}
               {selectedQuoteServiceIds.length > 0 && (
                 <div className="p-3 bg-surface-container-low/70 rounded-xl border border-surface-container space-y-2">
                   <span className="font-bold text-[11px] text-on-surface uppercase tracking-wider block">
                     Desglose de Trámites a Facturar ({selectedQuoteServiceIds.length}):
                   </span>
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto no-scrollbar pr-1">
                     {getSelectedQuoteItems().map((item) => (
                       <div
                         key={item.id}
@@ -1598,7 +2928,7 @@ export default function CRMClientesPage() {
                             className="text-outline hover:text-red-500 p-1"
                             title="Quitar de este presupuesto"
                           >
-                            <span className="material-symbols-outlined text-[15px]">close</span>
+                            <span className="material-symbols-outlined text-[14px]">close</span>
                           </button>
                         </div>
                       </div>
@@ -1607,68 +2937,35 @@ export default function CRMClientesPage() {
                 </div>
               )}
 
-              {/* Concepto Vinculado */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-outline uppercase font-semibold">Concepto Global del Presupuesto</label>
-                  {isConceptManuallyEdited && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsConceptManuallyEdited(false);
-                        const titles = servicesCatalog
-                          .filter((s) => selectedQuoteServiceIds.includes(s.id))
-                          .map((s) => s.title);
-                        setQuoteConcept(titles.join(' + '));
-                      }}
-                      className="text-[10px] text-secondary hover:underline flex items-center gap-0.5"
-                    >
-                      <span className="material-symbols-outlined text-[12px]">refresh</span>
-                      <span>Restablecer desde trámites</span>
-                    </button>
-                  )}
-                </div>
-                <textarea
-                  rows={2}
+                <label className="block text-outline uppercase font-semibold mb-1">
+                  Concepto en Presupuesto:
+                </label>
+                <input
                   required
+                  type="text"
                   value={quoteConcept}
                   onChange={(e) => {
                     setQuoteConcept(e.target.value);
                     setIsConceptManuallyEdited(true);
                   }}
-                  placeholder="Se genera automáticamente a partir de los trámites seleccionados..."
-                  className="w-full p-2.5 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-medium focus:border-secondary focus:outline-none"
                 />
-                <p className="text-[10px] text-outline mt-0.5">
-                  Este concepto aparecerá en el desglose oficial del presupuesto y en la factura fiscal correlativa.
-                </p>
               </div>
 
-              {/* Resumen Económico */}
-              <div className="p-3.5 bg-surface-container-low rounded-xl font-mono-data text-xs space-y-1.5 border border-surface-container">
+              <div className="p-3 bg-surface-container-low rounded-xl border border-surface-container font-mono-data space-y-1.5">
                 <div className="flex justify-between text-outline">
-                  <span>Base Imponible ({selectedQuoteServiceIds.length} trámites):</span>
-                  <span className="font-semibold text-on-surface">€ {quoteSubtotal.toFixed(2)}</span>
+                  <span>Base Imponible:</span>
+                  <span>€ {quoteSubtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-outline">
-                  <span>21% BTW (IVA Neerlandés):</span>
-                  <span className="font-semibold text-on-surface">€ {quoteTax.toFixed(2)}</span>
+                  <span>21% BTW (IVA NL):</span>
+                  <span>€ {quoteTax.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-sm text-secondary pt-2 border-t border-surface-container">
-                  <span>Total Presupuestado (BTW incl.):</span>
+                <div className="flex justify-between font-bold text-sm text-secondary pt-1.5 border-t border-surface-container">
+                  <span>Total Presupuestado:</span>
                   <span>€ {quoteTotal.toFixed(2)}</span>
                 </div>
-              </div>
-
-              {/* Fecha de Validez */}
-              <div>
-                <label className="block text-outline uppercase font-semibold mb-1">Válido Hasta</label>
-                <input
-                  type="date"
-                  value={quoteValidUntil}
-                  onChange={(e) => setQuoteValidUntil(e.target.value)}
-                  className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface font-mono-data focus:border-secondary focus:outline-none"
-                />
               </div>
             </div>
 
@@ -1676,41 +2973,37 @@ export default function CRMClientesPage() {
               <button
                 type="button"
                 onClick={() => setShowNewQuoteModal(false)}
-                className="h-9 px-4 border border-outline-variant rounded-lg text-xs font-semibold hover:bg-surface-container"
+                className="h-8 px-3 border border-outline-variant rounded text-xs font-semibold hover:bg-surface-container"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                disabled={selectedQuoteServiceIds.length === 0 && !quoteConcept.trim()}
-                className="h-9 px-5 bg-secondary text-white rounded-lg text-xs font-semibold hover:bg-blue-700 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-sm"
               >
-                <span className="material-symbols-outlined text-[16px]">check</span>
-                <span>Generar Presupuesto (€ {quoteTotal.toFixed(2)})</span>
+                Guardar Presupuesto (€ {quoteTotal.toFixed(2)})
               </button>
             </div>
           </form>
         </div>
       )}
+
       {/* ========================================================================= */}
-      {/* 4. MODAL VISUALIZADOR OFICIAL DE FACTURA O PRESUPUESTO */}
+      {/* MODAL 8: HOJA OFICIAL FACTURA / PRESUPUESTO */}
       {/* ========================================================================= */}
       {selectedDoc && (
-        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="bg-surface-container-lowest max-w-3xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95">
-            {/* Barra de Herramientas Superior */}
-            <div className="bg-surface-container px-6 py-3 border-b border-surface-container-high flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span
-                  className={`px-2.5 py-1 rounded text-xs font-bold font-mono-data uppercase ${
-                    selectedDoc.type === 'invoice'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-blue-100 text-blue-800'
-                  }`}
-                >
-                  {selectedDoc.type === 'invoice' ? 'FACTURA OFICIAL (VERKOOPFACTUUR)' : 'PRESUPUESTO (OFFERTE)'}
+        <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-scrollbar">
+          <div className="bg-surface-container-lowest max-w-3xl w-full rounded-2xl shadow-2xl border border-outline-variant overflow-hidden my-auto animate-in zoom-in-95">
+            {/* Barra Superior del Visor Documental */}
+            <div className="bg-surface-container-low px-6 py-3.5 border-b border-surface-container flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary">
+                  {selectedDoc.type === 'invoice' ? 'receipt_long' : 'request_quote'}
                 </span>
-                <span className="font-mono-data font-bold text-sm text-on-surface">
+                <span className="font-bold text-sm text-on-surface">
+                  {selectedDoc.type === 'invoice' ? 'Factura Oficial Neerlandesa' : 'Presupuesto de Honorarios'}
+                </span>
+                <span className="px-2 py-0.5 rounded text-[11px] font-mono-data font-bold bg-surface-container-high text-on-surface">
                   {selectedDoc.data.code}
                 </span>
               </div>
@@ -1719,47 +3012,23 @@ export default function CRMClientesPage() {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="h-8 px-3 bg-surface border border-outline-variant hover:bg-surface-container text-on-surface rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
-                  title="Imprimir documento o guardar como PDF"
+                  className="h-8 px-3 border border-outline-variant hover:bg-surface-container rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[15px]">print</span>
-                  <span>Imprimir / PDF</span>
+                  <span className="material-symbols-outlined text-[16px]">print</span>
+                  <span className="hidden sm:inline">Imprimir / PDF</span>
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const email = selectedDoc.data.email || selectedClient?.email || 'el cliente';
-                    setEmailSentToast(`Documento ${selectedDoc.data.code} enviado por correo electrónico a ${email}`);
-                    setTimeout(() => setEmailSentToast(null), 4000);
-                  }}
-                  className="h-8 px-3 bg-secondary text-white hover:bg-blue-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
-                >
-                  <span className="material-symbols-outlined text-[15px]">send</span>
-                  <span>Enviar por Email</span>
-                </button>
-
                 <button
                   type="button"
                   onClick={() => setSelectedDoc(null)}
-                  className="text-outline hover:text-on-surface p-1.5 rounded-lg hover:bg-surface"
+                  className="h-8 w-8 rounded-md text-outline hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors"
                 >
                   <span className="material-symbols-outlined text-lg">close</span>
                 </button>
               </div>
             </div>
 
-            {/* Toast de notificación */}
-            {emailSentToast && (
-              <div className="bg-emerald-600 text-white text-xs px-6 py-2 flex items-center gap-2">
-                <span className="material-symbols-outlined text-base">check_circle</span>
-                <span>{emailSentToast}</span>
-              </div>
-            )}
-
-            {/* Hoja Documental (Diseño de Factura/Presupuesto Legal Neerlandés) */}
+            {/* Hoja Documental */}
             <div className="p-8 sm:p-10 space-y-8 bg-surface-container-lowest text-xs text-on-surface">
-              {/* Encabezado Corporativo y Legal */}
               <div className="flex flex-col sm:flex-row justify-between gap-6 pb-6 border-b border-surface-container">
                 <div>
                   <div className="flex items-center gap-2">
@@ -1787,31 +3056,6 @@ export default function CRMClientesPage() {
                     {selectedDoc.type === 'invoice' ? 'Fecha de vencimiento: ' : 'Válido hasta: '}
                     <strong>{selectedDoc.data.due_date || selectedDoc.data.valid_until || '2026-11-30'}</strong>
                   </div>
-                  <div className="pt-1">
-                    {selectedDoc.type === 'invoice' ? (
-                      selectedDoc.data.status === 'pagada' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase">
-                          <span className="material-symbols-outlined text-[13px]">check_circle</span>
-                          <span>Pagada vía iDEAL</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-100 text-amber-800 font-bold text-[10px] uppercase">
-                          <span className="material-symbols-outlined text-[13px]">schedule</span>
-                          <span>Pendiente de Pago</span>
-                        </span>
-                      )
-                    ) : selectedDoc.data.status === 'convertido' ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-100 text-blue-800 font-bold text-[10px] uppercase">
-                        <span className="material-symbols-outlined text-[13px]">transform</span>
-                        <span>Convertido a Factura</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase">
-                        <span className="material-symbols-outlined text-[13px]">send</span>
-                        <span>Enviado al Cliente</span>
-                      </span>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -1823,21 +3067,21 @@ export default function CRMClientesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <h3 className="font-bold text-sm text-on-surface">
-                      {selectedDoc.data.client_name || selectedClient?.full_name || 'Maria Popescu'}
+                      {selectedDoc.data.client_name || selectedClient?.full_name || 'Cliente'}
                     </h3>
                     <p className="text-xs text-on-surface-variant font-mono-data mt-0.5">
-                      BSN Oficial: <strong>{selectedDoc.data.client_bsn || selectedClient?.bsn || '982145672'}</strong>
+                      BSN Oficial: <strong>{selectedDoc.data.client_bsn || selectedClient?.bsn || '—'}</strong>
                     </p>
                   </div>
                   <div className="text-xs text-on-surface-variant space-y-0.5">
-                    <p>{selectedDoc.data.address || selectedClient?.address || 'Strijpsestraat 142'}</p>
-                    <p>{selectedDoc.data.city || selectedClient?.city || 'Eindhoven'}, Países Bajos</p>
-                    <p className="text-outline">{selectedDoc.data.email || selectedClient?.email || 'cliente@nexusgest.nl'}</p>
+                    <p>{selectedDoc.data.address || selectedClient?.address || 'Países Bajos'}</p>
+                    <p>{selectedDoc.data.city || selectedClient?.city || 'Amsterdam'}</p>
+                    <p className="text-outline">{selectedDoc.data.email || selectedClient?.email || '—'}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Tabla de Conceptos / Trámites */}
+              {/* Tabla de Conceptos */}
               <div className="border border-outline-variant/60 rounded-xl overflow-hidden">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
@@ -1878,19 +3122,13 @@ export default function CRMClientesPage() {
                 </table>
               </div>
 
-              {/* Resumen de Totales y Liquidación Fiscal */}
+              {/* Resumen de Totales */}
               <div className="flex flex-col sm:flex-row justify-between gap-6 pt-2">
                 <div className="sm:max-w-xs space-y-2 text-[11px] text-outline">
                   <p className="font-semibold text-on-surface">Información de Pago & Fiscalidad:</p>
                   <p>
                     Tipo impositivo aplicado: 21% BTW según legislación tributaria de los Países Bajos (Belastingdienst).
                   </p>
-                  {selectedDoc.type === 'invoice' && selectedDoc.data.status === 'pagada' && (
-                    <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-800 font-mono-data text-[10px] space-y-0.5">
-                      <span className="font-bold block">Referencia iDEAL:</span>
-                      <span>{selectedDoc.data.payment_reference || 'IDL-TRX-2026-89472'}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="w-full sm:w-64 p-4 rounded-xl bg-surface-container-low font-mono-data text-xs space-y-2 border border-surface-container">
@@ -1903,14 +3141,14 @@ export default function CRMClientesPage() {
                     <span>€ {getDocTotals(selectedDoc.data).tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-sm text-secondary pt-2 border-t border-surface-container">
-                    <span>Total a {selectedDoc.type === 'invoice' ? 'Pagar' : 'Presupuestar'}:</span>
+                    <span>Total:</span>
                     <span>€ {getDocTotals(selectedDoc.data).total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Pie de Acciones Inferior */}
+            {/* Pie de Acciones */}
             <div className="bg-surface-container px-6 py-3 border-t border-surface-container-high flex items-center justify-between">
               <div className="text-[11px] text-outline">
                 Documento legal emitido por NexusGest · Países Bajos
