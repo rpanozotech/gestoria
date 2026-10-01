@@ -3,6 +3,8 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 // Tipos para soporte multiidioma básico
 type Language = 'ES' | 'EN' | 'NL' | 'RO' | 'PT' | 'PL';
@@ -267,219 +269,7 @@ export default function PublicHomePage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-blue-600 selection:text-white">
       
-      {/* ========================================================================= */}
-      {/* 1. TOP BAR & NAVBAR (FULL WIDTH PANTALLA COMPLETA)                        */}
-      {/* ========================================================================= */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm w-full">
-        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex items-center justify-between h-18 sm:h-20">
-            
-            {/* LOGO OFICIAL - ALINEACIÓN GEOMÉTRICA EXACTA */}
-            <Link href="/" className="flex items-center gap-3 shrink-0 group">
-              <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-sm border border-slate-200/90 group-hover:scale-105 transition-transform bg-slate-900 flex items-center justify-center shrink-0">
-                <Image 
-                  src="/logo.png" 
-                  alt="RP Gestoría & Asesoría" 
-                  width={44} 
-                  height={44} 
-                  className="object-cover w-full h-full"
-                  priority
-                />
-              </div>
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-heading font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 leading-none">
-                    RP Gestoría
-                  </span>
-                  <span className="font-heading font-extrabold text-lg sm:text-xl tracking-tight text-blue-600 leading-none">
-                    & Asesoría
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-1 leading-none">
-                  Tus trámites en Holanda, fáciles
-                </span>
-              </div>
-            </Link>
-
-            {/* NAV LINKS DESKTOP (CENTRADOS Y ESPACIADOS) */}
-            <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-              <Link href="#inicio" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors py-2">
-                Inicio
-              </Link>
-              <Link href="#como-funciona" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors py-2">
-                Cómo funciona
-              </Link>
-              <Link href="#servicios" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors py-2">
-                Servicios
-              </Link>
-              <Link href="#calculadora" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors py-2">
-                Calculadora
-              </Link>
-              <Link href="#nosotros" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors py-2">
-                Sobre nosotros
-              </Link>
-              <Link href="#faq" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors py-2">
-                FAQ
-              </Link>
-              <Link href="#contacto" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors py-2">
-                Contacto
-              </Link>
-            </nav>
-
-            {/* ACCIONES Y BOTONES DE LA DERECHA */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              
-              {/* SELECTOR DE IDIOMA */}
-              <div className="relative">
-                <button
-                  onClick={() => setLangMenuOpen(!langMenuOpen)}
-                  className="h-9 sm:h-10 px-2.5 sm:px-3 flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
-                  aria-label="Seleccionar idioma"
-                >
-                  <span className="material-symbols-outlined text-[17px] text-slate-500">language</span>
-                  <span>{lang}</span>
-                  <span className="material-symbols-outlined text-[15px] text-slate-400">expand_more</span>
-                </button>
-
-                {langMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    {[
-                      { code: 'ES', label: 'Español 🇪🇸' },
-                      { code: 'EN', label: 'English 🇬🇧' },
-                      { code: 'NL', label: 'Nederlands 🇳🇱' },
-                      { code: 'RO', label: 'Română 🇷🇴' },
-                      { code: 'PT', label: 'Português 🇵🇹' },
-                      { code: 'PL', label: 'Polski 🇵🇱' },
-                    ].map((item) => (
-                      <button
-                        key={item.code}
-                        onClick={() => {
-                          setLang(item.code as Language);
-                          setLangMenuOpen(false);
-                        }}
-                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-blue-50 transition-colors ${
-                          lang === item.code ? 'font-bold text-blue-600 bg-blue-50/60' : 'text-slate-700'
-                        }`}
-                      >
-                        <span>{item.label}</span>
-                        {lang === item.code && <span className="material-symbols-outlined text-[15px] text-blue-600">check</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* RESERVAR CITA BUTTON */}
-              <Link
-                href="#reservar"
-                className="hidden md:inline-flex items-center gap-2 h-9 sm:h-10 px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100/90 rounded-xl transition-all border border-blue-200/80 shadow-sm shrink-0"
-              >
-                <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                <span>Reservar Cita</span>
-              </Link>
-
-              {/* ÁREA CLIENTE BUTTON */}
-              <Link
-                href="/portal"
-                className="inline-flex items-center gap-2 h-9 sm:h-10 px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white bg-slate-900 hover:bg-blue-600 rounded-xl shadow-md hover:shadow-blue-500/20 transition-all shrink-0"
-              >
-                <span className="material-symbols-outlined text-[18px]">account_circle</span>
-                <span>Área Cliente</span>
-              </Link>
-
-              {/* BOTÓN HAMBURGUESA MOBILE */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors"
-                aria-label="Abrir menú de navegación"
-              >
-                <span className="material-symbols-outlined text-[22px]">
-                  {mobileMenuOpen ? 'close' : 'menu'}
-                </span>
-              </button>
-
-            </div>
-
-          </div>
-
-          {/* MENÚ MÓVIL DESPLEGABLE */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden py-4 border-t border-slate-100 bg-white/95 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="flex flex-col space-y-2 pb-3">
-                <Link
-                  href="#inicio"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
-                >
-                  Inicio
-                </Link>
-                <Link
-                  href="#como-funciona"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
-                >
-                  Cómo funciona
-                </Link>
-                <Link
-                  href="#servicios"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
-                >
-                  Servicios
-                </Link>
-                <Link
-                  href="#calculadora"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
-                >
-                  Calculadora
-                </Link>
-                <Link
-                  href="#nosotros"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
-                >
-                  Sobre nosotros
-                </Link>
-                <Link
-                  href="#faq"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
-                >
-                  Preguntas frecuentes
-                </Link>
-                <Link
-                  href="#contacto"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors"
-                >
-                  Contacto
-                </Link>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5">
-                <Link
-                  href="#reservar"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-3 text-sm font-bold text-blue-700 bg-blue-50 rounded-xl border border-blue-200 flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                  <span>Reservar una Cita</span>
-                </Link>
-                <Link
-                  href="/portal"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-3 text-sm font-bold text-white bg-slate-900 rounded-xl flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-[18px]">account_circle</span>
-                  <span>Acceso Área Cliente</span>
-                </Link>
-              </div>
-            </div>
-          )}
-
-        </div>
-      </header>
+      <Navbar />
 
       {/* ========================================================================= */}
       {/* 2. HERO SECTION                                                           */}
@@ -524,7 +314,7 @@ export default function PublicHomePage() {
               {/* ACTION BUTTONS */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
                 <Link
-                  href="#servicios"
+                  href="/servicios"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all transform hover:-translate-y-0.5"
                 >
                   <span>Empezar mi trámite</span>
@@ -532,7 +322,7 @@ export default function PublicHomePage() {
                 </Link>
 
                 <Link
-                  href="#reservar"
+                  href="/reservar"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 text-base font-bold text-slate-800 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 transition-all"
                 >
                   <span className="material-symbols-outlined text-blue-600 text-[20px]">event_available</span>
@@ -1547,81 +1337,7 @@ export default function PublicHomePage() {
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* 10. FOOTER                                                                */}
-      {/* ========================================================================= */}
-      <footer className="bg-slate-950 text-slate-400 text-xs pt-16 pb-12 border-t border-slate-800">
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-12">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-            
-            {/* BRAND */}
-            <div className="lg:col-span-2 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl overflow-hidden bg-slate-900 border border-slate-700">
-                  <Image src="/logo.png" alt="RP Gestoría" width={36} height={36} className="object-cover" />
-                </div>
-                <span className="font-heading font-extrabold text-lg text-white">
-                  RP Gestoría <span className="text-blue-500">& Asesoría</span>
-                </span>
-              </div>
-              <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-                “Tus trámites en Holanda, mucho más fáciles.” Asesoría fiscal, laboral y de extranjería para expatriados, jóvenes y profesionales en Países Bajos.
-              </p>
-              <div className="pt-2 text-[11px] text-slate-500 space-y-1">
-                <p>KvK: 84920194 · BTW: NL863492019B01</p>
-                <p>Amsterdam · Rotterdam · Utrecht · Países Bajos</p>
-              </div>
-            </div>
-
-            {/* TRÁMITES */}
-            <div className="space-y-3">
-              <p className="text-white font-bold uppercase tracking-wider text-xs">Trámites Populares</p>
-              <ul className="space-y-2">
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">M-Form Renta</Link></li>
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">DigiD Holanda</Link></li>
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Zorgtoeslag</Link></li>
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Seguro Médico</Link></li>
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Formulario U1</Link></li>
-              </ul>
-            </div>
-
-            {/* EMPRESAS & OTROS */}
-            <div className="space-y-3">
-              <p className="text-white font-bold uppercase tracking-wider text-xs">Autónomos & Legal</p>
-              <ul className="space-y-2">
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Alta Autónomo ZZP</Link></li>
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Impuesto BTW Trimestral</Link></li>
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Importación RDW / BPM</Link></li>
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Residencia Fiscal</Link></li>
-                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Paro UWV (WW)</Link></li>
-              </ul>
-            </div>
-
-            {/* ACCESOS DIRECTOS */}
-            <div className="space-y-3">
-              <p className="text-white font-bold uppercase tracking-wider text-xs">Plataforma</p>
-              <ul className="space-y-2">
-                <li><Link href="/portal" className="text-blue-400 font-bold hover:underline">Área Cliente (Mijn RP)</Link></li>
-                <li><Link href="/crm" className="hover:text-blue-400 transition-colors">Acceso Asesores CRM</Link></li>
-                <li><Link href="#reservar" className="hover:text-blue-400 transition-colors">Reservar Cita</Link></li>
-                <li><Link href="#faq" className="hover:text-blue-400 transition-colors">Preguntas Frecuentes</Link></li>
-              </ul>
-            </div>
-
-          </div>
-
-          <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
-            <p>© {new Date().getFullYear()} RP Gestoría & Asesoría B.V. Todos los derechos reservados.</p>
-            <div className="flex items-center gap-6">
-              <span className="hover:text-slate-300 cursor-pointer">Aviso Legal</span>
-              <span className="hover:text-slate-300 cursor-pointer">Política de Privacidad</span>
-              <span className="hover:text-slate-300 cursor-pointer">Términos y Condiciones</span>
-            </div>
-          </div>
-
-        </div>
-      </footer>
+      <Footer />
 
       {/* ========================================================================= */}
       {/* MODAL DE INICIO DE TRÁMITE RÁPIDO                                         */}
