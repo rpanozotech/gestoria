@@ -1973,9 +1973,9 @@ export default function CRMClientesPage() {
               </div>
             )}
 
-            {/* TAB 2: DOCUMENTOS & ARCHIVOS POR CLIENTE (NUEVO) */}
+            {/* TAB 4: DOCUMENTOS & ARCHIVOS POR CLIENTE */}
             {active360Tab === 'documentos' && (
-              <div className="space-y-6 max-w-5xl">
+              <div className="space-y-6 w-full">
                 {/* Cabecera de gestión documental */}
                 <div className="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>

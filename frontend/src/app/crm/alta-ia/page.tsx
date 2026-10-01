@@ -506,7 +506,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     .reduce((sum, c) => sum + (c.fee || 0), 0);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-6">
+    <div className="w-full space-y-6 pb-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-container">
         <div>
@@ -1079,7 +1079,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {activeTab === 'manual' && (
         <form
           onSubmit={handleSaveSingleManual}
-          className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4 max-w-3xl"
+          className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4 w-full"
         >
           <div className="flex items-center gap-2 pb-2 border-b border-surface-container">
             <span className="material-symbols-outlined text-secondary">person_add</span>
