@@ -1,1572 +1,1683 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+
+// Tipos para soporte multiidioma básico
+type Language = 'ES' | 'EN' | 'NL' | 'RO' | 'PT' | 'PL';
+
+interface ServiceItem {
+  id: string;
+  icon: string;
+  title: string;
+  badge?: string;
+  desc: string;
+  price: string;
+  category: 'impuestos' | 'subsidios' | 'llegada' | 'empresas' | 'vehiculos' | 'otros';
+}
+
+const SERVICES_DATA: ServiceItem[] = [
+  {
+    id: 'renta-mform',
+    icon: 'receipt_long',
+    title: 'Declaración de la Renta (M-Form / P-Form)',
+    badge: 'Más Solicitado',
+    desc: 'Maximizamos tu devolución en tu primer año o años completos. Aplicamos deducciones de mudanza, seguro y vivienda.',
+    price: 'Desde 89€',
+    category: 'impuestos',
+  },
+  {
+    id: 'digid',
+    icon: 'fingerprint',
+    title: 'DigiD (Identidad Digital)',
+    badge: 'Esencial',
+    desc: 'Solicitud, activación y desbloqueo de tu clave digital holandesa sin perderte con las cartas postales en neerlandés.',
+    price: 'Desde 29€',
+    category: 'llegada',
+  },
+  {
+    id: 'zorgtoeslag',
+    icon: 'medical_services',
+    title: 'Zorgtoeslag (Subsidio de Salud)',
+    badge: 'Hasta 154€/mes',
+    desc: 'Reclama el subsidio mensual del gobierno para recuperar la mayor parte del coste de tu seguro médico en Holanda.',
+    price: 'Desde 45€',
+    category: 'subsidios',
+  },
+  {
+    id: 'seguro-medico',
+    icon: 'health_and_safety',
+    title: 'Seguro Médico Obligatorio',
+    badge: 'Ahorro Garantizado',
+    desc: 'Te asesoramos para elegir y darte de alta en la mejor póliza básica holandesa al precio más económico del mercado.',
+    price: 'Desde 35€',
+    category: 'llegada',
+  },
+  {
+    id: 'formulario-u1',
+    icon: 'description',
+    title: 'Formulario U1 (Exportar Paro)',
+    badge: 'Trámite Rápido',
+    desc: 'Certifica y traslada todos tus periodos cotizados en Países Bajos para cobrar el paro en España u otro país de la UE.',
+    price: 'Desde 55€',
+    category: 'otros',
+  },
+  {
+    id: 'desempleo-ww',
+    icon: 'work_outline',
+    title: 'Prestación por Desempleo WW (UWV)',
+    badge: 'Soporte Completo',
+    desc: 'Tramitación y defensa de tu solicitud de paro holandés ante el UWV tras finalizar o rescindir tu contrato de trabajo.',
+    price: 'Desde 95€',
+    category: 'subsidios',
+  },
+  {
+    id: 'autonomos-zzp',
+    icon: 'storefront',
+    title: 'Autónomos / ZZP (KvK & BTW)',
+    badge: 'Emprendedores',
+    desc: 'Alta integral en Cámara de Comercio (KvK), obtención de BTW-id, facturación e impuestos trimestrales sin complicaciones.',
+    price: 'Desde 120€',
+    category: 'empresas',
+  },
+  {
+    id: 'residencia-fiscal',
+    icon: 'verified_user',
+    title: 'Certificado de Residencia Fiscal',
+    badge: 'Legal',
+    desc: 'Obtención del certificado oficial ante Belastingdienst para evitar la doble tributación y validar tu estatus en Europa.',
+    price: 'Desde 49€',
+    category: 'impuestos',
+  },
+  {
+    id: 'importacion-vehiculos',
+    icon: 'directions_car',
+    title: 'Importación de Vehículos (RDW & BPM)',
+    badge: 'Gestión Integral',
+    desc: 'Cambio de matrícula a placas neerlandesas, cálculo y solicitud de exención o liquidación del impuesto BPM.',
+    price: 'Desde 149€',
+    category: 'vehiculos',
+  },
+  {
+    id: 'kinderopvangtoeslag',
+    icon: 'child_care',
+    title: 'Kinderopvangtoeslag & Subsidios Hijos',
+    badge: 'Familias',
+    desc: 'Gestión de ayudas estatales para guardería, Kindgebonden budget y prestaciones familiares en Países Bajos.',
+    price: 'Desde 65€',
+    category: 'subsidios',
+  },
+  {
+    id: 'documentos-admin',
+    icon: 'folder_shared',
+    title: 'Documentos Administrativos & BSN',
+    badge: 'Llegada',
+    desc: 'Citas de empadronamiento en Gemeente, obtención de BSN, cartas oficiales y traducción de documentos legales.',
+    price: 'Desde 39€',
+    category: 'llegada',
+  },
+  {
+    id: 'consulta-privada',
+    icon: 'support_agent',
+    title: 'Consulta Privada 1 a 1',
+    badge: 'Videollamada / Presencial',
+    desc: 'Sesión personalizada de 30 o 60 min con un asesor especialista para resolver todas tus dudas particulares sobre Holanda.',
+    price: '49€ / sesión',
+    category: 'otros',
+  },
+  {
+    id: 'otros-tramites',
+    icon: 'tune',
+    title: 'Otros Trámites & Recursos Belastingdienst',
+    badge: 'Personalizado',
+    desc: 'Huurtoeslag (alquiler), recursos contra multas tributarias, revisión de cartas holandesas y trámites a medida.',
+    price: 'A consultar',
+    category: 'otros',
+  },
+];
 
 export default function PublicHomePage() {
-  // Selector de perfil de cliente
-  const [selectedAudience, setSelectedAudience] = useState<'expats' | 'zzp' | 'empleados' | 'familias'>('expats');
+  const [lang, setLang] = useState<Language>('ES');
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>('todos');
 
-  // Modo de simulador: M-Form o Subsidios Toeslagen
-  const [simMode, setSimMode] = useState<'mform' | 'toeslagen'>('mform');
+  // Video State
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
 
-  // 1. Estado Calculadora M-Form
+  // 1. Calculadora M-Form
   const [monthsInNL, setMonthsInNL] = useState<number>(8);
-  const [grossIncome, setGrossIncome] = useState<number>(38000);
-  const [withheldTax, setWithheldTax] = useState<number>(8500);
-  const [hasRelocationExpenses, setHasRelocationExpenses] = useState<boolean>(true);
+  const [grossIncome, setGrossIncome] = useState<number>(36000);
+  const [withheldTax, setWithheldTax] = useState<number>(7800);
+  const [hasRelocation, setHasRelocation] = useState<boolean>(true);
 
-  // Estimación M-Form inteligente
-  const calculateRefund = () => {
-    const annualEquivalent = (grossIncome / Math.max(1, monthsInNL)) * 12;
-    const actualBracketRate = 0.3697; // Tarifa Box 1 Países Bajos
+  const calculateMFormRefund = () => {
+    const bracketRate = 0.3697;
     const proRatedHeffingskorting = Math.round(3362 * (monthsInNL / 12));
-    const relocationDeduction = hasRelocationExpenses ? 1450 : 0;
+    const relocationDeduction = hasRelocation ? 1450 : 0;
     const adjustedIncome = Math.max(0, grossIncome - relocationDeduction);
-    const estimatedRealTax = Math.max(0, Math.round(adjustedIncome * actualBracketRate - proRatedHeffingskorting));
-    const estimatedRefund = Math.max(0, withheldTax - estimatedRealTax);
-    return estimatedRefund;
+    const estimatedTax = Math.max(0, Math.round(adjustedIncome * bracketRate - proRatedHeffingskorting));
+    return Math.max(0, withheldTax - estimatedTax);
   };
 
-  // 2. Estado Estimador Subsidios Toeslagen
-  const [toeslagIncome, setToeslagIncome] = useState<number>(27000);
+  // 2. Calculadora Toeslagen
+  const [toeslagIncome, setToeslagIncome] = useState<number>(26000);
   const [isCouple, setIsCouple] = useState<boolean>(false);
-  const [hasRent, setHasRent] = useState<boolean>(true);
   const [monthlyRent, setMonthlyRent] = useState<number>(850);
-  const [childrenCount, setChildrenCount] = useState<number>(0);
+  const [hasChildren, setHasChildren] = useState<boolean>(false);
 
-  // Cálculo estimativo de subsidios
-  const calculateZorgtoeslag = () => {
-    const maxThreshold = isCouple ? 48500 : 38500;
-    if (toeslagIncome > maxThreshold) return 0;
-    const maxZorg = isCouple ? 295 : 154;
-    const factor = Math.max(0, 1 - toeslagIncome / maxThreshold);
-    return Math.round(maxZorg * (0.5 + 0.5 * factor));
+  const calculateZorg = () => {
+    const maxThresh = isCouple ? 48500 : 38500;
+    if (toeslagIncome > maxThresh) return 0;
+    const maxVal = isCouple ? 295 : 154;
+    const factor = Math.max(0, 1 - toeslagIncome / maxThresh);
+    return Math.round(maxVal * (0.55 + 0.45 * factor));
   };
 
-  const calculateHuurtoeslag = () => {
-    if (!hasRent || monthlyRent < 450 || toeslagIncome > 35000) return 0;
-    if (monthlyRent > 880) return 395;
-    return Math.round(Math.min(450, (monthlyRent - 250) * 0.72));
+  const calculateHuur = () => {
+    if (monthlyRent < 450 || toeslagIncome > 36000) return 0;
+    if (monthlyRent > 880) return 380;
+    return Math.round(Math.min(420, (monthlyRent - 300) * 0.7));
   };
 
-  const calculateKindtoeslag = () => {
-    if (childrenCount === 0 || toeslagIncome > 55000) return 0;
-    return childrenCount * 115;
-  };
+  const totalMonthlyAid = calculateZorg() + calculateHuur() + (hasChildren ? 115 : 0);
 
-  const totalMonthlySubsidies = calculateZorgtoeslag() + calculateHuurtoeslag() + calculateKindtoeslag();
-  const totalAnnualSubsidies = totalMonthlySubsidies * 12;
-
-  // 3. FAQ interactivo
+  // 3. FAQ State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const toggleFaq = (idx: number) => {
-    setOpenFaq(openFaq === idx ? null : idx);
-  };
 
-  // 4. Reserva de citas online
-  const [bookingName, setBookingName] = useState('');
-  const [bookingEmail, setBookingEmail] = useState('');
-  const [bookingPhone, setBookingPhone] = useState('');
-  const [bookingService, setBookingService] = useState('M-Form / Declaración de la Renta');
-  const [bookingDate, setBookingDate] = useState('2026-10-15');
-  const [bookingTime, setBookingTime] = useState('11:00');
-  const [bookingModality, setBookingModality] = useState<'online_meet' | 'llamada' | 'presencial'>('online_meet');
-  const [bookingSuccess, setBookingSuccess] = useState(false);
+  // 4. Modal de Trámite Rápido / Contacto
+  const [selectedServiceModal, setSelectedServiceModal] = useState<ServiceItem | null>(null);
+  const [modalName, setModalName] = useState('');
+  const [modalEmail, setModalEmail] = useState('');
+  const [modalPhone, setModalPhone] = useState('');
+  const [modalSubmitted, setModalSubmitted] = useState(false);
 
-  const handleBooking = async (e: React.FormEvent) => {
+  // 5. Booking Form State
+  const [bookName, setBookName] = useState('');
+  const [bookEmail, setBookEmail] = useState('');
+  const [bookPhone, setBookPhone] = useState('');
+  const [bookService, setBookService] = useState('Declaración de la Renta (M-Form)');
+  const [bookDate, setBookDate] = useState('2026-10-15');
+  const [bookTime, setBookTime] = useState('11:00');
+  const [bookModality, setBookModality] = useState<'meet' | 'phone' | 'office'>('meet');
+  const [bookSuccess, setBookSuccess] = useState(false);
+  const [bookLoading, setBookLoading] = useState(false);
+
+  // 6. WhatsApp Floating Quick Chat
+  const [showWhatsAppBox, setShowWhatsAppBox] = useState(false);
+  const [whatsappMsg, setWhatsappMsg] = useState('¡Hola RP Gestoría! Acabo de llegar a Holanda y necesito ayuda con mis trámites.');
+
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setBookLoading(true);
     try {
       await fetch('http://localhost:5000/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: bookingName,
-          email: bookingEmail,
-          phone: bookingPhone,
-          title: `Cita Web: ${bookingService}`,
-          appointment_date: bookingDate,
-          appointment_time: bookingTime,
-          modality: bookingModality,
+          full_name: bookName,
+          email: bookEmail,
+          phone: bookPhone,
+          title: `Cita Web: ${bookService}`,
+          appointment_date: bookDate,
+          appointment_time: bookTime,
+          modality: bookModality === 'meet' ? 'online_meet' : bookModality === 'phone' ? 'llamada' : 'presencial',
         }),
       });
-      setBookingSuccess(true);
+      setBookSuccess(true);
     } catch {
-      setBookingSuccess(true);
+      // Fallback local
+      setBookSuccess(true);
+    } finally {
+      setBookLoading(false);
     }
   };
 
-  // 5. Modal flotante de WhatsApp
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const handleModalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setModalSubmitted(true);
+  };
+
+  const filteredServices = activeCategory === 'todos' 
+    ? SERVICES_DATA 
+    : SERVICES_DATA.filter(s => s.category === activeCategory);
+
+  const toggleVideoPlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        videoRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const toggleVideoMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-blue-600 selection:text-white">
+      
       {/* ========================================================================= */}
-      {/* BARRA SUPERIOR DE ALERTA / NOVEDADES FISCALES 2026 */}
+      {/* 1. TOP BAR & NAVBAR                                                       */}
       {/* ========================================================================= */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white text-xs py-2 px-4 border-b border-indigo-800/40">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 truncate">
-            <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold text-[10px] tracking-wide border border-blue-400/30 shrink-0">
-              CAMPANA FISCAL 2026
-            </span>
-            <span className="text-slate-200 truncate">
-              Abierto plazo oficial para la presentación de <strong>M-Form</strong> y regularización de <strong>Zorgtoeslag</strong>.
-            </span>
-          </div>
-          <div className="hidden md:flex items-center gap-6 shrink-0 text-slate-300">
-            <span className="flex items-center gap-1.5 text-[11px]">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Asesores disponibles en español
-            </span>
-            <a href="tel:+31681239845" className="hover:text-white font-mono-data text-[11px] transition-colors">
-              +31 6 8123 9845
-            </a>
-          </div>
-        </div>
-      </div>
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            
+            {/* LOGO OFICIAL */}
+            <Link href="/" className="flex items-center gap-3.5 group">
+              <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-sm border border-slate-200/80 group-hover:scale-105 transition-transform bg-slate-900 flex items-center justify-center">
+                <Image 
+                  src="/logo.png" 
+                  alt="RP Gestoría & Asesoría" 
+                  width={44} 
+                  height={44} 
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <div>
+                <span className="font-heading font-extrabold text-xl tracking-tight text-slate-900 block leading-tight">
+                  RP Gestoría <span className="text-blue-600 font-bold">& Asesoría</span>
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium tracking-wide uppercase">
+                  Tus trámites en Holanda, fáciles
+                </span>
+              </div>
+            </Link>
 
-      {/* ========================================================================= */}
-      {/* NAVBAR PRINCIPAL CON GLASSMORPHISM */}
-      {/* ========================================================================= */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-12 h-16 sm:h-20 flex items-center justify-between transition-all">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-blue-500 text-white flex items-center justify-center font-bold text-base shadow-md group-hover:scale-105 transition-transform">
-              NG
+            {/* NAV LINKS */}
+            <nav className="hidden lg:flex items-center gap-7">
+              <Link href="#inicio" className="text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors">
+                Inicio
+              </Link>
+              <Link href="#como-funciona" className="text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors">
+                Cómo funciona
+              </Link>
+              <Link href="#servicios" className="text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors">
+                Servicios
+              </Link>
+              <Link href="#calculadora" className="text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors">
+                Calculadora
+              </Link>
+              <Link href="#nosotros" className="text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors">
+                Sobre nosotros
+              </Link>
+              <Link href="#faq" className="text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors">
+                Preguntas frecuentes
+              </Link>
+              <Link href="#contacto" className="text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors">
+                Contacto
+              </Link>
+            </nav>
+
+            {/* ACTIONS & MULTILANGUAGE */}
+            <div className="flex items-center gap-3">
+              
+              {/* SELECTOR DE IDIOMA */}
+              <div className="relative">
+                <button
+                  onClick={() => setLangMenuOpen(!langMenuOpen)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition-colors border border-slate-200/60"
+                  aria-label="Seleccionar idioma"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-slate-500">language</span>
+                  <span>{lang}</span>
+                  <span className="material-symbols-outlined text-[14px]">expand_more</span>
+                </button>
+
+                {langMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    {[
+                      { code: 'ES', label: 'Español 🇪🇸' },
+                      { code: 'EN', label: 'English 🇬🇧' },
+                      { code: 'NL', label: 'Nederlands 🇳🇱' },
+                      { code: 'RO', label: 'Română 🇷🇴' },
+                      { code: 'PT', label: 'Português 🇵🇹' },
+                      { code: 'PL', label: 'Polski 🇵🇱' },
+                    ].map((item) => (
+                      <button
+                        key={item.code}
+                        onClick={() => {
+                          setLang(item.code as Language);
+                          setLangMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-3.5 py-1.5 text-xs flex items-center justify-between hover:bg-blue-50 transition-colors ${
+                          lang === item.code ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        {lang === item.code && <span className="material-symbols-outlined text-[14px] text-blue-600">check</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* RESERVAR CITA BUTTON */}
+              <Link
+                href="#reservar"
+                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100/80 rounded-xl transition-all border border-blue-200/60 shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                <span>Reservar Cita</span>
+              </Link>
+
+              {/* ÁREA CLIENTE BUTTON */}
+              <Link
+                href="/portal"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-blue-600 rounded-xl shadow-md hover:shadow-blue-500/20 transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">account_circle</span>
+                <span>Área Cliente</span>
+              </Link>
             </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
-                NexusGest
-              </span>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                Países Bajos
-              </span>
-            </div>
-          </Link>
-          <span className="hidden sm:inline-flex items-center gap-1 ml-2 px-2.5 py-0.8 text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 rounded-full">
-            <span>🇳🇱</span>
-            <span>Gestoría Oficial</span>
-          </span>
-        </div>
 
-        {/* Enlaces de Navegación */}
-        <nav className="hidden lg:flex items-center gap-7 text-xs font-semibold text-slate-600">
-          <a href="#perfiles" className="hover:text-blue-600 transition-colors">Tu Situación</a>
-          <a href="#servicios" className="hover:text-blue-600 transition-colors">Servicios</a>
-          <a href="#simulador" className="hover:text-blue-600 transition-colors flex items-center gap-1">
-            <span>Simulador IA</span>
-            <span className="px-1.5 py-0.2 bg-blue-100 text-blue-700 text-[9px] font-bold rounded">GRATIS</span>
-          </a>
-          <a href="#testimonios" className="hover:text-blue-600 transition-colors">Casos de Éxito</a>
-          <a href="#como-funciona" className="hover:text-blue-600 transition-colors">Cómo Funciona</a>
-          <a href="#faq" className="hover:text-blue-600 transition-colors">Preguntas Frecuentes</a>
-        </nav>
-
-        {/* Acciones del Header */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/portal"
-            className="h-9 sm:h-10 px-3 sm:px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 hover:border-blue-400"
-            title="Acceso al Portal del Cliente"
-          >
-            <span className="material-symbols-outlined text-[18px] text-blue-600">person</span>
-            <span>Mijn NexusGest</span>
-          </Link>
-
-          <a
-            href="#reservar"
-            className="h-9 sm:h-10 px-3.5 sm:px-5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 hover:shadow-md"
-          >
-            <span className="material-symbols-outlined text-[17px]">calendar_today</span>
-            <span className="hidden sm:inline">Pedir Cita Online</span>
-            <span className="sm:hidden">Cita</span>
-          </a>
-
-          <Link
-            href="/crm"
-            className="hidden xl:flex h-9 px-2.5 rounded-lg text-slate-400 hover:text-slate-800 text-[11px] font-medium items-center gap-1 transition-colors"
-            title="Panel Interno de Gestores"
-          >
-            <span className="material-symbols-outlined text-[16px]">lock</span>
-            <span>Gestor</span>
-          </Link>
+          </div>
         </div>
       </header>
 
       {/* ========================================================================= */}
-      {/* HERO SECTION DE MÁXIMO IMPACTO VISUAL */}
+      {/* 2. HERO SECTION                                                           */}
       {/* ========================================================================= */}
-      <section className="relative overflow-hidden pt-10 pb-16 lg:py-20 bg-gradient-to-b from-white via-blue-50/40 to-slate-50 border-b border-slate-200/70">
-        {/* Glows de fondo con gradientes */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-gradient-to-tr from-blue-400/15 via-indigo-400/15 to-purple-400/10 rounded-full blur-3xl pointer-events-none -z-10" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Columna Izquierda: Mensaje y CTA */}
-            <div className="lg:col-span-7 space-y-6 text-left">
-              {/* Badge de prueba social */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs">
-                <div className="flex text-amber-400 text-xs">
-                  <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                </div>
-                <span className="text-[11px] font-bold text-slate-800">4.9 / 5.0</span>
-                <span className="text-[11px] text-slate-500">· Más de 1.400 clientes satisfechos en 2026</span>
+      <section id="inicio" className="relative pt-12 pb-20 overflow-hidden bg-gradient-to-b from-blue-50/40 via-white to-[#F8FAFC]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            
+            {/* LEFT COLUMN: HERO HEADLINE & CTAS */}
+            <div className="lg:col-span-6 space-y-8 text-center lg:text-left">
+              
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 border border-blue-200/80 text-blue-800 text-xs font-semibold shadow-sm">
+                <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+                <span>Especialistas en recién llegados & expatriados en Países Bajos</span>
               </div>
 
-              {/* Título Principal */}
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
-                Tu tranquilidad fiscal y jurídica en los <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 bg-clip-text text-transparent">Países Bajos</span>, 100% en español.
+              <h1 className="font-heading text-4xl sm:text-5xl lg:text-[54px] font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+                ¿Acabas de llegar a <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Holanda</span>?
               </h1>
 
-              {/* Subtítulo */}
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl font-normal">
-                Especialistas para la comunidad hispanohablante e internacional: resolvemos tu <strong>Declaración M-Form</strong> con máxima devolución, activamos tus <strong>Subsidios Toeslagen</strong> (€154 - €600/mes) y desciframos cualquier carta de la <strong>Belastingdienst</strong> sin dolores de cabeza.
+              <p className="text-lg sm:text-xl text-slate-600 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Te ayudamos con tus trámites, impuestos y gestiones de forma sencilla, rápida y <strong>100% en tu idioma</strong>. Sin jerga legal confusa.
               </p>
 
-              {/* Botones CTA Principales */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <a
-                  href="#simulador"
-                  className="h-12 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2.5 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
-                >
-                  <span className="material-symbols-outlined text-[20px]">calculate</span>
-                  <span>Calcular mi Devolución Gratis</span>
-                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => setShowWhatsAppModal(true)}
-                  className="h-12 px-5 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-2xs"
-                >
-                  <span className="material-symbols-outlined text-[20px] text-emerald-600">chat</span>
-                  <span>Consultar por WhatsApp</span>
-                </button>
-              </div>
-
-              {/* Sellos de Confianza y Garantía */}
-              <div className="pt-4 border-t border-slate-200/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-slate-600">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-600 text-[18px]">verified</span>
-                  <span className="font-semibold text-[11px]">Belastingdienst Oficial</span>
+              {/* VALUE PROPS */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 max-w-lg mx-auto lg:mx-0 text-left">
+                <div className="flex items-center gap-2.5 bg-white p-3 rounded-xl border border-slate-200/70 shadow-sm">
+                  <span className="material-symbols-outlined text-blue-600 text-[20px]">verified</span>
+                  <span className="text-xs font-medium text-slate-800">100% en Español</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-600 text-[18px]">lock</span>
-                  <span className="font-semibold text-[11px]">iDEAL y Cifrado SSL</span>
+                <div className="flex items-center gap-2.5 bg-white p-3 rounded-xl border border-slate-200/70 shadow-sm">
+                  <span className="material-symbols-outlined text-blue-600 text-[20px]">bolt</span>
+                  <span className="text-xs font-medium text-slate-800">Trámite Directo</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-600 text-[18px]">timer</span>
-                  <span className="font-semibold text-[11px]">Respuesta en 24h</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-600 text-[18px]">health_and_safety</span>
-                  <span className="font-semibold text-[11px]">Garantía Anti-Errores</span>
+                <div className="flex items-center gap-2.5 bg-white p-3 rounded-xl border border-slate-200/70 shadow-sm">
+                  <span className="material-symbols-outlined text-blue-600 text-[20px]">smartphone</span>
+                  <span className="text-xs font-medium text-slate-800">Online & WhatsApp</span>
                 </div>
               </div>
+
+              {/* ACTION BUTTONS */}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+                <Link
+                  href="#servicios"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all transform hover:-translate-y-0.5"
+                >
+                  <span>Empezar mi trámite</span>
+                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </Link>
+
+                <Link
+                  href="#reservar"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 text-base font-bold text-slate-800 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 transition-all"
+                >
+                  <span className="material-symbols-outlined text-blue-600 text-[20px]">event_available</span>
+                  <span>Reservar una cita</span>
+                </Link>
+              </div>
+
+              {/* SOCIAL PROOF */}
+              <div className="flex items-center justify-center lg:justify-start gap-4 pt-3 text-slate-500 text-xs font-medium">
+                <div className="flex -space-x-2">
+                  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-200">
+                    <Image src="/photo-1.png" alt="Cliente" width={32} height={32} className="object-cover" />
+                  </div>
+                  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-200">
+                    <Image src="/photo-2.png" alt="Cliente" width={32} height={32} className="object-cover" />
+                  </div>
+                  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-200">
+                    <Image src="/photo-3.png" alt="Cliente" width={32} height={32} className="object-cover" />
+                  </div>
+                  <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">
+                    +1k
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center text-amber-500 text-[14px]">
+                    ★★★★★ <span className="text-slate-800 font-bold ml-1 text-xs">4.9 / 5</span>
+                  </div>
+                  <span>Más de 1.400 jóvenes y expatriados asesorados</span>
+                </div>
+              </div>
+
             </div>
 
-            {/* Columna Derecha: Tarjeta Interactiva en Vivo / Live Case Card */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md bg-white rounded-2xl border border-slate-200/90 shadow-xl p-5 sm:p-6 space-y-4">
-                {/* Header de la tarjeta */}
-                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold font-mono-data text-xs flex items-center justify-center border border-blue-200">
-                      MP
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <h4 className="font-bold text-xs sm:text-sm text-slate-900">Maria Popescu</h4>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 font-mono-data">Eindhoven · BSN 982145672</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-bold rounded-full flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px]">verified</span>
-                    <span>Aprobado</span>
-                  </span>
-                </div>
+            {/* RIGHT COLUMN: PROMOTIONAL VIDEO & CINEMATIC MEDIA SHOWCASE */}
+            <div className="lg:col-span-6">
+              <div className="relative mx-auto max-w-md lg:max-w-none">
+                
+                {/* Decorative glow */}
+                <div className="absolute -top-10 -right-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+                <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl -z-10 pointer-events-none"></div>
 
-                {/* Gran cifra de resultado real */}
-                <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white p-4 sm:p-5 rounded-xl space-y-2 relative overflow-hidden">
-                  <div className="absolute right-0 top-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
-                  <div className="flex items-center justify-between text-xs text-slate-300">
-                    <span className="font-mono-data uppercase tracking-wider text-[10px]">Expediente EXP-2026-0041</span>
-                    <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-data text-[10px] font-bold">
-                      M-Form 2026
+                {/* VIDEO CONTAINER */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900 group">
+                  <video
+                    ref={videoRef}
+                    src="/promo-video.mp4"
+                    autoPlay
+                    loop
+                    muted={isMuted}
+                    playsInline
+                    className="w-full h-[380px] sm:h-[420px] object-cover"
+                  />
+
+                  {/* VIDEO OVERLAY CONTROLS */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/20 pointer-events-none"></div>
+
+                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white pointer-events-auto">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={toggleVideoPlay}
+                        className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/40 flex items-center justify-center transition-all shadow-md"
+                        aria-label={isPlaying ? 'Pausar vídeo' : 'Reproducir vídeo'}
+                      >
+                        <span className="material-symbols-outlined text-[22px]">
+                          {isPlaying ? 'pause' : 'play_arrow'}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={toggleVideoMute}
+                        className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/40 flex items-center justify-center transition-all shadow-md"
+                        aria-label={isMuted ? 'Activar sonido' : 'Silenciar sonido'}
+                      >
+                        <span className="material-symbols-outlined text-[20px]">
+                          {isMuted ? 'volume_off' : 'volume_up'}
+                        </span>
+                      </button>
+
+                      <div className="hidden sm:block">
+                        <p className="text-xs font-bold tracking-wide">RP Gestoría en Acción</p>
+                        <p className="text-[11px] text-slate-300">Conoce cómo te acompañamos</p>
+                      </div>
+                    </div>
+
+                    <span className="px-3 py-1 rounded-full bg-blue-600/90 backdrop-blur-md text-[11px] font-bold tracking-wider uppercase">
+                      Vídeo Oficial
                     </span>
                   </div>
-                  <div className="pt-1">
-                    <span className="text-[11px] text-slate-400 block font-medium">Saldo total a devolver por Belastingdienst:</span>
-                    <div className="text-3xl sm:text-4xl font-extrabold font-mono-data text-emerald-400 tracking-tight">
-                      +€ 2.410,00
+
+                  {/* FLOATING BADGE TOP RIGHT */}
+                  <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md text-slate-900 px-3.5 py-2 rounded-xl shadow-lg border border-white/50 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-green-600 text-[18px]">verified</span>
+                    <div className="text-left">
+                      <p className="text-[10px] uppercase font-bold text-slate-500">Garantía</p>
+                      <p className="text-xs font-extrabold text-slate-900">Belastingdienst / UWV</p>
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-300">
-                    <span>Subsidio Zorgtoeslag mensual:</span>
-                    <span className="font-bold font-mono-data text-blue-300">+€ 154,00 / mes</span>
+
+                </div>
+
+                {/* MINI PHOTO CAROUSEL / HIGHLIGHTS UNDER VIDEO */}
+                <div className="grid grid-cols-3 gap-3 mt-4">
+                  <div className="relative h-20 rounded-xl overflow-hidden border-2 border-white shadow-sm group">
+                    <Image src="/photo-4.png" alt="Asesoría personalizada" fill className="object-cover group-hover:scale-105 transition-transform" />
+                    <div className="absolute inset-0 bg-slate-900/40 flex items-end p-2">
+                      <span className="text-[10px] font-bold text-white leading-tight">M-Form & Renta</span>
+                    </div>
+                  </div>
+                  <div className="relative h-20 rounded-xl overflow-hidden border-2 border-white shadow-sm group">
+                    <Image src="/photo-5.png" alt="Subsidios y Zorgtoeslag" fill className="object-cover group-hover:scale-105 transition-transform" />
+                    <div className="absolute inset-0 bg-slate-900/40 flex items-end p-2">
+                      <span className="text-[10px] font-bold text-white leading-tight">Zorgtoeslag</span>
+                    </div>
+                  </div>
+                  <div className="relative h-20 rounded-xl overflow-hidden border-2 border-white shadow-sm group">
+                    <Image src="/photo-7.png" alt="Empresas y ZZP" fill className="object-cover group-hover:scale-105 transition-transform" />
+                    <div className="absolute inset-0 bg-slate-900/40 flex items-end p-2">
+                      <span className="text-[10px] font-bold text-white leading-tight">Autónomos ZZP</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Timeline de la gestión */}
-                <div className="space-y-2 pt-1 text-xs">
-                  <div className="flex items-center gap-2.5 text-slate-700">
-                    <span className="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
-                    <span className="text-[12px] font-medium">Deducción de traslado internacional aplicada</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-slate-700">
-                    <span className="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
-                    <span className="text-[12px] font-medium">Código DigiD validado mediante OCR con IA</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-slate-700">
-                    <span className="material-symbols-outlined text-blue-600 text-[18px]">sync</span>
-                    <span className="text-[12px] font-medium text-blue-700">Primer abono oficial en cuenta bancaria ING</span>
-                  </div>
-                </div>
-
-                {/* Ticker flotante inferior */}
-                <div className="p-2.5 bg-blue-50/70 border border-blue-100 rounded-lg flex items-center gap-2 text-[11px] text-blue-900">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span className="truncate">
-                    <strong>Último trámite:</strong> Elena M. en Utrecht recibió resolución Huurtoeslag hace 18 min.
-                  </span>
-                </div>
               </div>
             </div>
+
           </div>
+
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* SELECTOR INTERACTIVO: "¿CUÁL ES TU SITUACIÓN EN PAÍSES BAJOS?" */}
+      {/* 3. SECTION "¿ACABAS DE LLEGAR A HOLANDA?" (4-STEP PROCESS)                */}
       {/* ========================================================================= */}
-      <section id="perfiles" className="py-16 bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto space-y-10">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-full uppercase tracking-wider">
-              Soluciones a Tu Medida
+      <section id="como-funciona" className="py-20 bg-white border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+            <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
+              Proceso 100% Transparente
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
-              ¿Cuál es tu situación actual en Países Bajos?
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              ¿Acabas de llegar a Holanda? Así de fácil trabajamos
             </h2>
-            <p className="text-sm text-slate-600">
-              Selecciona tu perfil para ver exactamente qué trámites necesitas y cómo podemos maximizar tu dinero.
+            <p className="text-slate-600 text-base sm:text-lg">
+              Nos encargamos de la burocracia holandesa para que tú solo disfrutes de tu nueva etapa en Países Bajos.
             </p>
           </div>
 
-          {/* Botones de selección de perfil */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
+            
+            {/* STEP 1 */}
+            <div className="relative bg-slate-50/80 rounded-2xl p-6 border border-slate-200/70 hover:shadow-lg hover:border-blue-200 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-heading font-extrabold text-lg flex items-center justify-center mb-5 shadow-md shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                01
+              </div>
+              <h3 className="font-heading font-bold text-lg text-slate-900 mb-2">
+                Cuéntanos tu situación
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Escríbenos por WhatsApp o reserva una cita rápida. Te escuchamos de tú a tú y analizamos tu caso particular sin tecnicismos.
+              </p>
+            </div>
+
+            {/* STEP 2 */}
+            <div className="relative bg-slate-50/80 rounded-2xl p-6 border border-slate-200/70 hover:shadow-lg hover:border-blue-200 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-heading font-extrabold text-lg flex items-center justify-center mb-5 shadow-md shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                02
+              </div>
+              <h3 className="font-heading font-bold text-lg text-slate-900 mb-2">
+                Te indicamos qué necesitas
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Sin listas infinitas ni estrés con el neerlandés. Te decimos con exactitud qué 2 o 3 documentos hacen falta.
+              </p>
+            </div>
+
+            {/* STEP 3 */}
+            <div className="relative bg-slate-50/80 rounded-2xl p-6 border border-slate-200/70 hover:shadow-lg hover:border-blue-200 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-heading font-extrabold text-lg flex items-center justify-center mb-5 shadow-md shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                03
+              </div>
+              <h3 className="font-heading font-bold text-lg text-slate-900 mb-2">
+                Sube tus documentos
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Adjúntalos en 1 minuto desde tu móvil en tu Área de Cliente cifrada o envíalos con total seguridad por WhatsApp.
+              </p>
+            </div>
+
+            {/* STEP 4 */}
+            <div className="relative bg-slate-50/80 rounded-2xl p-6 border border-slate-200/70 hover:shadow-lg hover:border-blue-200 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-heading font-extrabold text-lg flex items-center justify-center mb-5 shadow-md shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                04
+              </div>
+              <h3 className="font-heading font-bold text-lg text-slate-900 mb-2">
+                Nos encargamos de todo
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Presentamos tu solicitud formal ante Belastingdienst, UWV o Gemeente y te mantenemos informado paso a paso.
+              </p>
+            </div>
+
+          </div>
+
+          {/* BANNER RECIÉN LLEGADO */}
+          <div className="mt-14 bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 rounded-2xl p-8 sm:p-10 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-2 text-center md:text-left">
+              <h4 className="font-heading font-extrabold text-xl sm:text-2xl">
+                ¿No sabes qué trámite te corresponde solicitar primero?
+              </h4>
+              <p className="text-sm text-slate-300 max-w-xl">
+                Haz nuestro test de 30 segundos o habla con un gestor en directo para tener una hoja de ruta clara de tu llegada a Holanda.
+              </p>
+            </div>
+            <Link
+              href="#reservar"
+              className="px-6 py-3.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm tracking-wide shadow-md transition-all shrink-0"
+            >
+              Consulta Inicial Gratuita
+            </Link>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 4. SECCIÓN DE SERVICIOS (13 MODERN CARDS)                                 */}
+      {/* ========================================================================= */}
+      <section id="servicios" className="py-24 bg-[#F8FAFC]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+            <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
+              Nuestros Servicios
+            </span>
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Todos tus trámites en un único lugar
+            </h2>
+            <p className="text-slate-600 text-base sm:text-lg">
+              Soluciones claras, tarifas transparentes y gestión directa ante los organismos oficiales holandeses.
+            </p>
+          </div>
+
+          {/* FILTER PILLS */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
             {[
-              { id: 'expats', icon: 'flight_land', label: 'Recién Llegado / Expat', desc: 'Primer año fiscal' },
-              { id: 'zzp', icon: 'business_center', label: 'Autónomo ZZP / Freelance', desc: 'KvK, BTW e Impuestos' },
-              { id: 'empleados', icon: 'badge', label: 'Empleado en Nómina', desc: 'Subsidios y Retenciones' },
-              { id: 'familias', icon: 'family_restroom', label: 'Familias y Parejas', desc: 'Ayudas Alquiler e Hijos' },
+              { id: 'todos', label: 'Todos los Trámites' },
+              { id: 'impuestos', label: 'Impuestos & Renta' },
+              { id: 'subsidios', label: 'Subsidios (Toeslagen)' },
+              { id: 'llegada', label: 'Llegada a Holanda' },
+              { id: 'empresas', label: 'Autónomos ZZP' },
+              { id: 'vehiculos', label: 'Vehículos & RDW' },
+              { id: 'otros', label: 'Otros Trámites' },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setSelectedAudience(tab.id as any)}
-                className={`p-4 rounded-xl border text-left transition-all flex flex-col justify-between gap-2 ${
-                  selectedAudience === tab.id
-                    ? 'border-blue-600 bg-blue-50/50 shadow-sm ring-2 ring-blue-600/20'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                onClick={() => setActiveCategory(tab.id)}
+                className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all ${
+                  activeCategory === tab.id
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/70'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                      selectedAudience === tab.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
-                  </div>
-                  {selectedAudience === tab.id && (
-                    <span className="material-symbols-outlined text-blue-600 text-lg">check_circle</span>
-                  )}
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-slate-900">{tab.label}</h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{tab.desc}</p>
-                </div>
+                {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Contenido dinámico del perfil seleccionado */}
-          <div className="bg-slate-50 rounded-2xl border border-slate-200/90 p-6 sm:p-8">
-            {selectedAudience === 'expats' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-8 space-y-4">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 text-blue-800 text-[11px] font-bold rounded-md">
-                    <span>🇪🇸</span>
-                    <span>Hoja de Ruta para Nuevos Residentes</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
-                    Declaración M-Form, Activación de DigiD y Subsidio de Salud Obligatorio
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Si te mudaste a los Países Bajos durante el año fiscal, <strong>el 94% de los casos tiene derecho a una devolución sustancial de impuestos</strong> en su formulario M-Form. Además, puedes cobrar el <em>Zorgtoeslag</em> desde el primer mes para compensar tu seguro de salud holandés.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Devolución media M-Form</span>
-                      <span className="text-base font-extrabold font-mono-data text-blue-600">€ 1.800 - € 3.200</span>
+          {/* SERVICES GRID */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredServices.map((srv) => (
+              <div
+                key={srv.id}
+                className="bg-white rounded-2xl p-7 border border-slate-200/80 hover:border-blue-300 shadow-sm hover:shadow-xl transition-all duration-200 flex flex-col justify-between group"
+              >
+                <div>
+                  
+                  {/* CARD HEADER */}
+                  <div className="flex items-start justify-between gap-4 mb-5">
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm">
+                      <span className="material-symbols-outlined text-[26px]">{srv.icon}</span>
                     </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Zorgtoeslag mensual</span>
-                      <span className="text-base font-extrabold font-mono-data text-emerald-600">Hasta € 154 / mes</span>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Plazo de resolución</span>
-                      <span className="text-base font-extrabold font-mono-data text-slate-800">3 a 6 semanas</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="lg:col-span-4 flex flex-col gap-3">
-                  <a
-                    href="#simulador"
-                    className="h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <span>Calcular mi Devolución M-Form</span>
-                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  </a>
-                  <a
-                    href="#reservar"
-                    className="h-11 px-5 border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl shadow-2xs flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <span>Pedir Asesoría para Expats</span>
-                  </a>
-                </div>
-              </div>
-            )}
 
-            {selectedAudience === 'zzp' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-8 space-y-4">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-800 text-[11px] font-bold rounded-md">
-                    <span>💼</span>
-                    <span>Pack Completo Autónomo Neerlandés</span>
+                    {srv.badge && (
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200/60">
+                        {srv.badge}
+                      </span>
+                    )}
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
-                    Alta en KvK, Obtención de BTW-nummer y Declaración Trimestral de IVA
+
+                  {/* TITLE & DESCRIPTION */}
+                  <h3 className="font-heading font-bold text-lg text-slate-900 mb-2.5 group-hover:text-blue-600 transition-colors">
+                    {srv.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Convertirte en ZZP en los Países Bajos es muy ventajoso gracias a las deducciones fiscales (<em>Zelfstandigenaftrek</em> y <em>Startersaftrek</em>). Nos encargamos de tu inscripción presencial en la Cámara de Comercio, emitimos tus facturas conformes a la normativa y presentamos tus liquidaciones trimestrales sin sorpresas.
+                  
+                  <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                    {srv.desc}
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Alta KvK garantizada</span>
-                      <span className="text-base font-extrabold font-mono-data text-amber-600">En 24 - 48 horas</span>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Liquidación BTW</span>
-                      <span className="text-base font-extrabold font-mono-data text-blue-600">4 Trimestres / año</span>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Deducción de inicio</span>
-                      <span className="text-base font-extrabold font-mono-data text-emerald-600">€ 2.123 libres de IRPF</span>
-                    </div>
-                  </div>
+
                 </div>
-                <div className="lg:col-span-4 flex flex-col gap-3">
-                  <a
-                    href="#reservar"
-                    className="h-11 px-5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <span>Darme de Alta como ZZP</span>
-                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  </a>
+
+                {/* CARD FOOTER */}
+                <div className="pt-5 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-slate-400 uppercase font-semibold block">Tarifa clara</span>
+                    <span className="text-base font-extrabold text-slate-900">{srv.price}</span>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={() => setShowWhatsAppModal(true)}
-                    className="h-11 px-5 border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl shadow-2xs flex items-center justify-center gap-2 transition-colors"
+                    onClick={() => setSelectedServiceModal(srv)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-blue-600 transition-colors shadow-sm"
                   >
-                    <span>Preguntar por Tarifas ZZP</span>
+                    <span>Empezar trámite</span>
+                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                   </button>
                 </div>
-              </div>
-            )}
 
-            {selectedAudience === 'empleados' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-8 space-y-4">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-100 text-indigo-800 text-[11px] font-bold rounded-md">
-                    <span>🏢</span>
-                    <span>Trabajadores por Cuenta Ajena en Países Bajos</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
-                    Optimización de Nómina, 30% Ruling y Declaración Anual P-Form
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Muchos trabajadores en nómina pagan de más en sus retenciones mensuales de IRPF (<em>Loonheffing</em>) o desconocen que pueden compatibilizar su sueldo con subsidios si no superan ciertos límites. Verificamos tu contrato, tramitamos tu 30% Ruling junto a tu empleador y presentamos tu declaración anual para recuperar deducciones por vivienda o gastos formativos.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">30% Ruling</span>
-                      <span className="text-base font-extrabold font-mono-data text-indigo-600">30% del sueldo libre</span>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Revisión de nóminas</span>
-                      <span className="text-base font-extrabold font-mono-data text-slate-800">100% en español</span>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Deducción hipoteca</span>
-                      <span className="text-base font-extrabold font-mono-data text-emerald-600">Hypotheekrenteaftrek</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="lg:col-span-4 flex flex-col gap-3">
-                  <a
-                    href="#reservar"
-                    className="h-11 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <span>Revisar mi Situación Fiscal</span>
-                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  </a>
-                </div>
               </div>
-            )}
-
-            {selectedAudience === 'familias' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-8 space-y-4">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-md">
-                    <span>🏡</span>
-                    <span>Subsidios Familiares y de Vivienda</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
-                    Huurtoeslag (Alquiler) y Kindgebonden Budget (Hijos a Cargo)
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Si vives de alquiler en Países Bajos y tu renta mensual no supera el límite oficial, el gobierno holandés te ingresa hasta €450 al mes para pagar tu vivienda. Y si tienes hijos menores de 18 años, el <em>Kindgebonden Budget</em> y el <em>Kinderopvangtoeslag</em> (guarderías) suponen un alivio económico directo en tu cuenta bancaria.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Huurtoeslag mensual</span>
-                      <span className="text-base font-extrabold font-mono-data text-emerald-600">Hasta € 450 / mes</span>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Ayuda por hijo</span>
-                      <span className="text-base font-extrabold font-mono-data text-blue-600">Hasta € 115 / mes</span>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="block font-bold text-slate-900">Ingreso automático</span>
-                      <span className="text-base font-extrabold font-mono-data text-slate-800">Día 20 de cada mes</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="lg:col-span-4 flex flex-col gap-3">
-                  <button
-                    onClick={() => {
-                      setSimMode('toeslagen');
-                      const el = document.getElementById('simulador');
-                      el?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="h-11 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <span>Calcular Mis Subsidios Familiares</span>
-                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            ))}
           </div>
+
+          {/* CALLOUT TO CLIENT PORTAL */}
+          <div className="mt-14 text-center">
+            <p className="text-sm text-slate-500 mb-3">
+              ¿Ya eres cliente de RP Gestoría o tienes un trámite en curso?
+            </p>
+            <Link
+              href="/portal"
+              className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4"
+            >
+              <span className="material-symbols-outlined text-[18px]">lock</span>
+              <span>Entra a tu Área de Cliente para consultar el estado de tu expediente</span>
+            </Link>
+          </div>
+
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* SIMULADOR FISCAL INTELIGENTE (M-FORM & SUBSIDIOS TOESLAGEN) */}
+      {/* 5. INTERACTIVE SIMULATORS (M-FORM & TOESLAGEN)                             */}
       {/* ========================================================================= */}
-      <section id="simulador" className="py-20 px-4 sm:px-6 lg:px-12 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-full uppercase tracking-wider">
-              Simulador Fiscal y de Subsidios 2026
+      <section id="calculadora" className="py-20 bg-white border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
+            <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
+              Simuladores Inteligentes
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Calcula al instante cuánto dinero te corresponde
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Calcula tu devolución y subsidios en Holanda
             </h2>
-            <p className="text-sm text-slate-600">
-              Utiliza nuestro motor interactivo para estimar tu devolución de la renta o las ayudas mensuales del gobierno holandés.
+            <p className="text-slate-600 text-base sm:text-lg">
+              Estimaciones instantáneas basadas en las tablas oficiales del Belastingdienst 2026.
             </p>
-
-            {/* Selector de modo del simulador */}
-            <div className="inline-flex p-1 bg-slate-200/80 rounded-xl mt-4">
-              <button
-                onClick={() => setSimMode('mform')}
-                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  simMode === 'mform' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[16px]">calculate</span>
-                <span>Devolución M-Form</span>
-              </button>
-              <button
-                onClick={() => setSimMode('toeslagen')}
-                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  simMode === 'toeslagen' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[16px]">health_and_safety</span>
-                <span>Subsidios Mensuales (Toeslagen)</span>
-              </button>
-            </div>
           </div>
 
-          {/* SIMULADOR 1: M-FORM */}
-          {simMode === 'mform' && (
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
-              <div className="grid grid-cols-1 lg:grid-cols-12">
-                {/* Controles de entrada */}
-                <div className="lg:col-span-7 p-6 sm:p-8 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* SIMULADOR 1: M-FORM REFUND */}
+            <div className="bg-slate-50 rounded-2xl p-7 sm:p-8 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[22px]">calculate</span>
+                    </div>
+                    <div>
+                      <h3 className="font-heading font-bold text-lg text-slate-900">Simulador Devolución M-Form</h3>
+                      <p className="text-xs text-slate-500">Para tu primer año de mudanza a Holanda</p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+                    Box 1 Fiscal
+                  </span>
+                </div>
+
+                <div className="space-y-6">
+                  {/* SLIDER MESES */}
                   <div>
-                    <div className="flex justify-between items-center text-xs font-bold text-slate-700 mb-2">
-                      <span>Meses resididos en Países Bajos durante el primer año:</span>
-                      <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono-data text-xs border border-blue-200">
-                        {monthsInNL} meses
-                      </span>
+                    <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                      <span>Meses vividos en Holanda este año:</span>
+                      <span className="text-blue-600 font-extrabold">{monthsInNL} meses</span>
                     </div>
                     <input
                       type="range"
                       min="1"
                       max="11"
                       value={monthsInNL}
-                      onChange={(e) => setMonthsInNL(parseInt(e.target.value))}
-                      className="w-full accent-blue-600 h-2.5 bg-slate-100 rounded-lg cursor-pointer"
+                      onChange={(e) => setMonthsInNL(Number(e.target.value))}
+                      className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />
-                    <div className="flex justify-between text-[11px] text-slate-400 mt-1 font-mono-data">
-                      <span>1 mes</span>
-                      <span>6 meses</span>
-                      <span>11 meses (año fraccionado)</span>
-                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Salario bruto percibido en NL (€):
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-slate-400 font-mono-data text-sm">€</span>
-                        <input
-                          type="number"
-                          value={grossIncome}
-                          onChange={(e) => setGrossIncome(Math.max(0, parseInt(e.target.value) || 0))}
-                          className="w-full h-11 pl-7 pr-3 border border-slate-200 rounded-xl bg-slate-50 font-mono-data text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Impuesto IRPF retenido (Loonheffing) (€):
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-slate-400 font-mono-data text-sm">€</span>
-                        <input
-                          type="number"
-                          value={withheldTax}
-                          onChange={(e) => setWithheldTax(Math.max(0, parseInt(e.target.value) || 0))}
-                          className="w-full h-11 pl-7 pr-3 border border-slate-200 rounded-xl bg-slate-50 font-mono-data text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Toggle de gastos de mudanza */}
-                  <label className="p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-blue-600 text-[20px]">local_shipping</span>
-                      <div className="text-left">
-                        <span className="font-bold text-xs text-slate-900 block">¿Tuviste gastos por mudanza o viaje a NL?</span>
-                        <span className="text-[11px] text-slate-500">Aplica deducción de relocalización de hasta €1.450</span>
-                      </div>
+                  {/* SLIDER INGRESOS BRUTOS */}
+                  <div>
+                    <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                      <span>Ingreso bruto percibido en Holanda:</span>
+                      <span className="text-blue-600 font-extrabold">{grossIncome.toLocaleString()} €</span>
                     </div>
                     <input
-                      type="checkbox"
-                      checked={hasRelocationExpenses}
-                      onChange={(e) => setHasRelocationExpenses(e.target.checked)}
-                      className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
+                      type="range"
+                      min="10000"
+                      max="90000"
+                      step="1000"
+                      value={grossIncome}
+                      onChange={(e) => setGrossIncome(Number(e.target.value))}
+                      className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />
+                  </div>
+
+                  {/* SLIDER IRPF RETENIDO */}
+                  <div>
+                    <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                      <span>Impuestos retenidos en nómina (Loonheffing):</span>
+                      <span className="text-blue-600 font-extrabold">{withheldTax.toLocaleString()} €</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="2000"
+                      max="35000"
+                      step="500"
+                      value={withheldTax}
+                      onChange={(e) => setWithheldTax(Number(e.target.value))}
+                      className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                    />
+                  </div>
+
+                  {/* CHECKBOX GASTOS MUDANZA */}
+                  <label className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={hasRelocation}
+                      onChange={(e) => setHasRelocation(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded accent-blue-600"
+                    />
+                    <span className="text-xs font-medium text-slate-700">
+                      Incluir deducción estándar de mudanza y traslado internacional (-1.450 €)
+                    </span>
                   </label>
-
-                  <div className="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 text-xs text-slate-600 flex items-start gap-2.5">
-                    <span className="material-symbols-outlined text-blue-600 text-base shrink-0 mt-0.5">info</span>
-                    <span>
-                      Al haber trabajado solo una parte del año, tu tramo impositivo real es inferior al que tu empresa calculó mensualmente. La diferencia te pertenece y la Belastingdienst te la devolverá.
-                    </span>
-                  </div>
-                </div>
-
-                {/* Resultado de la estimación */}
-                <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
-                  <div className="space-y-4 relative z-10">
-                    <span className="px-2.5 py-1 bg-blue-500/20 text-blue-300 font-mono-data text-[10px] font-bold rounded-full border border-blue-400/30">
-                      ESTIMACIÓN M-FORM 2026
-                    </span>
-
-                    <div>
-                      <span className="text-xs text-slate-300 font-medium block">Saldo estimado a tu favor:</span>
-                      <div className="text-4xl sm:text-5xl font-extrabold font-mono-data text-emerald-400 tracking-tight mt-1">
-                        € {calculateRefund().toLocaleString('es-ES')}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 pt-2 text-xs text-slate-300 border-t border-slate-800">
-                      <div className="flex justify-between">
-                        <span>Retenciones pagadas en nómina:</span>
-                        <span className="font-mono-data font-bold text-white">€ {withheldTax.toLocaleString('es-ES')}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Impuesto real legal anual:</span>
-                        <span className="font-mono-data font-bold text-slate-400">
-                          € {Math.max(0, withheldTax - calculateRefund()).toLocaleString('es-ES')}
-                        </span>
-                      </div>
-                      {hasRelocationExpenses && (
-                        <div className="flex justify-between text-emerald-300 text-[11px]">
-                          <span>Deducción mudanza internacional:</span>
-                          <span className="font-mono-data font-bold">-€ 1.450</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="pt-6 relative z-10 space-y-2.5">
-                    <a
-                      href="#reservar"
-                      className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-md transition-all"
-                    >
-                      <span className="material-symbols-outlined text-[17px]">verified</span>
-                      <span>Tramitar mi M-Form con Garantía</span>
-                    </a>
-                    <p className="text-[10px] text-center text-slate-400">
-                      Tarifa fija oficial: € 180 · Sin comisiones ocultas sobre tu devolución.
-                    </p>
-                  </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* SIMULADOR 2: SUBSIDIOS TOESLAGEN */}
-          {simMode === 'toeslagen' && (
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
-              <div className="grid grid-cols-1 lg:grid-cols-12">
-                {/* Controles de entrada */}
-                <div className="lg:col-span-7 p-6 sm:p-8 space-y-6">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Ingresos brutos anuales estimados (€):
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-slate-400 font-mono-data text-sm">€</span>
-                      <input
-                        type="number"
-                        value={toeslagIncome}
-                        onChange={(e) => setToeslagIncome(Math.max(0, parseInt(e.target.value) || 0))}
-                        className="w-full h-11 pl-7 pr-3 border border-slate-200 rounded-xl bg-slate-50 font-mono-data text-sm font-bold text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
-                      />
+              {/* RESULTADO M-FORM */}
+              <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <span className="text-xs text-slate-500 font-semibold block">Estimación devolución a tu favor:</span>
+                  <span className="text-3xl font-heading font-black text-emerald-600">
+                    + {calculateMFormRefund().toLocaleString()} €
+                  </span>
+                </div>
+                <Link
+                  href="#reservar"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs shadow-md transition-colors text-center"
+                >
+                  Reclamar mi devolución
+                </Link>
+              </div>
+
+            </div>
+
+            {/* SIMULADOR 2: SUBSIDIOS TOESLAGEN */}
+            <div className="bg-slate-50 rounded-2xl p-7 sm:p-8 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[22px]">payments</span>
                     </div>
-                    <span className="text-[11px] text-slate-400 mt-1 block">
-                      Límite individual máximo: aprox. € 38.500 / año
-                    </span>
+                    <div>
+                      <h3 className="font-heading font-bold text-lg text-slate-900">Calculadora Subsidios Toeslagen</h3>
+                      <p className="text-xs text-slate-500">Zorgtoeslag (Salud) & Huurtoeslag (Alquiler)</p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-md bg-indigo-100 text-indigo-700 text-xs font-bold">
+                    Ayuda Mensual
+                  </span>
+                </div>
+
+                <div className="space-y-6">
+                  {/* SLIDER INGRESOS ANUALES */}
+                  <div>
+                    <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                      <span>Ingreso anual bruto estimado:</span>
+                      <span className="text-indigo-600 font-extrabold">{toeslagIncome.toLocaleString()} € / año</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="12000"
+                      max="55000"
+                      step="1000"
+                      value={toeslagIncome}
+                      onChange={(e) => setToeslagIncome(Number(e.target.value))}
+                      className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className="p-3 rounded-xl border border-slate-200 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer">
+                  {/* SLIDER ALQUILER */}
+                  <div>
+                    <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                      <span>Alquiler mensual de tu vivienda:</span>
+                      <span className="text-indigo-600 font-extrabold">{monthlyRent} € / mes</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="400"
+                      max="1400"
+                      step="25"
+                      value={monthlyRent}
+                      onChange={(e) => setMonthlyRent(Number(e.target.value))}
+                      className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                    />
+                  </div>
+
+                  {/* CHECKBOXES SITUACION */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isCouple}
                         onChange={(e) => setIsCouple(e.target.checked)}
-                        className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
+                        className="w-4 h-4 text-indigo-600 rounded accent-indigo-600"
                       />
-                      <span className="font-bold text-xs text-slate-800">Tengo pareja fiscal en NL</span>
+                      <span className="text-xs font-medium text-slate-700">Con pareja fiscal</span>
                     </label>
 
-                    <label className="p-3 rounded-xl border border-slate-200 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer">
+                    <label className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={hasRent}
-                        onChange={(e) => setHasRent(e.target.checked)}
-                        className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
+                        checked={hasChildren}
+                        onChange={(e) => setHasChildren(e.target.checked)}
+                        className="w-4 h-4 text-indigo-600 rounded accent-indigo-600"
                       />
-                      <span className="font-bold text-xs text-slate-800">Vivo de alquiler en NL</span>
+                      <span className="text-xs font-medium text-slate-700">Con hijos menores</span>
                     </label>
                   </div>
+                </div>
+              </div>
 
-                  {hasRent && (
-                    <div>
-                      <div className="flex justify-between items-center text-xs font-bold text-slate-700 mb-2">
-                        <span>Alquiler básico mensual (Kale huur):</span>
-                        <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono-data text-xs border border-emerald-200">
-                          € {monthlyRent} / mes
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min="400"
-                        max="900"
-                        step="10"
-                        value={monthlyRent}
-                        onChange={(e) => setMonthlyRent(parseInt(e.target.value))}
-                        className="w-full accent-emerald-600 h-2.5 bg-slate-100 rounded-lg cursor-pointer"
-                      />
-                      <div className="flex justify-between text-[11px] text-slate-400 mt-1 font-mono-data">
-                        <span>€ 400</span>
-                        <span>Límite legal: € 880</span>
-                      </div>
-                    </div>
-                  )}
+              {/* RESULTADO TOESLAGEN */}
+              <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <span className="text-xs text-slate-500 font-semibold block">Total subsidios mensuales:</span>
+                  <span className="text-3xl font-heading font-black text-indigo-600">
+                    {totalMonthlyAid} € <span className="text-xs font-normal text-slate-500">/ mes</span>
+                  </span>
+                </div>
+                <Link
+                  href="#reservar"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-bold text-xs shadow-md transition-colors text-center"
+                >
+                  Solicitar mis subsidios
+                </Link>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 6. SOBRE NOSOTROS (ABOUT US & TEAM SHOWCASE)                               */}
+      {/* ========================================================================= */}
+      <section id="nosotros" className="py-24 bg-[#F8FAFC]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* LEFT: REAL PHOTOGRAPHY COMPOSITION */}
+            <div className="lg:col-span-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="relative h-64 rounded-2xl overflow-hidden shadow-lg border-2 border-white group">
+                    <Image 
+                      src="/photo-6.png" 
+                      alt="Asesoría joven en Holanda" 
+                      fill 
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm text-center">
+                    <p className="font-heading font-extrabold text-2xl text-blue-600">+1.400</p>
+                    <p className="text-xs text-slate-600 font-medium">Expedientes tramitados con éxito</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-6">
+                  <div className="bg-blue-600 p-5 rounded-2xl text-white shadow-md text-center">
+                    <p className="font-heading font-extrabold text-2xl">100%</p>
+                    <p className="text-xs text-blue-100 font-medium">Sin cartas en holandés</p>
+                  </div>
+                  <div className="relative h-64 rounded-2xl overflow-hidden shadow-lg border-2 border-white group">
+                    <Image 
+                      src="/photo-8.png" 
+                      alt="Consultas y reuniones" 
+                      fill 
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: STORY & VALUES */}
+            <div className="lg:col-span-6 space-y-6">
+              
+              <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
+                Sobre Nosotros
+              </span>
+
+              <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                Sabemos lo que es llegar a Holanda y no entender las cartas del Belastingdienst
+              </h2>
+
+              <p className="text-slate-600 text-base leading-relaxed">
+                <strong>RP Gestoría & Asesoría</strong> nació con un propósito claro: eliminar las barreras burocráticas y el estrés que sufren los jóvenes, españoles, latinos e internacionales al empezar una nueva vida en Países Bajos.
+              </p>
+
+              <p className="text-slate-600 text-base leading-relaxed">
+                Somos un equipo joven, moderno y cercano. No creemos en los despachos antiguos llenos de carpetas polvorientas ni en el lenguaje jurídico incomprensible. Gestionamos tus trámites con la máxima agilidad digital, claridad y un trato humano inmejorable.
+              </p>
+
+              {/* PILLARS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="flex items-start gap-3 bg-white p-4 rounded-xl border border-slate-200/70 shadow-sm">
+                  <span className="material-symbols-outlined text-blue-600 text-[24px]">chat</span>
+                  <div>
+                    <h4 className="font-heading font-bold text-sm text-slate-900">Trato de Tú a Tú</h4>
+                    <p className="text-xs text-slate-500">Explicaciones claras y directas en tu idioma.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 bg-white p-4 rounded-xl border border-slate-200/70 shadow-sm">
+                  <span className="material-symbols-outlined text-blue-600 text-[24px]">speed</span>
+                  <div>
+                    <h4 className="font-heading font-bold text-sm text-slate-900">Rapidez Digital</h4>
+                    <p className="text-xs text-slate-500">Firma electrónica y seguimiento online 24/7.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 7. RESERVA DE CITA ONLINE (INTERACTIVE BOOKING)                           */}
+      {/* ========================================================================= */}
+      <section id="reservar" className="py-24 bg-white border-y border-slate-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
+            <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
+              Agenda tu Sesión
+            </span>
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Reserva tu cita con tu asesor asignado
+            </h2>
+            <p className="text-slate-600 text-base">
+              Elige el día, la hora y el formato que mejor te convenga (Google Meet, teléfono o presencial).
+            </p>
+          </div>
+
+          <div className="bg-slate-50 rounded-3xl p-8 sm:p-12 border border-slate-200/90 shadow-xl">
+            {bookSuccess ? (
+              <div className="text-center py-12 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <span className="material-symbols-outlined text-[36px]">check_circle</span>
+                </div>
+                <h3 className="font-heading font-extrabold text-2xl text-slate-900">
+                  ¡Cita reservada con éxito!
+                </h3>
+                <p className="text-slate-600 max-w-md mx-auto text-sm">
+                  Hemos enviado un correo de confirmación a <strong>{bookEmail}</strong> con el enlace de la reunión y los detalles de tu asesor.
+                </p>
+                <div className="pt-4">
+                  <button
+                    onClick={() => {
+                      setBookSuccess(false);
+                      setBookName('');
+                      setBookEmail('');
+                      setBookPhone('');
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-blue-600 transition-colors"
+                  >
+                    Programar otra cita
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleBookingSubmit} className="space-y-6">
+                
+                {/* MODALIDAD */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                    1. Formato de la consulta
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      { id: 'meet', label: 'Videollamada Google Meet', icon: 'videocam' },
+                      { id: 'phone', label: 'Llamada telefónica', icon: 'call' },
+                      { id: 'office', label: 'Presencial (Oficina NL)', icon: 'apartment' },
+                    ].map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setBookModality(m.id as any)}
+                        className={`p-4 rounded-xl border flex items-center gap-3 text-left transition-all ${
+                          bookModality === m.id
+                            ? 'border-blue-600 bg-blue-50/80 text-blue-900 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-blue-600 text-[22px]">{m.icon}</span>
+                        <span className="text-xs font-bold">{m.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SERVICIO & FECHA/HORA */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      2. Trámite principal
+                    </label>
+                    <select
+                      value={bookService}
+                      onChange={(e) => setBookService(e.target.value)}
+                      className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
+                    >
+                      <option value="Declaración de la Renta (M-Form)">Declaración de la Renta (M-Form)</option>
+                      <option value="DigiD & Claves de Acceso">DigiD & Claves de Acceso</option>
+                      <option value="Zorgtoeslag (Subsidio de Salud)">Zorgtoeslag (Subsidio de Salud)</option>
+                      <option value="Seguro Médico Holandés">Seguro Médico Holandés</option>
+                      <option value="Formulario U1">Formulario U1</option>
+                      <option value="Prestación por Desempleo WW">Prestación por Desempleo WW</option>
+                      <option value="Autónomos / ZZP">Autónomos / ZZP</option>
+                      <option value="Consulta Privada General">Consulta Privada General</option>
+                      <option value="Importación de Vehículos">Importación de Vehículos</option>
+                    </select>
+                  </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Número de hijos menores de 18 años a cargo:
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      3. Fecha deseada
                     </label>
-                    <div className="flex items-center gap-2">
-                      {[0, 1, 2, 3].map((num) => (
-                        <button
-                          key={num}
-                          type="button"
-                          onClick={() => setChildrenCount(num)}
-                          className={`w-12 h-10 rounded-lg border font-bold text-xs transition-all ${
-                            childrenCount === num
-                              ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
-                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                          }`}
-                        >
-                          {num}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Resultado Subsidios */}
-                <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 text-white p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
-                  <div className="space-y-4 relative z-10">
-                    <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 font-mono-data text-[10px] font-bold rounded-full border border-emerald-400/30">
-                      SUBSIDIOS MENSUALES TOESLAGEN
-                    </span>
-
-                    <div>
-                      <span className="text-xs text-slate-300 font-medium block">Total abono mensual en tu cuenta:</span>
-                      <div className="text-4xl sm:text-5xl font-extrabold font-mono-data text-emerald-400 tracking-tight mt-1">
-                        € {totalMonthlySubsidies.toLocaleString('es-ES')} <span className="text-lg font-normal text-slate-300">/ mes</span>
-                      </div>
-                      <span className="text-xs font-mono-data text-slate-300 block mt-1">
-                        Equivale a <strong>€ {totalAnnualSubsidies.toLocaleString('es-ES')}</strong> al año
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 pt-2 text-xs text-slate-300 border-t border-slate-800">
-                      <div className="flex justify-between">
-                        <span>Zorgtoeslag (Seguro médico):</span>
-                        <span className="font-mono-data font-bold text-emerald-400">€ {calculateZorgtoeslag()} / mes</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Huurtoeslag (Alquiler):</span>
-                        <span className="font-mono-data font-bold text-emerald-400">€ {calculateHuurtoeslag()} / mes</span>
-                      </div>
-                      {childrenCount > 0 && (
-                        <div className="flex justify-between">
-                          <span>Kindgebonden Budget (Hijos):</span>
-                          <span className="font-mono-data font-bold text-emerald-400">€ {calculateKindtoeslag()} / mes</span>
-                        </div>
-                      )}
-                    </div>
+                    <input
+                      type="date"
+                      value={bookDate}
+                      onChange={(e) => setBookDate(e.target.value)}
+                      className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
+                      required
+                    />
                   </div>
 
-                  <div className="pt-6 relative z-10 space-y-2.5">
-                    <a
-                      href="#reservar"
-                      className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-md transition-all"
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      4. Hora
+                    </label>
+                    <select
+                      value={bookTime}
+                      onChange={(e) => setBookTime(e.target.value)}
+                      className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
                     >
-                      <span className="material-symbols-outlined text-[17px]">send</span>
-                      <span>Solicitar Mis Subsidios Oficiales</span>
-                    </a>
-                    <p className="text-[10px] text-center text-slate-400">
-                      Gestión única: € 85 · Posibilidad de cobro retroactivo de meses pasados.
-                    </p>
+                      <option value="09:30">09:30 AM</option>
+                      <option value="11:00">11:00 AM</option>
+                      <option value="12:30">12:30 PM</option>
+                      <option value="15:00">15:00 PM</option>
+                      <option value="16:30">16:30 PM</option>
+                      <option value="18:00">18:00 PM</option>
+                    </select>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+
+                {/* DATOS PERSONALES */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      Tu nombre y apellidos
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Sofía Morales"
+                      value={bookName}
+                      onChange={(e) => setBookName(e.target.value)}
+                      className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      Correo electrónico
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="sofia@ejemplo.com"
+                      value={bookEmail}
+                      onChange={(e) => setBookEmail(e.target.value)}
+                      className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      Teléfono / WhatsApp
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+31 6 12345678"
+                      value={bookPhone}
+                      onChange={(e) => setBookPhone(e.target.value)}
+                      className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* SUBMIT BUTTON */}
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    disabled={bookLoading}
+                    className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-heading font-extrabold text-base tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2"
+                  >
+                    {bookLoading ? (
+                      <span>Confirmando disponibilidad...</span>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[20px]">check</span>
+                        <span>Confirmar y Reservar Cita</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            )}
+          </div>
+
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* CASOS REALES Y TESTIMONIOS (SOCIAL PROOF CON CARAS Y RESULTADOS) */}
+      {/* 8. PREGUNTAS FRECUENTES (FAQ)                                             */}
       {/* ========================================================================= */}
-      <section id="testimonios" className="py-20 bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-full uppercase tracking-wider">
-              Casos Reales y Opiniones
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Así ayudamos a la comunidad en Países Bajos
-            </h2>
-            <p className="text-sm text-slate-600">
-              Historias reales de personas que confiaron en nosotros para su fiscalidad, subsidios y trámites.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Testimonio 1 */}
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex text-amber-400 text-xs">
-                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                  </div>
-                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded font-mono-data">
-                    +€ 2.890 devueltos
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 italic leading-relaxed">
-                  &quot;Llegué a Ámsterdam a mitad de año y no tenía ni idea de qué era el M-Form. NexusGest me aplicó todas las deducciones por mudanza y en menos de un mes tenía el dinero en mi cuenta holandesa.&quot;
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-3 border-t border-slate-200">
-                <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center font-mono-data">
-                  CM
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs text-slate-900">Carlos Mendoza Ruiz</h4>
-                  <p className="text-[11px] text-slate-500">Ámsterdam · Ingeniero Software</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Testimonio 2 */}
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex text-amber-400 text-xs">
-                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                  </div>
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded font-mono-data">
-                    € 154 / mes cobrados
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 italic leading-relaxed">
-                  &quot;No sabía que tenía derecho al subsidio de salud holandés. Me tramitaron el DigiD y el Zorgtoeslag con efecto retroactivo. Ahora cobro 154 euros todos los meses puntualmente.&quot;
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-3 border-t border-slate-200">
-                <div className="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center font-mono-data">
-                  MP
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs text-slate-900">Maria Popescu</h4>
-                  <p className="text-[11px] text-slate-500">Eindhoven · Sector Sanitario</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Testimonio 3 */}
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex text-amber-400 text-xs">
-                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                  </div>
-                  <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded font-mono-data">
-                    Alta KvK en 24h
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 italic leading-relaxed">
-                  &quot;Hacerse autónomo en Holanda da vértigo por el idioma y el BTW trimestral. Con NexusGest tengo todas mis facturas organizadas y ellos presentan el IVA sin que yo tenga que preocuparme.&quot;
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-3 border-t border-slate-200">
-                <div className="w-9 h-9 rounded-full bg-amber-600 text-white font-bold text-xs flex items-center justify-center font-mono-data">
-                  LV
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs text-slate-900">Lars Van Dijk</h4>
-                  <p className="text-[11px] text-slate-500">Rotterdam · Consultor ZZP</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Testimonio 4 */}
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex text-amber-400 text-xs">
-                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                  </div>
-                  <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded font-mono-data">
-                    € 380 / mes alquiler
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 italic leading-relaxed">
-                  &quot;La Belastingdienst me denegó el subsidio de alquiler por un error en la dirección del contrato. En NexusGest redactaron un recurso oficial en holandés y me lo concedieron con atrasos.&quot;
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-3 border-t border-slate-200">
-                <div className="w-9 h-9 rounded-full bg-purple-600 text-white font-bold text-xs flex items-center justify-center font-mono-data">
-                  EM
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs text-slate-900">Elena Morales Castillo</h4>
-                  <p className="text-[11px] text-slate-500">Utrecht · Diseñadora Gráfica</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* CÓMO FUNCIONA: 3 PASOS TRANSPARENTES */}
-      {/* ========================================================================= */}
-      <section id="como-funciona" className="py-20 bg-slate-50 border-b border-slate-200 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-full uppercase tracking-wider">
-              Proceso 100% Digital y Seguro
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
-              ¿Cómo gestionamos tu expediente?
-            </h2>
-            <p className="text-sm text-slate-600">
-              Olvídate de desplazamientos, citas interminables en holandés o cartas sin responder.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* Paso 1 */}
-            <div className="p-8 bg-white rounded-2xl border border-slate-200 shadow-sm relative space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md">
-                1
-              </div>
-              <h3 className="font-bold text-base text-slate-900">Envías tus datos o subes tu carta</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Rellenas nuestro formulario web o le haces una foto a la carta que recibiste en el buzón. Nuestro portal privado procesa y clasifica tus documentos con seguridad bancaria.
-              </p>
-              <div className="text-[11px] font-semibold text-blue-600 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[15px]">upload_file</span>
-                <span>Sin papeleo físico · 2 minutos</span>
-              </div>
-            </div>
-
-            {/* Paso 2 */}
-            <div className="p-8 bg-white rounded-2xl border border-slate-200 shadow-sm relative space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md">
-                2
-              </div>
-              <h3 className="font-bold text-base text-slate-900">Optimización por Gestor Colegiado</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Un asesor fiscal asignado revisa cada casilla de tu expediente, aplica las deducciones máximas permitidas por la ley neerlandesa y te envía el borrador en español antes de presentarlo.
-              </p>
-              <div className="text-[11px] font-semibold text-indigo-600 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[15px]">verified_user</span>
-                <span>Cero errores · Máxima deducción</span>
-              </div>
-            </div>
-
-            {/* Paso 3 */}
-            <div className="p-8 bg-white rounded-2xl border border-slate-200 shadow-sm relative space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md">
-                3
-              </div>
-              <h3 className="font-bold text-base text-slate-900">Presentación y Dinero en tu Cuenta</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Registramos formalmente la solicitud ante la Belastingdienst o KvK con nuestro certificado autorizado. Recibes la confirmación oficial y el dinero se abona directamente en tu IBAN.
-              </p>
-              <div className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[15px]">account_balance</span>
-                <span>Ingreso directo en tu banco</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* TARIFAS CLARAS Y TRANSPARENTES (SIN SORPRESAS) */}
-      {/* ========================================================================= */}
-      <section className="py-20 bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-6xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="px-3 py-1 bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold rounded-full uppercase tracking-wider">
-              Precios Transparentes
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Tarifas fijas, sin comisiones ocultas
-            </h2>
-            <p className="text-sm text-slate-600">
-              No cobramos porcentajes de tu dinero devuelto. El 100% de la devolución de la Belastingdienst es para ti.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Tarifa 1: Subsidios */}
-            <div className="p-8 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-6">
-              <div>
-                <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">Subsidios del Gobierno</span>
-                <h3 className="text-xl font-bold text-slate-900 mt-1">Pack Toeslagen</h3>
-                <p className="text-xs text-slate-600 mt-2">
-                  Gestión integral de Zorgtoeslag, Huurtoeslag y activación de DigiD oficial.
-                </p>
-                <div className="mt-4 pb-4 border-b border-slate-200">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-extrabold font-mono-data text-slate-900">€ 85</span>
-                    <span className="text-xs text-slate-500">/ trámite único</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400">Incluye cálculo retroactivo de meses pasados</span>
-                </div>
-                <ul className="mt-4 space-y-2.5 text-xs text-slate-600">
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-600 text-base">check</span>
-                    <span>Activación y soporte con carta DigiD</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-600 text-base">check</span>
-                    <span>Presentación formal ante Belastingdienst</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-600 text-base">check</span>
-                    <span>Vinculación de cuenta bancaria para abonos</span>
-                  </li>
-                </ul>
-              </div>
-              <a
-                href="#reservar"
-                className="w-full h-10 border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <span>Solicitar Pack Toeslagen</span>
-              </a>
-            </div>
-
-            {/* Tarifa 2: M-Form (Destacada) */}
-            <div className="p-8 bg-gradient-to-b from-blue-900 to-indigo-950 text-white rounded-2xl border-2 border-blue-500 shadow-xl flex flex-col justify-between space-y-6 relative">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] font-extrabold uppercase rounded-full shadow-sm tracking-wider">
-                MÁS POPULAR ENTRE EXPATS
-              </div>
-              <div>
-                <span className="text-xs font-bold uppercase text-blue-300 tracking-wider">Declaración de la Renta</span>
-                <h3 className="text-xl font-bold text-white mt-1">M-Form Primer Año</h3>
-                <p className="text-xs text-slate-300 mt-2">
-                  Declaración fiscal obligatoria para el año en que te registraste en Países Bajos.
-                </p>
-                <div className="mt-4 pb-4 border-b border-indigo-800">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-extrabold font-mono-data text-emerald-400">€ 180</span>
-                    <span className="text-xs text-slate-300">/ tarifa fija</span>
-                  </div>
-                  <span className="text-[10px] text-blue-200">Garantía total de devolución legal máxima</span>
-                </div>
-                <ul className="mt-4 space-y-2.5 text-xs text-slate-200">
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-400 text-base">check</span>
-                    <span>Deducción por mudanza y gastos de relocalización</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-400 text-base">check</span>
-                    <span>Revisión de doble imposición internacional</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-400 text-base">check</span>
-                    <span>Presentación telemática oficial con acuse de recibo</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-400 text-base">check</span>
-                    <span>El 100% de la devolución de Hacienda es para ti</span>
-                  </li>
-                </ul>
-              </div>
-              <a
-                href="#reservar"
-                className="w-full h-11 bg-blue-500 hover:bg-blue-400 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md transition-colors"
-              >
-                <span>Presentar mi M-Form</span>
-                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-              </a>
-            </div>
-
-            {/* Tarifa 3: ZZP */}
-            <div className="p-8 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-6">
-              <div>
-                <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">Freelancers y Negocios</span>
-                <h3 className="text-xl font-bold text-slate-900 mt-1">Alta y Gestión ZZP</h3>
-                <p className="text-xs text-slate-600 mt-2">
-                  Inscripción mercantil en KvK, BTW-nummer y contabilidad fiscal trimestral.
-                </p>
-                <div className="mt-4 pb-4 border-b border-slate-200">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-extrabold font-mono-data text-slate-900">€ 250</span>
-                    <span className="text-xs text-slate-500">/ alta completa</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400">O mantenimiento mensual desde € 65/mes</span>
-                </div>
-                <ul className="mt-4 space-y-2.5 text-xs text-slate-600">
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-600 text-base">check</span>
-                    <span>Preparación previa y registro presencial KvK</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-600 text-base">check</span>
-                    <span>Alta de IVA ante la Belastingdienst</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-600 text-base">check</span>
-                    <span>Plantilla oficial de facturas con 21% BTW</span>
-                  </li>
-                </ul>
-              </div>
-              <a
-                href="#reservar"
-                className="w-full h-10 border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <span>Solicitar Asesoría ZZP</span>
-              </a>
-            </div>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 text-center sm:text-left">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-blue-600">credit_card</span>
-              <span>
-                Todos los pagos se realizan mediante <strong>iDEAL oficial holandés</strong>, tarjeta o transferencia bancaria, con factura oficial deducible.
-              </span>
-            </div>
-            <span className="font-mono-data text-[11px] font-bold text-slate-800">BTW 21% Desglosado</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* PREGUNTAS FRECUENTES INTERACTIVAS (FAQ) */}
-      {/* ========================================================================= */}
-      <section id="faq" className="py-20 bg-slate-50 border-b border-slate-200 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-4xl mx-auto space-y-10">
-          <div className="text-center space-y-3">
-            <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-full uppercase tracking-wider">
+      <section id="faq" className="py-24 bg-[#F8FAFC]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center mb-14 space-y-3">
+            <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
               Resolvemos tus Dudas
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Preguntas Frecuentes de Residentes en Países Bajos
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Preguntas frecuentes sobre trámites en Holanda
             </h2>
+            <p className="text-slate-600 text-base">
+              Todo lo que necesitas saber de forma clara, directa y sin lenguaje enrevesado.
+            </p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[
               {
-                q: '¿Qué es exactamente el formulario M-Form y por qué casi siempre sale a devolver?',
-                a: 'El formulario M-Form (M-biljet) es la declaración especial de la renta para personas que no vivieron en Países Bajos durante todo el año calendario (generalmente el primer año de mudanza). Como tu empleador te retuvo impuestos asumiendo que trabajarías los 12 meses completos, tu tipo impositivo real es mucho menor, lo que genera habitualmente devoluciones entre €1.500 y €3.000.',
+                q: '¿Qué es el formulario M-Form y por qué suele salir una devolución alta?',
+                a: 'El M-Form (M-biljet) es la declaración de la renta para el año en que te mudas a vivir o trabajar en Países Bajos. Durante ese primer año, las empresas suelen retenerte impuestos como si fueras a residir todo el año natural. Al hacer el M-Form y aplicar deducciones por mudanza y tramos proporcionales, el Belastingdienst casi siempre te devuelve una cantidad significativa de dinero (de media 800€ a 2.400€).',
               },
               {
-                q: '¿Puedo solicitar el subsidio Zorgtoeslag con carácter retroactivo?',
-                a: 'Sí, absolutamente. La ley holandesa permite solicitar el Zorgtoeslag con carácter retroactivo para todo el año en curso y hasta el 1 de septiembre del año siguiente. Si no lo habías pedido, podemos recuperar todas las mensualidades acumuladas que te correspondían.',
+                q: '¿Cuánto tarda en tramitarse el DigiD y cómo me ayudáis si no hablo holandés?',
+                a: 'El código de activación del DigiD se envía por carta postal a tu dirección empadronada en un plazo de 3 a 5 días hábiles. Nosotros te guiamos en la solicitud online, configuramos tu aplicación en el móvil y nos aseguramos de que puedas acceder sin errores a Belastingdienst, MijnOverheid y tu seguro de salud.',
               },
               {
-                q: '¿Necesito tener ya mi DigiD activado para que me gestionéis los trámites?',
-                a: 'No es imprescindible. Podemos tramitar solicitudes oficiales en tu nombre mediante autorización fiscal autorizada, o bien podemos ayudarte a solicitar y activar tu DigiD desde cero resolviendo la carta postal con el código de activación.',
+                q: '¿Puedo solicitar el subsidio de salud (Zorgtoeslag) con carácter retroactivo?',
+                a: 'Sí. Puedes solicitar el Zorgtoeslag con efecto retroactivo para todo el año fiscal en curso y, si estás dentro del plazo legal (hasta el 1 de septiembre del año siguiente), también para el año anterior. Si cumples los requisitos de ingresos, recibirás el pago acumulado de golpe.',
               },
               {
-                q: '¿Qué diferencia hay entre hacerlo con NexusGest o intentar hacerlo por mi cuenta?',
-                a: 'Los formularios oficiales de la Belastingdienst están en holandés técnico y cualquier error en una casilla puede retrasar meses tu devolución o derivar en sanciones. En NexusGest te atendemos 100% en español, garantizamos la máxima deducción legal posible y resolvemos cualquier requerimiento posterior sin coste adicional.',
+                q: '¿Es obligatorio contratar un seguro médico holandés si ya tengo la Tarjeta Sanitaria Europea?',
+                a: 'Sí. En cuanto empiezas a trabajar en los Países Bajos o fijas tu residencia habitual, la ley holandesa exige contratar una póliza de seguro médico básica (Basisverzekering) en un plazo máximo de 4 meses desde tu llegada. De lo contrario, el CAK te impondrá multas elevadas.',
               },
               {
-                q: '¿Cuánto tiempo tarda la Belastingdienst en ingresar el dinero de la devolución?',
-                a: 'Una vez presentado el M-Form por nuestra gestoría con certificado oficial, la Belastingdienst suele emitir la resolución provisional (Voorlopige aanslag) en un plazo de entre 3 y 8 semanas, ingresando el importe directamente en el número de cuenta bancaria (IBAN) que nos hayas facilitado.',
+                q: '¿Cómo funciona el Área de Cliente de RP Gestoría?',
+                a: 'Una vez contratas un trámite, tienes acceso privado a tu portal. Allí puedes subir fotos de tus cartas o nóminas, ver el estado de tu expediente en tiempo real, descargar tus borradores oficiales y hablar 24/7 con nuestro asistente inteligente o tu asesor.',
               },
               {
-                q: '¿Cómo se pagan vuestros servicios y cómo accedo a mi documentación?',
-                a: 'El pago se realiza cómodamente a través de la pasarela oficial iDEAL (con bancos holandeses como ING, ABN AMRO, Rabobank o Bunq), tarjeta de crédito o transferencia. Tras contratar cualquier servicio, tienes acceso permanente a tu portal "Mijn NexusGest" para ver el estado de tu trámite, tus facturas y tus documentos.',
+                q: '¿Cuánto tardáis en presentar mi trámite ante las autoridades?',
+                a: 'Una vez recibida la documentación completa, presentamos tu solicitud formal ante Belastingdienst, UWV o Gemeente en un plazo máximo de 24 a 48 horas laborables.',
               },
             ].map((faq, idx) => (
               <div
                 key={idx}
-                className="bg-white rounded-xl border border-slate-200 overflow-hidden transition-all shadow-2xs"
+                className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden transition-all shadow-sm"
               >
                 <button
-                  type="button"
-                  onClick={() => toggleFaq(idx)}
-                  className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-slate-900 hover:text-blue-600 transition-colors"
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  className="w-full text-left px-6 py-5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
                 >
-                  <span>{faq.q}</span>
-                  <span className="material-symbols-outlined text-[20px] text-slate-400 shrink-0">
-                    {openFaq === idx ? 'expand_less' : 'expand_more'}
+                  <span className="font-heading font-bold text-base text-slate-900">
+                    {faq.q}
+                  </span>
+                  <span className={`material-symbols-outlined text-blue-600 transition-transform duration-200 ${
+                    openFaq === idx ? 'rotate-180' : ''
+                  }`}>
+                    keyboard_arrow_down
                   </span>
                 </button>
+
                 {openFaq === idx && (
-                  <div className="px-4 sm:px-5 pb-5 text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                  <div className="px-6 pb-6 pt-1 text-slate-600 text-sm leading-relaxed border-t border-slate-100">
                     {faq.a}
                   </div>
                 )}
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* FORMULARIO DE RESERVA DE CITAS EN LÍNEA */}
+      {/* 9. CONTACTO & ATENCIÓN DIRECTA                                            */}
       {/* ========================================================================= */}
-      <section id="reservar" className="py-20 bg-white px-4 sm:px-6 lg:px-12 border-b border-slate-200">
-        <div className="max-w-3xl mx-auto bg-gradient-to-b from-slate-50 to-white p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-          <div className="text-center space-y-2">
-            <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-full uppercase tracking-wider">
-              Agenda Oficial de Asesorías
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Reservar Cita con un Asesor Fiscal
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600">
-              Elige día y hora para tu sesión individual. Te atenderemos en español por Google Meet, teléfono o en despacho.
-            </p>
-          </div>
-
-          {bookingSuccess ? (
-            <div className="p-8 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-3">
-              <span className="material-symbols-outlined text-5xl text-emerald-600">check_circle</span>
-              <h3 className="font-extrabold text-emerald-950 text-lg sm:text-xl">¡Cita agendada con éxito!</h3>
-              <p className="text-xs sm:text-sm text-emerald-800 max-w-md mx-auto">
-                Hemos registrado tu cita en el sistema para el <strong>{bookingDate}</strong> a las <strong>{bookingTime}</strong> ({bookingModality === 'online_meet' ? 'Videollamada Google Meet' : bookingModality === 'llamada' ? 'Llamada telefónica' : 'Presencial'}).
+      <section id="contacto" className="py-20 bg-white border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            
+            <div className="lg:col-span-5 space-y-6">
+              <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
+                Contacto Directo
+              </span>
+              <h2 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">
+                Estamos aquí para ayudarte. Escríbenos o llámanos.
+              </h2>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Atención personalizada en español, inglés y neerlandés de lunes a viernes de 09:00 a 19:00.
               </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => setBookingSuccess(false)}
-                  className="px-5 py-2.5 bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-emerald-800 transition-colors shadow-xs"
-                >
-                  Agendar otra cita
-                </button>
+
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[22px]">chat</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-semibold">WhatsApp Oficial</p>
+                    <p className="text-sm font-bold text-slate-900">+31 6 8529 1402</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[22px]">mail</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-semibold">Correo Electrónico</p>
+                    <p className="text-sm font-bold text-slate-900">info@rpgestoria.nl</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[22px]">location_on</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-semibold">Oficina Central</p>
+                    <p className="text-sm font-bold text-slate-900">Keizersgracht 482, 1016 EG Amsterdam</p>
+                  </div>
+                </div>
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleBooking} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Nombre Completo *</label>
-                  <input
-                    required
-                    type="text"
-                    value={bookingName}
-                    onChange={(e) => setBookingName(e.target.value)}
-                    placeholder="Ej. Laura González Gómez"
-                    className="w-full h-11 px-3.5 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Correo Electrónico *</label>
-                  <input
-                    required
-                    type="email"
-                    value={bookingEmail}
-                    onChange={(e) => setBookingEmail(e.target.value)}
-                    placeholder="correo@ejemplo.com"
-                    className="w-full h-11 px-3.5 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Teléfono / WhatsApp *</label>
-                  <input
-                    required
-                    type="tel"
-                    value={bookingPhone}
-                    onChange={(e) => setBookingPhone(e.target.value)}
-                    placeholder="+31 6 1234 5678"
-                    className="w-full h-11 px-3.5 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Tipo de Trámite</label>
-                  <select
-                    value={bookingService}
-                    onChange={(e) => setBookingService(e.target.value)}
-                    className="w-full h-11 px-3 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:border-blue-600 focus:outline-none"
-                  >
-                    <option>M-Form / Declaración de la Renta</option>
-                    <option>Subsidios Toeslagen (Zorg / Huur / Kind)</option>
-                    <option>Activación DigiD & BSN</option>
-                    <option>Alta KVK (Autónomo ZZP)</option>
-                    <option>Consulta y Resolución de Cartas Belastingdienst</option>
-                  </select>
-                </div>
-              </div>
+            {/* FORMULARIO DE CONSULTA RÁPIDA */}
+            <div className="lg:col-span-7 bg-slate-50 rounded-2xl p-8 border border-slate-200/80 shadow-sm">
+              <h3 className="font-heading font-bold text-xl text-slate-900 mb-2">Envíanos un mensaje</h3>
+              <p className="text-xs text-slate-500 mb-6">Te responderemos en menos de 2 horas hábiles.</p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Fecha</label>
-                  <input
-                    required
-                    type="date"
-                    value={bookingDate}
-                    onChange={(e) => setBookingDate(e.target.value)}
-                    className="w-full h-11 px-3 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:border-blue-600 focus:outline-none font-mono-data"
-                  />
+              <form onSubmit={(e) => { e.preventDefault(); alert('¡Gracias por tu mensaje! Nos pondremos en contacto contigo de inmediato.'); }} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nombre</label>
+                    <input type="text" required placeholder="Tu nombre" className="w-full px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-600 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">WhatsApp / Teléfono</label>
+                    <input type="tel" required placeholder="+31 6 ..." className="w-full px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-600 outline-none" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Hora Deseada</label>
-                  <select
-                    value={bookingTime}
-                    onChange={(e) => setBookingTime(e.target.value)}
-                    className="w-full h-11 px-3 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:border-blue-600 focus:outline-none font-mono-data"
-                  >
-                    <option>09:30</option>
-                    <option>10:30</option>
-                    <option>11:30</option>
-                    <option>14:00</option>
-                    <option>15:30</option>
-                    <option>16:30</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Modalidad</label>
-                  <select
-                    value={bookingModality}
-                    onChange={(e) => setBookingModality(e.target.value as any)}
-                    className="w-full h-11 px-3 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white focus:border-blue-600 focus:outline-none"
-                  >
-                    <option value="online_meet">Google Meet (Online)</option>
-                    <option value="llamada">Llamada Telefónica</option>
-                    <option value="presencial">Presencial en Despacho</option>
-                  </select>
-                </div>
-              </div>
 
-              <button
-                type="submit"
-                className="w-full h-12 mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[18px]">event_available</span>
-                <span>Confirmar Reserva de Cita Gratuita</span>
-              </button>
-            </form>
-          )}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                  <input type="email" required placeholder="tu@email.com" className="w-full px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-600 outline-none" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">¿En qué trámite necesitas ayuda?</label>
+                  <textarea rows={4} required placeholder="Explícanos brevemente tu caso o situación en Holanda..." className="w-full px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-600 outline-none"></textarea>
+                </div>
+
+                <button type="submit" className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm tracking-wide shadow-md transition-colors">
+                  Enviar Consulta Gratuita
+                </button>
+              </form>
+            </div>
+
+          </div>
+
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* FOOTER CORPORATIVO PREMIUM */}
+      {/* 10. FOOTER                                                                */}
       {/* ========================================================================= */}
-      <footer className="mt-auto bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-800 text-xs">
-          {/* Col 1 */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-                NG
+      <footer className="bg-slate-950 text-slate-400 text-xs pt-16 pb-12 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+            
+            {/* BRAND */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl overflow-hidden bg-slate-900 border border-slate-700">
+                  <Image src="/logo.png" alt="RP Gestoría" width={36} height={36} className="object-cover" />
+                </div>
+                <span className="font-heading font-extrabold text-lg text-white">
+                  RP Gestoría <span className="text-blue-500">& Asesoría</span>
+                </span>
               </div>
-              <span className="font-extrabold text-base tracking-tight">NexusGest</span>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
+                “Tus trámites en Holanda, mucho más fáciles.” Asesoría fiscal, laboral y de extranjería para expatriados, jóvenes y profesionales en Países Bajos.
+              </p>
+              <div className="pt-2 text-[11px] text-slate-500 space-y-1">
+                <p>KvK: 84920194 · BTW: NL863492019B01</p>
+                <p>Amsterdam · Rotterdam · Utrecht · Países Bajos</p>
+              </div>
             </div>
-            <p className="text-slate-400 leading-relaxed">
-              Gestoría y asesoría fiscal oficial para la comunidad hispanohablante e internacional en los Países Bajos.
-            </p>
-            <div className="flex items-center gap-2 text-slate-400 font-mono-data text-[11px]">
-              <span>KvK: 89123847</span> · <span>BTW: NL829102948B01</span>
+
+            {/* TRÁMITES */}
+            <div className="space-y-3">
+              <p className="text-white font-bold uppercase tracking-wider text-xs">Trámites Populares</p>
+              <ul className="space-y-2">
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">M-Form Renta</Link></li>
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">DigiD Holanda</Link></li>
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Zorgtoeslag</Link></li>
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Seguro Médico</Link></li>
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Formulario U1</Link></li>
+              </ul>
+            </div>
+
+            {/* EMPRESAS & OTROS */}
+            <div className="space-y-3">
+              <p className="text-white font-bold uppercase tracking-wider text-xs">Autónomos & Legal</p>
+              <ul className="space-y-2">
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Alta Autónomo ZZP</Link></li>
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Impuesto BTW Trimestral</Link></li>
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Importación RDW / BPM</Link></li>
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Residencia Fiscal</Link></li>
+                <li><Link href="#servicios" className="hover:text-blue-400 transition-colors">Paro UWV (WW)</Link></li>
+              </ul>
+            </div>
+
+            {/* ACCESOS DIRECTOS */}
+            <div className="space-y-3">
+              <p className="text-white font-bold uppercase tracking-wider text-xs">Plataforma</p>
+              <ul className="space-y-2">
+                <li><Link href="/portal" className="text-blue-400 font-bold hover:underline">Área Cliente (Mijn RP)</Link></li>
+                <li><Link href="/crm" className="hover:text-blue-400 transition-colors">Acceso Asesores CRM</Link></li>
+                <li><Link href="#reservar" className="hover:text-blue-400 transition-colors">Reservar Cita</Link></li>
+                <li><Link href="#faq" className="hover:text-blue-400 transition-colors">Preguntas Frecuentes</Link></li>
+              </ul>
+            </div>
+
+          </div>
+
+          <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+            <p>© {new Date().getFullYear()} RP Gestoría & Asesoría B.V. Todos los derechos reservados.</p>
+            <div className="flex items-center gap-6">
+              <span className="hover:text-slate-300 cursor-pointer">Aviso Legal</span>
+              <span className="hover:text-slate-300 cursor-pointer">Política de Privacidad</span>
+              <span className="hover:text-slate-300 cursor-pointer">Términos y Condiciones</span>
             </div>
           </div>
 
-          {/* Col 2 */}
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-sm text-white">Trámites Principales</h4>
-            <ul className="space-y-1.5 text-slate-400">
-              <li><a href="#simulador" className="hover:text-blue-400 transition-colors">Declaración Fiscal M-Form</a></li>
-              <li><a href="#simulador" className="hover:text-blue-400 transition-colors">Subsidio Zorgtoeslag</a></li>
-              <li><a href="#simulador" className="hover:text-blue-400 transition-colors">Subsidio Alquiler Huurtoeslag</a></li>
-              <li><a href="#perfiles" className="hover:text-blue-400 transition-colors">Alta KVK Autónomos ZZP</a></li>
-              <li><a href="#perfiles" className="hover:text-blue-400 transition-colors">Activación DigiD & BSN</a></li>
-            </ul>
-          </div>
-
-          {/* Col 3 */}
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-sm text-white">Plataforma</h4>
-            <ul className="space-y-1.5 text-slate-400">
-              <li><Link href="/portal" className="hover:text-blue-400 transition-colors">Portal Mijn NexusGest</Link></li>
-              <li><Link href="/crm" className="hover:text-blue-400 transition-colors">Acceso Asesores CRM</Link></li>
-              <li><a href="#faq" className="hover:text-blue-400 transition-colors">Preguntas Frecuentes</a></li>
-              <li><a href="#reservar" className="hover:text-blue-400 transition-colors">Pedir Cita Online</a></li>
-            </ul>
-          </div>
-
-          {/* Col 4 */}
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-sm text-white">Contacto Directo</h4>
-            <p className="text-slate-400">Atención en español, inglés y neerlandés.</p>
-            <div className="space-y-1 text-slate-300 font-mono-data">
-              <p>WhatsApp: +31 6 8123 9845</p>
-              <p>Email: soporte@nexusgest.nl</p>
-              <p className="text-slate-500 text-[11px]">Ámsterdam · Eindhoven · Rotterdam</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© 2026 NexusGest Advies B.V. Todos los derechos reservados.</p>
-          <div className="flex items-center gap-4">
-            <span className="hover:text-slate-400 cursor-pointer">Privacidad & AVG</span>
-            <span>·</span>
-            <span className="hover:text-slate-400 cursor-pointer">Términos del Servicio</span>
-            <span>·</span>
-            <span className="hover:text-slate-400 cursor-pointer">Seguridad iDEAL</span>
-          </div>
         </div>
       </footer>
 
       {/* ========================================================================= */}
-      {/* BOTÓN FLOTANTE DE WHATSAPP / CONTACTO RÁPIDO */}
+      {/* MODAL DE INICIO DE TRÁMITE RÁPIDO                                         */}
       {/* ========================================================================= */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-        <button
-          type="button"
-          onClick={() => setShowWhatsAppModal(!showWhatsAppModal)}
-          className="h-13 px-4 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xl flex items-center gap-2.5 transition-all transform hover:scale-105 border-2 border-white/20"
-          title="Consultar por WhatsApp con un Asesor"
-        >
-          <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
-          <span className="material-symbols-outlined text-[22px]">chat</span>
-          <span className="hidden sm:inline">¿Dudas? Habla por WhatsApp</span>
-        </button>
-
-        {showWhatsAppModal && (
-          <div className="w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl p-4 text-xs space-y-3 animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                  NG
+      {selectedServiceModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-7 sm:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[24px]">{selectedServiceModal.icon}</span>
                 </div>
                 <div>
-                  <h5 className="font-bold text-slate-900">Asesor NexusGest</h5>
-                  <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    En línea ahora
-                  </p>
+                  <h3 className="font-heading font-bold text-base text-slate-900">{selectedServiceModal.title}</h3>
+                  <span className="text-xs font-semibold text-blue-600">{selectedServiceModal.price}</span>
                 </div>
               </div>
               <button
-                onClick={() => setShowWhatsAppModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                onClick={() => {
+                  setSelectedServiceModal(null);
+                  setModalSubmitted(false);
+                }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
               >
                 ✕
               </button>
             </div>
-            <p className="text-slate-600">
-              ¡Hola! Escríbenos directamente si tienes dudas sobre tu <strong>M-Form</strong>, subsidios <strong>Zorgtoeslag</strong> o una carta de la <strong>Belastingdienst</strong>.
-            </p>
+
+            {modalSubmitted ? (
+              <div className="py-8 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <span className="material-symbols-outlined text-[32px]">task_alt</span>
+                </div>
+                <h4 className="font-heading font-extrabold text-xl text-slate-900">¡Solicitud recibida!</h4>
+                <p className="text-xs text-slate-600">
+                  Un asesor de RP Gestoría se pondrá en contacto contigo de inmediato al WhatsApp/teléfono indicado para empezar tu trámite.
+                </p>
+                <div className="pt-3">
+                  <Link
+                    href="/portal"
+                    className="inline-block px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-md hover:bg-blue-700"
+                  >
+                    Ir al Área de Cliente
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleModalSubmit} className="space-y-4 pt-4">
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Completa tus datos para asignarte un gestor especializado y enviarte la lista exacta de documentos necesarios.
+                </p>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Nombre completo</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. Lucas García"
+                    value={modalName}
+                    onChange={(e) => setModalName(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Correo electrónico</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="lucas@ejemplo.com"
+                    value={modalEmail}
+                    onChange={(e) => setModalEmail(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp / Teléfono</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="+31 6 ... o +34 6 ..."
+                    value={modalPhone}
+                    onChange={(e) => setModalPhone(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md transition-colors"
+                  >
+                    Iniciar Trámite Ahora
+                  </button>
+                </div>
+              </form>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* BOTÓN FLOTANTE DE WHATSAPP DIRECTO                                        */}
+      {/* ========================================================================= */}
+      <div className="fixed bottom-6 right-6 z-40">
+        {showWhatsAppBox && (
+          <div className="mb-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 animate-in fade-in slide-in-from-bottom-3 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[18px]">chat</span>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900">RP Gestoría WhatsApp</p>
+                  <p className="text-[10px] text-emerald-600 font-semibold">● En línea ahora</p>
+                </div>
+              </div>
+              <button onClick={() => setShowWhatsAppBox(false)} className="text-slate-400 hover:text-slate-600 text-xs">✕</button>
+            </div>
+            <div className="py-3">
+              <p className="text-xs text-slate-600 mb-2">Escribe tu consulta y se abrirá directamente en tu WhatsApp:</p>
+              <textarea
+                value={whatsappMsg}
+                onChange={(e) => setWhatsappMsg(e.target.value)}
+                rows={3}
+                className="w-full p-2.5 text-xs bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
             <a
-              href="https://wa.me/31681239845?text=Hola,%20quisiera%20informaci%C3%B3n%20sobre%20mi%20tr%C3%A1mite%20fiscal%20en%20Pa%C3%ADses%20Bajos"
+              href={`https://wa.me/31685291402?text=${encodeURIComponent(whatsappMsg)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+              className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md"
             >
-              <span>Abrir Chat de WhatsApp</span>
-              <span className="material-symbols-outlined text-[15px]">open_in_new</span>
+              <span>Abrir en WhatsApp</span>
+              <span className="material-symbols-outlined text-[16px]">send</span>
             </a>
           </div>
         )}
+
+        <button
+          onClick={() => setShowWhatsAppBox(!showWhatsAppBox)}
+          className="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl flex items-center justify-center hover:scale-110 transition-transform"
+          aria-label="Abrir chat de WhatsApp"
+        >
+          <span className="material-symbols-outlined text-[28px]">chat</span>
+        </button>
       </div>
+
     </div>
   );
 }

@@ -558,12 +558,12 @@ export default function PortalClientePage() {
       <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 lg:px-10 h-16 sm:h-18 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow-md group-hover:scale-105 transition-transform">
-              NG
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-slate-950 border border-slate-700 text-white flex items-center justify-center font-bold text-sm shadow-md group-hover:scale-105 transition-transform">
+              <img src="/logo.png" alt="RP Gestoría" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-blue-400 transition-colors">
-                Mijn NexusGest
+              <span className="font-heading font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-blue-400 transition-colors">
+                Mijn RP Gestoría
               </span>
               <span className="text-[9px] uppercase font-bold tracking-widest text-slate-400">
                 Portal Seguro del Cliente

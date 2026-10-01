@@ -1,17 +1,19 @@
 import type { Metadata } from 'next';
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { Manrope, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-manrope',
   display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
 });
 
-const jakarta = Plus_Jakarta_Sans({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-jakarta',
+  variable: '--font-dmsans',
   display: 'swap',
+  weight: ['400', '500', '600', '700'],
 });
 
 const jetbrains = JetBrains_Mono({
@@ -21,10 +23,10 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'NexusGest | Plataforma de Negocio & CRM Gestoría Inteligente',
-  description: 'Gestoría integral, asesoría fiscal en Países Bajos, trámites Belastingdienst, DigiD, Toeslagen y pasarela iDEAL.',
+  title: 'RP Gestoría & Asesoría | Tus trámites en Holanda, mucho más fáciles',
+  description: 'Gestoría integral y asesoría para jóvenes, expatriados y profesionales en Países Bajos. Declaración de la renta M-Form, DigiD, Zorgtoeslag, ZZP y más en tu idioma.',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/logo.png',
   },
 };
 
@@ -34,8 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${inter.variable} ${jakarta.variable} ${jetbrains.variable}`}>
-      <body className="bg-surface text-on-surface antialiased">
+    <html lang="es" className={`${manrope.variable} ${dmSans.variable} ${jetbrains.variable}`}>
+      <body className="bg-surface text-on-surface antialiased font-sans">
         {children}
       </body>
     </html>
