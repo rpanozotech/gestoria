@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 
 interface Appointment {
   id: string;
@@ -11,7 +12,9 @@ interface Appointment {
   appointment_date: string; // YYYY-MM-DD
   appointment_time: string; // HH:MM:SS
   modality: 'llamada' | 'presencial' | 'online_meet';
-  status: 'confirmada' | 'completada' | 'pendiente';
+  // 'cancelada' la devuelve el backend desde siempre pero no estaba en el
+  // tipo, asi que comparar contra ella daba error de compilacion.
+  status: 'confirmada' | 'completada' | 'pendiente' | 'cancelada';
   notes?: string;
 }
 
@@ -159,7 +162,7 @@ export default function CRMAgendaPage() {
 
   // Cargar citas reales de la API backend si está disponible
   useEffect(() => {
-    fetch('http://localhost:5000/api/appointments')
+    apiFetch('/appointments')
       .then((res) => res.json())
       .then((data) => {
         if (data.appointments && data.appointments.length > 0) {
@@ -343,10 +346,53 @@ export default function CRMAgendaPage() {
     showToast('Estado de la cita actualizado.');
   };
 
-  const handleDeleteAppointment = (id: string) => {
-    if (confirm('¿Deseas cancelar y eliminar esta cita de la agenda?')) {
+  // Eliminar cita: llama al backend. Antes solo la quitaba de la pantalla.
+  // Para conservar constancia de una cita que el cliente ya tenía, usar
+  // "Marcar cancelada" en su lugar.
+  const handleDeleteAppointment = async (id: string) => {
+    if (!confirm('¿Eliminar esta cita de la agenda?\n\nSe borrará del servidor. Si solo quieres dejar constancia de que se canceló, usa "Marcar cancelada".')) {
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`/appointments/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        showToast(data.error || 'No se pudo eliminar la cita.');
+        return;
+      }
+
       setAppointments(appointments.filter((a) => a.id !== id));
-      showToast('Cita cancelada y eliminada.');
+      showToast('Cita eliminada.');
+    } catch {
+      showToast('Error de conexión al eliminar la cita.');
+    }
+  };
+
+  // Marcar cancelada: conserva el registro en vez de borrarlo. Es lo
+  // correcto cuando el cliente ya tenía la cita reservada.
+  const handleCancelAppointment = async (id: string) => {
+    if (!confirm('¿Marcar esta cita como cancelada?\n\nSe conserva en el historial; no se elimina de la agenda.')) {
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`/appointments/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'cancelada' }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        showToast(data.error || 'No se pudo actualizar la cita.');
+        return;
+      }
+
+      setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: 'cancelada' } : a)));
+      showToast('Cita marcada como cancelada.');
+    } catch {
+      showToast('Error de conexión al actualizar la cita.');
     }
   };
 
@@ -830,6 +876,20 @@ export default function CRMAgendaPage() {
                           </span>
                           <span>{apt.status === 'completada' ? 'Reabrir' : 'Completar'}</span>
                         </button>
+
+                        {/* Cancelar: conserva la cita en el historial.
+                            Se oculta si ya está cancelada o completada. */}
+                        {apt.status !== 'cancelada' && apt.status !== 'completada' && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancelAppointment(apt.id)}
+                            className="h-6 px-2 rounded text-[10px] font-semibold transition-colors flex items-center gap-1 border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                            title="Marcar como cancelada, conservando el registro"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">event_busy</span>
+                            <span>Cancelar</span>
+                          </button>
+                        )}
 
                         <button
                           type="button"

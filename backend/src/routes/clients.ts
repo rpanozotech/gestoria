@@ -204,4 +204,120 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /api/clients/:id - Eliminar cliente
+//
+// Solo permite borrar clientes SIN historial economico. Las tablas cuelgan
+// de clients con ON DELETE CASCADE, asi que un DELETE se lleva por delante
+// expedientes, presupuestos, facturas, citas y documentos. Para una
+// gestoria eso es perder contabilidad con facturas ya pagadas, que tienen
+// obligacion legal de conservacion.
+//
+// Ante la duda se desactiva (PUT con status='inactivo'), que es reversible.
+// Este endpoint es para limpiar altas erroneas o duplicados.
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const exists = await query('SELECT id FROM clients WHERE id = $1', [id]);
+    if (exists.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    // Inventario previo: devuelve el detalle para que la UI pueda mostrar
+    // exactamente que se va a perder, no solo el numero.
+    const [dossiers, invoices, quotes, appointments, documents, paid] = await Promise.all([
+      query('SELECT COUNT(*)::int AS n FROM dossiers WHERE client_id = $1', [id]),
+      query('SELECT COUNT(*)::int AS n FROM invoices WHERE client_id = $1', [id]),
+      query('SELECT COUNT(*)::int AS n FROM quotes WHERE client_id = $1', [id]),
+      query('SELECT COUNT(*)::int AS n FROM appointments WHERE client_id = $1', [id]),
+      query('SELECT COUNT(*)::int AS n FROM documents WHERE client_id = $1', [id]),
+      query("SELECT COUNT(*)::int AS n FROM invoices WHERE client_id = $1 AND status = 'pagada'", [id]),
+    ]);
+
+    const impact = {
+      expedientes: dossiers.rows[0].n,
+      facturas: invoices.rows[0].n,
+      facturas_pagadas: paid.rows[0].n,
+      presupuestos: quotes.rows[0].n,
+      citas: appointments.rows[0].n,
+      documentos: documents.rows[0].n,
+    };
+
+    const total = Object.values(impact).reduce((a, b) => a + b, 0) - impact.facturas_pagadas;
+
+    // Bloqueo absoluto: con facturas pagadas no se borra nunca.
+    if (impact.facturas_pagadas > 0) {
+      return res.status(409).json({
+        error:
+          'Este cliente tiene facturas pagadas y no se puede eliminar. ' +
+          'Por obligación de conservación fiscal deben mantenerse. ' +
+          'Desactívalo en su lugar (estado "inactivo"): deja de aparecer en los listados sin borrar nada.',
+        impact,
+      });
+    }
+
+    // Con historico economico sin cobrar, se exige confirmacion explicita:
+    // ?confirmar=SI. Sin ella, el endpoint devuelve el inventario y no borra.
+    if (total > 0 && req.query.confirmar !== 'SI') {
+      return res.status(409).json({
+        error:
+          'Este cliente tiene datos asociados que se perderán. ' +
+          'Repite la petición con ?confirmar=SI si quieres continuar.',
+        impact,
+        requiere_confirmacion: true,
+      });
+    }
+
+    await query('DELETE FROM clients WHERE id = $1', [id]);
+
+    res.json({
+      message: 'Cliente eliminado',
+      eliminado: impact,
+    });
+  } catch (error) {
+    console.error('Error al eliminar cliente:', error);
+    res.status(500).json({ error: 'Error al eliminar el cliente' });
+  }
+});
+
+// POST /api/clients/:id/deactivate - Desactivar cliente (vía recomendada)
+//
+// Marca el cliente como 'inactivo' sin tocar ningun otro registro: el
+// historial permanece intacto y es reversible volviendo a ponerlo 'activo'.
+// Es la alternativa al borrado cuando el cliente ya tiene expediente.
+router.post('/:id/deactivate', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const nuevoEstado = (req.body?.status || 'inactivo').trim();
+
+    if (!['activo', 'inactivo', 'prospecto'].includes(nuevoEstado)) {
+      return res.status(400).json({
+        error: `Estado no válido: ${nuevoEstado}. Valores admitidos: activo, inactivo, prospecto.`,
+      });
+    }
+
+    const result = await query(
+      `UPDATE clients SET status = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING id, full_name, status;`,
+      [nuevoEstado, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    res.json({
+      client: result.rows[0],
+      message:
+        nuevoEstado === 'inactivo'
+          ? 'Cliente desactivado. Su historial se conserva intacto.'
+          : `Cliente marcado como "${nuevoEstado}".`,
+    });
+  } catch (error) {
+    console.error('Error al desactivar cliente:', error);
+    res.status(500).json({ error: 'Error al cambiar el estado del cliente' });
+  }
+});
+
 export default router;

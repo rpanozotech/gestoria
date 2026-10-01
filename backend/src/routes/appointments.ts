@@ -1,10 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
+// GET/PATCH de citas es la agenda interna del CRM: requiere gestor.
+// POST es la reserva publica y por eso NO lleva guard (ver index.ts).
+const gestorOnly = [requireAuth, requireRole('admin', 'gestor')];
+
 // GET /api/appointments - Lista de citas
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', gestorOnly, async (req: Request, res: Response) => {
   try {
     const { date, status } = req.query;
     let sql = `
@@ -82,10 +87,19 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PATCH /api/appointments/:id - Cambiar estado
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', gestorOnly, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status, notes } = req.body;
+
+    // Sin esta validación, un typo ("cancaldada") dejaba la cita en un
+    // estado que la UI no reconoce y era irrecuperable sin editar a mano.
+    const ESTADOS = ['pendiente', 'confirmada', 'completada', 'cancelada'];
+    if (status !== undefined && status !== null && !ESTADOS.includes(status)) {
+      return res.status(400).json({
+        error: `Estado no válido: ${status}. Valores admitidos: ${ESTADOS.join(', ')}.`,
+      });
+    }
 
     const sql = `
       UPDATE appointments SET
@@ -105,6 +119,35 @@ router.patch('/:id', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error actualizando cita:', error);
     res.status(500).json({ error: 'Error al actualizar cita' });
+  }
+});
+
+// DELETE /api/appointments/:id - Eliminar cita
+//
+// Las citas no tienen valor contable ni historial fiscal asociado, asi que
+// aqui si se permite el borrado real. Para "deshacer" una cita reservada
+// por error, PATCH con status='cancelada' es mejor: deja constancia.
+router.delete('/:id', gestorOnly, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      'DELETE FROM appointments WHERE id = $1 RETURNING id, title, appointment_date;',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Cita no encontrada' });
+    }
+
+    const cita = result.rows[0];
+    res.json({
+      message: 'Cita eliminada de la agenda',
+      cita,
+    });
+  } catch (error) {
+    console.error('Error al eliminar cita:', error);
+    res.status(500).json({ error: 'Error al eliminar la cita' });
   }
 });
 

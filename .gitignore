@@ -2,12 +2,23 @@
 node_modules/
 npm-debug.log*
 yarn.lock
-package-lock.json
 
 # Build artefacts
 .next/
 out/
 dist/
+*.tsbuildinfo
+
+# Uploads locales de desarrollo (el volumen de Docker lo suple en prod)
+backend/uploads/
+
+# Dumps de la base de datos: pueden contener datos personales y bancarios.
+# NUNCA subirlos al repo.
+backups/
+
+# Ajustes locales del editor y del agente
+.vscode/
+.claude/
 
 # Environment
 .env

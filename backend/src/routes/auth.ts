@@ -4,7 +4,17 @@ import jwt from 'jsonwebtoken';
 import { query } from '../db/index.js';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'nexusgest_secret_jwt_2026';
+
+// Leido por peticion (no al cargar el modulo): los imports de ESM se evaluan
+// antes de que dotenv.config() corra, asi que un top-level ignoraria el .env.
+// Sin valor por defecto a proposito.
+const jwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET no esta definido');
+  }
+  return secret;
+};
 
 // Iniciar Sesión (Gestor o Cliente)
 router.post('/login', async (req: Request, res: Response) => {
@@ -33,7 +43,7 @@ router.post('/login', async (req: Request, res: Response) => {
         full_name: user.full_name,
         role: user.role,
       },
-      JWT_SECRET,
+      jwtSecret(),
       { expiresIn: '7d' }
     );
 
@@ -62,7 +72,7 @@ router.get('/me', async (req: Request, res: Response) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, jwtSecret()) as any;
     const result = await query('SELECT id, email, full_name, role, phone, avatar_url FROM users WHERE id = $1', [decoded.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado' });

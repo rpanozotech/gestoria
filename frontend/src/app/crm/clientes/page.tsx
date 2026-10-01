@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 
 interface ClientDocument {
   id: string;
@@ -594,9 +595,8 @@ export default function CRMClientesPage() {
 
     // Intentar persistir en backend
     try {
-      await fetch(`http://localhost:5000/api/clients/${updatedClient.id}`, {
+      await apiFetch(`/clients/${updatedClient.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editFormData),
       });
     } catch {}
@@ -828,15 +828,46 @@ export default function CRMClientesPage() {
     showToast(`Documento generado por IA: "${title}".`);
   };
 
+  // Desactivar cliente (vía recomendada frente a eliminar).
+  // El backend marca status='inactivo' sin tocar expedientes ni facturas.
+  const handleDeactivateClient = async () => {
+    if (!selectedClient) return;
+    if (!confirm(`¿Desactivar a ${selectedClient.full_name}?\n\nDejará de aparecer en los listados, pero su expediente, facturas y documentos se conservan intactos. Podrás reactivarlo después.`)) {
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`/clients/${selectedClient.id}/deactivate`, {
+        method: 'POST',
+        body: JSON.stringify({ status: 'inactivo' }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.error || 'No se pudo desactivar el cliente.');
+        return;
+      }
+
+      const updated = { ...selectedClient, status: 'inactivo' };
+      setSelectedClient(updated);
+      setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+      showToast('Cliente desactivado. Su historial se conserva.');
+    } catch {
+      showToast('Error de conexión al desactivar.');
+    }
+  };
+
   // Eliminar Documento
+  // El backend no expone DELETE de documentos: el registro se quita solo de
+  // la vista local. Para borrarlo de verdad hay que hacerlo por consola.
   const handleDeleteDocument = (docId: string) => {
     if (!selectedClient) return;
-    if (confirm('¿Deseas eliminar este documento del expediente del cliente?')) {
+    if (confirm('¿Quitar este documento de la ficha?\n\nSolo desaparecerá de esta pantalla: el archivo y su registro siguen en el servidor.')) {
       const updatedDocs = (selectedClient.documents || []).filter((d: any) => d.id !== docId);
       const updatedClient = { ...selectedClient, documents: updatedDocs };
       setSelectedClient(updatedClient);
       setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
-      showToast('Documento eliminado.');
+      showToast('Documento quitado de la ficha (sigue en el servidor).');
     }
   };
 
@@ -1511,6 +1542,21 @@ export default function CRMClientesPage() {
                 <span className="material-symbols-outlined text-[16px]">edit</span>
                 <span>Editar Datos</span>
               </button>
+
+              {/* Desactivar: alternativa segura a eliminar. El backend solo
+                  marca status='inactivo'; el expediente y las facturas quedan
+                  intactos. Se muestra únicamente si el cliente está activo. */}
+              {selectedClient.status !== 'inactivo' && (
+                <button
+                  type="button"
+                  onClick={handleDeactivateClient}
+                  className="h-8 sm:h-9 px-3 border border-outline-variant text-on-surface-variant text-xs font-semibold rounded-md shadow-xs hover:bg-surface-container transition-colors flex items-center gap-1.5"
+                  title="Desactivar el cliente sin borrar su historial"
+                >
+                  <span className="material-symbols-outlined text-[16px]">visibility_off</span>
+                  <span className="hidden sm:inline">Desactivar</span>
+                </button>
+              )}
 
               {/* Botón Maximizar / Pantalla completa */}
               <button

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
 
 export default function CRMDashboardPage() {
   const [stats, setStats] = useState<any>({
@@ -27,7 +28,7 @@ export default function CRMDashboardPage() {
   const [selectedDossier, setSelectedDossier] = useState<any>(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/dashboard/stats')
+    apiFetch('/dashboard/stats')
       .then((res) => res.json())
       .then((data) => {
         if (data.kpis) setStats(data);

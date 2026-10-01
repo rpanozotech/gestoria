@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { apiUrl } from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -216,7 +217,7 @@ export default function PublicHomePage() {
     e.preventDefault();
     setBookLoading(true);
     try {
-      await fetch('http://localhost:5000/api/appointments', {
+      await fetch(apiUrl('/appointments'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

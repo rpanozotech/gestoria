@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 
 interface ExtractedClient {
   id: string;
@@ -155,9 +156,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     setIsProcessing(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/ai/parse-multi-clients', {
+      const res = await apiFetch('/ai/parse-multi-clients', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: nlpPrompt,
           files: uploadedFiles.map((f) => ({
@@ -352,9 +352,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       // 1. Intentar persistir en PostgreSQL mediante API Backend
       for (const client of toSave) {
         try {
-          const clientRes = await fetch('http://localhost:5000/api/clients', {
+          const clientRes = await apiFetch('/clients', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               full_name: client.full_name,
               email: client.email,
@@ -371,9 +370,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           const clientData = await clientRes.json();
 
           if (clientData?.client?.id) {
-            await fetch('http://localhost:5000/api/dossiers', {
+            await apiFetch('/dossiers', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 client_id: clientData.client.id,
                 title: client.service_title,

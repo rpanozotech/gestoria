@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { getToken, getStoredUser, clearSession } from '@/lib/session';
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState(getStoredUser());
+  const [checking, setChecking] = useState(true);
 
   // Estados interactivos para Topbar y Responsive Drawer
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -14,6 +17,18 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Guard de sesion: sin token valido no se entra al CRM.
+  // El backend tambien protege sus rutas (401), pero sin esto se renderiza
+  // la pantalla y luego cada fetch falla.
+  useEffect(() => {
+    if (!getToken()) {
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+      return;
+    }
+    setUser(getStoredUser());
+    setChecking(false);
+  }, [pathname, router]);
 
   // Cerrar menú móvil al navegar
   useEffect(() => {
@@ -58,6 +73,16 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     { title: 'FAC-2026-0002: € 102,85 (Emitida)', category: 'Factura', href: '/crm/facturacion' },
     { title: 'Tarifas Oficiales: M-Form, DigiD, ZZP', category: 'Tarifas', href: '/crm/tarifas' },
   ].filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  // Mientras se verifica la sesion no se renderiza el CRM: si no, se ve
+  // un frame con la UI y los datos hardcodeados antes de redirigir.
+  if (checking) {
+    return (
+      <div className="h-screen h-[100dvh] w-full bg-surface flex items-center justify-center">
+        <span className="material-symbols-outlined text-[28px] text-outline animate-spin">progress_activity</span>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen h-[100dvh] w-full bg-surface flex overflow-hidden">
@@ -278,11 +303,16 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
                 <div className="w-8 h-8 rounded-full bg-primary-container text-white font-mono-data font-bold text-xs flex items-center justify-center shadow-sm">
-                  RP
+                  {(user?.full_name || 'G')
+                    .split(' ')
+                    .map((w) => w[0])
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase()}
                 </div>
                 <div className="hidden lg:flex flex-col text-left">
-                  <span className="text-xs font-bold text-on-surface leading-tight">Rony P.</span>
-                  <span className="text-[10px] text-outline">Gestor Principal / Admin</span>
+                  <span className="text-xs font-bold text-on-surface leading-tight">{user?.full_name || 'Gestor'}</span>
+                  <span className="text-[10px] text-outline capitalize">{user?.role || 'gestor'}</span>
                 </div>
                 <span className="material-symbols-outlined text-[16px] text-outline">expand_more</span>
               </button>
@@ -291,8 +321,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               {showUserMenu && (
                 <div className="absolute right-0 top-11 w-56 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl p-3 space-y-2 z-50 text-xs">
                   <div className="px-2 py-1.5 border-b border-surface-container">
-                    <p className="font-bold text-on-surface">Rony P.</p>
-                    <p className="text-[11px] text-outline font-mono-data">admin@nexusgest.nl</p>
+                    <p className="font-bold text-on-surface">{user?.full_name || 'Gestor'}</p>
+                    <p className="text-[11px] text-outline font-mono-data">{user?.email}</p>
                   </div>
                   <Link
                     href="/portal"
@@ -314,7 +344,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                     <button
                       onClick={() => {
                         setShowUserMenu(false);
-                        router.push('/');
+                        clearSession();
+                        router.replace('/login');
                       }}
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-error hover:bg-red-50 transition-colors text-left"
                     >

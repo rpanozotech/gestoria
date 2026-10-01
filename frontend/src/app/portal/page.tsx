@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/api';
 
 interface ClientMessage {
   id: string;
@@ -392,7 +393,7 @@ export default function PortalClientePage() {
 
     // Intentar remitir a API backend
     try {
-      await fetch('http://localhost:5000/api/appointments', {
+      await fetch(apiUrl('/appointments'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

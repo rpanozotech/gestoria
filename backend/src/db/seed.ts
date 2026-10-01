@@ -2,6 +2,19 @@ import bcrypt from 'bcryptjs';
 import { pool } from './index.js';
 import { initializeDatabase } from './init.js';
 
+// Credenciales del admin que crea el seed.
+//
+// La contrasena NO tiene valor por defecto a proposito: si estuviera fija en
+// el codigo seria una credencial publicada en el repositorio. Definir
+// SEED_ADMIN_PASSWORD para habilitarla; sin ella el seed sigue sembrando los
+// datos de demo pero omite el usuario.
+//
+// Para produccion, preferible usar `npm run db:create-user` (genera una
+// contrasena aleatoria) en lugar de este seed.
+const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
+const SEED_ADMIN_EMAIL = (process.env.SEED_ADMIN_EMAIL || 'admin@nexusgest.nl').trim().toLowerCase();
+const SEED_ADMIN_NAME = process.env.SEED_ADMIN_NAME || 'Rony P. (Gestor Principal)';
+
 export async function seedDatabase() {
   console.log('🌱 Sembrando datos iniciales en NexusGest...');
   await initializeDatabase();
@@ -11,17 +24,30 @@ export async function seedDatabase() {
     await client.query('BEGIN');
 
     // 1. Usuario Gestor / Admin
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash('Admin2026!', salt);
+    // Sin SEED_ADMIN_PASSWORD no se crea el usuario. Los expedientes de demo
+    // llevan assigned_to al gestor, asi que sin gestor tampoco se siembran.
+    let gestorId: string | null = null;
+    if (SEED_ADMIN_PASSWORD) {
+      if (SEED_ADMIN_PASSWORD.length < 12) {
+        throw new Error('SEED_ADMIN_PASSWORD debe tener al menos 12 caracteres.');
+      }
+      const hash = await bcrypt.hash(SEED_ADMIN_PASSWORD, 10);
 
-    const userRes = await client.query(
-      `INSERT INTO users (email, password_hash, full_name, role, phone)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name
-       RETURNING id;`,
-      ['admin@nexusgest.nl', hash, 'Rony P. (Gestor Principal)', 'admin', '+31 6 12345678']
-    );
-    const gestorId = userRes.rows[0].id;
+      const userRes = await client.query(
+        `INSERT INTO users (email, password_hash, full_name, role, phone)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (email) DO UPDATE
+           SET password_hash = EXCLUDED.password_hash,
+               is_active = true
+         RETURNING id;`,
+        [SEED_ADMIN_EMAIL, hash, SEED_ADMIN_NAME, 'admin', '+31 6 12345678']
+      );
+      gestorId = userRes.rows[0].id;
+      console.log(`✅ Usuario admin creado: ${SEED_ADMIN_EMAIL}`);
+    } else {
+      console.log('⚠️  SEED_ADMIN_PASSWORD no definida: se omiten el usuario y los expedientes.');
+      console.log('   Para crear el gestor usa: npm run db:create-user -- --email ... --name ...');
+    }
 
     // 2. Clientes de demostración
     const clientsData = [

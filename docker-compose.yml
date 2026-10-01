@@ -1,6 +1,10 @@
 # =====================================================================
 # NEXUSGEST - DOCKER COMPOSE PARA COOLIFY Y DESPLIEGUE EN SERVIDOR
 # =====================================================================
+# Variables obligatorias (definir en Coolify > Environment Variables):
+#   JWT_SECRET, POSTGRES_PASSWORD
+# Ver .env.example para la lista completa.
+# =====================================================================
 
 services:
   # 1. Base de Datos Relacional PostgreSQL 16
@@ -10,19 +14,27 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-nexusgest_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexusgest_secret_password_2026}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in Coolify}
       POSTGRES_DB: ${POSTGRES_DB:-nexusgest_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - backups_data:/backups
+      # El script de backup se ejecuta DENTRO de este contenedor, asi que
+      # necesita poder leer uploads_data para empaquetar los PDFs. Solo
+      # lectura: el backup nunca debe modificar los documentos.
+      - uploads_data:/app/uploads:ro
       # Inicialización automática del esquema de NexusGest al levantar la BD por primera vez
       - ./backend/src/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-    ports:
-      - "5432:5432"
+      # Script de backup, montado en solo lectura.
+      - ./backup.sh:/backups/backup.sh:ro
+    # Sin 'ports': Postgres solo es accesible desde la red interna de Docker.
+    # Exponerlo en 5432 lo deja alcanzable desde internet.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nexusgest_user} -d ${POSTGRES_DB:-nexusgest_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     networks:
       - nexusgest_network
 
@@ -39,15 +51,27 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-nexusgest_user}:${POSTGRES_PASSWORD:-nexusgest_secret_password_2026}@postgres:5432/${POSTGRES_DB:-nexusgest_db}
-      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_nexusgest_secure_2026_change_in_production}
+      # OJO: la contraseña va URL-encoded (ver .env.example). Si contiene
+      # @ : / ? # o espacios, la cadena de conexión se rompe.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexusgest_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-nexusgest_db}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in Coolify}
+      # Origenes permitidos por CORS, separados por comas.
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://rp-gestoria.tech,https://www.rp-gestoria.tech}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       UPLOAD_DIR: /app/uploads
     volumes:
       - uploads_data:/app/uploads
-    ports:
-      - "5000:5000"
+    # Puerto expuesto solo si necesitas depurar el API directamente.
+    # Coolify enruta el tráfico público por el frontend, no por aquí.
+    expose:
+      - "5000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - nexusgest_network
 
@@ -59,13 +83,29 @@ services:
     container_name: nexusgest_frontend
     restart: always
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:5000/api}
+      # Consumido por el SERVIDOR de Next para proxear hacia el backend
+      # por la red interna (ver rewrites en next.config.mjs).
+      API_INTERNAL_URL: http://backend:5000
+      # Consumido por el NAVEGADOR. Debe ser una ruta same-origin: el
+      # cliente no puede resolver el hostname `backend`. Ver src/lib/api.ts.
+      NEXT_PUBLIC_API_BASE: /api/backend
+      # Necesaria en el servicio frontend: las route handlers /api/ai/* leen
+      # OPENAI_API_KEY desde el runtime de Node, no desde el backend.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - nexusgest_network
 
@@ -73,6 +113,11 @@ volumes:
   postgres_data:
     driver: local
   uploads_data:
+    driver: local
+  # Dumps de la base de datos. Montado en postgres para que pg_dump
+  # escriba en un volumen persistente y no en la capa del contenedor,
+  # que se pierde al recrear el servicio. Ver backup.sh.
+  backups_data:
     driver: local
 
 networks:
