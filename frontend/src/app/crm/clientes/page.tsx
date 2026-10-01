@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface ClientDocument {
   id: string;
@@ -394,6 +395,10 @@ export default function CRMClientesPage() {
     }
   }, [clients]);
 
+  const router = useRouter();
+  const [returnOrigin, setReturnOrigin] = useState<string | null>(null);
+  const hasAutoOpenedRef = useRef(false);
+
   // Cliente seleccionado para la Ficha 360°
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [active360Tab, setActive360Tab] = useState<
@@ -492,6 +497,66 @@ export default function CRMClientesPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
+  };
+
+  // Auto-seleccionar cliente desde parámetro URL (ej: /crm/clientes?client=Maria+Popescu&from=agenda)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && clients.length > 0 && !hasAutoOpenedRef.current) {
+      const params = new URLSearchParams(window.location.search);
+      const clientQuery = params.get('client') || params.get('nombre');
+      const idQuery = params.get('id');
+      const fromParam = params.get('from');
+      const tabQuery = params.get('tab');
+
+      if (fromParam) {
+        setReturnOrigin(fromParam);
+      }
+
+      if (clientQuery || idQuery) {
+        const found = clients.find((c) => {
+          if (idQuery && String(c.id) === String(idQuery)) return true;
+          if (clientQuery) {
+            const cleanQuery = clientQuery.trim().toLowerCase();
+            const cleanName = (c.full_name || '').trim().toLowerCase();
+            return cleanName === cleanQuery || cleanName.includes(cleanQuery) || cleanQuery.includes(cleanName);
+          }
+          return false;
+        });
+
+        if (found) {
+          hasAutoOpenedRef.current = true;
+          handleOpenClient(found);
+          if (
+            tabQuery &&
+            [
+              'resumen',
+              'personales',
+              'servicios',
+              'documentos',
+              'presupuestos',
+              'facturas',
+              'citas',
+              'tareas',
+              'historial',
+              'ia',
+            ].includes(tabQuery)
+          ) {
+            setActive360Tab(tabQuery as any);
+          }
+        }
+      }
+    }
+  }, [clients]);
+
+  // Cerrar Ficha 360° y retornar al origen o limpiar URL
+  const handleCloseFicha = () => {
+    setSelectedClient(null);
+    if (returnOrigin === 'agenda') {
+      router.push('/crm/agenda');
+    } else if (typeof window !== 'undefined') {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
   };
 
   // Abrir Modal de Edición de Datos
@@ -1408,12 +1473,13 @@ export default function CRMClientesPage() {
           <header className="min-h-16 py-2 px-4 sm:px-6 lg:px-8 bg-surface-container-lowest border-b border-surface-container-high flex flex-wrap items-center justify-between gap-3 shadow-sm shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
-                onClick={() => setSelectedClient(null)}
+                type="button"
+                onClick={handleCloseFicha}
                 className="h-8 sm:h-9 px-2.5 sm:px-3 border border-outline-variant bg-surface hover:bg-surface-container text-on-surface rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
-                title="Cerrar y volver al listado"
+                title={returnOrigin === 'agenda' ? 'Volver a la Agenda' : 'Cerrar y volver al listado'}
               >
                 <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                <span className="hidden sm:inline">Cerrar</span>
+                <span>{returnOrigin === 'agenda' ? 'Volver a Agenda' : 'Cerrar'}</span>
               </button>
 
               <div className="h-6 w-px bg-surface-container-high shrink-0" />

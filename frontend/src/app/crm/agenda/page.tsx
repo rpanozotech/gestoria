@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Appointment {
   id: string;
@@ -34,6 +35,7 @@ function formatLongDate(dateStr: string): string {
 }
 
 export default function CRMAgendaPage() {
+  const router = useRouter();
   const [appointments, setAppointments] = useState<Appointment[]>([
     {
       id: '1',
@@ -695,9 +697,17 @@ export default function CRMAgendaPage() {
                         </div>
 
                         <div className="min-w-0">
-                          <h4 className="font-bold text-xs sm:text-sm text-on-surface truncate">
-                            {apt.client_name}
-                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+                            className="text-left font-bold text-xs sm:text-sm text-on-surface hover:text-secondary hover:underline flex items-center gap-1 group/cname transition-colors truncate max-w-full"
+                            title={`Abrir Ficha 360° de ${apt.client_name}`}
+                          >
+                            <span className="truncate">{apt.client_name}</span>
+                            <span className="material-symbols-outlined text-[14px] text-secondary opacity-0 group-hover/cname:opacity-100 transition-opacity shrink-0">
+                              open_in_new
+                            </span>
+                          </button>
                           <p className="text-[11px] font-semibold text-secondary truncate mt-0.2">
                             {apt.title}
                           </p>
@@ -732,6 +742,16 @@ export default function CRMAgendaPage() {
                     {/* Botones de acción directa */}
                     <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-surface-container text-xs">
                       <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+                          className="flex items-center gap-1 px-2 py-0.8 bg-secondary/10 hover:bg-secondary/20 text-secondary font-semibold rounded text-[10px] transition-colors border border-secondary/20 shadow-2xs"
+                          title={`Abrir Ficha 360° de ${apt.client_name}`}
+                        >
+                          <span className="material-symbols-outlined text-[13px]">badge</span>
+                          <span>Ficha 360°</span>
+                        </button>
+
                         {apt.modality === 'llamada' && (
                           <button
                             type="button"
@@ -863,7 +883,17 @@ export default function CRMAgendaPage() {
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-bold text-xs sm:text-sm text-on-surface">{apt.client_name}</h3>
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+                          className="text-left font-bold text-xs sm:text-sm text-on-surface hover:text-secondary hover:underline flex items-center gap-1 group/cname transition-colors"
+                          title={`Abrir Ficha 360° de ${apt.client_name}`}
+                        >
+                          <span>{apt.client_name}</span>
+                          <span className="material-symbols-outlined text-[14px] text-secondary opacity-0 group-hover/cname:opacity-100 transition-opacity">
+                            open_in_new
+                          </span>
+                        </button>
                         <p className="text-[11px] text-secondary font-medium">{apt.title}</p>
                         <p className="text-[10px] text-outline font-mono-data">{apt.client_phone}</p>
                       </div>
@@ -891,6 +921,16 @@ export default function CRMAgendaPage() {
 
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-surface-container text-xs">
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+                        className="flex items-center gap-1 px-2 py-0.8 bg-secondary/10 hover:bg-secondary/20 text-secondary font-semibold rounded text-[10px] transition-colors border border-secondary/20"
+                        title={`Abrir Ficha 360° de ${apt.client_name}`}
+                      >
+                        <span className="material-symbols-outlined text-[13px]">badge</span>
+                        <span>Ficha 360°</span>
+                      </button>
+
                       {apt.modality === 'llamada' && (
                         <button
                           onClick={() => setCallModal({ client: apt.client_name, phone: apt.client_phone })}
