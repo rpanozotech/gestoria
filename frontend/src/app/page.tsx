@@ -268,10 +268,10 @@ export default function PublicHomePage() {
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-blue-600 selection:text-white">
       
       {/* ========================================================================= */}
-      {/* 1. TOP BAR & NAVBAR (CALIBRADO & RESPONSIVO)                              */}
+      {/* 1. TOP BAR & NAVBAR (FULL WIDTH PANTALLA COMPLETA)                        */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="flex items-center justify-between h-18 sm:h-20">
             
             {/* LOGO OFICIAL - ALINEACIÓN GEOMÉTRICA EXACTA */}
@@ -485,7 +485,7 @@ export default function PublicHomePage() {
       {/* 2. HERO SECTION                                                           */}
       {/* ========================================================================= */}
       <section id="inicio" className="relative pt-12 pb-20 overflow-hidden bg-gradient-to-b from-blue-50/40 via-white to-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             
@@ -667,7 +667,7 @@ export default function PublicHomePage() {
       {/* 3. SECTION "¿ACABAS DE LLEGAR A HOLANDA?" (4-STEP PROCESS)                */}
       {/* ========================================================================= */}
       <section id="como-funciona" className="py-20 bg-white border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
             <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
@@ -762,7 +762,7 @@ export default function PublicHomePage() {
       {/* 4. SECCIÓN DE SERVICIOS (13 MODERN CARDS)                                 */}
       {/* ========================================================================= */}
       <section id="servicios" className="py-24 bg-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           
           <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
             <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
@@ -875,7 +875,7 @@ export default function PublicHomePage() {
       {/* 5. INTERACTIVE SIMULATORS (M-FORM & TOESLAGEN)                             */}
       {/* ========================================================================= */}
       <section id="calculadora" className="py-20 bg-white border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           
           <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
             <span className="text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
@@ -1098,7 +1098,7 @@ export default function PublicHomePage() {
       {/* 6. SOBRE NOSOTROS (ABOUT US & TEAM SHOWCASE)                               */}
       {/* ========================================================================= */}
       <section id="nosotros" className="py-24 bg-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
@@ -1461,7 +1461,7 @@ export default function PublicHomePage() {
       {/* 9. CONTACTO & ATENCIÓN DIRECTA                                            */}
       {/* ========================================================================= */}
       <section id="contacto" className="py-20 bg-white border-t border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             
@@ -1551,7 +1551,7 @@ export default function PublicHomePage() {
       {/* 10. FOOTER                                                                */}
       {/* ========================================================================= */}
       <footer className="bg-slate-950 text-slate-400 text-xs pt-16 pb-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-12">
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             
