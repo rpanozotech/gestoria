@@ -11,8 +11,23 @@ export default function PortalClientePage() {
   const [isPaying, setIsPaying] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
 
-  // Subida de carta
-  const [uploadSuccess, setUploadSuccess] = useState(false);
+  // Subsidios interactivos
+  const [huurtoeslagRequested, setHuurtoeslagRequested] = useState(false);
+
+  // Subida de carta con archivo real o simulado
+  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [isScanningFile, setIsScanningFile] = useState(false);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsScanningFile(true);
+      setTimeout(() => {
+        setUploadedFile(file.name);
+        setIsScanningFile(false);
+      }, 1000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -31,7 +46,15 @@ export default function PortalClientePage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5">
+          <Link
+            href="/crm"
+            className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
+          >
+            <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+            <span className="hidden sm:inline">Panel Gestor</span>
+          </Link>
+
+          <div className="flex items-center gap-2.5 border-l border-surface-container pl-3">
             <div className="w-8 h-8 rounded-full bg-secondary text-white font-mono-data font-bold text-xs flex items-center justify-center shadow-sm">
               MP
             </div>
@@ -40,6 +63,7 @@ export default function PortalClientePage() {
               <span className="text-[10px] font-mono-data text-outline">BSN: 982145672</span>
             </div>
           </div>
+
           <Link
             href="/"
             className="text-xs font-medium text-outline hover:text-secondary flex items-center gap-1 border-l border-surface-container pl-3"
@@ -131,7 +155,7 @@ export default function PortalClientePage() {
                   </div>
                   <div>
                     <h5 className="font-bold text-on-surface">1. Recopilación de Documentos y BSN</h5>
-                    <p className="text-outline text-[11px] mt-0.5">Completado por el asesor el 2 de Octubre</p>
+                    <p className="text-outline text-[11px] mt-0.5">Completado por el asesor</p>
                   </div>
                 </div>
 
@@ -152,7 +176,7 @@ export default function PortalClientePage() {
                   <div>
                     <h5 className="font-bold text-secondary">3. Espera de carta oficial con código DigiD</h5>
                     <p className="text-on-surface-variant text-[11px] mt-0.5">
-                      Recibirás una carta física por correo postal en tu domicilio de Eindhoven. Cuando la tengas, súbela en la pestaña &quot;Subir Cartas&quot;.
+                      Recibirás una carta física por correo postal en tu domicilio de Eindhoven. Cuando la recibas, hazle una foto y súbela en la pestaña &quot;Subir Cartas&quot;.
                     </p>
                   </div>
                 </div>
@@ -214,7 +238,7 @@ export default function PortalClientePage() {
               </div>
               <h3 className="font-bold text-sm text-on-surface">Zorgtoeslag (Seguro Médico)</h3>
               <p className="text-xs text-on-surface-variant">
-                Compensación para el pago de tu seguro de salud obligatorio.
+                Compensación mensual para el pago de tu póliza médica obligatoria holandesa.
               </p>
               <div className="pt-2 border-t border-surface-container">
                 <span className="text-[10px] text-outline uppercase font-mono-data">Estimación mensual:</span>
@@ -225,7 +249,9 @@ export default function PortalClientePage() {
             <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-3">
               <div className="flex items-center justify-between">
                 <span className="material-symbols-outlined text-emerald-600 text-2xl">home</span>
-                <span className="px-2 py-0.5 bg-surface-container text-outline text-[10px] font-bold rounded">DISPONIBLE</span>
+                <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${huurtoeslagRequested ? 'bg-blue-50 text-secondary' : 'bg-surface-container text-outline'}`}>
+                  {huurtoeslagRequested ? 'SOLICITUD INICIADA' : 'DISPONIBLE'}
+                </span>
               </div>
               <h3 className="font-bold text-sm text-on-surface">Huurtoeslag (Alquiler)</h3>
               <p className="text-xs text-on-surface-variant">
@@ -235,6 +261,13 @@ export default function PortalClientePage() {
                 <span className="text-[10px] text-outline uppercase font-mono-data">Estimación mensual:</span>
                 <div className="text-xl font-bold font-mono-data text-on-surface">Hasta € 450,00 / mes</div>
               </div>
+              <button
+                onClick={() => setHuurtoeslagRequested(true)}
+                disabled={huurtoeslagRequested}
+                className="w-full h-8 mt-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-surface-container disabled:text-outline text-white text-xs font-semibold rounded transition-colors"
+              >
+                {huurtoeslagRequested ? '✓ Solicitud Enviada al Gestor' : 'Solicitar Este Subsidio'}
+              </button>
             </div>
 
             <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-3">
@@ -250,6 +283,12 @@ export default function PortalClientePage() {
                 <span className="text-[10px] text-outline uppercase font-mono-data">Estimación mensual:</span>
                 <div className="text-xl font-bold font-mono-data text-outline">—</div>
               </div>
+              <button
+                onClick={() => alert('Para solicitar la ayuda de hijos a cargo, tu gestor verificará el registro en el ayuntamiento (Gemeente).')}
+                className="w-full h-8 mt-2 border border-outline-variant hover:bg-surface-container text-on-surface text-xs font-semibold rounded transition-colors"
+              >
+                Comprobar Requisitos
+              </button>
             </div>
           </div>
         )}
@@ -269,12 +308,19 @@ export default function PortalClientePage() {
             </div>
 
             {paymentDone ? (
-              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-2">
+              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-3">
                 <span className="material-symbols-outlined text-4xl text-emerald-600">verified</span>
                 <h4 className="font-bold text-emerald-950 text-base">¡Pago completado con éxito!</h4>
                 <p className="text-xs text-emerald-800">
                   Referencia iDEAL: <span className="font-mono-data font-bold">IDL-TRX-2026-98124</span>. Tu asesor ya ha recibido la confirmación automática.
                 </p>
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-emerald-700 text-white rounded text-xs font-semibold hover:bg-emerald-800 transition-colors inline-flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-base">download</span>
+                  <span>Descargar Recibo / Factura Oficial</span>
+                </button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -312,7 +358,7 @@ export default function PortalClientePage() {
                   className="w-full h-11 bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs rounded-md shadow-sm transition-colors flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-[18px]">lock</span>
-                  <span>{isPaying ? 'Conectando con tu banco...' : `Pagar € 102,85 con ${selectedBank}`}</span>
+                  <span>{isPaying ? 'Conectando con pasarela iDEAL...' : `Pagar € 102,85 con ${selectedBank}`}</span>
                 </button>
               </div>
             )}
@@ -333,18 +379,51 @@ export default function PortalClientePage() {
                 </p>
               </div>
 
-              {uploadSuccess ? (
-                <div className="p-4 bg-emerald-50 text-emerald-800 text-xs font-semibold rounded-lg">
-                  ✓ Carta recibida y analizada por IA. Tu gestor Rony P. ha sido notificado.
+              {/* Selector real de archivos */}
+              <input
+                type="file"
+                id="docUploadInput"
+                accept=".pdf,.png,.jpg,.jpeg"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              {uploadedFile ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg space-y-1">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span className="material-symbols-outlined text-base text-emerald-600">check_circle</span>
+                    <span>Archivo &quot;{uploadedFile}&quot; recibido y analizado por el OCR de IA.</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-700">Tu gestor Rony P. ha sido notificado para la revisión.</p>
+                </div>
+              ) : isScanningFile ? (
+                <div className="p-4 bg-blue-50 text-secondary text-xs font-semibold rounded-lg flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined animate-spin text-base">sync</span>
+                  <span>Extrayendo BSN y datos con el motor IA...</span>
                 </div>
               ) : (
-                <button
-                  onClick={() => setUploadSuccess(true)}
-                  className="h-10 px-6 bg-secondary text-white text-xs font-semibold rounded-md hover:bg-blue-700 transition-colors shadow-sm inline-flex items-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-[18px]">cloud_upload</span>
-                  <span>Simular Subida de Carta Belastingdienst</span>
-                </button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <label
+                    htmlFor="docUploadInput"
+                    className="h-10 px-5 bg-secondary text-white text-xs font-semibold rounded-md hover:bg-blue-700 transition-colors shadow-sm inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                    <span>Seleccionar Archivo (PDF o Foto)</span>
+                  </label>
+                  <button
+                    onClick={() => {
+                      setIsScanningFile(true);
+                      setTimeout(() => {
+                        setUploadedFile('Carta_Belastingdienst_DigiD_Code.pdf');
+                        setIsScanningFile(false);
+                      }, 1000);
+                    }}
+                    className="h-10 px-4 border border-outline-variant hover:bg-surface-container text-on-surface text-xs font-semibold rounded-md transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
+                    <span>Simular Subida Automática</span>
+                  </button>
+                </div>
               )}
             </div>
           </div>

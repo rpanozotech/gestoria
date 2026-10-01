@@ -17,11 +17,14 @@ export default function CRMDashboardPage() {
       { id: '3', title: 'Consulta Huurtoeslag', client_name: 'Elena Morales', appointment_time: '16:00:00', modality: 'online_meet', status: 'pendiente' },
     ],
     recent_dossiers: [
-      { id: '1', code: 'EXP-2026-0041', title: 'Activación DigiD + Solicitud Zorgtoeslag', client_name: 'Maria Popescu', client_bsn: '982145672', status: 'en_belastingdienst', progress_percentage: 65, fee: '85.00' },
-      { id: '2', code: 'EXP-2026-0042', title: 'Declaración Fiscal M-Form (Migración)', client_name: 'Carlos Mendoza Ruiz', client_bsn: '817293845', status: 'en_proceso', progress_percentage: 40, fee: '180.00' },
-      { id: '3', code: 'EXP-2026-0043', title: 'Alta Eenmanszaak KVK y BTW-nummer', client_name: 'Lars Van Dijk', client_bsn: '728194028', status: 'completado', progress_percentage: 100, fee: '250.00' },
+      { id: '1', code: 'EXP-2026-0041', title: 'Activación DigiD + Solicitud Zorgtoeslag', client_name: 'Maria Popescu', client_bsn: '982145672', status: 'en_belastingdienst', progress_percentage: 65, fee: '85.00', description: 'Trámite de solicitud de ayuda médica y código de activación DigiD ante la Belastingdienst.' },
+      { id: '2', code: 'EXP-2026-0042', title: 'Declaración Fiscal M-Form (Migración)', client_name: 'Carlos Mendoza Ruiz', client_bsn: '817293845', status: 'en_proceso', progress_percentage: 40, fee: '180.00', description: 'Cálculo de deducción por traslado internacional y declaración ante Belastingdienst año 2025.' },
+      { id: '3', code: 'EXP-2026-0043', title: 'Alta Eenmanszaak KVK y BTW-nummer', client_name: 'Lars Van Dijk', client_bsn: '728194028', status: 'completado', progress_percentage: 100, fee: '250.00', description: 'Registro mercantil neerlandés y obtención de BTW-nummer para actividad profesional.' },
     ],
   });
+
+  // Modal para ver detalles de expediente al hacer clic en la tabla
+  const [selectedDossier, setSelectedDossier] = useState<any>(null);
 
   useEffect(() => {
     fetch('http://localhost:5000/api/dashboard/stats')
@@ -29,9 +32,7 @@ export default function CRMDashboardPage() {
       .then((data) => {
         if (data.kpis) setStats(data);
       })
-      .catch(() => {
-        // Fallback optimista pre-cargado
-      });
+      .catch(() => {});
   }, []);
 
   return (
@@ -76,12 +77,15 @@ export default function CRMDashboardPage() {
         </div>
       </div>
 
-      {/* 6 KPI Cards Grid */}
+      {/* 6 KPI Cards Grid (Clickable to jump directly to sections) */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        {/* KPI 1 */}
-        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+        {/* KPI 1: Clientes */}
+        <Link
+          href="/crm/clientes"
+          className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
+        >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Clientes Activos</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Clientes Activos</span>
             <span className="material-symbols-outlined text-[18px] text-secondary">group</span>
           </div>
           <div className="mt-3">
@@ -94,12 +98,15 @@ export default function CRMDashboardPage() {
           <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
             <div className="bg-secondary h-full rounded-full w-[78%]"></div>
           </div>
-        </div>
+        </Link>
 
-        {/* KPI 2 */}
-        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+        {/* KPI 2: Citas */}
+        <Link
+          href="/crm/agenda"
+          className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
+        >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Citas de Hoy</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Citas de Hoy</span>
             <span className="material-symbols-outlined text-[18px] text-primary">calendar_clock</span>
           </div>
           <div className="mt-3">
@@ -117,12 +124,15 @@ export default function CRMDashboardPage() {
             <span className="h-1 flex-1 bg-surface-container-high rounded-full"></span>
             <span className="h-1 flex-1 bg-surface-container-high rounded-full"></span>
           </div>
-        </div>
+        </Link>
 
-        {/* KPI 3 */}
-        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+        {/* KPI 3: Trámites */}
+        <Link
+          href="/crm/clientes"
+          className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
+        >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">En Trámite</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">En Trámite</span>
             <span className="material-symbols-outlined text-[18px] text-secondary">pending_actions</span>
           </div>
           <div className="mt-3">
@@ -138,12 +148,15 @@ export default function CRMDashboardPage() {
           <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
             <div className="bg-secondary-container h-full rounded-full w-[65%]"></div>
           </div>
-        </div>
+        </Link>
 
-        {/* KPI 4 */}
-        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+        {/* KPI 4: Facturación Mes */}
+        <Link
+          href="/crm/facturacion"
+          className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
+        >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Facturación Mes</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Facturación Mes</span>
             <span className="material-symbols-outlined text-[18px] text-emerald-600">payments</span>
           </div>
           <div className="mt-3">
@@ -155,12 +168,15 @@ export default function CRMDashboardPage() {
           <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
             <div className="bg-emerald-500 h-full rounded-full w-[82%]"></div>
           </div>
-        </div>
+        </Link>
 
-        {/* KPI 5 */}
-        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+        {/* KPI 5: Cobros Pendientes */}
+        <Link
+          href="/crm/facturacion"
+          className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
+        >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Cobros Pendientes</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Cobros Pendientes</span>
             <span className="material-symbols-outlined text-[18px] text-amber-600">receipt</span>
           </div>
           <div className="mt-3">
@@ -172,12 +188,15 @@ export default function CRMDashboardPage() {
           <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
             <div className="bg-amber-500 h-full rounded-full w-[35%]"></div>
           </div>
-        </div>
+        </Link>
 
-        {/* KPI 6 */}
-        <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+        {/* KPI 6: Pasarela iDEAL */}
+        <Link
+          href="/crm/facturacion"
+          className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
+        >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">Pasarela iDEAL</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Pasarela iDEAL</span>
             <span className="material-symbols-outlined text-[18px] text-secondary">credit_card</span>
           </div>
           <div className="mt-3">
@@ -189,11 +208,11 @@ export default function CRMDashboardPage() {
           <div className="w-full bg-surface-container h-1 rounded-full mt-3 overflow-hidden">
             <div className="bg-emerald-500 h-full rounded-full w-full"></div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* AI Proactive Advisory Alert (Executive Precision) */}
-      <div className="p-4 bg-indigo-50 border border-indigo-200 border-l-4 border-l-indigo-600 rounded-lg flex items-center justify-between gap-4">
+      <div className="p-4 bg-indigo-50 border border-indigo-200 border-l-4 border-l-indigo-600 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-600 text-[22px]">smart_toy</span>
           <div>
@@ -207,7 +226,7 @@ export default function CRMDashboardPage() {
         </div>
         <Link
           href="/crm/alta-ia"
-          className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded flex items-center gap-1.5 transition-colors whitespace-nowrap shadow-sm"
+          className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded flex items-center gap-1.5 transition-colors whitespace-nowrap shadow-sm self-start sm:self-auto"
         >
           <span>Revisar Acciones IA</span>
           <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
@@ -216,13 +235,13 @@ export default function CRMDashboardPage() {
 
       {/* Dual Workspace: Active Dossiers & Today's Appointments */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Active Dossiers Table (2 cols) */}
+        {/* Active Dossiers Table */}
         <div className="xl:col-span-2 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col justify-between">
           <div>
             <div className="p-5 border-b border-surface-container flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-sm text-on-surface">Expedientes y Trámites en Curso</h3>
-                <p className="text-xs text-on-surface-variant mt-0.5">Seguimiento de estados ante la administración pública neerlandesa</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">Haz clic en cualquier fila para ver el detalle del expediente</p>
               </div>
               <Link href="/crm/clientes" className="text-xs font-semibold text-secondary hover:underline">
                 Ver todos (34)
@@ -243,7 +262,12 @@ export default function CRMDashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-surface-container">
                   {stats.recent_dossiers.map((dossier: any) => (
-                    <tr key={dossier.id} className="hover:bg-surface-container-low transition-colors">
+                    <tr
+                      key={dossier.id}
+                      onClick={() => setSelectedDossier(dossier)}
+                      className="hover:bg-blue-50/60 cursor-pointer transition-colors"
+                      title="Haz clic para ver detalles"
+                    >
                       <td className="px-5 py-3.5 font-mono-data font-semibold text-secondary">
                         {dossier.code}
                       </td>
@@ -293,7 +317,7 @@ export default function CRMDashboardPage() {
           </div>
         </div>
 
-        {/* Today's Appointments List (1 col) */}
+        {/* Today's Appointments List */}
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-surface-container mb-4">
@@ -302,13 +326,17 @@ export default function CRMDashboardPage() {
                 <p className="text-xs text-on-surface-variant">Martes, 10 de Marzo · Agenda oficial</p>
               </div>
               <Link href="/crm/agenda" className="text-xs font-semibold text-secondary hover:underline">
-                Calendario
+                Ver Todas
               </Link>
             </div>
 
             <div className="space-y-3">
               {stats.today_appointments.map((apt: any) => (
-                <div key={apt.id} className="p-3 rounded-lg border border-surface-container hover:border-secondary transition-colors bg-surface flex items-start justify-between gap-3">
+                <Link
+                  key={apt.id}
+                  href="/crm/agenda"
+                  className="p-3 rounded-lg border border-surface-container hover:border-secondary transition-colors bg-surface flex items-start justify-between gap-3 block"
+                >
                   <div className="flex items-start gap-3">
                     <div className="px-2 py-1 bg-surface-container-high rounded text-center">
                       <span className="block font-mono-data text-xs font-bold text-on-surface">
@@ -332,7 +360,7 @@ export default function CRMDashboardPage() {
                     </div>
                   </div>
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -348,6 +376,64 @@ export default function CRMDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* MODAL DETALLES DEL EXPEDIENTE (Al hacer clic en la tabla) */}
+      {selectedDossier && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest max-w-lg w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-surface-container">
+              <div>
+                <span className="font-mono-data font-bold text-secondary text-xs">{selectedDossier.code}</span>
+                <h3 className="font-bold text-base text-on-surface">{selectedDossier.title}</h3>
+              </div>
+              <button onClick={() => setSelectedDossier(null)} className="text-outline hover:text-on-surface">
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-surface rounded-lg border border-surface-container">
+                <span className="text-[10px] font-bold uppercase text-outline">Cliente:</span>
+                <p className="font-bold text-on-surface text-sm mt-0.5">{selectedDossier.client_name}</p>
+                <p className="text-outline font-mono-data text-[11px]">BSN: {selectedDossier.client_bsn}</p>
+              </div>
+
+              <div className="p-3 bg-surface rounded-lg border border-surface-container">
+                <span className="text-[10px] font-bold uppercase text-outline">Descripción del Trámite:</span>
+                <p className="text-on-surface mt-1 leading-relaxed">{selectedDossier.description || 'Sin descripción adicional.'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-2.5 bg-surface rounded border border-surface-container">
+                  <span className="text-[10px] font-bold uppercase text-outline">Estado:</span>
+                  <p className="font-bold text-secondary mt-0.5 uppercase">{selectedDossier.status}</p>
+                </div>
+                <div className="p-2.5 bg-surface rounded border border-surface-container">
+                  <span className="text-[10px] font-bold uppercase text-outline">Honorarios / Tarifa:</span>
+                  <p className="font-mono-data font-bold text-on-surface mt-0.5">€ {parseFloat(selectedDossier.fee).toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-surface-container">
+              <Link
+                href="/crm/facturacion"
+                onClick={() => setSelectedDossier(null)}
+                className="h-8 px-3 bg-surface-container hover:bg-surface-container-high rounded text-xs font-semibold text-on-surface flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[15px]">receipt_long</span>
+                <span>Facturar Trámite</span>
+              </Link>
+              <button
+                onClick={() => setSelectedDossier(null)}
+                className="h-8 px-4 bg-primary text-white text-xs font-semibold rounded hover:bg-slate-800"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

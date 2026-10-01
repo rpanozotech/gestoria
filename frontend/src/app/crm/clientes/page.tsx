@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function CRMClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'con_digid' | 'pendientes'>('todos');
+
   const [clients, setClients] = useState<any[]>([
     {
       id: '1',
@@ -74,6 +77,13 @@ export default function CRMClientesPage() {
   // Cliente seleccionado para la Ficha 360°
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [active360Tab, setActive360Tab] = useState<'resumen' | 'personales' | 'facturacion' | 'citas' | 'ia'>('resumen');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editedNotes, setEditedNotes] = useState('');
+
+  // Modal para crear nuevo trámite rápido dentro de la ficha 360°
+  const [showAddDossierModal, setShowAddDossierModal] = useState(false);
+  const [newDossierTitle, setNewDossierTitle] = useState('');
+  const [newDossierFee, setNewDossierFee] = useState<number>(90);
 
   useEffect(() => {
     fetch('http://localhost:5000/api/clients')
@@ -86,12 +96,40 @@ export default function CRMClientesPage() {
       .catch(() => {});
   }, []);
 
-  const filteredClients = clients.filter(
-    (c) =>
+  const filteredClients = clients.filter((c) => {
+    const matchesSearch =
       c.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.bsn?.includes(searchTerm) ||
-      c.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      c.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (!matchesSearch) return false;
+    if (filterStatus === 'activos') return c.status === 'activo';
+    if (filterStatus === 'con_digid') return c.digid_status === 'activo';
+    if (filterStatus === 'pendientes') return c.digid_status === 'pendiente_activar';
+    return true;
+  });
+
+  const handleSaveNotes = () => {
+    if (!selectedClient) return;
+    const updated = { ...selectedClient, notes: editedNotes };
+    setSelectedClient(updated);
+    setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+    setIsEditingNotes(false);
+  };
+
+  const handleAddDossierToClient = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDossierTitle.trim() || !selectedClient) return;
+
+    const updated = {
+      ...selectedClient,
+      dossiers_count: (selectedClient.dossiers_count || 0) + 1,
+    };
+    setSelectedClient(updated);
+    setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+    setShowAddDossierModal(false);
+    setNewDossierTitle('');
+  };
 
   return (
     <div className="space-y-6">
@@ -104,7 +142,7 @@ export default function CRMClientesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <span className="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">search</span>
             <input
@@ -112,10 +150,46 @@ export default function CRMClientesPage() {
               placeholder="Buscar por nombre o BSN..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-9 pl-9 pr-4 text-xs border border-outline-variant rounded-md bg-surface-container-lowest focus:border-secondary focus:outline-none w-64"
+              className="h-9 pl-9 pr-4 text-xs border border-outline-variant rounded-md bg-surface-container-lowest focus:border-secondary focus:outline-none w-56"
             />
           </div>
+
+          <Link
+            href="/crm/alta-ia"
+            className="h-9 px-4 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[16px]">person_add</span>
+            <span>+ Nuevo Cliente</span>
+          </Link>
         </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex border-b border-surface-container gap-2 text-xs font-semibold">
+        <button
+          onClick={() => setFilterStatus('todos')}
+          className={`pb-2.5 px-3 border-b-2 transition-all ${
+            filterStatus === 'todos' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+          }`}
+        >
+          Todos ({clients.length})
+        </button>
+        <button
+          onClick={() => setFilterStatus('con_digid')}
+          className={`pb-2.5 px-3 border-b-2 transition-all ${
+            filterStatus === 'con_digid' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+          }`}
+        >
+          DigiD Activo
+        </button>
+        <button
+          onClick={() => setFilterStatus('pendientes')}
+          className={`pb-2.5 px-3 border-b-2 transition-all ${
+            filterStatus === 'pendientes' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
+          }`}
+        >
+          Pendientes DigiD
+        </button>
       </div>
 
       {/* Grid: Clients Directory Table */}
@@ -170,6 +244,8 @@ export default function CRMClientesPage() {
                     <button
                       onClick={() => {
                         setSelectedClient(client);
+                        setEditedNotes(client.notes || '');
+                        setIsEditingNotes(false);
                         setActive360Tab('resumen');
                       }}
                       className="h-8 px-3 bg-surface-container text-on-surface text-xs font-semibold rounded hover:bg-secondary hover:text-white transition-colors inline-flex items-center gap-1.5 shadow-sm"
@@ -220,6 +296,38 @@ export default function CRMClientesPage() {
               </button>
             </div>
 
+            {/* Quick Actions Strip inside 360 view */}
+            <div className="px-6 py-2.5 bg-surface border-b border-surface-container flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setShowAddDossierModal(true)}
+                className="h-7 px-2.5 bg-secondary text-white rounded text-[11px] font-semibold flex items-center gap-1 hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[14px]">add</span>
+                <span>Nuevo Trámite</span>
+              </button>
+              <Link
+                href="/crm/facturacion"
+                className="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold flex items-center gap-1 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[14px]">receipt_long</span>
+                <span>Emitir Factura</span>
+              </Link>
+              <Link
+                href="/crm/agenda"
+                className="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold flex items-center gap-1 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[14px]">event</span>
+                <span>Agendar Cita</span>
+              </Link>
+              <Link
+                href="/crm/documentos-ia"
+                className="h-7 px-2.5 bg-surface-container hover:bg-surface-container-high text-on-surface rounded text-[11px] font-semibold flex items-center gap-1 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[14px] text-secondary">auto_awesome</span>
+                <span>Carta Belastingdienst</span>
+              </Link>
+            </div>
+
             {/* Sub-Tabs de Ficha 360° */}
             <div className="flex border-b border-surface-container px-6 gap-2 bg-surface text-xs font-semibold">
               <button
@@ -261,13 +369,50 @@ export default function CRMClientesPage() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
               {active360Tab === 'resumen' && (
                 <div className="space-y-4">
+                  {/* Notes Card with interactive Edit */}
                   <div className="p-4 bg-surface-container-low rounded-xl border border-surface-container">
-                    <span className="text-[10px] font-bold uppercase text-outline">Notas del Gestor:</span>
-                    <p className="mt-1 text-on-surface leading-relaxed">{selectedClient.notes || 'Sin notas registradas.'}</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold uppercase text-outline">Notas del Gestor:</span>
+                      <button
+                        onClick={() => setIsEditingNotes(!isEditingNotes)}
+                        className="text-secondary font-semibold text-[11px] hover:underline flex items-center gap-0.5"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">edit</span>
+                        <span>{isEditingNotes ? 'Cancelar' : 'Editar Nota'}</span>
+                      </button>
+                    </div>
+
+                    {isEditingNotes ? (
+                      <div className="space-y-2 mt-2">
+                        <textarea
+                          rows={3}
+                          value={editedNotes}
+                          onChange={(e) => setEditedNotes(e.target.value)}
+                          className="w-full p-2 border border-outline-variant rounded bg-surface text-xs focus:border-secondary focus:outline-none"
+                        />
+                        <button
+                          onClick={handleSaveNotes}
+                          className="h-7 px-3 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700"
+                        >
+                          Guardar Nota
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="mt-1 text-on-surface leading-relaxed">{selectedClient.notes || 'Sin notas registradas.'}</p>
+                    )}
                   </div>
 
                   <div>
-                    <h4 className="font-bold text-sm text-on-surface mb-3">Expedientes y Trámites Activos</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-bold text-sm text-on-surface">Expedientes y Trámites Activos</h4>
+                      <button
+                        onClick={() => setShowAddDossierModal(true)}
+                        className="text-xs font-semibold text-secondary hover:underline"
+                      >
+                        + Añadir Trámite
+                      </button>
+                    </div>
+
                     <div className="p-4 rounded-xl border border-outline-variant bg-surface space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
@@ -323,6 +468,13 @@ export default function CRMClientesPage() {
                       <span className="block text-[10px] font-semibold text-emerald-800">Pagada vía iDEAL</span>
                     </div>
                   </div>
+
+                  <Link
+                    href="/crm/facturacion"
+                    className="block text-center p-3 rounded-lg border border-dashed border-secondary text-secondary font-semibold hover:bg-blue-50 transition-colors"
+                  >
+                    + Ir al Módulo de Facturación Completo
+                  </Link>
                 </div>
               )}
 
@@ -351,6 +503,64 @@ export default function CRMClientesPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL AÑADIR TRÁMITE RÁPIDO */}
+      {showAddDossierModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleAddDossierToClient}
+            className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-surface-container">
+              <h3 className="font-bold text-sm text-on-surface">Nuevo Trámite para {selectedClient?.full_name}</h3>
+              <button type="button" onClick={() => setShowAddDossierModal(false)} className="text-outline">
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Nombre del Trámite</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Ej. Solicitud Subsidio Huurtoeslag 2026"
+                  value={newDossierTitle}
+                  onChange={(e) => setNewDossierTitle(e.target.value)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-outline uppercase font-semibold mb-1">Tarifa Gestoría (€)</label>
+                <input
+                  required
+                  type="number"
+                  value={newDossierFee}
+                  onChange={(e) => setNewDossierFee(parseFloat(e.target.value) || 0)}
+                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data font-semibold focus:border-secondary focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAddDossierModal(false)}
+                className="h-8 px-3 border border-outline-variant rounded text-xs font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700"
+              >
+                Añadir al Expediente
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
