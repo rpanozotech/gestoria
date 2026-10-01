@@ -18,9 +18,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Create non-root user for security
+# Create non-root user for security.
+# --ingroup nodejs es explicito: sin el, adduser asigna el grupo por defecto
+# y el `--chown=nextjs:nodejs` de mas abajo dependeria de esa suposicion.
 RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
+  && adduser --system --uid 1001 --ingroup nodejs nextjs
 # Create uploads directory with proper permissions (uploads_data lo monta en runtime)
 RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
 
@@ -31,7 +33,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 
 # Change ownership of application files
 RUN chown -R nextjs:nodejs /app
-USER nextjs  # Switch to non-root user
+# Switch to non-root user. El comentario va en su propia linea: pegado a
+# la instrucción, Docker lo interpreta como parte del valor y falla con
+# "unable to find user nextjs # Switch to...".
+USER nextjs
 
 EXPOSE 5000
 
