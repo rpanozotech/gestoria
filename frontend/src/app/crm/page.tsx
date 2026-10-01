@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import { activableConTeclado } from '@/lib/a11y';
 
 // El dia se deriva del reloj del navegador, nunca se escribe a mano: una
 // fecha fija en el dashboard hace que el gestor no se fie de la agenda.
@@ -272,8 +273,9 @@ export default function CRMDashboardPage() {
                     <tr
                       key={dossier.id}
                       onClick={() => setSelectedDossier(dossier)}
+                      {...activableConTeclado(() => setSelectedDossier(dossier))}
                       className="hover:bg-blue-50/60 cursor-pointer transition-colors"
-                      title="Haz clic para ver detalles"
+                      title="Haz clic o pulsa Enter para ver detalles"
                     >
                       <td className="px-5 py-3.5 font-mono-data font-semibold text-secondary">
                         {dossier.code}

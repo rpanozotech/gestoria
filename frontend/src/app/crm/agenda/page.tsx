@@ -155,9 +155,12 @@ export default function CRMAgendaPage() {
   const [meetModal, setMeetModal] = useState<string | null>(null);
   const [callModal, setCallModal] = useState<{ client: string; phone: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastTipo, setToastTipo] = useState<'exito' | 'error'>('exito');
 
-  const showToast = (msg: string) => {
+  /** Los fallos se muestran en rojo: un error con check verde es peor que no avisar. */
+  const showToast = (msg: string, tipo: 'exito' | 'error' = 'exito') => {
     setToastMessage(msg);
+    setToastTipo(tipo);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -381,14 +384,14 @@ export default function CRMAgendaPage() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        showToast(data.error || 'No se pudo eliminar la cita.');
+        showToast(data.error || 'No se pudo eliminar la cita.', 'error');
         return;
       }
 
       setAppointments(appointments.filter((a) => a.id !== id));
       showToast('Cita eliminada.');
     } catch {
-      showToast('Error de conexión al eliminar la cita.');
+      showToast('Error de conexión al eliminar la cita.', 'error');
     }
   };
 
@@ -407,14 +410,14 @@ export default function CRMAgendaPage() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        showToast(data.error || 'No se pudo actualizar la cita.');
+        showToast(data.error || 'No se pudo actualizar la cita.', 'error');
         return;
       }
 
       setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: 'cancelada' } : a)));
       showToast('Cita marcada como cancelada.');
     } catch {
-      showToast('Error de conexión al actualizar la cita.');
+      showToast('Error de conexión al actualizar la cita.', 'error');
     }
   };
 
@@ -465,8 +468,21 @@ export default function CRMAgendaPage() {
     <div className="h-full flex flex-col space-y-2.5 overflow-hidden">
       {/* Toast de Notificaciones */}
       {toastMessage && (
-        <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 border border-secondary/40 animate-in fade-in duration-200">
-          <span className="material-symbols-outlined text-secondary text-lg">check_circle</span>
+        <div
+          role={toastTipo === 'error' ? 'alert' : 'status'}
+          className={`fixed top-20 right-8 z-50 px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 border animate-in fade-in duration-200 ${
+            toastTipo === 'error'
+              ? 'bg-red-50 text-red-800 border-red-300'
+              : 'bg-slate-900 text-white border-secondary/40'
+          }`}
+        >
+          <span
+            className={`material-symbols-outlined text-lg ${
+              toastTipo === 'error' ? 'text-red-600' : 'text-secondary'
+            }`}
+          >
+            {toastTipo === 'error' ? 'error' : 'check_circle'}
+          </span>
           <span className="text-xs font-medium">{toastMessage}</span>
         </div>
       )}

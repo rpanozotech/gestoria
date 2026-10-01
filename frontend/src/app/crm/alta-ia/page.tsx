@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useEscapeKey } from '@/lib/a11y';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 
@@ -89,6 +90,12 @@ export default function AltaIAEscaneerPage() {
   const [saveSuccessModal, setSaveSuccessModal] = useState<any>(null);
   const [aviso, setAviso] = useState<{ texto: string; tipo: 'error' | 'info' } | null>(null);
   const [usadoFallback, setUsadoFallback] = useState(false);
+
+  // Escape cierra el modal de resultado.
+  useEscapeKey(!!saveSuccessModal, () => {
+    setSaveSuccessModal(null);
+    if (saveSuccessModal?.count > 0) router.push('/crm/clientes');
+  });
 
   // Aviso local. Los errores van en rojo: un fallo de guardado nunca debe
   // comunicarse con el mismo tono que un exito.
@@ -1334,7 +1341,12 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       )}
 
       {saveSuccessModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-alta-ia-titulo"
+        >
           <div className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-secondary shadow-2xl p-6 space-y-4 animate-in zoom-in-95 text-center">
             <div
               className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto ${
@@ -1349,7 +1361,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             </div>
 
             <div>
-              <h3 className="font-bold text-lg text-on-surface">
+              <h3 id="modal-alta-ia-titulo" className="font-bold text-lg text-on-surface">
                 {saveSuccessModal.failed?.length
                   ? `${saveSuccessModal.count} guardados, ${saveSuccessModal.failed.length} sin guardar`
                   : `¡${saveSuccessModal.count} Nuevos Clientes Registrados!`}

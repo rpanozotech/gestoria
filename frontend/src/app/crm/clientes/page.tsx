@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { activableConTeclado, useEscapeKey } from '@/lib/a11y';
 
 interface ClientDocument {
   id: string;
@@ -40,8 +41,18 @@ export default function CRMClientesPage() {
 
   // Toast global
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const showToast = (msg: string) => {
+  const [toastTipo, setToastTipo] = useState<'exito' | 'error'>('exito');
+  /**
+   * Aviso flotante.
+   *
+   * Antes solo existia la variante de exito: los fallos ("No se pudo
+   * eliminar el cliente", "Error de conexion") se mostraban con un
+   * check_circle verde. Un check verde sobre un error es la peor
+   * combinacion posible — quien glee un visto bueno no lee el texto.
+   */
+  const showToast = (msg: string, tipo: 'exito' | 'error' = 'exito') => {
     setToastMessage(msg);
+    setToastTipo(tipo);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -358,7 +369,34 @@ export default function CRMClientesPage() {
     },
   ]);
 
-  // Sincronización con localStorage
+  // Copiar al portapapeles con feedback
+  const copyToClipboard = (text: string, label: string) => {
+    if (!text || text === '—') return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      showToast(`¡${label} copiado al portapapeles!`);
+    }
+  };
+
+  // Exportar lista de clientes a CSV universal (compatible con otros CRM y Excel)
+  const handleExportClientsCsv = () => {
+    let csv = '\uFEFF"ID";"Nombre Completo";"BSN";"Email";"Telefono";"Documento";"Ciudad";"Direccion";"IBAN";"Estado DigiD";"Estado"\r\n';
+    clients.forEach((c: any) => {
+      csv += `"${c.id}";"${c.full_name}";"${c.bsn || ''}";"${c.email || ''}";"${c.phone || ''}";"${c.id_document_number || ''}";"${c.city || ''}";"${c.address || ''}";"${c.iban || ''}";"${c.digid_status || ''}";"${c.status || ''}"\r\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nexusgest-clientes-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    showToast(`¡${clients.length} clientes exportados a CSV con éxito!`);
+  };
+
+  // Sincronización con localStorage y Backend
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -383,6 +421,32 @@ export default function CRMClientesPage() {
       } catch (err) {
         console.warn('Error al leer clientes de localStorage:', err);
       }
+
+      // Sincronizar clientes desde backend si está disponible
+      apiFetch('/clients')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (Array.isArray(data?.clients) && data.clients.length > 0) {
+            setClients((prev) => {
+              const map = new Map();
+              prev.forEach((c) => map.set(String(c.id), c));
+              data.clients.forEach((c: any) => {
+                const existing = map.get(String(c.id));
+                map.set(String(c.id), {
+                  ...existing,
+                  ...c,
+                  dossiers: existing?.dossiers || [],
+                  quotes: existing?.quotes || [],
+                  invoices: existing?.invoices || [],
+                  appointments: existing?.appointments || [],
+                  documents: existing?.documents || [],
+                });
+              });
+              return Array.from(map.values());
+            });
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -559,6 +623,10 @@ export default function CRMClientesPage() {
       window.history.replaceState({}, '', newUrl);
     }
   };
+
+  // Escape cierra la Ficha 360°. Sin esto, quien navega solo con teclado
+  // no tiene forma de volver al listado.
+  useEscapeKey(!!selectedClient, handleCloseFicha);
 
   // Abrir Modal de Edición de Datos
   const handleOpenEditClient = (client: any) => {
@@ -844,7 +912,7 @@ export default function CRMClientesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        showToast(data.error || 'No se pudo desactivar el cliente.');
+        showToast(data.error || 'No se pudo desactivar el cliente.', 'error');
         return;
       }
 
@@ -853,11 +921,64 @@ export default function CRMClientesPage() {
       setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
       showToast('Cliente desactivado. Su historial se conserva.');
     } catch {
-      showToast('Error de conexión al desactivar.');
+      showToast('Error de conexión al desactivar.', 'error');
     }
   };
 
-  // Eliminar Documento
+  // Eliminar cliente. El backend bloquea el borrado si hay facturas pagadas
+  // (conservación fiscal) y, si hay otros datos asociados, exige ?confirmar=SI.
+  const handleDeleteClient = async () => {
+    if (!selectedClient) return;
+
+    if (
+      !confirm(
+        `¿Eliminar a ${selectedClient.full_name}?\n\nSe borrarán también sus expedientes, presupuestos, citas y documentos asociados.\n\nEsta acción no se puede deshacer. Si solo quieres dejar de trabajar con él, desactívalo en su lugar.`
+      )
+    ) {
+      return;
+    }
+
+    const ejecutarBorrado = async (confirmar: boolean) => {
+      const url = confirmar ? `/clients/${selectedClient.id}?confirmar=SI` : `/clients/${selectedClient.id}`;
+      const res = await apiFetch(url, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 409 && data.requiere_confirmacion) {
+        const detalle = data.impact
+          ? Object.entries(data.impact as Record<string, number>)
+              .filter(([, v]) => v > 0)
+              .map(([k, v]) => `${v} ${k}`)
+              .join(', ')
+          : '';
+
+        if (
+          confirm(
+            `Se eliminará también lo asociado: ${detalle}.\n\n¿Confirmas el borrado definitivo?`
+          )
+        ) {
+          return ejecutarBorrado(true);
+        }
+        return;
+      }
+
+      if (!res.ok) {
+        showToast(data.error || 'No se pudo eliminar el cliente.', 'error');
+        return;
+      }
+
+      setClients(clients.filter((c) => c.id !== selectedClient.id));
+      setSelectedClient(null);
+      showToast('Cliente eliminado.');
+    };
+
+    try {
+      await ejecutarBorrado(false);
+    } catch {
+      showToast('Error de conexión al eliminar.', 'error');
+    }
+  };
+
+// Eliminar Documento
   // El backend no expone DELETE de documentos: el registro se quita solo de
   // la vista local. Para borrarlo de verdad hay que hacerlo por consola.
   const handleDeleteDocument = (docId: string) => {
@@ -1335,8 +1456,21 @@ export default function CRMClientesPage() {
     <div className="space-y-6">
       {/* Toast de Notificaciones */}
       {toastMessage && (
-        <div className="fixed top-20 right-8 z-[200] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-secondary/40 animate-in fade-in duration-200">
-          <span className="material-symbols-outlined text-secondary text-xl">check_circle</span>
+        <div
+          role={toastTipo === 'error' ? 'alert' : 'status'}
+          className={`fixed top-20 right-8 z-[200] px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border animate-in fade-in duration-200 ${
+            toastTipo === 'error'
+              ? 'bg-red-50 text-red-800 border-red-300'
+              : 'bg-slate-900 text-white border-secondary/40'
+          }`}
+        >
+          <span
+            className={`material-symbols-outlined text-xl ${
+              toastTipo === 'error' ? 'text-red-600' : 'text-secondary'
+            }`}
+          >
+            {toastTipo === 'error' ? 'error' : 'check_circle'}
+          </span>
           <span className="text-xs font-semibold">{toastMessage}</span>
         </div>
       )}
@@ -1355,7 +1489,7 @@ export default function CRMClientesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative">
             <span className="material-symbols-outlined absolute left-3 top-2.5 text-outline text-base">search</span>
             <input
@@ -1363,13 +1497,33 @@ export default function CRMClientesPage() {
               placeholder="Buscar por nombre, BSN, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-9 pl-9 pr-4 text-xs bg-surface-container-lowest border border-outline-variant rounded-md focus:border-secondary focus:outline-none w-64 shadow-xs"
+              className="h-9 pl-9 pr-4 text-xs bg-surface-container-lowest border border-outline-variant rounded-md focus:border-secondary focus:outline-none w-56 sm:w-64 shadow-xs"
             />
           </div>
 
+          <button
+            type="button"
+            onClick={handleExportClientsCsv}
+            className="h-9 px-3 bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-secondary hover:text-secondary text-xs font-semibold rounded-md shadow-xs transition-colors flex items-center gap-1.5"
+            title="Descargar lista de clientes en CSV compatible con Excel y otros CRM"
+          >
+            <span className="material-symbols-outlined text-[16px]">file_download</span>
+            <span className="hidden sm:inline">Exportar CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </button>
+
+          <Link
+            href="/crm/backup"
+            className="h-9 px-3 bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-secondary hover:text-secondary text-xs font-semibold rounded-md shadow-xs transition-colors flex items-center gap-1.5"
+            title="Ir al Centro de Copias de Seguridad"
+          >
+            <span className="material-symbols-outlined text-[16px] text-secondary">cloud_download</span>
+            <span className="hidden md:inline">Backup</span>
+          </Link>
+
           <Link
             href="/crm/alta-ia"
-            className="h-9 px-4 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+            className="h-9 px-3.5 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-1.5"
           >
             <span className="material-symbols-outlined text-[16px]">person_add</span>
             <span>+ Nuevo Cliente</span>
@@ -1425,8 +1579,9 @@ export default function CRMClientesPage() {
                 <tr
                   key={client.id}
                   onClick={() => handleOpenClient(client)}
+                  {...activableConTeclado(() => handleOpenClient(client))}
                   className="hover:bg-blue-50/50 cursor-pointer transition-colors group"
-                  title="Pulsar para abrir Ficha 360°"
+                  title="Pulsar para abrir Ficha 360° (Enter)"
                 >
                   <td className="px-5 py-3.5">
                     <div className="font-bold text-on-surface text-sm group-hover:text-secondary flex items-center gap-1.5 transition-colors">
@@ -1499,6 +1654,9 @@ export default function CRMClientesPage() {
             isMaximized ? 'left-0 z-[100]' : 'left-0 lg:left-64 z-40'
           } bg-surface flex flex-col overflow-hidden shadow-2xl border-l border-surface-container-high transition-all`}
           style={{ top: 0, marginTop: 0, paddingTop: 0 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Ficha 360 de ${selectedClient.full_name}`}
         >
           {/* Top Bar de la Ficha 360° */}
           <header className="min-h-16 py-2 px-4 sm:px-6 lg:px-8 bg-surface-container-lowest border-b border-surface-container-high flex flex-wrap items-center justify-between gap-3 shadow-sm shrink-0">
@@ -1557,6 +1715,17 @@ export default function CRMClientesPage() {
                   <span className="hidden sm:inline">Desactivar</span>
                 </button>
               )}
+
+              {/* Eliminar. El backend lo bloquea si el cliente tiene facturas
+                  pagadas, y devuelve el motivo para que se muestre. */}
+              <button
+                type="button"
+                onClick={handleDeleteClient}
+                className="h-8 sm:h-9 w-8 sm:w-9 border border-outline-variant text-outline rounded-md shadow-xs hover:text-error hover:bg-red-50 hover:border-red-200 transition-colors flex items-center justify-center"
+                title="Eliminar cliente (bloqueado si tiene facturas pagadas)"
+              >
+                <span className="material-symbols-outlined text-[17px]">delete</span>
+              </button>
 
               {/* Botón Maximizar / Pantalla completa */}
               <button
@@ -2534,41 +2703,129 @@ export default function CRMClientesPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="p-3 bg-surface rounded border border-surface-container">
-                    <span className="text-[10px] font-bold uppercase text-outline">Nombre Completo:</span>
-                    <p className="font-bold text-sm text-on-surface mt-1">{selectedClient.full_name}</p>
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-outline">Nombre Completo:</span>
+                      <p className="font-bold text-sm text-on-surface mt-0.5">{selectedClient.full_name}</p>
+                    </div>
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
-                    <span className="text-[10px] font-bold uppercase text-outline">BSN Oficial:</span>
-                    <p className="font-mono-data font-bold text-sm text-secondary mt-1">{selectedClient.bsn || '—'}</p>
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-outline">BSN Oficial:</span>
+                      <p className="font-mono-data font-bold text-sm text-secondary mt-0.5">{selectedClient.bsn || '—'}</p>
+                    </div>
+                    {selectedClient.bsn && (
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(selectedClient.bsn, 'BSN')}
+                        className="p-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-outline hover:text-secondary transition-colors"
+                        title="Copiar BSN"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">content_copy</span>
+                      </button>
+                    )}
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
-                    <span className="text-[10px] font-bold uppercase text-outline">Documento / Pasaporte:</span>
-                    <p className="font-mono-data font-bold text-sm text-on-surface mt-1">{selectedClient.id_document_number || '—'}</p>
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-outline">Documento / Pasaporte:</span>
+                      <p className="font-mono-data font-bold text-sm text-on-surface mt-0.5">{selectedClient.id_document_number || '—'}</p>
+                    </div>
+                    {selectedClient.id_document_number && (
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(selectedClient.id_document_number, 'Pasaporte')}
+                        className="p-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-outline hover:text-secondary transition-colors"
+                        title="Copiar Pasaporte"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">content_copy</span>
+                      </button>
+                    )}
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
-                    <span className="text-[10px] font-bold uppercase text-outline">Teléfono de Contacto:</span>
-                    <p className="font-semibold text-on-surface mt-1">{selectedClient.phone}</p>
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-outline">Teléfono de Contacto:</span>
+                      <p className="font-semibold text-on-surface mt-0.5">{selectedClient.phone}</p>
+                    </div>
+                    {selectedClient.phone && (
+                      <div className="flex items-center gap-1">
+                        <a
+                          href={`tel:${selectedClient.phone}`}
+                          className="p-1.5 rounded-lg border border-outline-variant hover:bg-emerald-50 text-emerald-700 transition-colors"
+                          title="Llamar"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">call</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(selectedClient.phone, 'Teléfono')}
+                          className="p-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-outline hover:text-secondary transition-colors"
+                          title="Copiar Teléfono"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">content_copy</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
-                    <span className="text-[10px] font-bold uppercase text-outline">Correo Electrónico:</span>
-                    <p className="font-semibold text-on-surface mt-1">{selectedClient.email}</p>
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-outline">Correo Electrónico:</span>
+                      <p className="font-semibold text-on-surface mt-0.5">{selectedClient.email}</p>
+                    </div>
+                    {selectedClient.email && (
+                      <div className="flex items-center gap-1">
+                        <a
+                          href={`mailto:${selectedClient.email}`}
+                          className="p-1.5 rounded-lg border border-outline-variant hover:bg-blue-50 text-secondary transition-colors"
+                          title="Enviar correo"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">mail</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(selectedClient.email, 'Correo')}
+                          className="p-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-outline hover:text-secondary transition-colors"
+                          title="Copiar Correo"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">content_copy</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Ciudad:</span>
-                    <p className="font-semibold text-on-surface mt-1">{selectedClient.city || 'Países Bajos'}</p>
+                    <p className="font-semibold text-on-surface mt-0.5">{selectedClient.city || 'Países Bajos'}</p>
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Dirección en Países Bajos:</span>
-                    <p className="font-semibold text-on-surface mt-1">{selectedClient.address || '—'}</p>
+                    <p className="font-semibold text-on-surface mt-0.5">{selectedClient.address || '—'}</p>
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
-                    <span className="text-[10px] font-bold uppercase text-outline">Cuenta Bancaria (IBAN):</span>
-                    <p className="font-mono-data font-bold text-on-surface mt-1">{selectedClient.iban || '—'}</p>
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-outline">Cuenta Bancaria (IBAN):</span>
+                      <p className="font-mono-data font-bold text-on-surface mt-0.5">{selectedClient.iban || '—'}</p>
+                    </div>
+                    {selectedClient.iban && (
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(selectedClient.iban, 'IBAN')}
+                        className="p-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-outline hover:text-secondary transition-colors"
+                        title="Copiar IBAN"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">content_copy</span>
+                      </button>
+                    )}
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Estado DigiD:</span>
-                    <p className="font-bold text-sm mt-1">
+                    <p className="font-bold text-sm mt-0.5">
                       {selectedClient.digid_status === 'activo'
                         ? '🟢 Activo'
                         : selectedClient.digid_status === 'pendiente_activar'
@@ -2576,9 +2833,10 @@ export default function CRMClientesPage() {
                         : '⚪ Sin DigiD'}
                     </p>
                   </div>
-                  <div className="p-3 bg-surface rounded border border-surface-container">
+
+                  <div className="p-3 bg-surface rounded-xl border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Estado del Cliente:</span>
-                    <p className="font-bold text-sm mt-1 uppercase text-secondary">{selectedClient.status}</p>
+                    <p className="font-bold text-sm mt-0.5 uppercase text-secondary">{selectedClient.status}</p>
                   </div>
                 </div>
               </div>
