@@ -7,6 +7,15 @@ import { apiUrl } from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
+/**
+ * Tope del ingreso bruto en los simuladores.
+ *
+ * El publico objetivo de la gestoria no gana mas de esta cifra, asi que
+ * el deslizador se detiene aqui. Los campos numericos aceptan cualquier
+ * importe: quien gana mas puede escribirlo a mano.
+ */
+const MAX_INCOME = 45000;
+
 // Tipos para soporte multiidioma básico
 type Language = 'ES' | 'EN' | 'NL' | 'RO' | 'PT' | 'PL';
 
@@ -755,14 +764,23 @@ export default function PublicHomePage() {
                   <div>
                     <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                       <span>Ingreso bruto percibido en Holanda:</span>
-                      <span className="text-blue-600 font-extrabold">{grossIncome.toLocaleString()} €</span>
+                      <input
+                        type="number"
+                        min="10000"
+                        max={MAX_INCOME}
+                        step="500"
+                        value={grossIncome}
+                        onChange={(e) => setGrossIncome(Number(e.target.value))}
+                        className="w-28 text-right text-blue-600 font-extrabold border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                      />
+                      <span className="text-blue-600 font-extrabold">€</span>
                     </div>
                     <input
                       type="range"
                       min="10000"
-                      max="90000"
-                      step="1000"
-                      value={grossIncome}
+                      max={MAX_INCOME}
+                      step="500"
+                      value={Math.min(Math.max(grossIncome, 10000), MAX_INCOME)}
                       onChange={(e) => setGrossIncome(Number(e.target.value))}
                       className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />
@@ -772,14 +790,23 @@ export default function PublicHomePage() {
                   <div>
                     <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                       <span>Impuestos retenidos en nómina (Loonheffing):</span>
-                      <span className="text-blue-600 font-extrabold">{withheldTax.toLocaleString()} €</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={MAX_INCOME}
+                        step="100"
+                        value={withheldTax}
+                        onChange={(e) => setWithheldTax(Number(e.target.value))}
+                        className="w-28 text-right text-blue-600 font-extrabold border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                      />
+                      <span className="text-blue-600 font-extrabold">€</span>
                     </div>
                     <input
                       type="range"
-                      min="2000"
-                      max="35000"
-                      step="500"
-                      value={withheldTax}
+                      min="0"
+                      max={MAX_INCOME}
+                      step="100"
+                      value={Math.min(Math.max(withheldTax, 0), MAX_INCOME)}
                       onChange={(e) => setWithheldTax(Number(e.target.value))}
                       className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />
@@ -841,14 +868,23 @@ export default function PublicHomePage() {
                   <div>
                     <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                       <span>Ingreso anual bruto estimado:</span>
-                      <span className="text-indigo-600 font-extrabold">{toeslagIncome.toLocaleString()} € / año</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={MAX_INCOME}
+                        step="500"
+                        value={toeslagIncome}
+                        onChange={(e) => setToeslagIncome(Number(e.target.value))}
+                        className="w-28 text-right text-indigo-600 font-extrabold border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                      />
+                      <span className="text-indigo-600 font-extrabold">€ / año</span>
                     </div>
                     <input
                       type="range"
                       min="12000"
-                      max="55000"
-                      step="1000"
-                      value={toeslagIncome}
+                      max={MAX_INCOME}
+                      step="500"
+                      value={Math.min(Math.max(toeslagIncome, 12000), MAX_INCOME)}
                       onChange={(e) => setToeslagIncome(Number(e.target.value))}
                       className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />
@@ -858,14 +894,22 @@ export default function PublicHomePage() {
                   <div>
                     <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                       <span>Alquiler mensual de tu vivienda:</span>
-                      <span className="text-indigo-600 font-extrabold">{monthlyRent} € / mes</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="25"
+                        value={monthlyRent}
+                        onChange={(e) => setMonthlyRent(Number(e.target.value))}
+                        className="w-24 text-right text-indigo-600 font-extrabold border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                      />
+                      <span className="text-indigo-600 font-extrabold">€ / mes</span>
                     </div>
                     <input
                       type="range"
                       min="400"
                       max="1400"
                       step="25"
-                      value={monthlyRent}
+                      value={Math.min(Math.max(monthlyRent, 0), 1400)}
                       onChange={(e) => setMonthlyRent(Number(e.target.value))}
                       className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />

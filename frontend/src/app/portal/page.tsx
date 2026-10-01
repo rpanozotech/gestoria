@@ -4,6 +4,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { apiUrl } from '@/lib/api';
 
+/**
+ * Pago del portal del cliente.
+ *
+ * No hay pasarela de pago integrada: la gestoria no procesa tarjetas. El
+ * cliente abre WhatsApp con el mensaje ya escrito y el gestor le confirma
+ * importe, coordenadas e IBAN. Nada se cobra desde la web.
+ *
+ * Rellena WHATSAPP_PAGO con el numero en formato internacional, sin
+ * espacios ni simbolos (ej: 31612345678). Si se deja vacio, el boton
+ * avisa al cliente en lugar de abrir un chat roto.
+ */
+const WHATSAPP_PAGO = '';
+
+const FACTURA_REF = 'FAC-2026-0002';
+const FACTURA_TOTAL = '102,85';
+const FACTURA_BASE = '85,00';
+const FACTURA_BTW_PCT = '21';
+
 interface ClientMessage {
   id: string;
   sender: 'ia' | 'user';
@@ -141,10 +159,7 @@ export default function PortalClientePage() {
   const [unreadNotifications, setUnreadNotifications] = useState(2);
 
   // Estado simulación iDEAL
-  const [selectedBank, setSelectedBank] = useState('ING');
-  const [isPaying, setIsPaying] = useState(false);
-  const [paymentDone, setPaymentDone] = useState(false);
-
+  
   // Subsidios interactivos
   const [huurtoeslagRequested, setHuurtoeslagRequested] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -1452,8 +1467,8 @@ export default function PortalClientePage() {
                     <span className="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-data text-xs font-bold">
                       FACTURA FAC-2026-0002
                     </span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${paymentDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                      {paymentDone ? 'PAGADA' : 'PENDIENTE DE PAGO'}
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">
+                      PENDIENTE DE PAGO
                     </span>
                   </div>
                   <h3 className="text-lg font-bold text-white mt-1.5">{client.dossier_title}</h3>
@@ -1466,65 +1481,41 @@ export default function PortalClientePage() {
                 </div>
               </div>
 
-              {paymentDone ? (
-                <div className="p-8 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-center space-y-3">
-                  <div className="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg">
-                    <span className="material-symbols-outlined text-3xl">verified</span>
-                  </div>
-                  <h4 className="font-extrabold text-emerald-400 text-lg">¡Pago iDEAL Confirmado con Éxito!</h4>
-                  <p className="text-xs text-slate-300 max-w-md mx-auto">
-                    Referencia de transacción bancaria: <span className="font-mono-data font-bold text-white">IDL-TRX-2026-98124</span>. Tu gestor Rony P. ha recibido la confirmación automática.
-                  </p>
-                  <button
-                    onClick={() => window.print()}
-                    className="mt-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2 shadow-md"
-                  >
-                    <span className="material-symbols-outlined text-base">download</span>
-                    <span>Descargar Recibo / Factura Oficial en PDF</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  <div>
-                    <span className="text-xs font-bold uppercase text-slate-400 block mb-2">
-                      Selecciona tu Banco Holandés para Pago Directo (iDEAL):
+              <div className="space-y-5">
+                <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                  <span className="material-symbols-outlined text-blue-400 text-lg shrink-0 mt-0.5">info</span>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    El pago se coordina directamente con tu gestor por WhatsApp. Al pulsar el
+                    botón se abrirá una conversación con el mensaje ya escrito; tu gestor te
+                    confirmará el importe, las coordenadas y el IBAN de la cuenta.
+                    <span className="block mt-1 text-slate-400">
+                      Desde esta web no se cobra nada ni se registran datos bancarios.
                     </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                      {['ING', 'ABN AMRO', 'Rabobank', 'Bunq', 'SNS Bank'].map((bank) => (
-                        <button
-                          key={bank}
-                          type="button"
-                          onClick={() => setSelectedBank(bank)}
-                          className={`p-3.5 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center justify-center gap-1 ${
-                            selectedBank === bank
-                              ? 'border-blue-500 bg-blue-500/20 text-blue-300 shadow-md ring-2 ring-blue-500/30'
-                              : 'border-slate-800 bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:border-slate-700'
-                          }`}
-                        >
-                          <span className="material-symbols-outlined text-[20px] text-pink-500">payments</span>
-                          <span>{bank}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setIsPaying(true);
-                      setTimeout(() => {
-                        setIsPaying(false);
-                        setPaymentDone(true);
-                        showToast('¡Pago de € 102,85 confirmado mediante iDEAL!');
-                      }, 1200);
-                    }}
-                    disabled={isPaying}
-                    className="w-full h-12 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">lock</span>
-                    <span>{isPaying ? 'Conectando con pasarela iDEAL...' : `Pagar € 102,85 de forma segura con ${selectedBank}`}</span>
-                  </button>
+                  </p>
                 </div>
-              )}
+
+                <button
+                  onClick={() => {
+                    if (!WHATSAPP_PAGO) {
+                      showToast('El pago por WhatsApp aún no está configurado. Contacta a tu gestor por email.');
+                      return;
+                    }
+                    const mensaje = encodeURIComponent(
+                      `Hola, quiero pagar la factura ${FACTURA_REF} de mi gestoría (importe ${FACTURA_TOTAL} EUR, base ${FACTURA_BASE} EUR + ${FACTURA_BTW_PCT}% BTW). ¿Me confirmas las coordenadas para Doing en cuenta?`
+                    );
+                    window.open(`https://wa.me/${WHATSAPP_PAGO}?text=${mensaje}`, '_blank', 'noopener,noreferrer');
+                  }}
+                  className="w-full h-12 bg-gradient-to-r from-secondary to-blue-700 hover:from-secondary/90 hover:to-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chat</span>
+                  <span>Pagar por WhatsApp</span>
+                </button>
+
+                <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+                  Te abrimos WhatsApp con el mensaje ya escrito. Tu gestor te confirmará las
+                  coordenadas de pago y el IBAN de la cuenta. No se cobra nada desde esta web.
+                </p>
+              </div>
             </div>
           </div>
         )}

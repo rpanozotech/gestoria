@@ -5,6 +5,15 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
+/**
+ * Tope del ingreso bruto en los simuladores.
+ *
+ * El publico objetivo de la gestoria no gana mas de esta cifra, asi que
+ * el deslizador se detiene aqui. Los campos numericos siguen aceptando
+ * cualquier importe: quien gana mas puede escribirlo a mano.
+ */
+const MAX_INCOME = 45000;
+
 export default function CalculadoraPage() {
   // 1. Calculadora M-Form
   const [monthsInNL, setMonthsInNL] = useState<number>(8);
@@ -119,50 +128,58 @@ export default function CalculadoraPage() {
                     <div>
                       <div className="flex justify-between w-full text-sm font-semibold text-slate-800 mb-2">
                         <span>Ingreso bruto percibido en Holanda:</span>
-                        <span className="text-blue-600 font-extrabold text-base">{grossIncome.toLocaleString('es-ES')} €</span>
+                        <input
+                          type="number"
+                          min="10000"
+                          max={MAX_INCOME}
+                          step="500"
+                          value={grossIncome}
+                          onChange={(e) => setGrossIncome(Number(e.target.value))}
+                          className="w-32 text-right text-blue-600 font-extrabold text-base border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                        />
+                        <span className="text-blue-600 font-extrabold text-base">€</span>
                       </div>
                       <input
                         type="range"
                         min="10000"
-                        max="60000"
-                        step="1000"
-                        value={grossIncome}
+                        max={MAX_INCOME}
+                        step="500"
+                        value={Math.min(Math.max(grossIncome, 10000), MAX_INCOME)}
                         onChange={(e) => setGrossIncome(Number(e.target.value))}
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
-                      <input
-                        type="number"
-                        min="10000"
-                        max="60000"
-                        value={grossIncome}
-                        onChange={(e) => setGrossIncome(Number(e.target.value))}
-                        className="mt-2 mx-auto w-48 border border-slate-300 rounded p-1"
-                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Puedes escribir el importe directamente. Rango del deslizador: 10.000 – {MAX_INCOME.toLocaleString('es-ES')} €.
+                      </p>
                     </div>
 
                     {/* SLIDER RETENCIONES */}
                     <div>
                       <div className="flex justify-between w-full text-sm font-semibold text-slate-800 mb-2">
                         <span>Impuestos retenidos en nómina (Loonheffing):</span>
-                        <span className="text-blue-600 font-extrabold text-base">{withheldTax.toLocaleString('es-ES')} €</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max={MAX_INCOME}
+                          step="100"
+                          value={withheldTax}
+                          onChange={(e) => setWithheldTax(Number(e.target.value))}
+                          className="w-32 text-right text-blue-600 font-extrabold text-base border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                        />
+                        <span className="text-blue-600 font-extrabold text-base">€</span>
                       </div>
                       <input
                         type="range"
-                        min="2000"
-                        max="20000"
-                        step="500"
-                        value={withheldTax}
+                        min="0"
+                        max={MAX_INCOME}
+                        step="100"
+                        value={Math.min(Math.max(withheldTax, 0), MAX_INCOME)}
                         onChange={(e) => setWithheldTax(Number(e.target.value))}
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
-                      <input
-                        type="number"
-                        min="2000"
-                        max="20000"
-                        value={withheldTax}
-                        onChange={(e) => setWithheldTax(Number(e.target.value))}
-                        className="mt-2 mx-auto w-48 border border-slate-300 rounded p-1"
-                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Escribe el importe que aparece en tu nómina (loonheffing).
+                      </p>
                     </div>
 
                     {/* DEDUCCIÓN MUDANZA */}
@@ -220,34 +237,57 @@ export default function CalculadoraPage() {
                     <div>
                       <div className="flex justify-between text-sm font-semibold text-slate-800 mb-2">
                         <span>Ingreso anual bruto estimado:</span>
-                        <span className="text-indigo-600 font-extrabold text-base">{toeslagIncome.toLocaleString()} € / año</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max={MAX_INCOME}
+                          step="500"
+                          value={toeslagIncome}
+                          onChange={(e) => setToeslagIncome(Number(e.target.value))}
+                          className="w-32 text-right text-indigo-600 font-extrabold text-base border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                        />
+                        <span className="text-indigo-600 font-extrabold text-base">€ / año</span>
                       </div>
                       <input
                         type="range"
                         min="12000"
-                        max="55000"
-                        step="1000"
-                        value={toeslagIncome}
+                        max={MAX_INCOME}
+                        step="500"
+                        value={Math.min(Math.max(toeslagIncome, 12000), MAX_INCOME)}
                         onChange={(e) => setToeslagIncome(Number(e.target.value))}
                         className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Puedes escribir el importe directamente. El deslizador llega hasta {MAX_INCOME.toLocaleString('es-ES')} €.
+                      </p>
                     </div>
 
                     {/* SLIDER ALQUILER */}
                     <div>
                       <div className="flex justify-between text-sm font-semibold text-slate-800 mb-2">
                         <span>Alquiler mensual de tu vivienda:</span>
-                        <span className="text-indigo-600 font-extrabold text-base">{monthlyRent} € / mes</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="25"
+                          value={monthlyRent}
+                          onChange={(e) => setMonthlyRent(Number(e.target.value))}
+                          className="w-28 text-right text-indigo-600 font-extrabold text-base border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                        />
+                        <span className="text-indigo-600 font-extrabold text-base">€ / mes</span>
                       </div>
                       <input
                         type="range"
                         min="400"
                         max="1400"
                         step="25"
-                        value={monthlyRent}
+                        value={Math.min(Math.max(monthlyRent, 0), 1400)}
                         onChange={(e) => setMonthlyRent(Number(e.target.value))}
                         className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Si pagas mas de 1.400 €, escribe el importe real arriba.
+                      </p>
                     </div>
 
                     {/* SITUACIÓN */}
