@@ -308,8 +308,11 @@ const SAMPLE_CLIENTS = [
 ];
 
 export default function DocumentosIAPage() {
-  // Pestañas principales
-  const [activeTab, setActiveTab] = useState<'cartas' | 'chat' | 'analizador'>('cartas');
+  // Vista principal: generador de cartas o analizador
+  const [activeView, setActiveView] = useState<'generador' | 'analizador'>('generador');
+
+  // Estado de la Barra Lateral del Chat Asistente (abierta por defecto)
+  const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(true);
 
   // Configuración de IA
   const [config, setConfig] = useState<AIConfig>(DEFAULT_CONFIG);
@@ -358,7 +361,7 @@ export default function DocumentosIAPage() {
     }
   }, []);
 
-  // Lista combinada de todas las plantillas disponibles
+  // Lista combinada de plantillas
   const allTemplates = [...DEFAULT_TEMPLATES, ...customTemplates];
   const activeTemplateObj = allTemplates.find((t) => t.id === selectedTemplateId) || DEFAULT_TEMPLATES[0];
 
@@ -578,7 +581,7 @@ NexusGest Advies & Gestoría
   };
 
   // -------------------------------------------------------------
-  // GENERACIÓN CON IA
+  // GENERACIÓN CON IA (DOCUMENTO PRINCIPAL)
   // -------------------------------------------------------------
   const handleGenerate = async (customInstruction?: string) => {
     setIsGenerating(true);
@@ -660,37 +663,88 @@ Estructura requerida: Encabezado corporativo, fecha de hoy, número BSN, motivo 
   };
 
   // -------------------------------------------------------------
-  // CHAT ASISTENTE LEGAL
+  // CHAT ASISTENTE EN LA BARRA LATERAL CON AUTO-SCROLL
   // -------------------------------------------------------------
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     {
       role: 'assistant',
-      content: `¡Hola! Soy tu **Asistente Legal de Documentos NexusGest**.
+      content: `¡Hola! Soy tu **Asistente Legal IA de NexusGest**.
 
-Puedo ayudarte a:
-- Redactar escritos a medida para la **Belastingdienst**, **Toeslagen**, **CAK** o **Gemeente**.
-- Crear cláusulas de contratos y cartas oficiales con normativas holandesas (Awb).
-- Traducir documentos del neerlandés al español manteniendo rigor legal.
+Estoy aquí en tu **barra lateral** para asistirte mientras redactas tus documentos:
+- Consultar artículos legales (ej: *artículo 7:1 Awb* o plazos de 6 semanas).
+- Traducir frases de neerlandés a español al vuelo.
+- Redactar párrafos a medida e **insertarlos directamente** en tu documento.
 
 ${
   config.apiKey
     ? `🟢 **IA Conectada**: \`${config.model}\` (${config.provider}).`
-    : `💡 *Nota: Modo local activo. Puedes añadir tu API Key y URL en el botón ⚙️ 'Configurar IA' para respuestas dinámicas completas.*`
+    : `💡 *Modo Local activo. Añade tu API Key y URL en ⚙️ 'Configurar IA' para respuestas completas.*`
 }`,
     },
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isChatSending, setIsChatSending] = useState(false);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  const chatScrollContainerRef = useRef<HTMLDivElement>(null);
+  const chatScrollAnchorRef = useRef<HTMLDivElement>(null);
+
+  // Función de scroll automático suave
+  const scrollToBottom = (smooth = true) => {
+    if (chatScrollContainerRef.current) {
+      chatScrollContainerRef.current.scrollTo({
+        top: chatScrollContainerRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  };
+
+  // Reproducción en streaming / máquina de escribir con scroll continuo
+  const streamResponseText = (fullText: string) => {
+    setIsStreaming(true);
+    let currentIndex = 0;
+    const stepSize = Math.max(3, Math.ceil(fullText.length / 70)); // Duración equilibrada ~1.5 segundos
+
+    // Añadir mensaje asistente inicialmente vacío
+    setChatMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+    setTimeout(() => scrollToBottom(true), 25);
+
+    const intervalId = setInterval(() => {
+      currentIndex += stepSize;
+      if (currentIndex >= fullText.length) {
+        clearInterval(intervalId);
+        setChatMessages((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = { role: 'assistant', content: fullText };
+          return next;
+        });
+        setIsChatSending(false);
+        setIsStreaming(false);
+        setTimeout(() => scrollToBottom(true), 60);
+      } else {
+        const partial = fullText.slice(0, currentIndex);
+        setChatMessages((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = { role: 'assistant', content: partial };
+          return next;
+        });
+        // Scroll continuo en modo scroll conforme llega el texto
+        scrollToBottom(true);
+      }
+    }, 25);
+  };
 
   const handleSendChatMessage = async (presetPrompt?: string) => {
     const textToSend = (presetPrompt || chatInput).trim();
-    if (!textToSend || isChatSending) return;
+    if (!textToSend || isChatSending || isStreaming) return;
 
     const newMessages = [...chatMessages, { role: 'user' as const, content: textToSend }];
     setChatMessages(newMessages);
     if (!presetPrompt) setChatInput('');
     setIsChatSending(true);
+
+    // Scroll inmediato hacia abajo al enviar
+    setTimeout(() => scrollToBottom(true), 30);
 
     try {
       const systemPrompt = `Eres un asesor fiscal y redactor legal experto de NexusGest en los Países Bajos. Conoces la ley Awb, Belastingdienst, Toeslagen y contratos neerlandeses. Responde de forma estructurada, directa y lista para usar.`;
@@ -710,7 +764,14 @@ ${
 
       const data = await res.json();
       if (data.text) {
-        setChatMessages([...newMessages, { role: 'assistant', content: data.text }]);
+        // Ejecutar animación con auto-scroll continuo
+        streamResponseText(data.text);
+      } else {
+        setChatMessages([
+          ...newMessages,
+          { role: 'assistant', content: 'No se recibió respuesta válida del motor de IA.' },
+        ]);
+        setIsChatSending(false);
       }
     } catch {
       setChatMessages([
@@ -720,9 +781,19 @@ ${
           content: 'No fue posible completar la respuesta de IA. Verifica tu API Key y URL en Configurar IA.',
         },
       ]);
-    } finally {
       setIsChatSending(false);
     }
+  };
+
+  // Insertar respuesta del chat directamente en el documento
+  const handleInsertChatIntoDoc = (textToInsert: string) => {
+    setDetails((prev) => (prev ? `${prev}\n\n${textToInsert}` : textToInsert));
+    showToast('Texto insertado en la sección de hechos/justificación');
+  };
+
+  const handleReplaceGeneratedLetter = (textToReplace: string) => {
+    setGeneratedLetter(textToReplace);
+    showToast('El borrador oficial ha sido actualizado con el texto del chat');
   };
 
   // -------------------------------------------------------------
@@ -812,12 +883,12 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
     setDetails(
       `Discrepancia en la resolución oficial (${analysisResult.documentType || 'Aanslag'}). ${analysisResult.summaryEs}. Solicitamos rectificación de la cuota (${analysisResult.financialOutcome}) y suspensión de cobro.`
     );
-    setActiveTab('cartas');
+    setActiveView('generador');
     handleGenerate('Redacta un bezwaarschrift formal respondiendo a la resolución analizada.');
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-[1700px] mx-auto pb-12">
       {/* Toast de Notificaciones */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-indigo-500/40 animate-in fade-in duration-200 no-print">
@@ -844,12 +915,32 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
             )}
           </div>
           <p className="text-xs text-on-surface-variant mt-1">
-            Crea plantillas personalizadas, redacta con IA y exporta directamente en <strong>Word (.docx)</strong>,{' '}
-            <strong>PDF</strong> o <strong>Impresión oficial</strong>.
+            Redacción oficial con <strong>Chat Asistente en Barra Lateral</strong>, creador de plantillas y exportación a{' '}
+            <strong>Word (.docx)</strong>, <strong>PDF</strong> e <strong>Impresión legal</strong>.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Botón para Alternar Barra Lateral del Chat */}
+          <button
+            onClick={() => {
+              setIsChatSidebarOpen(!isChatSidebarOpen);
+              if (!isChatSidebarOpen) {
+                setTimeout(() => scrollToBottom(true), 100);
+              }
+            }}
+            className={`h-9 px-3.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs border ${
+              isChatSidebarOpen
+                ? 'bg-secondary/10 border-secondary/30 text-secondary hover:bg-secondary/20'
+                : 'bg-surface border-outline-variant hover:bg-surface-container text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              {isChatSidebarOpen ? 'vertical_split' : 'forum'}
+            </span>
+            <span>{isChatSidebarOpen ? 'Barra Lateral Abierta' : 'Abrir Barra Lateral Chat'}</span>
+          </button>
+
           {/* Botón para Crear Plantilla */}
           <button
             onClick={handleOpenCreateTemplate}
@@ -873,37 +964,24 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
         </div>
       </div>
 
-      {/* Selector de Pestañas Principales */}
-      <div className="flex border-b border-surface-container gap-2 no-print">
+      {/* Selector de Modo Principal (Generador / Analizador) */}
+      <div className="flex border-b border-surface-container gap-3 no-print">
         <button
-          onClick={() => setActiveTab('cartas')}
-          className={`pb-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === 'cartas'
+          onClick={() => setActiveView('generador')}
+          className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
+            activeView === 'generador'
               ? 'border-secondary text-secondary'
               : 'border-transparent text-outline hover:text-on-surface'
           }`}
         >
           <span className="material-symbols-outlined text-[18px]">edit_document</span>
-          <span>Generador & Plantillas Oficiales</span>
+          <span>Generador Oficial & Editor de Documentos</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('chat')}
-          className={`pb-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === 'chat'
-              ? 'border-secondary text-secondary'
-              : 'border-transparent text-outline hover:text-on-surface'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[18px]">forum</span>
-          <span>Chat Asistente Legal Neerlandés</span>
-          <span className="px-1.5 py-0.2 bg-secondary/10 text-secondary text-[10px] font-bold rounded">IA</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('analizador')}
-          className={`pb-3 px-4 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === 'analizador'
+          onClick={() => setActiveView('analizador')}
+          className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
+            activeView === 'analizador'
               ? 'border-secondary text-secondary'
               : 'border-transparent text-outline hover:text-on-surface'
           }`}
@@ -914,563 +992,589 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
       </div>
 
       {/* ============================================================== */}
-      {/* PESTAÑA 1: GENERADOR OFICIAL, PLANTILLAS & EXPORTACIONES       */}
+      {/* CONTENEDOR PRINCIPAL: PANTALLA DIVIDIDA CON BARRA LATERAL      */}
       {/* ============================================================== */}
-      {activeTab === 'cartas' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Controles del Generador (5 cols) */}
-          <div className="lg:col-span-5 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4 no-print">
-            {/* Header de Plantillas con botón de Nueva Plantilla */}
-            <div className="flex items-center justify-between pb-2 border-b border-surface-container">
-              <div>
-                <h3 className="font-bold text-sm text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-secondary text-lg">folder_open</span>
-                  <span>Plantilla Seleccionada</span>
-                </h3>
-                <p className="text-[11px] text-outline">Elige una plantilla o crea la tuya propia</p>
-              </div>
+      <div className="flex flex-col xl:flex-row gap-6 items-start">
+        {/* ========================================== */}
+        {/* COLUMNAS CENTRALES (GENERADOR O ANALIZADOR) */}
+        {/* ========================================== */}
+        <div className={`transition-all duration-300 ${isChatSidebarOpen ? 'w-full xl:flex-1 min-w-0' : 'w-full'}`}>
+          {/* MODO 1: GENERADOR Y EDITOR DE DOCUMENTOS */}
+          {activeView === 'generador' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Formulario y Plantillas (5 cols en lg) */}
+              <div className="lg:col-span-5 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm space-y-4 no-print">
+                {/* Cabecera del catálogo */}
+                <div className="flex items-center justify-between pb-2 border-b border-surface-container">
+                  <div>
+                    <h3 className="font-bold text-sm text-on-surface flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-secondary text-lg">folder_open</span>
+                      <span>Plantilla y Parámetros</span>
+                    </h3>
+                    <p className="text-[11px] text-outline">Elige o crea plantillas con datos del cliente</p>
+                  </div>
 
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={handleOpenCreateTemplate}
-                  className="px-2.5 py-1 bg-surface hover:bg-surface-container border border-outline-variant/70 text-secondary text-[11px] font-semibold rounded flex items-center gap-1 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[14px]">add</span>
-                  <span>Nueva</span>
-                </button>
-                {activeTemplateObj.isCustom && (
-                  <>
+                  <div className="flex items-center gap-1">
                     <button
-                      onClick={handleOpenEditTemplate}
-                      title="Editar esta plantilla personalizada"
-                      className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface transition-colors"
+                      onClick={handleOpenCreateTemplate}
+                      className="px-2 py-1 bg-surface hover:bg-surface-container border border-outline-variant text-secondary text-[11px] font-semibold rounded flex items-center gap-1"
                     >
-                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                      <span className="material-symbols-outlined text-[13px]">add</span>
+                      <span>Nueva</span>
                     </button>
-                    <button
-                      onClick={() => handleDeleteCustomTemplate(activeTemplateObj.id)}
-                      title="Eliminar plantilla"
-                      className="p-1 hover:bg-rose-50 rounded text-rose-600 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Selector de Plantilla */}
-            <div>
-              <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
-                Catálogo de Plantillas Disponibles
-              </label>
-              <select
-                value={selectedTemplateId}
-                onChange={(e) => handleSelectTemplate(e.target.value)}
-                className="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none text-xs font-medium"
-              >
-                <optgroup label="📋 Plantillas Oficiales del Sistema">
-                  {DEFAULT_TEMPLATES.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </optgroup>
-                {customTemplates.length > 0 && (
-                  <optgroup label="⭐ Mis Plantillas Creadas">
-                    {customTemplates.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        ★ {t.name} ({t.categoryLabel})
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-
-              {activeTemplateObj.isCustom && (
-                <div className="mt-1 flex items-center gap-1 text-[11px] text-indigo-700 dark:text-indigo-400 font-medium">
-                  <span className="material-symbols-outlined text-[14px]">star</span>
-                  <span>Esta es una plantilla personalizada creada por ti.</span>
-                </div>
-              )}
-            </div>
-
-            {/* Selector de Cliente Rápido */}
-            <div>
-              <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
-                Cliente Rápido (Autocompletar BSN y Dirección)
-              </label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {SAMPLE_CLIENTS.map((c) => (
-                  <button
-                    key={c.bsn}
-                    type="button"
-                    onClick={() => handlePickClient(c)}
-                    className={`text-left p-2 rounded-lg border text-[11px] transition-all ${
-                      clientName === c.name
-                        ? 'border-secondary bg-secondary/5 font-semibold text-secondary shadow-xs'
-                        : 'border-outline-variant/60 hover:border-outline-variant bg-surface text-on-surface'
-                    }`}
-                  >
-                    <div className="truncate">{c.name}</div>
-                    <div className="text-[10px] text-outline font-mono-data">BSN: {c.bsn}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Campos del Documento */}
-            <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Cliente</label>
-                  <input
-                    type="text"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">BSN (Burger Service)</label>
-                  <input
-                    type="text"
-                    value={bsn}
-                    onChange={(e) => setBsn(e.target.value)}
-                    className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data font-bold text-secondary focus:border-secondary focus:outline-none text-xs"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Dirección NL</label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Idioma del Escrito</label>
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setLanguage('nl')}
-                      className={`flex-1 h-8 rounded text-xs font-semibold transition-all ${
-                        language === 'nl'
-                          ? 'bg-secondary text-white shadow-xs'
-                          : 'bg-surface border border-outline-variant text-outline'
-                      }`}
-                    >
-                      Neerlandés
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLanguage('es')}
-                      className={`flex-1 h-8 rounded text-xs font-semibold transition-all ${
-                        language === 'es'
-                          ? 'bg-secondary text-white shadow-xs'
-                          : 'bg-surface border border-outline-variant text-outline'
-                      }`}
-                    >
-                      Español
-                    </button>
+                    {activeTemplateObj.isCustom && (
+                      <>
+                        <button
+                          onClick={handleOpenEditTemplate}
+                          title="Editar esta plantilla personalizada"
+                          className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCustomTemplate(activeTemplateObj.id)}
+                          title="Eliminar plantilla"
+                          className="p-1 hover:bg-rose-50 rounded text-rose-600"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">delete</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
+                {/* Selector de Plantilla */}
                 <div>
-                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Tono Legal</label>
+                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                    Catálogo de Plantillas
+                  </label>
                   <select
-                    value={tone}
-                    onChange={(e: any) => setTone(e.target.value)}
-                    className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
+                    value={selectedTemplateId}
+                    onChange={(e) => handleSelectTemplate(e.target.value)}
+                    className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none text-xs font-medium"
                   >
-                    <option value="juridico">Awb Jurídico Riguroso</option>
-                    <option value="formal">Formal Administrativo</option>
-                    <option value="urgente">Urgente con Requerimiento</option>
+                    <optgroup label="📋 Plantillas Oficiales del Sistema">
+                      {DEFAULT_TEMPLATES.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    {customTemplates.length > 0 && (
+                      <optgroup label="⭐ Mis Plantillas Creadas">
+                        {customTemplates.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            ★ {t.name} ({t.categoryLabel})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
-                  Hechos del Caso y Justificación
-                </label>
-                <textarea
-                  rows={4}
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  placeholder="Detalla los hechos, ingresos discrepantes o petición..."
-                  className="w-full p-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs leading-relaxed"
-                />
-              </div>
-            </div>
+                {/* Selector de Cliente Rápido */}
+                <div>
+                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                    Cargar Cliente Rápido
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {SAMPLE_CLIENTS.map((c) => (
+                      <button
+                        key={c.bsn}
+                        type="button"
+                        onClick={() => handlePickClient(c)}
+                        className={`text-left p-1.5 rounded-lg border text-[11px] transition-all ${
+                          clientName === c.name
+                            ? 'border-secondary bg-secondary/5 font-semibold text-secondary'
+                            : 'border-outline-variant/60 hover:border-outline-variant bg-surface text-on-surface'
+                        }`}
+                      >
+                        <div className="truncate font-medium">{c.name}</div>
+                        <div className="text-[10px] text-outline font-mono-data">BSN: {c.bsn}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Botón de Generar Carta */}
-            <button
-              onClick={() => handleGenerate()}
-              disabled={isGenerating}
-              className="w-full h-11 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined text-[18px] text-amber-400">
-                {isGenerating ? 'hourglass_top' : 'auto_awesome'}
-              </span>
-              <span>
-                {isGenerating
-                  ? `Redactando con ${config.model}...`
-                  : `Generar / Redactar con ${config.model}`}
-              </span>
-            </button>
-          </div>
+                {/* Campos del Documento */}
+                <div className="space-y-2.5 text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Cliente</label>
+                      <input
+                        type="text"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                        className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-outline uppercase font-semibold text-[10px] mb-1">BSN</label>
+                      <input
+                        type="text"
+                        value={bsn}
+                        onChange={(e) => setBsn(e.target.value)}
+                        className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface font-mono-data font-bold text-secondary focus:border-secondary focus:outline-none text-xs"
+                      />
+                    </div>
+                  </div>
 
-          {/* Vista Previa del Documento y Barra de Exportación (7 cols) */}
-          <div className="lg:col-span-7 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between print-area">
-            <div>
-              {/* Barra de Acciones de Exportación */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-container mb-4 no-print">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-outline text-lg">description</span>
                   <div>
-                    <span className="font-bold text-xs text-on-surface">Borrador Oficial del Documento</span>
-                    <span className="text-[10px] text-outline ml-2 font-mono-data">
-                      {language === 'nl' ? 'Neerlandés (NL)' : 'Español (ES)'}
-                    </span>
+                    <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Dirección NL</label>
+                    <input
+                      type="text"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Idioma</label>
+                      <select
+                        value={language}
+                        onChange={(e: any) => setLanguage(e.target.value)}
+                        className="w-full h-8 px-2 border border-outline-variant rounded bg-surface text-xs focus:border-secondary focus:outline-none"
+                      >
+                        <option value="nl">Neerlandés (NL)</option>
+                        <option value="es">Español (ES)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Tono Legal</label>
+                      <select
+                        value={tone}
+                        onChange={(e: any) => setTone(e.target.value)}
+                        className="w-full h-8 px-2 border border-outline-variant rounded bg-surface text-xs focus:border-secondary focus:outline-none"
+                      >
+                        <option value="juridico">Awb Jurídico</option>
+                        <option value="formal">Formal</option>
+                        <option value="urgente">Urgente</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
+                      Hechos del Caso y Justificación
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={details}
+                      onChange={(e) => setDetails(e.target.value)}
+                      placeholder="Explica las discrepancias de ingresos o la petición..."
+                      className="w-full p-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs leading-relaxed"
+                    />
                   </div>
                 </div>
 
-                {/* BOTONES PRINCIPALES: WORD (.DOCX), PDF E IMPRIMIR */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Descargar Word */}
-                  <button
-                    onClick={handleExportWord}
-                    disabled={isExportingDocx}
-                    title="Descargar archivo editable en Microsoft Word (.docx)"
-                    className="h-8 px-3 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs disabled:opacity-50"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">file_open</span>
-                    <span>{isExportingDocx ? 'Exportando Word...' : 'Descargar Word (.docx)'}</span>
-                  </button>
-
-                  {/* Imprimir / Guardar en PDF */}
-                  <button
-                    onClick={handlePrintDocument}
-                    title="Imprimir documento en papel o guardar como PDF oficial"
-                    className="h-8 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">print</span>
-                    <span>Imprimir / PDF</span>
-                  </button>
-
-                  {/* Copiar Texto */}
-                  <button
-                    onClick={handleCopy}
-                    className="h-8 px-2.5 rounded-lg border border-outline-variant hover:bg-surface text-xs font-semibold text-on-surface flex items-center gap-1 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[15px]">{copied ? 'check' : 'content_copy'}</span>
-                    <span>{copied ? '¡Copiado!' : 'Copiar'}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Botones de Refinamiento Rápido con IA */}
-              <div className="mb-3 p-2 bg-surface-container rounded-lg border border-outline-variant/40 flex flex-wrap items-center gap-2 text-[11px] no-print">
-                <span className="text-outline font-semibold flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px] text-amber-500">auto_fix_high</span>
-                  <span>Refinar con IA:</span>
-                </span>
+                {/* Botón de Generar */}
                 <button
-                  onClick={() =>
-                    handleGenerate('Haz el texto aún más formal y riguroso, citando los artículos pertinentes de la ley Awb.')
-                  }
+                  onClick={() => handleGenerate()}
                   disabled={isGenerating}
-                  className="px-2.5 py-1 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium transition-colors"
+                  className="w-full h-10 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                 >
-                  + Citar Ley Awb
-                </button>
-                <button
-                  onClick={() =>
-                    handleGenerate(
-                      'Añade un párrafo solicitando expresamente la suspensión del cobro (verzoek om uitstel van betaling).'
-                    )
-                  }
-                  disabled={isGenerating}
-                  className="px-2.5 py-1 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium transition-colors"
-                >
-                  + Suspensión de Cobro
-                </button>
-                <button
-                  onClick={() =>
-                    handleGenerate('Traduce todo el escrito al español manteniendo el formato legal formal.')
-                  }
-                  disabled={isGenerating}
-                  className="px-2.5 py-1 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium transition-colors"
-                >
-                  🌐 Traducir a Español
-                </button>
-              </div>
-
-              {/* Hoja de Documento A4 (Área Imprimible) */}
-              <div className="p-8 bg-white border border-surface-container rounded-xl shadow-inner font-mono-data text-xs text-slate-800 leading-relaxed whitespace-pre-line min-h-[500px] print-page-a4">
-                {/* Encabezado Corporativo Oficial */}
-                <div className="pb-4 mb-4 border-b border-slate-300">
-                  <div className="font-bold text-base text-slate-900 tracking-tight">NexusGest Advies & Gestoría B.V.</div>
-                  <div className="text-[10px] text-slate-500 font-sans mt-0.5">
-                    Fiscale Dienstverlening & Juridische Zaken · KvK: 89123847 · Eindhoven
-                  </div>
-                </div>
-
-                {/* Texto del Documento */}
-                <div className="font-sans text-xs leading-relaxed text-slate-900 whitespace-pre-line">
-                  {generatedLetter}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between text-xs text-outline no-print">
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px] text-emerald-600">verified</span>
-                <span>Plantilla: {activeTemplateObj.name}</span>
-              </span>
-              <span className="font-mono-data">Exportable en Word (.docx) & PDF</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================== */}
-      {/* PESTAÑA 2: CHAT ASISTENTE LEGAL & TRÁMITES                      */}
-      {/* ============================================================== */}
-      {activeTab === 'chat' && (
-        <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4 max-w-4xl mx-auto no-print">
-          <div className="flex items-center justify-between pb-3 border-b border-surface-container">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
-                <span className="material-symbols-outlined text-[18px]">psychology</span>
-              </div>
-              <div>
-                <h3 className="font-bold text-sm text-on-surface">Consultoría y Asistente Legal Neerlandés</h3>
-                <p className="text-[11px] text-outline">
-                  Pregunta cualquier duda sobre fiscalidad, subsidios (*toeslagen*), leyes (*Awb*) o redacción personalizada.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                setChatMessages([
-                  {
-                    role: 'assistant',
-                    content: 'Conversación reiniciada. ¿En qué trámite o consulta legal de Países Bajos puedo ayudarte ahora?',
-                  },
-                ]);
-              }}
-              className="text-xs text-outline hover:text-on-surface flex items-center gap-1 px-2 py-1 rounded hover:bg-surface-container"
-            >
-              <span className="material-symbols-outlined text-[15px]">refresh</span>
-              <span>Limpiar chat</span>
-            </button>
-          </div>
-
-          {/* Atajos Rápidos */}
-          <div className="flex flex-wrap gap-1.5 text-[11px]">
-            <span className="text-outline font-semibold py-1">Atajos rápidos:</span>
-            {[
-              '¿Cuál es el plazo legal para recurrir a Belastingdienst?',
-              'Redacta un texto pidiendo prórroga para presentar el M-Form',
-              '¿Qué requisitos hay para no pagar multa con HollandZorg y CAK?',
-              'Diferencias fiscales entre Eenmanszaak y BV en Holanda',
-            ].map((shortcut, i) => (
-              <button
-                key={i}
-                onClick={() => handleSendChatMessage(shortcut)}
-                className="px-2.5 py-1 bg-surface rounded-full border border-outline-variant/60 hover:border-secondary hover:text-secondary text-on-surface text-[11px] transition-colors"
-              >
-                {shortcut}
-              </button>
-            ))}
-          </div>
-
-          {/* Caja de Mensajes */}
-          <div className="h-[460px] overflow-y-auto space-y-4 p-4 bg-surface rounded-xl border border-surface-container">
-            {chatMessages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {msg.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold">
-                    IA
-                  </div>
-                )}
-                <div
-                  className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-line shadow-sm ${
-                    msg.role === 'user'
-                      ? 'bg-secondary text-white rounded-br-none'
-                      : 'bg-white border border-outline-variant/50 text-slate-800 rounded-bl-none'
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {isChatSending && (
-              <div className="flex gap-3 justify-start">
-                <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold animate-pulse">
-                  IA
-                </div>
-                <div className="p-3 bg-white border border-outline-variant/50 rounded-2xl text-xs text-outline flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
-                  <span>{config.model} está pensando y redactando...</span>
-                </div>
-              </div>
-            )}
-            <div ref={chatBottomRef} />
-          </div>
-
-          {/* Formulario de Entrada */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendChatMessage();
-            }}
-            className="flex gap-2"
-          >
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Haz una pregunta legal o pide redactar un documento específico..."
-              className="flex-1 h-11 px-4 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none text-xs"
-            />
-            <button
-              type="submit"
-              disabled={isChatSending || !chatInput.trim()}
-              className="h-11 px-5 bg-secondary text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
-            >
-              <span>Enviar</span>
-              <span className="material-symbols-outlined text-[16px]">send</span>
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* ============================================================== */}
-      {/* PESTAÑA 3: ANALIZADOR DE RESOLUCIONES Y CARTAS                 */}
-      {/* ============================================================== */}
-      {activeTab === 'analizador' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
-          <div className="lg:col-span-6 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4">
-            <div>
-              <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-secondary">plagiarism</span>
-                <span>Documento o Carta a Analizar</span>
-              </h3>
-              <p className="text-[11px] text-outline mt-0.5">
-                Pega el texto de una carta de Belastingdienst, CAK, IND o una resolución administrativa en neerlandés.
-              </p>
-            </div>
-
-            <textarea
-              rows={12}
-              value={docToAnalyze}
-              onChange={(e) => setDocToAnalyze(e.target.value)}
-              placeholder="Pega aquí el texto completo del documento oficial..."
-              className="w-full p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none"
-            />
-
-            <button
-              onClick={handleAnalyzeDoc}
-              disabled={isAnalyzing || !docToAnalyze.trim()}
-              className="w-full h-11 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined text-[18px] text-amber-400">
-                {isAnalyzing ? 'hourglass_top' : 'auto_awesome'}
-              </span>
-              <span>{isAnalyzing ? 'Analizando con IA...' : 'Analizar Documento con IA'}</span>
-            </button>
-          </div>
-
-          <div className="lg:col-span-6 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
-            <div>
-              <h3 className="font-bold text-sm text-on-surface pb-3 border-b border-surface-container flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-emerald-600">fact_check</span>
-                  <span>Diagnóstico y Puntos Clave Extraídos</span>
-                </span>
-                {analysisResult && (
-                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded">
-                    Análisis Completado
+                  <span className="material-symbols-outlined text-[17px] text-amber-400">
+                    {isGenerating ? 'hourglass_top' : 'auto_awesome'}
                   </span>
-                )}
-              </h3>
+                  <span>{isGenerating ? `Redactando con ${config.model}...` : `Generar / Redactar con IA`}</span>
+                </button>
+              </div>
 
-              {!analysisResult ? (
-                <div className="p-12 text-center text-outline text-xs space-y-3">
-                  <span className="material-symbols-outlined text-4xl text-outline-variant">find_in_page</span>
-                  <p>
-                    Pulsa en <strong>&ldquo;Analizar Documento con IA&rdquo;</strong> para extraer automáticamente la entidad emisora,
-                    plazos legales de recurso (6 semanas Awb), importes y la recomendación de actuación.
+              {/* Vista Previa del Documento y Exportaciones (7 cols en lg) */}
+              <div className="lg:col-span-7 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between print-area">
+                <div>
+                  {/* Barra de Herramientas de Exportación */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-surface-container mb-3 no-print">
+                    <div className="flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-outline text-lg">description</span>
+                      <span className="font-bold text-xs text-on-surface">Borrador Oficial A4</span>
+                      <span className="text-[10px] text-outline font-mono-data">
+                        ({language === 'nl' ? 'Neerlandés' : 'Español'})
+                      </span>
+                    </div>
+
+                    {/* BOTONES PRINCIPALES: WORD (.DOCX), PDF E IMPRIMIR */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <button
+                        onClick={handleExportWord}
+                        disabled={isExportingDocx}
+                        title="Descargar documento en formato Word (.docx)"
+                        className="h-8 px-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-[11px] font-semibold flex items-center gap-1 transition-all shadow-xs disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">file_open</span>
+                        <span>{isExportingDocx ? 'Exportando...' : 'Word (.docx)'}</span>
+                      </button>
+
+                      <button
+                        onClick={handlePrintDocument}
+                        title="Imprimir documento o guardar como PDF oficial"
+                        className="h-8 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold flex items-center gap-1 transition-all shadow-xs"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">print</span>
+                        <span>Imprimir / PDF</span>
+                      </button>
+
+                      <button
+                        onClick={handleCopy}
+                        title="Copiar texto al portapapeles"
+                        className="h-8 px-2 rounded-lg border border-outline-variant hover:bg-surface text-[11px] font-semibold text-on-surface flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">
+                          {copied ? 'check' : 'content_copy'}
+                        </span>
+                        <span>{copied ? '¡Copiado!' : 'Copiar'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Refinamientos con IA */}
+                  <div className="mb-3 p-2 bg-surface-container rounded-lg border border-outline-variant/40 flex flex-wrap items-center gap-1.5 text-[10px] no-print">
+                    <span className="text-outline font-semibold flex items-center gap-0.5">
+                      <span className="material-symbols-outlined text-[13px] text-amber-500">auto_fix_high</span>
+                      <span>Refinar:</span>
+                    </span>
+                    <button
+                      onClick={() =>
+                        handleGenerate('Haz el texto más riguroso y formal citando artículos de la ley Awb.')
+                      }
+                      disabled={isGenerating}
+                      className="px-2 py-0.5 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium"
+                    >
+                      + Ley Awb
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleGenerate(
+                          'Añade un párrafo solicitando expresamente la suspensión del cobro (uitstel van betaling).'
+                        )
+                      }
+                      disabled={isGenerating}
+                      className="px-2 py-0.5 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium"
+                    >
+                      + Suspensión Cobro
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleGenerate('Traduce todo el escrito al español manteniendo el formato formal.')
+                      }
+                      disabled={isGenerating}
+                      className="px-2 py-0.5 bg-surface rounded hover:bg-surface-container-high border border-outline-variant/60 font-medium"
+                    >
+                      🌐 Traducir
+                    </button>
+                  </div>
+
+                  {/* Hoja de Documento A4 */}
+                  <div className="p-6 bg-white border border-surface-container rounded-xl shadow-inner font-mono-data text-xs text-slate-800 leading-relaxed whitespace-pre-line min-h-[480px] print-page-a4">
+                    {/* Encabezado Corporativo */}
+                    <div className="pb-3 mb-3 border-b border-slate-300">
+                      <div className="font-bold text-sm text-slate-900 tracking-tight">
+                        NexusGest Advies & Gestoría B.V.
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-sans mt-0.5">
+                        Fiscale Dienstverlening & Juridische Zaken · KvK: 89123847 · Eindhoven
+                      </div>
+                    </div>
+
+                    {/* Texto del Documento */}
+                    <div className="font-sans text-xs leading-relaxed text-slate-900 whitespace-pre-line">
+                      {generatedLetter}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2 border-t border-surface-container flex items-center justify-between text-[11px] text-outline no-print">
+                  <span>Plantilla activa: {activeTemplateObj.name}</span>
+                  <span className="font-mono-data">Word (.docx) & PDF</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODO 2: ANALIZADOR DE RESOLUCIONES Y CARTAS */}
+          {activeView === 'analizador' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
+              <div className="lg:col-span-6 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm space-y-4">
+                <div>
+                  <h3 className="font-bold text-sm text-on-surface flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-secondary">plagiarism</span>
+                    <span>Documento o Carta a Analizar</span>
+                  </h3>
+                  <p className="text-[11px] text-outline mt-0.5">
+                    Pega el texto de una carta de Belastingdienst, CAK, IND o resolución administrativa.
                   </p>
                 </div>
-              ) : (
-                <div className="mt-4 space-y-3.5 text-xs">
-                  <div className="p-3 bg-surface rounded-lg border border-surface-container">
-                    <span className="text-[10px] text-outline uppercase font-semibold block">Entidad Emisora</span>
-                    <span className="font-bold text-slate-900 text-sm">{analysisResult.entity}</span>
-                    <div className="text-[11px] text-on-surface-variant mt-0.5">{analysisResult.documentType}</div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-surface rounded-lg border border-surface-container">
-                      <span className="text-[10px] text-outline uppercase font-semibold block">Plazo Fatal / Límite</span>
-                      <span className="font-bold text-rose-700 flex items-center gap-1 mt-0.5">
-                        <span className="material-symbols-outlined text-[15px]">event_busy</span>
-                        <span>{analysisResult.deadline || '6 semanas desde fecha de emisión'}</span>
-                      </span>
-                    </div>
+                <textarea
+                  rows={13}
+                  value={docToAnalyze}
+                  onChange={(e) => setDocToAnalyze(e.target.value)}
+                  placeholder="Pega aquí el texto completo del documento oficial..."
+                  className="w-full p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none"
+                />
 
-                    <div className="p-3 bg-surface rounded-lg border border-surface-container">
-                      <span className="text-[10px] text-outline uppercase font-semibold block">Impacto Financiero</span>
-                      <span className="font-bold text-slate-900 mt-0.5 block font-mono-data">
-                        {analysisResult.financialOutcome}
-                      </span>
-                    </div>
-                  </div>
+                <button
+                  onClick={handleAnalyzeDoc}
+                  disabled={isAnalyzing || !docToAnalyze.trim()}
+                  className="w-full h-10 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-[17px] text-amber-400">
+                    {isAnalyzing ? 'hourglass_top' : 'auto_awesome'}
+                  </span>
+                  <span>{isAnalyzing ? 'Analizando con IA...' : 'Analizar Documento con IA'}</span>
+                </button>
+              </div>
 
-                  <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg">
-                    <span className="text-[10px] text-blue-900 uppercase font-bold block mb-1">
-                      Explicación en Español para el Cliente
+              <div className="lg:col-span-6 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-sm text-on-surface pb-3 border-b border-surface-container flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-emerald-600">fact_check</span>
+                      <span>Puntos Clave Extraídos</span>
                     </span>
-                    <p className="text-blue-950 leading-relaxed">{analysisResult.summaryEs}</p>
-                  </div>
+                    {analysisResult && (
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded">
+                        Completado
+                      </span>
+                    )}
+                  </h3>
 
-                  <div className="p-3 bg-surface rounded-lg border border-surface-container">
-                    <span className="text-[10px] text-outline uppercase font-semibold block mb-1">
-                      Acción Recomendada por el Asesor
-                    </span>
-                    <p className="text-on-surface leading-relaxed">{analysisResult.recommendedAction}</p>
-                  </div>
+                  {!analysisResult ? (
+                    <div className="p-10 text-center text-outline text-xs space-y-2">
+                      <span className="material-symbols-outlined text-3xl text-outline-variant">find_in_page</span>
+                      <p>Pulsa en &ldquo;Analizar Documento con IA&rdquo; para extraer plazos de recurso e importes.</p>
+                    </div>
+                  ) : (
+                    <div className="mt-3 space-y-3 text-xs">
+                      <div className="p-2.5 bg-surface rounded-lg border border-surface-container">
+                        <span className="text-[10px] text-outline uppercase font-semibold block">Entidad Emisora</span>
+                        <span className="font-bold text-slate-900">{analysisResult.entity}</span>
+                        <div className="text-[11px] text-on-surface-variant">{analysisResult.documentType}</div>
+                      </div>
 
-                  <button
-                    onClick={handleApplyAnalysisToLetter}
-                    className="w-full h-10 mt-2 bg-secondary hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm"
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2.5 bg-surface rounded-lg border border-surface-container">
+                          <span className="text-[10px] text-outline uppercase font-semibold block">Plazo Fatal</span>
+                          <span className="font-bold text-rose-700 flex items-center gap-1 mt-0.5">
+                            <span className="material-symbols-outlined text-[14px]">event_busy</span>
+                            <span>{analysisResult.deadline || '6 semanas para recurso'}</span>
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 bg-surface rounded-lg border border-surface-container">
+                          <span className="text-[10px] text-outline uppercase font-semibold block">Impacto Económico</span>
+                          <span className="font-bold text-slate-900 mt-0.5 block font-mono-data">
+                            {analysisResult.financialOutcome}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 bg-blue-50/70 border border-blue-200 rounded-lg">
+                        <span className="text-[10px] text-blue-900 uppercase font-bold block mb-0.5">
+                          Explicación en Español para el Cliente
+                        </span>
+                        <p className="text-blue-950 leading-relaxed text-[11px]">{analysisResult.summaryEs}</p>
+                      </div>
+
+                      <div className="p-2.5 bg-surface rounded-lg border border-surface-container">
+                        <span className="text-[10px] text-outline uppercase font-semibold block mb-0.5">
+                          Acción Recomendada
+                        </span>
+                        <p className="text-on-surface leading-relaxed text-[11px]">{analysisResult.recommendedAction}</p>
+                      </div>
+
+                      <button
+                        onClick={handleApplyAnalysisToLetter}
+                        className="w-full h-9 bg-secondary hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm text-xs"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">draw</span>
+                        <span>Redactar Contestación con estos datos</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-3 pt-2 border-t border-surface-container text-[11px] text-outline flex items-center justify-between">
+                  <span>Auditoría registrada</span>
+                  <span className="font-mono-data">NexusGest v2.4</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ============================================================== */}
+        {/* BARRA LATERAL: CHAT ASISTENTE LEGAL CON AUTO-SCROLL EN VIVO   */}
+        {/* ============================================================== */}
+        {isChatSidebarOpen && (
+          <aside className="w-full xl:w-[410px] 2xl:w-[450px] shrink-0 sticky top-20 bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col h-[760px] max-h-[calc(100vh-100px)] no-print animate-in slide-in-from-right duration-200">
+            {/* Header de la Barra Lateral */}
+            <div className="flex items-center justify-between pb-3 border-b border-surface-container">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
+                  <span className="material-symbols-outlined text-[16px]">forum</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xs text-on-surface flex items-center gap-1.5">
+                    <span>Chat Asistente Legal</span>
+                    {config.apiKey && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>}
+                  </h3>
+                  <p className="text-[10px] text-outline font-mono-data">{config.model}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {/* Botón de limpiar chat */}
+                <button
+                  onClick={() => {
+                    setChatMessages([
+                      {
+                        role: 'assistant',
+                        content: 'Conversación reiniciada. ¿En qué puedo asistirte ahora con tu documento o cliente?',
+                      },
+                    ]);
+                  }}
+                  title="Reiniciar chat"
+                  className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px]">refresh</span>
+                </button>
+
+                {/* Botón de cerrar / ocultar barra lateral */}
+                <button
+                  onClick={() => setIsChatSidebarOpen(false)}
+                  title="Ocultar barra lateral"
+                  className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Atajos Rápidos */}
+            <div className="py-2 border-b border-surface-container/60 flex flex-wrap gap-1">
+              {[
+                'Plazo recurso Awb',
+                'Pedir prórroga M-Form',
+                'Exención seguro CAK',
+                'Traducir al holandés',
+              ].map((shortcut, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSendChatMessage(shortcut)}
+                  disabled={isChatSending || isStreaming}
+                  className="px-2 py-0.5 bg-surface hover:bg-surface-container border border-outline-variant/60 rounded-full text-[10px] text-on-surface transition-colors disabled:opacity-50"
+                >
+                  {shortcut}
+                </button>
+              ))}
+            </div>
+
+            {/* CONTENEDOR DE MENSAJES CON AUTO-SCROLL CONTINUO */}
+            <div
+              ref={chatScrollContainerRef}
+              className="flex-1 overflow-y-auto space-y-3 p-2 my-2 bg-surface/60 rounded-lg border border-surface-container scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
+            >
+              {chatMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                >
+                  <div
+                    className={`p-3 rounded-xl text-xs leading-relaxed whitespace-pre-line shadow-xs max-w-[92%] ${
+                      msg.role === 'user'
+                        ? 'bg-secondary text-white rounded-br-none'
+                        : 'bg-white border border-outline-variant/60 text-slate-800 rounded-bl-none'
+                    }`}
                   >
-                    <span className="material-symbols-outlined text-[16px]">draw</span>
-                    <span>Redactar Recurso / Contestación Inmediata con estos datos</span>
-                  </button>
+                    {msg.content}
+                    {/* Cursor parpadeante si se está escribiendo este mensaje */}
+                    {isStreaming && idx === chatMessages.length - 1 && msg.role === 'assistant' && (
+                      <span className="inline-block w-1.5 h-3.5 bg-indigo-600 ml-1 animate-pulse align-middle" />
+                    )}
+                  </div>
+
+                  {/* Acciones directas sobre respuestas del asistente */}
+                  {msg.role === 'assistant' && msg.content && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-outline ml-1">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(msg.content);
+                          showToast('Texto copiado al portapapeles');
+                        }}
+                        className="hover:text-secondary flex items-center gap-0.5"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">content_copy</span>
+                        <span>Copiar</span>
+                      </button>
+                      <span>·</span>
+                      <button
+                        onClick={() => handleInsertChatIntoDoc(msg.content)}
+                        className="hover:text-secondary font-semibold text-secondary flex items-center gap-0.5"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">input</span>
+                        <span>Insertar en documento</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Indicador de pensamiento mientras espera respuesta de la API */}
+              {isChatSending && !isStreaming && (
+                <div className="flex items-center gap-2 p-2.5 bg-white border border-outline-variant/60 rounded-xl text-xs text-outline w-fit animate-pulse">
+                  <span className="material-symbols-outlined text-[15px] animate-spin text-indigo-600">sync</span>
+                  <span>{config.model} está redactando...</span>
                 </div>
               )}
+
+              {/* Ancla para auto-scroll */}
+              <div ref={chatScrollAnchorRef} className="h-1 w-full" />
             </div>
 
-            <div className="mt-4 pt-3 border-t border-surface-container text-[11px] text-outline flex items-center justify-between">
-              <span>Auditoría de IA registrada</span>
-              <span className="font-mono-data">NexusGest v2.4</span>
-            </div>
-          </div>
-        </div>
+            {/* Formulario de Entrada del Chat en la Barra Lateral */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendChatMessage();
+              }}
+              className="pt-2 border-t border-surface-container flex gap-1.5"
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Pregunta o pide redactar algo..."
+                disabled={isChatSending || isStreaming}
+                className="flex-1 h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none text-xs disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={isChatSending || isStreaming || !chatInput.trim()}
+                className="h-9 px-3 bg-secondary text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-semibold flex items-center justify-center gap-1 disabled:opacity-50 shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[15px]">send</span>
+              </button>
+            </form>
+          </aside>
+        )}
+      </div>
+
+      {/* Botón flotante para reabrir la barra lateral si está cerrada */}
+      {!isChatSidebarOpen && (
+        <button
+          onClick={() => {
+            setIsChatSidebarOpen(true);
+            setTimeout(() => scrollToBottom(true), 100);
+          }}
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-secondary hover:bg-blue-700 text-white px-3 py-2.5 rounded-l-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-in slide-in-from-right no-print transition-all"
+        >
+          <span className="material-symbols-outlined text-[18px]">forum</span>
+          <span className="writing-vertical">Chat Asistente IA</span>
+        </button>
       )}
 
       {/* ============================================================== */}
@@ -1479,7 +1583,6 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
       {showTemplateModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 no-print">
           <div className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
             <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white flex items-center justify-between border-b border-blue-900/50">
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-amber-300 text-2xl">post_add</span>
@@ -1488,7 +1591,7 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
                     {isEditingTemplate ? 'Editar Plantilla Personalizada' : 'Crear Nueva Plantilla de Documento'}
                   </h3>
                   <p className="text-[11px] text-blue-200">
-                    Define las variables y la estructura que la IA usará para redactar y exportar
+                    Define variables dinámicas y estructura para exportar a Word (.docx) o imprimir en PDF
                   </p>
                 </div>
               </div>
@@ -1500,7 +1603,6 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1625,7 +1727,7 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
                 />
               </div>
 
-              {/* Instrucción opcional para la IA */}
+              {/* Directriz para la IA */}
               <div>
                 <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
                   Directriz Especial para la IA (Opcional)
@@ -1640,7 +1742,6 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="px-6 py-4 bg-surface border-t border-surface-container flex items-center justify-end gap-2">
               <button
                 type="button"
@@ -1668,7 +1769,6 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
       {showConfigModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 no-print">
           <div className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
             <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-indigo-900/50">
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-amber-300 text-2xl">tune</span>
@@ -1687,7 +1787,6 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-5 text-xs">
               {/* Presets Rápidos */}
               <div>
@@ -1838,7 +1937,6 @@ U kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of s
               )}
             </div>
 
-            {/* Modal Footer */}
             <div className="px-6 py-4 bg-surface border-t border-surface-container flex flex-col sm:flex-row items-center justify-between gap-3">
               <button
                 type="button"
