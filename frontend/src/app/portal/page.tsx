@@ -11,7 +11,22 @@ interface ClientMessage {
   suggestedAction?: {
     label: string;
     tab: 'resumen' | 'toeslagen' | 'facturas' | 'documentos' | 'citas';
+    action?: string;
   };
+}
+
+interface PortalAppointment {
+  id: string;
+  client_name: string;
+  client_phone: string;
+  title: string;
+  appointment_date: string;
+  appointment_time: string;
+  modality: 'llamada' | 'presencial' | 'online_meet';
+  status: 'confirmada' | 'completada' | 'pendiente';
+  advisor: string;
+  notes?: string;
+  created_at?: string;
 }
 
 export default function PortalClientePage() {
@@ -34,13 +49,7 @@ export default function PortalClientePage() {
       refund_amount: 2410,
       monthly_zorg: 154,
       monthly_huur: 0,
-      next_appointment: {
-        date: '2026-10-10',
-        time: '10:00',
-        title: 'Seguimiento Telefónico Zorgtoeslag',
-        modality: 'llamada',
-        advisor: 'Rony P.',
-      },
+      advisor: 'Rony P.',
     },
     {
       id: '2',
@@ -59,13 +68,7 @@ export default function PortalClientePage() {
       refund_amount: 2890,
       monthly_zorg: 0,
       monthly_huur: 0,
-      next_appointment: {
-        date: '2026-10-10',
-        time: '11:30',
-        title: 'Revisión M-Form Carlos Mendoza',
-        modality: 'online_meet',
-        advisor: 'Rony P.',
-      },
+      advisor: 'Rony P.',
     },
     {
       id: '3',
@@ -84,13 +87,7 @@ export default function PortalClientePage() {
       refund_amount: 0,
       monthly_zorg: 0,
       monthly_huur: 0,
-      next_appointment: {
-        date: '2026-10-10',
-        time: '16:00',
-        title: 'Firma Presencial Documentación KVK',
-        modality: 'presencial',
-        advisor: 'Rony P.',
-      },
+      advisor: 'Rony P.',
     },
     {
       id: '4',
@@ -109,13 +106,7 @@ export default function PortalClientePage() {
       refund_amount: 1450,
       monthly_zorg: 154,
       monthly_huur: 380,
-      next_appointment: {
-        date: '2026-10-12',
-        time: '09:30',
-        title: 'Consulta Telefónica Huurtoeslag',
-        modality: 'llamada',
-        advisor: 'Rony P.',
-      },
+      advisor: 'Rony P.',
     },
   ];
 
@@ -130,7 +121,23 @@ export default function PortalClientePage() {
 
   // Estado de Notificaciones
   const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(3);
+  const [notificationsList, setNotificationsList] = useState([
+    {
+      id: 'n1',
+      title: 'Belastingdienst en Proceso',
+      date: 'Hoy',
+      text: 'Expediente remitido para validación de subsidio Zorgtoeslag.',
+      type: 'info',
+    },
+    {
+      id: 'n2',
+      title: 'Asesor Asignado',
+      date: 'Ayer',
+      text: 'Rony P. ha revisado tu documentación y preparado tu borrador fiscal.',
+      type: 'success',
+    },
+  ]);
+  const [unreadNotifications, setUnreadNotifications] = useState(2);
 
   // Estado simulación iDEAL
   const [selectedBank, setSelectedBank] = useState('ING');
@@ -201,12 +208,250 @@ export default function PortalClientePage() {
     }
   };
 
+  // =========================================================================
+  // SISTEMA COMPLETO DE CITAS Y SOLICITUD DESDE EL PORTAL DEL CLIENTE
+  // =========================================================================
+  const initialAppointments: PortalAppointment[] = [
+    {
+      id: '1',
+      client_name: 'Maria Popescu',
+      client_phone: '+31 6 81239845',
+      title: 'Seguimiento Telefónico Zorgtoeslag',
+      appointment_date: '2026-10-10',
+      appointment_time: '10:00:00',
+      modality: 'llamada',
+      status: 'confirmada',
+      advisor: 'Rony P.',
+      notes: 'Llamar para verificar si ya llegó la carta física con el código de activación DigiD.',
+    },
+    {
+      id: '8',
+      client_name: 'Maria Popescu',
+      client_phone: '+31 6 81239845',
+      title: 'Verificación Certificado DigiD',
+      appointment_date: '2026-10-05',
+      appointment_time: '10:00:00',
+      modality: 'llamada',
+      status: 'completada',
+      advisor: 'Rony P.',
+      notes: 'Revisión y confirmación de activación de código por SMS.',
+    },
+    {
+      id: '2',
+      client_name: 'Carlos Mendoza Ruiz',
+      client_phone: '+34 654 321 987',
+      title: 'Revisión M-Form Carlos Mendoza',
+      appointment_date: '2026-10-10',
+      appointment_time: '11:30:00',
+      modality: 'online_meet',
+      status: 'confirmada',
+      advisor: 'Rony P.',
+      notes: 'Revisar certificado de retenciones emitido en España antes del traslado a Ámsterdam.',
+    },
+    {
+      id: '7',
+      client_name: 'Carlos Mendoza Ruiz',
+      client_phone: '+34 654 321 987',
+      title: 'Firma Presencial Modelo 30% Ruling',
+      appointment_date: '2026-10-27',
+      appointment_time: '15:00:00',
+      modality: 'presencial',
+      status: 'confirmada',
+      advisor: 'Rony P.',
+      notes: 'Firma conjunta con empleador del formulario 30% Ruling ante la Belastingdienst.',
+    },
+    {
+      id: '3',
+      client_name: 'Lars Van Dijk',
+      client_phone: '+31 6 49201948',
+      title: 'Firma Presencial Documentación KVK',
+      appointment_date: '2026-10-10',
+      appointment_time: '16:00:00',
+      modality: 'presencial',
+      status: 'confirmada',
+      advisor: 'Rony P.',
+      notes: 'Firma de estatutos y verificación presencial de pasaporte en despacho.',
+    },
+    {
+      id: '5',
+      client_name: 'Lars Van Dijk',
+      client_phone: '+31 6 49201948',
+      title: 'Videollamada Liquidación BTW 3T',
+      appointment_date: '2026-10-15',
+      appointment_time: '12:00:00',
+      modality: 'online_meet',
+      status: 'confirmada',
+      advisor: 'Rony P.',
+      notes: 'Presentación trimestral del IVA (Omzetbelasting) y facturas deducibles.',
+    },
+    {
+      id: '4',
+      client_name: 'Elena Morales Castillo',
+      client_phone: '+34 611 223 344',
+      title: 'Consulta Telefónica Huurtoeslag',
+      appointment_date: '2026-10-12',
+      appointment_time: '09:30:00',
+      modality: 'llamada',
+      status: 'pendiente',
+      advisor: 'Rony P.',
+      notes: 'Resolver dudas sobre el contrato de arrendamiento en Utrecht y límite de ingresos.',
+    },
+    {
+      id: '6',
+      client_name: 'Elena Morales Castillo',
+      client_phone: '+34 611 223 344',
+      title: 'Consulta Deducción Hipoteca (Eigenwoningforfait)',
+      appointment_date: '2026-10-22',
+      appointment_time: '11:15:00',
+      modality: 'llamada',
+      status: 'confirmada',
+      advisor: 'Rony P.',
+      notes: 'Análisis fiscal sobre compra de vivienda habitual en Países Bajos.',
+    },
+  ];
+
+  const [allAppointments, setAllAppointments] = useState<PortalAppointment[]>(initialAppointments);
+  const [aptFilter, setAptFilter] = useState<'todas' | 'proximas' | 'completadas'>('todas');
+
+  // Sincronización con localStorage para persistir las citas solicitadas por el cliente
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('nexusgest_appointments');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAllAppointments((prev) => {
+              const map = new Map();
+              prev.forEach((a) => map.set(String(a.id), a));
+              parsed.forEach((a: any) => map.set(String(a.id), a));
+              return Array.from(map.values());
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Error al leer citas de localStorage:', err);
+      }
+    }
+  }, []);
+
+  // Citas pertenecientes al cliente actualmente seleccionado
+  const clientAppointments = allAppointments.filter((a) => {
+    const cleanApt = (a.client_name || '').trim().toLowerCase();
+    const cleanClient = client.full_name.trim().toLowerCase();
+    return cleanApt === cleanClient || cleanApt.includes(cleanClient) || cleanClient.includes(cleanApt);
+  });
+
+  // Próxima cita del cliente (la más cercana no completada)
+  const nextClientAppointment =
+    clientAppointments
+      .filter((a) => a.status !== 'completada')
+      .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date))[0] || null;
+
+  // MODAL PARA SOLICITAR CITA
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingTopic, setBookingTopic] = useState('Revisión y Firma de Declaración M-Form 2026');
+  const [bookingDate, setBookingDate] = useState('2026-10-16');
+  const [bookingTime, setBookingTime] = useState('11:00');
+  const [bookingModality, setBookingModality] = useState<'online_meet' | 'llamada' | 'presencial'>('online_meet');
+  const [bookingNotes, setBookingNotes] = useState('');
+  const [isSubmittingApt, setIsSubmittingApt] = useState(false);
+
+  const handleCreateClientAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingApt(true);
+
+    const newApt: PortalAppointment = {
+      id: String(Date.now()),
+      client_name: client.full_name,
+      client_phone: client.phone,
+      title: bookingTopic,
+      appointment_date: bookingDate,
+      appointment_time: `${bookingTime}:00`,
+      modality: bookingModality,
+      status: 'confirmada',
+      advisor: 'Rony P.',
+      notes: bookingNotes.trim()
+        ? `Solicitada por el cliente desde su portal: ${bookingNotes}`
+        : `Solicitada por el cliente desde el portal (${bookingModality === 'online_meet' ? 'Google Meet' : bookingModality === 'llamada' ? 'Llamada telefónica' : 'Presencial'})`,
+      created_at: new Date().toISOString(),
+    };
+
+    // Actualizar estado local
+    const updated = [newApt, ...allAppointments];
+    setAllAppointments(updated);
+
+    // Guardar en localStorage para que el gestor la vea de inmediato en /crm/agenda
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nexusgest_appointments', JSON.stringify(updated));
+      } catch (err) {
+        console.warn('Error al guardar cita en localStorage:', err);
+      }
+    }
+
+    // Intentar remitir a API backend
+    try {
+      await fetch('http://localhost:5000/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: client.full_name,
+          email: client.email,
+          phone: client.phone,
+          title: bookingTopic,
+          appointment_date: bookingDate,
+          appointment_time: `${bookingTime}:00`,
+          modality: bookingModality,
+          notes: bookingNotes,
+        }),
+      });
+    } catch {}
+
+    // Notificación en la campana
+    setNotificationsList((prev) => [
+      {
+        id: String(Date.now()),
+        title: 'Cita Agendada con Éxito',
+        date: 'Ahora',
+        text: `${bookingTopic} programada para el ${bookingDate} a las ${bookingTime}.`,
+        type: 'success',
+      },
+      ...prev,
+    ]);
+    setUnreadNotifications((n) => n + 1);
+
+    // Mensaje automático en el Asistente IA
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: String(Date.now()),
+        sender: 'ia',
+        text: `📅 ¡Listo, ${client.full_name.split(' ')[0]}! He registrado tu nueva cita para el **${bookingDate} a las ${bookingTime}** (${
+          bookingModality === 'online_meet'
+            ? 'Videollamada Google Meet'
+            : bookingModality === 'llamada'
+            ? `Llamada telefónica al ${client.phone}`
+            : 'Presencial en despacho'
+        }).\n\nTu asesor personal **Rony P.** ha recibido la confirmación en su agenda y revisará previamente tu expediente **${client.dossier_code}**.`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        suggestedAction: { label: 'Ver mis Citas', tab: 'citas' },
+      },
+    ]);
+
+    setIsSubmittingApt(false);
+    setShowBookingModal(false);
+    setBookingNotes('');
+    setActiveTab('citas');
+    showToast(`¡Cita solicitada con éxito para el ${bookingDate} a las ${bookingTime}!`);
+  };
+
   // CHAT DEL ASISTENTE VIRTUAL IA DEL CLIENTE
   const [chatMessages, setChatMessages] = useState<ClientMessage[]>([
     {
       id: 'm1',
       sender: 'ia',
-      text: `👋 ¡Hola ${client.full_name.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest 24/7**.\n\nTengo acceso a tu expediente activo **${client.dossier_code}** y puedo responder cualquier duda sobre tu **devolución de impuestos**, el cobro de tu **Zorgtoeslag** o las cartas que recibas de la **Belastingdienst**.\n\n¿Qué te gustaría consultar hoy?`,
+      text: `👋 ¡Hola ${client.full_name.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest 24/7**.\n\nTengo acceso a tu expediente activo **${client.dossier_code}** y puedo responder cualquier duda sobre tu **devolución de impuestos**, el cobro de tu **Zorgtoeslag**, agendar una **cita con tu gestor** o descifrar las cartas de la **Belastingdienst**.\n\n¿En qué puedo ayudarte?`,
       time: '10:00',
     },
   ]);
@@ -254,7 +499,11 @@ export default function PortalClientePage() {
       let action: any = undefined;
       const lower = message.toLowerCase();
 
-      if (lower.includes('zorgtoeslag') || lower.includes('subsidio') || lower.includes('cobro') || lower.includes('dinero')) {
+      if (lower.includes('pedir cita') || lower.includes('solicitar cita') || lower.includes('agendar') || lower.includes('reunión')) {
+        reply = `¡Por supuesto! Puedes solicitar una sesión individual con tu asesor **Rony P.** eligiendo fecha, hora y modalidad (Google Meet, llamada telefónica o presencial).\n\nHe preparado el formulario para que selecciones el horario que mejor te convenga.`;
+        action = { label: 'Abrir Formulario de Cita', tab: 'citas', action: 'open_booking' };
+        setShowBookingModal(true);
+      } else if (lower.includes('zorgtoeslag') || lower.includes('subsidio') || lower.includes('cobro') || lower.includes('dinero')) {
         reply = `El subsidio de salud (**Zorgtoeslag**) de **€ ${client.monthly_zorg || 154},00 al mes** lo abona directamente la Belastingdienst en tu cuenta bancaria (**${client.iban}**) el **día 20 de cada mes**.\n\nComo tu solicitud se tramitó en octubre, el primer ingreso incluirá además los meses atrasados que te correspondan con efecto retroactivo.`;
         action = { label: 'Ver Estado de Subsidios', tab: 'toeslagen' };
       } else if (lower.includes('carta') || lower.includes('digid') || lower.includes('código') || lower.includes('sms')) {
@@ -263,14 +512,20 @@ export default function PortalClientePage() {
       } else if (lower.includes('devolución') || lower.includes('mform') || lower.includes('m-form') || lower.includes('renta')) {
         reply = `Tu declaración **M-Form 2026** tiene un saldo estimado a tu favor de **€ ${client.refund_amount.toLocaleString('es-ES')}** gracias a las deducciones por relocalización internacional.\n\nEl expediente se encuentra formalmente presentado ante la oficina fiscal de Heerlen y el plazo medio habitual de resolución oscila entre **3 y 6 semanas**.`;
         action = { label: 'Consultar Expediente', tab: 'resumen' };
-      } else if (lower.includes('cita') || lower.includes('reunión') || lower.includes('asesor') || lower.includes('hablar')) {
-        reply = `Tienes programada tu próxima sesión de asesoría con **${client.next_appointment.advisor}** para el día **${client.next_appointment.date} a las ${client.next_appointment.time}** (${client.next_appointment.modality === 'online_meet' ? 'Videollamada Google Meet' : 'Llamada telefónica'}).\n\nSi necesitas reprogramarla o añadir notas previas, puedes hacerlo en la pestaña de citas.`;
-        action = { label: 'Ver Próxima Cita', tab: 'citas' };
+      } else if (lower.includes('cita') || lower.includes('asesor') || lower.includes('hablar')) {
+        const nextApt = nextClientAppointment;
+        if (nextApt) {
+          reply = `Tienes programada tu próxima sesión con **${nextApt.advisor}** para el día **${nextApt.appointment_date} a las ${nextApt.appointment_time.slice(0, 5)}** (${nextApt.modality === 'online_meet' ? 'Videollamada Google Meet' : nextApt.modality === 'llamada' ? 'Llamada telefónica' : 'Presencial'}).\n\n¿Deseas solicitar otra cita adicional o reprogramarla?`;
+          action = { label: 'Gestionar Mis Citas', tab: 'citas' };
+        } else {
+          reply = `Actualmente no tienes ninguna cita futura agendada. ¿Quieres que agendemos una llamada o videollamada con tu gestor **Rony P.**?`;
+          action = { label: 'Solicitar Nueva Cita', tab: 'citas', action: 'open_booking' };
+        }
       } else if (lower.includes('factura') || lower.includes('pagar') || lower.includes('ideal')) {
         reply = `Puedes abonar cómodamente la gestión de tus trámites mediante la pasarela segura **iDEAL** utilizando cualquiera de los principales bancos neerlandeses (ING, ABN AMRO, Rabobank, Bunq) o descargar tu factura oficial con el 21% BTW desglosado.`;
         action = { label: 'Ver Facturas y Pago', tab: 'facturas' };
       } else {
-        reply = `He registrado tu consulta sobre *"${message}"*. Tu asesor personal **${client.next_appointment.advisor}** tiene visibilidad de este chat en su CRM y revisará cualquier detalle específico en tu expediente **${client.dossier_code}**.\n\n¿Deseas que te oriente sobre tus **subsidios**, tu **declaración M-Form** o la **subida de documentos**?`;
+        reply = `He registrado tu consulta sobre *"${message}"*. Tu asesor personal **Rony P.** tiene visibilidad de este chat en su CRM y revisará cualquier detalle específico en tu expediente **${client.dossier_code}**.\n\n¿Deseas que te oriente sobre tus **subsidios**, tu **declaración M-Form** o **agendar una cita** directa?`;
       }
 
       setChatMessages((prev) => [
@@ -323,6 +578,17 @@ export default function PortalClientePage() {
 
         {/* Acciones y Selector de Perfil */}
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* Botón destacado rápido para solicitar cita */}
+          <button
+            onClick={() => setShowBookingModal(true)}
+            className="h-8 sm:h-9 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
+            title="Pedir cita con mi gestor"
+          >
+            <span className="material-symbols-outlined text-[16px]">add_circle</span>
+            <span className="hidden sm:inline">Solicitar Cita</span>
+            <span className="sm:hidden">Cita</span>
+          </button>
+
           {/* Selector de cliente para demostración */}
           <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs">
             <span className="text-slate-400 text-[10px] hidden sm:inline">Ver como:</span>
@@ -365,25 +631,29 @@ export default function PortalClientePage() {
                   <h5 className="font-bold text-white text-xs">Avisos de tu Expediente</h5>
                   <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-white">✕</button>
                 </div>
-                <div className="space-y-2">
-                  <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-blue-300 text-[11px]">Belastingdienst en Proceso</span>
-                      <span className="text-[10px] text-slate-400">Hoy</span>
+                <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
+                  {notificationsList.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className={`p-2.5 rounded-xl border space-y-1 ${
+                        notif.type === 'success'
+                          ? 'bg-emerald-500/10 border-emerald-500/20'
+                          : 'bg-blue-500/10 border-blue-500/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`font-bold text-[11px] ${
+                            notif.type === 'success' ? 'text-emerald-300' : 'text-blue-300'
+                          }`}
+                        >
+                          {notif.title}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono-data">{notif.date}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-tight">{notif.text}</p>
                     </div>
-                    <p className="text-[11px] text-slate-300">
-                      Expediente {client.dossier_code} remitido para validación de subsidio Zorgtoeslag.
-                    </p>
-                  </div>
-                  <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-emerald-300 text-[11px]">Asesor Asignado</span>
-                      <span className="text-[10px] text-slate-400">Ayer</span>
-                    </div>
-                    <p className="text-[11px] text-slate-300">
-                      Rony P. ha revisado tu documentación y preparado tu borrador fiscal.
-                    </p>
-                  </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -392,7 +662,7 @@ export default function PortalClientePage() {
           {/* Enlace directo a CRM (Gestor) */}
           <Link
             href="/crm"
-            className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-colors"
+            className="hidden xl:flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-colors"
             title="Acceso al Panel CRM de la Gestoría"
           >
             <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
@@ -402,7 +672,7 @@ export default function PortalClientePage() {
           {/* Avatar del Cliente */}
           <div className="flex items-center gap-2.5 border-l border-slate-800 pl-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-mono-data font-bold text-xs flex items-center justify-center shadow-md">
-              {client.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              {client.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
             </div>
             <div className="hidden sm:flex flex-col text-left">
               <span className="text-xs font-bold text-white truncate max-w-[130px]">{client.full_name}</span>
@@ -441,25 +711,25 @@ export default function PortalClientePage() {
               ¡Hola, {client.full_name.split(' ')[0]}!
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Tu expediente <strong>{client.dossier_title}</strong> se encuentra activo y gestionado por tu asesor personal <strong>{client.next_appointment.advisor}</strong> ante la Belastingdienst.
+              Tu expediente <strong>{client.dossier_title}</strong> se encuentra activo y gestionado por tu asesor personal <strong>{client.advisor}</strong> ante la Belastingdienst.
             </p>
           </div>
 
-          {/* Quick Action Button en el Banner */}
+          {/* Quick Action Buttons en el Banner */}
           <div className="flex flex-wrap items-center gap-3 relative z-10 shrink-0">
             <button
-              onClick={() => setActiveTab('ia')}
+              onClick={() => setShowBookingModal(true)}
               className="h-10 sm:h-11 px-4 sm:px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2 transition-all transform hover:-translate-y-0.5"
             >
-              <span className="material-symbols-outlined text-[18px]">smart_toy</span>
-              <span>Consultar con Asistente IA</span>
+              <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+              <span>Solicitar Cita con Asesor</span>
             </button>
             <button
-              onClick={() => setActiveTab('documentos')}
+              onClick={() => setActiveTab('ia')}
               className="h-10 sm:h-11 px-4 border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-xl transition-colors flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[18px] text-blue-400">upload_file</span>
-              <span>Subir Carta Recibida</span>
+              <span className="material-symbols-outlined text-[18px] text-blue-400">smart_toy</span>
+              <span>Consultar Asistente IA</span>
             </button>
           </div>
         </div>
@@ -517,19 +787,27 @@ export default function PortalClientePage() {
             </div>
           </div>
 
-          {/* Card 4: Próxima Cita */}
+          {/* Card 4: Próxima Cita & Acción Rápida */}
           <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Próxima Asesoría</span>
               <span className="material-symbols-outlined text-amber-400 text-lg">calendar_month</span>
             </div>
             <div className="text-base sm:text-lg font-bold text-white truncate">
-              {client.next_appointment.date} · {client.next_appointment.time}
+              {nextClientAppointment
+                ? `${nextClientAppointment.appointment_date} · ${nextClientAppointment.appointment_time.slice(0, 5)}`
+                : 'Sin cita programada'}
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
-              <span className="text-slate-400 truncate">Con {client.next_appointment.advisor}</span>
+              <button
+                onClick={() => setShowBookingModal(true)}
+                className="text-blue-400 hover:underline font-semibold flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[13px]">add</span>
+                <span>Pedir Cita</span>
+              </button>
               <button onClick={() => setActiveTab('citas')} className="text-amber-400 hover:underline font-semibold">
-                Detalles
+                Ver todas ({clientAppointments.length})
               </button>
             </div>
           </div>
@@ -541,11 +819,11 @@ export default function PortalClientePage() {
         <div className="flex border-b border-slate-800 gap-1 overflow-x-auto text-xs font-bold no-scrollbar">
           {[
             { id: 'resumen', icon: 'assignment', label: 'Mi Expediente & Estado' },
-            { id: 'ia', icon: 'smart_toy', label: 'Asistente IA 24/7', badge: 'EN VIVO' },
+            { id: 'citas', icon: 'event', label: 'Mis Citas & Solicitar', badge: `${clientAppointments.length}` },
+            { id: 'ia', icon: 'smart_toy', label: 'Asistente IA 24/7' },
             { id: 'toeslagen', icon: 'health_and_safety', label: 'Subsidios & Toeslagen Hub' },
             { id: 'facturas', icon: 'credit_card', label: 'Facturas & Pago iDEAL' },
             { id: 'documentos', icon: 'folder_shared', label: 'Bóveda de Documentos' },
-            { id: 'citas', icon: 'event', label: 'Mis Citas' },
           ].map((t) => (
             <button
               key={t.id}
@@ -559,13 +837,186 @@ export default function PortalClientePage() {
               <span className="material-symbols-outlined text-[18px]">{t.icon}</span>
               <span>{t.label}</span>
               {t.badge && (
-                <span className="px-1.5 py-0.2 bg-blue-500 text-white text-[9px] font-extrabold rounded">
+                <span className="px-1.5 py-0.2 bg-blue-500 text-white text-[9px] font-extrabold rounded-full">
                   {t.badge}
                 </span>
               )}
             </button>
           ))}
         </div>
+
+        {/* ========================================================================= */}
+        {/* TAB: MIS CITAS & SOLICITAR CITA NUEVA */}
+        {/* ========================================================================= */}
+        {activeTab === 'citas' && (
+          <div className="space-y-6">
+            {/* Header de la sección de citas */}
+            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-data text-xs font-bold">
+                    AGENDA DEL CLIENTE
+                  </span>
+                  <span className="text-xs text-slate-400">Asesor: <strong>{client.advisor}</strong></span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-white mt-1">Tus Citas y Asesorías</h2>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Gestiona tus sesiones con tu gestor. Puedes solicitar una nueva cita en cualquier momento eligiendo día y hora.
+                </p>
+              </div>
+
+              {/* Botón principal Solicitar Cita */}
+              <button
+                onClick={() => setShowBookingModal(true)}
+                className="h-11 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0 transform hover:-translate-y-0.5"
+              >
+                <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                <span>+ Solicitar Nueva Cita</span>
+              </button>
+            </div>
+
+            {/* Filtros de citas */}
+            <div className="flex items-center gap-2 text-xs">
+              {(['todas', 'proximas', 'completadas'] as const).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setAptFilter(filter)}
+                  className={`px-3.5 py-1.5 rounded-lg font-bold capitalize transition-colors ${
+                    aptFilter === filter
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  {filter === 'todas' ? 'Todas las Citas' : filter === 'proximas' ? 'Próximas Sesiones' : 'Completadas'}
+                </button>
+              ))}
+            </div>
+
+            {/* Listado de citas */}
+            <div className="space-y-3.5">
+              {clientAppointments
+                .filter((apt) => {
+                  if (aptFilter === 'proximas') return apt.status !== 'completada';
+                  if (aptFilter === 'completadas') return apt.status === 'completada';
+                  return true;
+                })
+                .map((apt) => (
+                  <div
+                    key={apt.id}
+                    className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                      apt.status === 'completada'
+                        ? 'bg-slate-900/60 border-slate-800 opacity-75'
+                        : 'bg-slate-900 border-slate-800 hover:border-slate-700 shadow-md'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-3.5">
+                        <div
+                          className={`p-3 rounded-xl text-center min-w-[75px] shrink-0 font-mono-data ${
+                            apt.modality === 'online_meet'
+                              ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                              : apt.modality === 'llamada'
+                              ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-slate-800 text-slate-300 border border-slate-700'
+                          }`}
+                        >
+                          <span className="block text-sm font-extrabold">{apt.appointment_time.slice(0, 5)}</span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider">
+                            {apt.appointment_date}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-bold text-sm sm:text-base text-white">{apt.title}</h3>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                apt.status === 'completada'
+                                  ? 'bg-slate-800 text-slate-400'
+                                  : apt.status === 'pendiente'
+                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+                              }`}
+                            >
+                              {apt.status === 'completada'
+                                ? 'Completada'
+                                : apt.status === 'pendiente'
+                                ? 'Pendiente de confirmación'
+                                : 'Confirmada'}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-slate-400 flex items-center gap-2">
+                            <span>Asesor: <strong className="text-slate-300">{apt.advisor || 'Rony P.'}</strong></span>
+                            <span>·</span>
+                            <span className="flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[14px] text-blue-400">
+                                {apt.modality === 'online_meet' ? 'videocam' : apt.modality === 'llamada' ? 'call' : 'business'}
+                              </span>
+                              <span>
+                                {apt.modality === 'online_meet'
+                                  ? 'Videollamada Google Meet'
+                                  : apt.modality === 'llamada'
+                                  ? `Llamada telefónica a ${apt.client_phone}`
+                                  : 'Presencial en despacho'}
+                              </span>
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Acciones directas de la cita */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {apt.modality === 'online_meet' && apt.status !== 'completada' && (
+                          <button
+                            onClick={() => window.open('https://meet.google.com', '_blank')}
+                            className="h-9 px-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">video_call</span>
+                            <span>Unirse a Google Meet</span>
+                          </button>
+                        )}
+
+                        {apt.modality === 'llamada' && apt.status !== 'completada' && (
+                          <button
+                            onClick={() => showToast(`Tu asesor ${apt.advisor || 'Rony P.'} te llamará al ${apt.client_phone} en la hora indicada.`)}
+                            className="h-9 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">phone_in_talk</span>
+                            <span>Confirmar Número</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {apt.notes && (
+                      <div className="p-3 bg-slate-950/70 rounded-xl text-xs text-slate-300 border border-slate-800">
+                        <span className="text-slate-500 font-semibold">Detalles de la sesión: </span>
+                        <span>{apt.notes}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+              {clientAppointments.length === 0 && (
+                <div className="p-12 text-center bg-slate-900 rounded-3xl border border-dashed border-slate-800 space-y-3">
+                  <span className="material-symbols-outlined text-4xl text-slate-600">event_busy</span>
+                  <h4 className="font-bold text-white text-base">No tienes citas registradas actualmente</h4>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                    Puedes agendar una sesión individual con tu gestor Rony P. para revisar tu declaración, tus subsidios o cualquier carta de la Belastingdienst.
+                  </p>
+                  <button
+                    onClick={() => setShowBookingModal(true)}
+                    className="mt-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                    <span>Solicitar mi Primera Cita</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ========================================================================= */}
         {/* TAB 1: MI EXPEDIENTE & PROGRESO VISUAL */}
@@ -710,19 +1161,19 @@ export default function PortalClientePage() {
 
                 <div className="space-y-2">
                   <button
-                    onClick={() => setActiveTab('ia')}
+                    onClick={() => setShowBookingModal(true)}
                     className="w-full h-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all"
                   >
-                    <span className="material-symbols-outlined text-[17px]">chat</span>
-                    <span>Consultar por Chat con mi Asesor</span>
+                    <span className="material-symbols-outlined text-[17px]">calendar_month</span>
+                    <span>Pedir Cita con Rony P.</span>
                   </button>
 
                   <button
-                    onClick={() => setActiveTab('citas')}
+                    onClick={() => setActiveTab('ia')}
                     className="w-full h-10 border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <span className="material-symbols-outlined text-[17px]">calendar_today</span>
-                    <span>Ver Próxima Cita</span>
+                    <span className="material-symbols-outlined text-[17px]">chat</span>
+                    <span>Consultar por Chat con Asistente IA</span>
                   </button>
                 </div>
               </div>
@@ -755,14 +1206,23 @@ export default function PortalClientePage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setChatMessages(chatMessages.slice(0, 1))}
-                className="h-8 px-2.5 rounded-lg border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition-colors"
-                title="Reiniciar conversación"
-              >
-                <span className="material-symbols-outlined text-[14px]">refresh</span>
-                <span>Limpiar</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowBookingModal(true)}
+                  className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold flex items-center gap-1 transition-colors shadow-2xs"
+                >
+                  <span className="material-symbols-outlined text-[14px]">calendar_month</span>
+                  <span>Pedir Cita</span>
+                </button>
+                <button
+                  onClick={() => setChatMessages(chatMessages.slice(0, 1))}
+                  className="h-8 px-2.5 rounded-lg border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                  title="Reiniciar conversación"
+                >
+                  <span className="material-symbols-outlined text-[14px]">refresh</span>
+                  <span>Limpiar</span>
+                </button>
+              </div>
             </div>
 
             {/* Mensajes del Chat */}
@@ -795,7 +1255,12 @@ export default function PortalClientePage() {
                     {/* Botón de acción contextual sugerido */}
                     {msg.suggestedAction && (
                       <button
-                        onClick={() => setActiveTab(msg.suggestedAction!.tab)}
+                        onClick={() => {
+                          if (msg.suggestedAction?.action === 'open_booking') {
+                            setShowBookingModal(true);
+                          }
+                          setActiveTab(msg.suggestedAction!.tab);
+                        }}
                         className="px-3.5 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-400/30 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
                       >
                         <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -827,10 +1292,10 @@ export default function PortalClientePage() {
             <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-800 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0 text-xs">
               <span className="text-slate-500 text-[11px] shrink-0">Preguntas frecuentes:</span>
               {[
+                'Quiero solicitar una cita',
                 '¿Cuándo me ingresan el Zorgtoeslag?',
                 '¿Cómo subo la carta de DigiD?',
                 '¿Cuándo resolverán mi M-Form?',
-                '¿Cuándo es mi próxima cita?',
               ].map((query, i) => (
                 <button
                   key={i}
@@ -855,7 +1320,7 @@ export default function PortalClientePage() {
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Pregúntale a tu Asistente IA sobre tus subsidios, impuestos o cartas..."
+                  placeholder="Pregúntale a tu Asistente IA sobre tus subsidios, impuestos o pide una cita..."
                   className="flex-1 h-11 px-4 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors"
                 />
                 <button
@@ -1186,75 +1651,170 @@ export default function PortalClientePage() {
             </div>
           </div>
         )}
-
-        {/* ========================================================================= */}
-        {/* TAB 6: MIS CITAS & ASESORÍAS */}
-        {/* ========================================================================= */}
-        {activeTab === 'citas' && (
-          <div className="max-w-3xl mx-auto space-y-6">
-            <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                <div>
-                  <span className="text-xs font-mono-data text-blue-400 uppercase font-bold">Sesión Confirmada</span>
-                  <h3 className="text-lg font-bold text-white mt-1">Próxima Consulta con tu Gestor</h3>
-                </div>
-                <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-bold text-[10px] rounded-full">
-                  CONFIRMADA
-                </span>
-              </div>
-
-              <div className="p-5 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700 space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-blue-600 text-white rounded-xl text-center min-w-[70px]">
-                    <span className="block text-sm font-extrabold font-mono-data">{client.next_appointment.time}</span>
-                    <span className="text-[10px] uppercase font-bold text-blue-200">
-                      {client.next_appointment.date.slice(5)}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-sm sm:text-base text-white">{client.next_appointment.title}</h4>
-                    <p className="text-xs text-slate-300">Asesor: <strong>{client.next_appointment.advisor}</strong></p>
-                    <p className="text-[11px] text-slate-400 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-blue-400">
-                        {client.next_appointment.modality === 'online_meet' ? 'videocam' : 'call'}
-                      </span>
-                      <span>
-                        {client.next_appointment.modality === 'online_meet'
-                          ? 'Google Meet (meet.google.com/nxg-asesoria)'
-                          : `Llamada directa a tu teléfono (${client.phone})`}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-xs text-slate-400">
-                    Te enviaremos un recordatorio por WhatsApp 15 minutos antes.
-                  </span>
-                  <button
-                    onClick={() => {
-                      if (client.next_appointment.modality === 'online_meet') {
-                        window.open('https://meet.google.com', '_blank');
-                      } else {
-                        showToast(`Llamada programada con tu asesor Rony P. para el ${client.next_appointment.date}`);
-                      }
-                    }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      {client.next_appointment.modality === 'online_meet' ? 'video_call' : 'call'}
-                    </span>
-                    <span>
-                      {client.next_appointment.modality === 'online_meet' ? 'Acceder a Google Meet' : 'Confirmar Teléfono'}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
+
+      {/* ========================================================================= */}
+      {/* MODAL INTERACTIVO: SOLICITAR NUEVA CITA CON EL GESTOR */}
+      {/* ========================================================================= */}
+      {showBookingModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl animate-in fade-in">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[20px]">calendar_month</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-base text-white">Solicitar Cita con Asesor</h4>
+                  <p className="text-[11px] text-slate-400">Asignado: <strong>Rony P. (Gestor Oficial NL)</strong></p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBookingModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateClientAppointment} className="space-y-4 text-xs">
+              {/* Motivo de la Cita */}
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5">
+                  Motivo de la Consulta *
+                </label>
+                <select
+                  value={bookingTopic}
+                  onChange={(e) => setBookingTopic(e.target.value)}
+                  className="w-full h-11 px-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 font-medium"
+                >
+                  <option>Revisión y Firma de Declaración M-Form 2026</option>
+                  <option>Consulta y Solicitud de Subsidios (Zorgtoeslag / Huurtoeslag)</option>
+                  <option>Dudas sobre Carta Postal de la Belastingdienst</option>
+                  <option>Activación de Código DigiD y Certificados</option>
+                  <option>Asesoría para Autónomos ZZP y Facturación</option>
+                  <option>Consulta General de Traslado y Residencia</option>
+                </select>
+              </div>
+
+              {/* Modalidad */}
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5">
+                  ¿Cómo prefieres realizar la sesión? *
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'online_meet', label: 'Google Meet', icon: 'videocam' },
+                    { id: 'llamada', label: 'Llamada', icon: 'call' },
+                    { id: 'presencial', label: 'Presencial', icon: 'business' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setBookingModality(m.id as any)}
+                      className={`p-2.5 rounded-xl border font-bold flex flex-col items-center justify-center gap-1 transition-all ${
+                        bookingModality === m.id
+                          ? 'border-blue-500 bg-blue-500/20 text-blue-300 shadow-sm'
+                          : 'border-slate-800 bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">{m.icon}</span>
+                      <span className="text-[11px]">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fecha y Hora */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1.5">Fecha Deseada *</label>
+                  <input
+                    required
+                    type="date"
+                    value={bookingDate}
+                    min="2026-10-10"
+                    onChange={(e) => setBookingDate(e.target.value)}
+                    className="w-full h-11 px-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 font-mono-data"
+                  />
+                  {/* Píldoras rápidas */}
+                  <div className="flex gap-1.5 mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setBookingDate('2026-10-12')}
+                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
+                    >
+                      12 Oct
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingDate('2026-10-15')}
+                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
+                    >
+                      15 Oct
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingDate('2026-10-20')}
+                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
+                    >
+                      20 Oct
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1.5">Hora Disponible *</label>
+                  <select
+                    value={bookingTime}
+                    onChange={(e) => setBookingTime(e.target.value)}
+                    className="w-full h-11 px-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 font-mono-data"
+                  >
+                    <option>09:30</option>
+                    <option>10:30</option>
+                    <option>11:30</option>
+                    <option>14:00</option>
+                    <option>15:30</option>
+                    <option>16:30</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Notas opcionales */}
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5">
+                  Notas o comentarios para tu gestor (opcional):
+                </label>
+                <textarea
+                  rows={2}
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  placeholder="Ej: Tengo una duda sobre la casilla 3.b del M-Form..."
+                  className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 resize-none text-xs"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowBookingModal(false)}
+                  className="h-11 px-4 border border-slate-700 hover:bg-slate-800 text-slate-300 font-bold rounded-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingApt}
+                  className="h-11 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">check</span>
+                  <span>{isSubmittingApt ? 'Agendando...' : 'Confirmar Solicitud de Cita'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* MODAL VISUALIZADOR DE DOCUMENTOS */}

@@ -180,6 +180,38 @@ export default function CRMAgendaPage() {
       .catch(() => {});
   }, []);
 
+  // Sincronización con localStorage (citas solicitadas desde el portal del cliente)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('nexusgest_appointments');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAppointments((prev) => {
+              const map = new Map();
+              prev.forEach((a) => map.set(String(a.id), a));
+              parsed.forEach((a: any) => map.set(String(a.id), a));
+              return Array.from(map.values());
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Error al leer citas de localStorage:', err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && appointments.length > 0) {
+      try {
+        localStorage.setItem('nexusgest_appointments', JSON.stringify(appointments));
+      } catch (err) {
+        console.warn('Error al guardar citas en localStorage:', err);
+      }
+    }
+  }, [appointments]);
+
   // Navegación entre meses
   const handlePrevMonth = () => {
     if (calendarMonth === 0) {
