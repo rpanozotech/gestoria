@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
@@ -243,9 +243,43 @@ export default function PublicHomePage() {
     setModalSubmitted(true);
   };
 
+  const [servicesList, setServicesList] = useState<ServiceItem[]>(SERVICES_DATA);
+
+  // Sincronizar con los precios modificados desde la terminal del gestor (/crm/tarifas)
+  useEffect(() => {
+    const syncPrices = () => {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('rpgestoria_service_prices');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const updated = SERVICES_DATA.map((base) => {
+                const found = parsed.find((p: any) => p.id === base.id);
+                if (found) {
+                  return {
+                    ...base,
+                    price: `Desde ${found.basePrice}€`,
+                    badge: found.badge || base.badge,
+                  };
+                }
+                return base;
+              });
+              setServicesList(updated);
+            }
+          } catch {}
+        }
+      }
+    };
+
+    syncPrices();
+    window.addEventListener('rpgestoria_prices_updated', syncPrices);
+    return () => window.removeEventListener('rpgestoria_prices_updated', syncPrices);
+  }, []);
+
   const filteredServices = activeCategory === 'todos' 
-    ? SERVICES_DATA 
-    : SERVICES_DATA.filter(s => s.category === activeCategory);
+    ? servicesList 
+    : servicesList.filter(s => s.category === activeCategory);
 
   const toggleVideoPlay = () => {
     if (videoRef.current) {

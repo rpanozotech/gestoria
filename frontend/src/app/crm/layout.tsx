@@ -40,6 +40,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: '/crm', label: 'Dashboard', icon: 'grid_view' },
+    { href: '/crm/tarifas', label: 'Tarifas & Precios Web', icon: 'price_change', highlight: true, badge: 'Terminal' },
     { href: '/crm/clientes', label: 'Clientes & Ficha 360', icon: 'group', badge: '148' },
     { href: '/crm/alta-ia', label: 'Alta IA & Escáner', icon: 'auto_awesome', highlight: true },
     { href: '/crm/facturacion', label: 'Presupuestos & Facturas', icon: 'receipt_long' },
@@ -55,6 +56,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     { title: 'EXP-2026-0042: M-Form 2025 Belastingdienst', category: 'Expediente', href: '/crm' },
     { title: 'FAC-2026-0001: € 266,20 (Pagada iDEAL)', category: 'Factura', href: '/crm/facturacion' },
     { title: 'FAC-2026-0002: € 102,85 (Emitida)', category: 'Factura', href: '/crm/facturacion' },
+    { title: 'Tarifas Oficiales: M-Form, DigiD, ZZP', category: 'Tarifas', href: '/crm/tarifas' },
   ].filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
@@ -69,14 +71,14 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           {/* Brand header */}
           <div className="h-16 px-6 flex items-center justify-between border-b border-surface-container">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary-container text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                NG
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-slate-700 flex items-center justify-center shadow-sm">
+                <img src="/logo.png" alt="RP Gestoría" className="w-full h-full object-cover" />
               </div>
-              <span className="font-headline-sm text-base font-bold text-on-surface tracking-tight">NexusGest</span>
+              <span className="font-headline-sm text-base font-bold text-on-surface tracking-tight">RP Gestoría</span>
             </Link>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-surface-container text-on-surface-variant font-mono-data text-[10px] font-semibold rounded">
-                v2.4 Pro
+              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-mono-data text-[10px] font-semibold rounded border border-blue-200">
+                CRM
               </span>
               <button
                 type="button"

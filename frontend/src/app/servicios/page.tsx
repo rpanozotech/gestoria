@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -164,6 +164,7 @@ const SERVICES_DATA: ServiceItem[] = [
 ];
 
 export default function ServiciosPage() {
+  const [servicesList, setServicesList] = useState<ServiceItem[]>(SERVICES_DATA);
   const [activeCategory, setActiveCategory] = useState<string>('todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
@@ -172,7 +173,39 @@ export default function ServiciosPage() {
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
 
-  const filtered = SERVICES_DATA.filter((s) => {
+  // Sincronizar con los precios modificados desde la terminal del gestor (/crm/tarifas)
+  useEffect(() => {
+    const syncPrices = () => {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('rpgestoria_service_prices');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const updated = SERVICES_DATA.map((base) => {
+                const found = parsed.find((p: any) => p.id === base.id);
+                if (found) {
+                  return {
+                    ...base,
+                    price: `Desde ${found.basePrice}€`,
+                    badge: found.badge || base.badge,
+                  };
+                }
+                return base;
+              });
+              setServicesList(updated);
+            }
+          } catch {}
+        }
+      }
+    };
+
+    syncPrices();
+    window.addEventListener('rpgestoria_prices_updated', syncPrices);
+    return () => window.removeEventListener('rpgestoria_prices_updated', syncPrices);
+  }, []);
+
+  const filtered = servicesList.filter((s) => {
     const matchesCategory = activeCategory === 'todos' || s.category === activeCategory;
     const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           s.desc.toLowerCase().includes(searchQuery.toLowerCase());
