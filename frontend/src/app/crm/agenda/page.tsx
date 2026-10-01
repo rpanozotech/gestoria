@@ -128,7 +128,7 @@ export default function CRMAgendaPage() {
   // Modo de visualización: Calendario Mensual (por defecto) o Lista
   const [viewMode, setViewMode] = useState<'calendario' | 'lista'>('calendario');
 
-  // Estado del calendario mensual (Inicializado en Octubre 2026)
+  // Estado del calendario mensual (Octubre 2026)
   const [calendarYear, setCalendarYear] = useState<number>(2026);
   const [calendarMonth, setCalendarMonth] = useState<number>(9); // 9 = Octubre (0-indexed)
   const [selectedDate, setSelectedDate] = useState<string>('2026-10-10');
@@ -203,12 +203,11 @@ export default function CRMAgendaPage() {
     setSelectedDate('2026-10-10');
   };
 
-  // Cálculo de la cuadrícula de días del calendario mensual (Lunes a Domingo)
+  // Cuadrícula de días mensual
   const calendarGrid = useMemo(() => {
     const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1);
-    // getDay() devuelve 0 para domingo, 1 para lunes...
     let startingDay = firstDayOfMonth.getDay() - 1;
-    if (startingDay === -1) startingDay = 6; // Domingo pasa a ser índice 6
+    if (startingDay === -1) startingDay = 6;
 
     const daysInCurrentMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
     const daysInPrevMonth = new Date(calendarYear, calendarMonth, 0).getDate();
@@ -220,7 +219,7 @@ export default function CRMAgendaPage() {
       isToday: boolean;
     }[] = [];
 
-    // Días del mes anterior para rellenar la primera semana
+    // Días del mes previo
     for (let i = startingDay - 1; i >= 0; i--) {
       const dayNum = daysInPrevMonth - i;
       const prevMonth = calendarMonth === 0 ? 11 : calendarMonth - 1;
@@ -235,7 +234,7 @@ export default function CRMAgendaPage() {
     }
 
     // Días del mes actual
-    const todayStr = '2026-10-10'; // Referencia base
+    const todayStr = '2026-10-10';
     for (let d = 1; d <= daysInCurrentMonth; d++) {
       const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       days.push({
@@ -246,7 +245,7 @@ export default function CRMAgendaPage() {
       });
     }
 
-    // Días del mes siguiente para completar la matriz (35 o 42 casillas)
+    // Relleno mes siguiente (35 o 42 casillas)
     const targetLength = days.length <= 35 ? 35 : 42;
     const paddingNeeded = targetLength - days.length;
     for (let d = 1; d <= paddingNeeded; d++) {
@@ -264,7 +263,7 @@ export default function CRMAgendaPage() {
     return days;
   }, [calendarYear, calendarMonth]);
 
-  // Agrupar citas por fecha para acceso O(1)
+  // Agrupar citas por fecha
   const appointmentsMap = useMemo(() => {
     const map: Record<string, Appointment[]> = {};
     for (const apt of appointments) {
@@ -301,14 +300,13 @@ export default function CRMAgendaPage() {
     };
   }, [appointments, calendarYear, calendarMonth]);
 
-  // Acciones sobre citas
   const handleToggleComplete = (id: string) => {
     setAppointments(
       appointments.map((a) =>
         a.id === id ? { ...a, status: a.status === 'completada' ? 'confirmada' : 'completada' } : a
       )
     );
-    showToast('Estado de la cita actualizado con éxito.');
+    showToast('Estado de la cita actualizado.');
   };
 
   const handleDeleteAppointment = (id: string) => {
@@ -349,7 +347,6 @@ export default function CRMAgendaPage() {
     setAppointments([newApt, ...appointments]);
     setSelectedDate(aptDate);
 
-    // Si la fecha corresponde a otro mes, sincronizar el calendario al mes de la cita
     const [y, m] = aptDate.split('-').map(Number);
     if (y !== calendarYear || m - 1 !== calendarMonth) {
       setCalendarYear(y);
@@ -360,174 +357,139 @@ export default function CRMAgendaPage() {
     showToast(`Cita agendada para el ${formatLongDate(aptDate)}.`);
   };
 
+  const gridRowsCount = calendarGrid.length / 7;
+
   return (
-    <div className="space-y-5 pb-6">
+    <div className="h-full flex flex-col space-y-2.5 overflow-hidden">
       {/* Toast de Notificaciones */}
       {toastMessage && (
-        <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-secondary/40 animate-in fade-in duration-200">
-          <span className="material-symbols-outlined text-secondary text-xl">check_circle</span>
+        <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 border border-secondary/40 animate-in fade-in duration-200">
+          <span className="material-symbols-outlined text-secondary text-lg">check_circle</span>
           <span className="text-xs font-medium">{toastMessage}</span>
         </div>
       )}
 
-      {/* HEADER PRINCIPAL */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-container">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-on-surface">Agenda & Citas</h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-secondary/10 text-secondary">
-              Calendario Interactivo
+      {/* 1. BARRA SUPERIOR INTEGRADA: Título, Navegación de Mes, KPIs y Acciones (Sin ocupar altura excesiva) */}
+      <div className="p-2 sm:px-3 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+        {/* Título & Navegación de Mes */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-on-surface">Agenda</h1>
+            <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-secondary/10 text-secondary">
+              Mensual
             </span>
           </div>
-          <p className="text-xs text-on-surface-variant mt-0.5">
-            Vista mensual con selector de día, gestión de llamadas telefónicas, videollamadas Google Meet y citas presenciales.
-          </p>
+
+          <div className="h-4 w-px bg-surface-container hidden sm:block" />
+
+          {/* Navegador de mes */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handlePrevMonth}
+              className="h-7 w-7 rounded-md border border-outline-variant hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors"
+              title="Mes anterior"
+            >
+              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+            </button>
+            <span className="text-xs sm:text-sm font-bold text-on-surface min-w-[125px] text-center font-mono-data">
+              {MONTH_NAMES[calendarMonth]} {calendarYear}
+            </span>
+            <button
+              onClick={handleNextMonth}
+              className="h-7 w-7 rounded-md border border-outline-variant hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors"
+              title="Mes siguiente"
+            >
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+            </button>
+            <button
+              onClick={handleGoToDefaultOct2026}
+              className="h-7 px-2 border border-outline-variant hover:bg-surface-container text-[11px] font-semibold rounded-md text-on-surface flex items-center gap-1 ml-0.5"
+              title="Volver a mes actual"
+            >
+              <span className="material-symbols-outlined text-[13px] text-secondary">today</span>
+              <span className="hidden sm:inline">Mes Actual</span>
+            </button>
+          </div>
         </div>
 
-        {/* CONTROLES SUPERIORES */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Selector de modo: Calendario vs Lista */}
-          <div className="flex items-center p-0.5 bg-surface-container rounded-lg border border-outline-variant text-xs">
+        {/* KPIs del mes integrados en píldoras compactas */}
+        <div className="hidden lg:flex items-center gap-1.5 text-xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-container text-on-surface font-semibold text-[11px]">
+            <span className="material-symbols-outlined text-[14px] text-secondary">event_note</span>
+            <span>{monthStats.total} citas</span>
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-semibold text-[11px] border border-emerald-200/60">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>{monthStats.llamadas} llamadas</span>
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 font-semibold text-[11px] border border-blue-200/60">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            <span>{monthStats.online_meet} Meet</span>
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-semibold text-[11px] border border-slate-200/60">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+            <span>{monthStats.presencial} Presencial</span>
+          </span>
+        </div>
+
+        {/* Acciones & Filtros */}
+        <div className="flex items-center gap-2">
+          {/* Selector de modo: Mensual / Lista */}
+          <div className="flex items-center p-0.5 bg-surface-container rounded-md border border-outline-variant text-xs">
             <button
               onClick={() => setViewMode('calendario')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold transition-all ${
+              className={`p-1 px-2 rounded font-semibold text-[11px] flex items-center gap-1 transition-all ${
                 viewMode === 'calendario'
                   ? 'bg-surface-container-lowest text-secondary shadow-xs'
                   : 'text-outline hover:text-on-surface'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-              <span>Mensual</span>
+              <span className="material-symbols-outlined text-[14px]">calendar_month</span>
+              <span className="hidden sm:inline">Mensual</span>
             </button>
             <button
               onClick={() => setViewMode('lista')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold transition-all ${
+              className={`p-1 px-2 rounded font-semibold text-[11px] flex items-center gap-1 transition-all ${
                 viewMode === 'lista'
                   ? 'bg-surface-container-lowest text-secondary shadow-xs'
                   : 'text-outline hover:text-on-surface'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">format_list_bulleted</span>
-              <span>Lista</span>
+              <span className="material-symbols-outlined text-[14px]">format_list_bulleted</span>
+              <span className="hidden sm:inline">Lista</span>
             </button>
           </div>
 
-          {/* Filtro por modalidad */}
+          {/* Filtro modalidad */}
           <select
             value={filterModality}
             onChange={(e) => setFilterModality(e.target.value as any)}
-            className="h-9 px-3 border border-outline-variant rounded-md text-xs bg-surface-container-lowest focus:border-secondary focus:outline-none"
+            className="h-7 px-2 border border-outline-variant rounded-md text-[11px] bg-surface-container-lowest focus:border-secondary focus:outline-none"
           >
-            <option value="todas">Todas las modalidades</option>
-            <option value="llamada">Solo llamadas telefónicas</option>
-            <option value="online_meet">Solo videollamadas Meet</option>
-            <option value="presencial">Solo presenciales en despacho</option>
+            <option value="todas">Todas</option>
+            <option value="llamada">Llamadas</option>
+            <option value="online_meet">Google Meet</option>
+            <option value="presencial">Presencial</option>
           </select>
 
           {/* Botón Nueva Cita */}
           <button
             onClick={() => handleOpenNewForDate(selectedDate)}
-            className="h-9 px-4 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+            className="h-7 px-3 bg-secondary text-white text-xs font-semibold rounded-md shadow-xs hover:bg-blue-700 transition-colors flex items-center gap-1 shrink-0"
           >
-            <span className="material-symbols-outlined text-[16px]">add</span>
-            <span>+ Nueva Cita</span>
+            <span className="material-symbols-outlined text-[14px]">add</span>
+            <span>+ Cita</span>
           </button>
         </div>
       </div>
 
-      {/* STRIP DE MÉTRICAS DEL MES */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] text-outline font-medium uppercase">Citas en {MONTH_NAMES[calendarMonth]}</p>
-            <p className="text-xl font-bold font-mono-data text-on-surface mt-0.5">{monthStats.total}</p>
-          </div>
-          <span className="material-symbols-outlined text-secondary text-2xl p-2 bg-blue-50 rounded-lg">
-            event_note
-          </span>
-        </div>
-
-        <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] text-outline font-medium uppercase">Llamadas (Principal)</p>
-            <p className="text-xl font-bold font-mono-data text-emerald-700 mt-0.5">{monthStats.llamadas}</p>
-          </div>
-          <span className="material-symbols-outlined text-emerald-600 text-2xl p-2 bg-emerald-50 rounded-lg">
-            call
-          </span>
-        </div>
-
-        <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] text-outline font-medium uppercase">Google Meet</p>
-            <p className="text-xl font-bold font-mono-data text-blue-700 mt-0.5">{monthStats.online_meet}</p>
-          </div>
-          <span className="material-symbols-outlined text-blue-600 text-2xl p-2 bg-blue-50 rounded-lg">
-            videocam
-          </span>
-        </div>
-
-        <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] text-outline font-medium uppercase">Presenciales</p>
-            <p className="text-xl font-bold font-mono-data text-slate-700 mt-0.5">{monthStats.presencial}</p>
-          </div>
-          <span className="material-symbols-outlined text-slate-600 text-2xl p-2 bg-slate-100 rounded-lg">
-            business
-          </span>
-        </div>
-      </div>
-
-      {/* VISTA 1: CALENDARIO MENSUAL + VISOR DE CITAS DEL DÍA */}
-      {viewMode === 'calendario' && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
-          {/* CALENDARIO MENSUAL (7 columnas en XL) */}
-          <div className="xl:col-span-7 2xl:col-span-8 bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-            {/* Barra de Navegación del Mes */}
-            <div className="p-4 sm:p-5 border-b border-surface-container flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface/50">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePrevMonth}
-                  className="h-8 w-8 rounded-lg border border-outline-variant hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors"
-                  title="Mes anterior"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_left</span>
-                </button>
-
-                <h2 className="text-base sm:text-lg font-bold text-on-surface min-w-[170px] text-center sm:text-left">
-                  {MONTH_NAMES[calendarMonth]} {calendarYear}
-                </h2>
-
-                <button
-                  onClick={handleNextMonth}
-                  className="h-8 w-8 rounded-lg border border-outline-variant hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors"
-                  title="Mes siguiente"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_right</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2 justify-end">
-                <button
-                  onClick={handleGoToDefaultOct2026}
-                  className="h-8 px-3 rounded-lg border border-outline-variant text-xs font-semibold text-on-surface hover:bg-surface-container transition-colors flex items-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-[15px] text-secondary">today</span>
-                  <span>Mes Actual</span>
-                </button>
-
-                <button
-                  onClick={() => handleOpenNewForDate(selectedDate)}
-                  className="h-8 px-3 bg-secondary/10 hover:bg-secondary/20 text-secondary text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-[15px]">event</span>
-                  <span>Agendar en {selectedDate}</span>
-                </button>
-              </div>
-            </div>
-
+      {/* 2. CONTENIDO PRINCIPAL: FITS 100% EN PANTALLA COMPLETA SIN SCROLL EXTERNO */}
+      {viewMode === 'calendario' ? (
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 overflow-hidden">
+          {/* COLUMNA IZQUIERDA: CALENDARIO MENSUAL COMPLETO (7 o 8 cols) */}
+          <div className="lg:col-span-7 xl:col-span-8 flex flex-col h-full min-h-0 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs overflow-hidden">
             {/* Cabecera de días de la semana */}
-            <div className="grid grid-cols-7 border-b border-surface-container text-center bg-surface-container-low text-outline text-[11px] font-semibold uppercase py-2">
+            <div className="grid grid-cols-7 border-b border-surface-container text-center bg-surface-container-low text-outline text-[11px] font-semibold uppercase py-1 shrink-0">
               {WEEK_DAYS.map((day, idx) => (
                 <div key={day} className={idx >= 5 ? 'text-amber-700/80 font-bold' : ''}>
                   {day}
@@ -535,14 +497,18 @@ export default function CRMAgendaPage() {
               ))}
             </div>
 
-            {/* Cuadrícula de Días del Mes */}
-            <div className="grid grid-cols-7 divide-x divide-y divide-surface-container bg-surface-container/20">
+            {/* Matriz de Días del Mes: distribuye la altura exactamente entre 5 o 6 filas */}
+            <div
+              className="flex-1 min-h-0 grid grid-cols-7 divide-x divide-y divide-surface-container bg-surface-container/20"
+              style={{
+                gridTemplateRows: `repeat(${gridRowsCount}, minmax(0, 1fr))`,
+              }}
+            >
               {calendarGrid.map((cell) => {
                 const dayApts = appointmentsMap[cell.dateStr] || [];
                 const isSelected = selectedDate === cell.dateStr;
                 const hasApts = dayApts.length > 0;
 
-                // Contar modalidades para mini-indicadores
                 const hasCall = dayApts.some((a) => a.modality === 'llamada');
                 const hasMeet = dayApts.some((a) => a.modality === 'online_meet');
                 const hasPresencial = dayApts.some((a) => a.modality === 'presencial');
@@ -552,29 +518,28 @@ export default function CRMAgendaPage() {
                     key={cell.dateStr}
                     onClick={() => {
                       setSelectedDate(cell.dateStr);
-                      // Si hace clic en un día del mes adyacente, ajustar mes activo
                       const [y, m] = cell.dateStr.split('-').map(Number);
                       if (y !== calendarYear || m - 1 !== calendarMonth) {
                         setCalendarYear(y);
                         setCalendarMonth(m - 1);
                       }
                     }}
-                    className={`min-h-[85px] sm:min-h-[105px] p-2 transition-all cursor-pointer flex flex-col justify-between relative group ${
+                    className={`h-full min-h-0 p-1 sm:p-1.5 flex flex-col justify-between cursor-pointer select-none transition-all relative overflow-hidden ${
                       isSelected
-                        ? 'bg-blue-50/80 ring-2 ring-inset ring-secondary z-10'
+                        ? 'bg-blue-50/90 ring-2 ring-inset ring-secondary z-10'
                         : cell.isCurrentMonth
                         ? 'bg-surface-container-lowest hover:bg-surface-container/40'
                         : 'bg-surface-container-low/40 opacity-40 hover:opacity-80'
                     }`}
                   >
-                    {/* Fila Superior: Número de día y badge de total */}
+                    {/* Fila superior de celda: Día y Badge */}
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-xs sm:text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center ${
+                        className={`text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ${
                           cell.isToday
                             ? 'bg-secondary text-white shadow-xs'
                             : isSelected
-                            ? 'text-secondary font-black'
+                            ? 'text-secondary font-black scale-105'
                             : cell.isCurrentMonth
                             ? 'text-on-surface'
                             : 'text-outline'
@@ -585,24 +550,23 @@ export default function CRMAgendaPage() {
 
                       {hasApts && (
                         <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono-data ${
+                          className={`px-1 py-0.2 rounded-full text-[9px] font-bold font-mono-data leading-none ${
                             isSelected
                               ? 'bg-secondary text-white'
                               : 'bg-secondary/15 text-secondary'
                           }`}
-                          title={`${dayApts.length} cita(s) programada(s)`}
                         >
                           {dayApts.length}
                         </span>
                       )}
                     </div>
 
-                    {/* Contenido Central: Previsualización de citas (Desktop) */}
-                    <div className="hidden sm:flex flex-col gap-1 my-1 overflow-hidden">
+                    {/* Previsualización de citas (Desktop / Tablet) */}
+                    <div className="hidden md:flex flex-col gap-0.5 overflow-hidden my-0.5">
                       {dayApts.slice(0, 2).map((apt) => (
                         <div
                           key={apt.id}
-                          className={`px-1.5 py-0.5 rounded text-[10px] truncate flex items-center gap-1 font-medium border ${
+                          className={`px-1 py-0.2 rounded text-[9px] leading-tight truncate flex items-center gap-1 font-medium border ${
                             apt.modality === 'llamada'
                               ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
                               : apt.modality === 'online_meet'
@@ -611,14 +575,14 @@ export default function CRMAgendaPage() {
                           } ${apt.status === 'completada' ? 'line-through opacity-60' : ''}`}
                           title={`${apt.appointment_time.slice(0, 5)} - ${apt.client_name}: ${apt.title}`}
                         >
-                          <span className="material-symbols-outlined text-[12px] shrink-0">
+                          <span className="material-symbols-outlined text-[10px] shrink-0">
                             {apt.modality === 'llamada'
                               ? 'call'
                               : apt.modality === 'online_meet'
                               ? 'videocam'
                               : 'business'}
                           </span>
-                          <span className="font-mono-data font-semibold shrink-0">
+                          <span className="font-mono-data font-bold shrink-0">
                             {apt.appointment_time.slice(0, 5)}
                           </span>
                           <span className="truncate">{apt.client_name.split(' ')[0]}</span>
@@ -626,23 +590,23 @@ export default function CRMAgendaPage() {
                       ))}
 
                       {dayApts.length > 2 && (
-                        <span className="text-[9px] text-outline font-semibold pl-1">
+                        <span className="text-[8px] text-outline font-semibold pl-0.5 leading-none">
                           +{dayApts.length - 2} más
                         </span>
                       )}
                     </div>
 
-                    {/* Previsualización en Móvil (Puntos de color) */}
-                    <div className="sm:hidden flex items-center justify-center gap-1 mt-1">
+                    {/* Mini-indicadores por puntos (Mobile) */}
+                    <div className="md:hidden flex items-center justify-center gap-1 mt-0.5">
                       {hasCall && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>}
                       {hasMeet && <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>}
                       {hasPresencial && <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>}
                     </div>
 
-                    {/* Pie de celda: Indicador de día seleccionado */}
+                    {/* Indicador de selección sutil al pie */}
                     {isSelected && (
-                      <div className="hidden sm:block text-[9px] font-bold text-secondary text-right uppercase tracking-wider">
-                        Seleccionado
+                      <div className="hidden sm:block text-[8px] font-bold text-secondary text-right uppercase tracking-wider leading-none">
+                        Activo
                       </div>
                     )}
                   </div>
@@ -650,236 +614,230 @@ export default function CRMAgendaPage() {
               })}
             </div>
 
-            {/* Leyenda de Modalidades al pie del calendario */}
-            <div className="p-3 bg-surface-container-low border-t border-surface-container flex flex-wrap items-center justify-between gap-3 text-[11px] text-on-surface-variant">
+            {/* Pie de leyenda compacto */}
+            <div className="h-6 shrink-0 px-3 bg-surface-container-low border-t border-surface-container flex items-center justify-between text-[10px] text-outline">
               <div className="flex items-center gap-3">
-                <span className="text-outline font-medium">Leyenda:</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                  <span>Llamada Telefónica</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span className="text-on-surface-variant font-medium">Llamada</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                  <span>Google Meet</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span className="text-on-surface-variant font-medium">Google Meet</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
-                  <span>Presencial</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                  <span className="text-on-surface-variant font-medium">Presencial</span>
                 </span>
               </div>
-
-              <span className="text-[10px] text-outline font-mono-data">
-                Pulsa cualquier casilla para inspeccionar o agregar citas
+              <span className="hidden sm:inline font-mono-data text-[9px]">
+                Selecciona cualquier casilla para ver o añadir citas
               </span>
             </div>
           </div>
 
-          {/* PANEL DERECHO: INSPECTOR DE CITAS DEL DÍA SELECCIONADO (5 columnas en XL) */}
-          <div className="xl:col-span-5 2xl:col-span-4 space-y-4">
-            <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm p-5 space-y-4">
-              {/* Header del día seleccionado */}
-              <div className="flex items-start justify-between gap-3 pb-3 border-b border-surface-container">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-secondary text-xs font-semibold uppercase tracking-wider">
-                    <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                    <span>Citas del Día</span>
-                  </div>
-                  <h3 className="font-bold text-base sm:text-lg text-on-surface capitalize">
-                    {formatLongDate(selectedDate)}
-                  </h3>
-                  <p className="text-xs text-outline">
-                    {selectedDayAppointments.length === 0
-                      ? 'Sin citas programadas'
-                      : `${selectedDayAppointments.length} cita(s) para este día`}
-                  </p>
+          {/* COLUMNA DERECHA: INSPECTOR DE CITAS DEL DÍA (4 o 5 cols) */}
+          <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-full min-h-0 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs overflow-hidden">
+            {/* Header del día seleccionado */}
+            <div className="p-3 sm:px-4 sm:py-3 border-b border-surface-container flex items-center justify-between gap-2 bg-surface/40 shrink-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1 text-secondary text-[11px] font-bold uppercase tracking-wider">
+                  <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                  <span>Citas del Día</span>
                 </div>
+                <h3 className="font-bold text-xs sm:text-sm text-on-surface truncate capitalize mt-0.5">
+                  {formatLongDate(selectedDate)}
+                </h3>
+              </div>
 
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="px-2 py-0.5 bg-surface-container text-on-surface text-[10px] font-mono-data font-bold rounded-full">
+                  {selectedDayAppointments.length} cita(s)
+                </span>
                 <button
                   type="button"
                   onClick={() => handleOpenNewForDate(selectedDate)}
-                  className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1 shadow-xs shrink-0"
+                  className="h-7 px-2.5 bg-secondary text-white text-[11px] font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1 shadow-xs"
                 >
-                  <span className="material-symbols-outlined text-[16px]">add</span>
+                  <span className="material-symbols-outlined text-[13px]">add</span>
                   <span>Añadir</span>
                 </button>
               </div>
+            </div>
 
-              {/* LISTA DE CITAS DEL DÍA SELECCIONADO */}
+            {/* Lista interna de citas del día con auto-scroll limpio sin barras visibles */}
+            <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-3 space-y-2.5">
               {selectedDayAppointments.length > 0 ? (
-                <div className="space-y-3.5 max-h-[620px] overflow-y-auto no-scrollbar pr-0.5">
-                  {selectedDayAppointments.map((apt) => (
-                    <div
-                      key={apt.id}
-                      className={`p-4 rounded-xl border transition-all space-y-3 shadow-xs ${
-                        apt.modality === 'llamada'
-                          ? 'bg-emerald-50/30 border-emerald-200 hover:border-emerald-400'
-                          : apt.modality === 'online_meet'
-                          ? 'bg-blue-50/30 border-blue-200 hover:border-blue-400'
-                          : 'bg-surface-container-low/40 border-outline-variant hover:border-slate-400'
-                      }`}
-                    >
-                      {/* Top: Hora, Nombre, Estado */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-2.5">
-                          <div
-                            className={`p-2 rounded-lg text-center font-mono-data font-bold text-xs shrink-0 ${
-                              apt.modality === 'llamada'
-                                ? 'bg-emerald-100 text-emerald-900'
-                                : apt.modality === 'online_meet'
-                                ? 'bg-blue-100 text-blue-900'
-                                : 'bg-surface-container text-on-surface'
-                            }`}
-                          >
-                            <span className="block text-[13px]">{apt.appointment_time.slice(0, 5)}</span>
-                            <span className="text-[9px] uppercase font-semibold text-outline">Hora</span>
-                          </div>
-
-                          <div>
-                            <h4 className="font-bold text-sm text-on-surface">{apt.client_name}</h4>
-                            <p className="text-xs font-semibold text-secondary mt-0.5">{apt.title}</p>
-                            <p className="text-[11px] font-mono-data text-outline mt-0.5 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[13px]">phone</span>
-                              <span>{apt.client_phone}</span>
-                            </p>
-                          </div>
+                selectedDayAppointments.map((apt) => (
+                  <div
+                    key={apt.id}
+                    className={`p-3 rounded-xl border transition-all space-y-2 shadow-xs ${
+                      apt.modality === 'llamada'
+                        ? 'bg-emerald-50/30 border-emerald-200'
+                        : apt.modality === 'online_meet'
+                        ? 'bg-blue-50/30 border-blue-200'
+                        : 'bg-surface-container-low/40 border-outline-variant'
+                    }`}
+                  >
+                    {/* Fila 1: Hora, Nombre, Estado */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2">
+                        <div
+                          className={`px-1.5 py-1 rounded text-center font-mono-data font-bold text-xs shrink-0 ${
+                            apt.modality === 'llamada'
+                              ? 'bg-emerald-100 text-emerald-900'
+                              : apt.modality === 'online_meet'
+                              ? 'bg-blue-100 text-blue-900'
+                              : 'bg-surface-container text-on-surface'
+                          }`}
+                        >
+                          <span className="block text-[11px]">{apt.appointment_time.slice(0, 5)}</span>
                         </div>
 
-                        <div>
-                          {apt.status === 'completada' ? (
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
-                              Completada
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">
-                              Confirmada
-                            </span>
-                          )}
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-xs sm:text-sm text-on-surface truncate">
+                            {apt.client_name}
+                          </h4>
+                          <p className="text-[11px] font-semibold text-secondary truncate mt-0.2">
+                            {apt.title}
+                          </p>
+                          <p className="text-[10px] font-mono-data text-outline mt-0.2 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[12px]">phone</span>
+                            <span>{apt.client_phone}</span>
+                          </p>
                         </div>
                       </div>
 
-                      {/* Nota o Detalle */}
-                      {apt.notes && (
-                        <div className="p-2.5 bg-surface-container-lowest/80 rounded-lg text-xs text-on-surface-variant border border-surface-container">
-                          <span className="font-semibold text-on-surface">Detalle: </span>
-                          <span>{apt.notes}</span>
-                        </div>
-                      )}
-
-                      {/* Botones de acción directa para este día */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-surface-container text-xs">
-                        <div className="flex items-center gap-1.5">
-                          {/* Acción 1: Llamada */}
-                          {apt.modality === 'llamada' && (
-                            <button
-                              type="button"
-                              onClick={() => setCallModal({ client: apt.client_name, phone: apt.client_phone })}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded text-[11px] transition-colors shadow-xs"
-                            >
-                              <span className="material-symbols-outlined text-[14px]">call</span>
-                              <span>Llamar Ahora</span>
-                            </button>
-                          )}
-
-                          {/* Acción 2: Google Meet */}
-                          {apt.modality === 'online_meet' && (
-                            <button
-                              type="button"
-                              onClick={() => setMeetModal(`meet.google.com/nxg-${apt.id}-asesoria`)}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-[11px] transition-colors shadow-xs"
-                            >
-                              <span className="material-symbols-outlined text-[14px]">videocam</span>
-                              <span>Abrir Meet</span>
-                            </button>
-                          )}
-
-                          {/* Acción 3: Presencial */}
-                          {apt.modality === 'presencial' && (
-                            <span className="flex items-center gap-1 px-2 py-1 bg-surface-container text-on-surface-variant font-semibold rounded text-[11px]">
-                              <span className="material-symbols-outlined text-[14px] text-outline">business</span>
-                              <span>En Despacho</span>
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          {/* Toggle Completar */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleComplete(apt.id)}
-                            className={`h-7 px-2.5 rounded text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-                              apt.status === 'completada'
-                                ? 'border border-outline-variant text-outline hover:bg-surface-container'
-                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                            }`}
-                            title={apt.status === 'completada' ? 'Reabrir cita' : 'Marcar como completada'}
-                          >
-                            <span className="material-symbols-outlined text-[14px]">
-                              {apt.status === 'completada' ? 'undo' : 'check'}
-                            </span>
-                            <span>{apt.status === 'completada' ? 'Reabrir' : 'Completada'}</span>
-                          </button>
-
-                          {/* Cancelar / Eliminar */}
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteAppointment(apt.id)}
-                            className="h-7 w-7 rounded text-outline hover:text-error hover:bg-red-50 flex items-center justify-center transition-colors"
-                            title="Eliminar cita"
-                          >
-                            <span className="material-symbols-outlined text-[15px]">delete</span>
-                          </button>
-                        </div>
+                      <div className="shrink-0">
+                        {apt.status === 'completada' ? (
+                          <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded-full">
+                            Completada
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[9px] font-bold rounded-full">
+                            Confirmada
+                          </span>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* Nota o Detalle */}
+                    {apt.notes && (
+                      <div className="p-2 bg-surface-container-lowest/90 rounded-md text-[11px] text-on-surface-variant border border-surface-container line-clamp-2">
+                        <span className="font-semibold text-on-surface">Nota: </span>
+                        <span>{apt.notes}</span>
+                      </div>
+                    )}
+
+                    {/* Botones de acción directa */}
+                    <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-surface-container text-xs">
+                      <div className="flex items-center gap-1">
+                        {apt.modality === 'llamada' && (
+                          <button
+                            type="button"
+                            onClick={() => setCallModal({ client: apt.client_name, phone: apt.client_phone })}
+                            className="flex items-center gap-1 px-2 py-0.8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded text-[10px] transition-colors shadow-xs"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">call</span>
+                            <span>Llamar</span>
+                          </button>
+                        )}
+
+                        {apt.modality === 'online_meet' && (
+                          <button
+                            type="button"
+                            onClick={() => setMeetModal(`meet.google.com/nxg-${apt.id}-asesoria`)}
+                            className="flex items-center gap-1 px-2 py-0.8 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-[10px] transition-colors shadow-xs"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">videocam</span>
+                            <span>Meet</span>
+                          </button>
+                        )}
+
+                        {apt.modality === 'presencial' && (
+                          <span className="flex items-center gap-1 px-1.5 py-0.8 bg-surface-container text-on-surface-variant font-semibold rounded text-[10px]">
+                            <span className="material-symbols-outlined text-[12px] text-outline">business</span>
+                            <span>Presencial</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleComplete(apt.id)}
+                          className={`h-6 px-2 rounded text-[10px] font-semibold transition-colors flex items-center gap-1 ${
+                            apt.status === 'completada'
+                              ? 'border border-outline-variant text-outline hover:bg-surface-container'
+                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                          }`}
+                          title={apt.status === 'completada' ? 'Reabrir cita' : 'Marcar como completada'}
+                        >
+                          <span className="material-symbols-outlined text-[13px]">
+                            {apt.status === 'completada' ? 'undo' : 'check'}
+                          </span>
+                          <span>{apt.status === 'completada' ? 'Reabrir' : 'Completar'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAppointment(apt.id)}
+                          className="h-6 w-6 rounded text-outline hover:text-error hover:bg-red-50 flex items-center justify-center transition-colors"
+                          title="Eliminar cita"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
               ) : (
-                /* ESTADO VACÍO CUANDO NO HAY CITAS PARA EL DÍA */
-                <div className="p-8 text-center bg-surface-container-low/30 rounded-xl border border-dashed border-outline-variant space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-surface-container text-outline flex items-center justify-center mx-auto">
-                    <span className="material-symbols-outlined text-2xl">event_available</span>
+                /* Estado sin citas para el día */
+                <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-surface-container-low/20 rounded-xl border border-dashed border-outline-variant space-y-2.5">
+                  <div className="w-10 h-10 rounded-full bg-surface-container text-outline flex items-center justify-center">
+                    <span className="material-symbols-outlined text-xl">event_available</span>
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-on-surface">No hay citas programadas</h4>
-                    <p className="text-xs text-outline mt-1 max-w-xs mx-auto">
-                      No tienes compromisos agendados para el <span className="font-semibold">{selectedDate}</span>.
+                    <h4 className="font-bold text-xs sm:text-sm text-on-surface">Sin citas para este día</h4>
+                    <p className="text-[11px] text-outline mt-0.5">
+                      No hay compromisos agendados para el <span className="font-semibold">{selectedDate}</span>.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleOpenNewForDate(selectedDate)}
-                    className="h-8 px-4 bg-secondary text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                    className="h-7 px-3 bg-secondary text-white text-[11px] font-semibold rounded-md hover:bg-blue-700 transition-colors inline-flex items-center gap-1 shadow-xs"
                   >
-                    <span className="material-symbols-outlined text-[16px]">add_circle</span>
-                    <span>Programar Cita en este día</span>
+                    <span className="material-symbols-outlined text-[14px]">add_circle</span>
+                    <span>Programar Cita</span>
                   </button>
                 </div>
               )}
             </div>
           </div>
         </div>
-      )}
-
-      {/* VISTA 2: LISTA COMPLETA DE TODAS LAS CITAS */}
-      {viewMode === 'lista' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between bg-surface-container-lowest p-4 rounded-xl border border-outline-variant">
+      ) : (
+        /* VISTA 2: LISTA COMPLETA INTEGRADA EN PANTALLA COMPLETA */
+        <div className="flex-1 min-h-0 flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs overflow-hidden">
+          <div className="p-3 border-b border-surface-container flex items-center justify-between gap-3 shrink-0 bg-surface/40">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-secondary">format_list_bulleted</span>
-              <h2 className="font-bold text-sm text-on-surface">Todas las Citas Registradas ({appointments.length})</h2>
+              <span className="material-symbols-outlined text-secondary text-lg">format_list_bulleted</span>
+              <h2 className="font-bold text-xs sm:text-sm text-on-surface">
+                Listado Global de Citas ({appointments.length})
+              </h2>
             </div>
-            <div className="w-64">
+            <div className="w-48 sm:w-64">
               <input
                 type="text"
-                placeholder="Buscar por cliente o asunto..."
+                placeholder="Buscar cliente o trámite..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-8 px-3 border border-outline-variant rounded-md text-xs bg-surface focus:border-secondary focus:outline-none"
+                className="w-full h-7 px-2.5 border border-outline-variant rounded text-xs bg-surface focus:border-secondary focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-3 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
             {appointments
               .filter((a) => {
                 const matchMod = filterModality === 'todas' || a.modality === filterModality;
@@ -892,32 +850,32 @@ export default function CRMAgendaPage() {
               .map((apt) => (
                 <div
                   key={apt.id}
-                  className="p-5 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between space-y-4 hover:border-secondary transition-colors"
+                  className="p-3.5 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs flex flex-col justify-between space-y-2 hover:border-secondary transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2.5 bg-surface-container rounded-lg text-center min-w-[65px]">
-                        <span className="block text-[12px] font-mono-data font-bold text-secondary">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2.5">
+                      <div className="p-2 bg-surface-container rounded-md text-center min-w-[55px]">
+                        <span className="block text-[11px] font-mono-data font-bold text-secondary">
                           {apt.appointment_time.slice(0, 5)}
                         </span>
-                        <span className="text-[10px] text-outline uppercase font-semibold">
+                        <span className="text-[9px] text-outline uppercase font-semibold">
                           {apt.appointment_date}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-bold text-sm text-on-surface">{apt.client_name}</h3>
-                        <p className="text-xs text-secondary font-medium mt-0.5">{apt.title}</p>
-                        <p className="text-[11px] text-outline font-mono-data mt-0.5">{apt.client_phone}</p>
+                        <h3 className="font-bold text-xs sm:text-sm text-on-surface">{apt.client_name}</h3>
+                        <p className="text-[11px] text-secondary font-medium">{apt.title}</p>
+                        <p className="text-[10px] text-outline font-mono-data">{apt.client_phone}</p>
                       </div>
                     </div>
 
                     <div>
                       {apt.status === 'completada' ? (
-                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded">
+                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded">
                           Completada
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded">
+                        <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold rounded">
                           Confirmada
                         </span>
                       )}
@@ -925,54 +883,54 @@ export default function CRMAgendaPage() {
                   </div>
 
                   {apt.notes && (
-                    <div className="p-3 bg-surface-container-low rounded-lg text-xs text-on-surface-variant">
-                      <span className="font-semibold text-on-surface">Detalles / Nota: </span>
+                    <div className="p-2 bg-surface-container-low rounded text-[11px] text-on-surface-variant">
+                      <span className="font-semibold text-on-surface">Detalle: </span>
                       <span>{apt.notes}</span>
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-surface-container text-xs">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-surface-container text-xs">
+                    <div className="flex items-center gap-1.5">
                       {apt.modality === 'llamada' && (
                         <button
                           onClick={() => setCallModal({ client: apt.client_name, phone: apt.client_phone })}
-                          className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold rounded transition-colors"
+                          className="flex items-center gap-1 px-2 py-0.8 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold rounded text-[10px] transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[15px] text-emerald-600">call</span>
-                          <span>Llamada Telefónica</span>
+                          <span className="material-symbols-outlined text-[13px] text-emerald-600">call</span>
+                          <span>Llamada</span>
                         </button>
                       )}
 
                       {apt.modality === 'online_meet' && (
                         <button
                           onClick={() => setMeetModal(`meet.google.com/nxg-${apt.id}-asesoria`)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-800 font-semibold rounded transition-colors"
+                          className="flex items-center gap-1 px-2 py-0.8 bg-blue-50 hover:bg-blue-100 text-blue-800 font-semibold rounded text-[10px] transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[15px] text-blue-600">videocam</span>
-                          <span>Videollamada</span>
+                          <span className="material-symbols-outlined text-[13px] text-blue-600">videocam</span>
+                          <span>Meet</span>
                         </button>
                       )}
 
                       {apt.modality === 'presencial' && (
-                        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container text-on-surface-variant font-semibold rounded">
-                          <span className="material-symbols-outlined text-[15px] text-outline">business</span>
-                          <span>Solo Presencial</span>
+                        <span className="flex items-center gap-1 px-2 py-0.8 bg-surface-container text-on-surface-variant font-semibold rounded text-[10px]">
+                          <span className="material-symbols-outlined text-[13px] text-outline">business</span>
+                          <span>Presencial</span>
                         </span>
                       )}
                     </div>
 
                     <button
                       onClick={() => handleToggleComplete(apt.id)}
-                      className={`h-8 px-3 rounded text-xs font-semibold transition-colors flex items-center gap-1 ${
+                      className={`h-6 px-2 rounded text-[10px] font-semibold transition-colors flex items-center gap-1 ${
                         apt.status === 'completada'
                           ? 'border border-outline-variant text-outline hover:bg-surface-container'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[15px]">
-                        {apt.status === 'completada' ? 'undo' : 'check_circle'}
+                      <span className="material-symbols-outlined text-[13px]">
+                        {apt.status === 'completada' ? 'undo' : 'check'}
                       </span>
-                      <span>{apt.status === 'completada' ? 'Reabrir Cita' : 'Marcar Completada'}</span>
+                      <span>{apt.status === 'completada' ? 'Reabrir' : 'Completar'}</span>
                     </button>
                   </div>
                 </div>
@@ -986,7 +944,7 @@ export default function CRMAgendaPage() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <form
             onSubmit={handleCreateAppointment}
-            className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95"
+            className="bg-surface-container-lowest max-w-md w-full rounded-2xl border border-outline-variant shadow-2xl p-5 space-y-3.5 animate-in fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-2 border-b border-surface-container">
               <div className="flex items-center gap-2">
@@ -1002,10 +960,10 @@ export default function CRMAgendaPage() {
               </button>
             </div>
 
-            <div className="space-y-3.5 text-xs">
-              {/* MODALIDAD CON LLAMADA POR DEFECTO */}
+            <div className="space-y-3 text-xs">
+              {/* Modalidad con llamada por defecto */}
               <div>
-                <label className="block text-outline uppercase font-semibold mb-1.5">
+                <label className="block text-outline uppercase font-semibold mb-1">
                   Modalidad de la Cita:
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1017,14 +975,14 @@ export default function CRMAgendaPage() {
                         setAptTitle('Consulta Telefónica Gestoría');
                       }
                     }}
-                    className={`p-2.5 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
+                    className={`p-2 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
                       aptModality === 'llamada'
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-900 font-bold shadow-sm ring-2 ring-emerald-500/20'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-900 font-bold shadow-xs ring-2 ring-emerald-500/20'
                         : 'border-outline-variant bg-surface text-outline hover:bg-surface-container'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-lg text-emerald-600">call</span>
-                    <span className="text-[11px] leading-tight">Llamada (Defecto)</span>
+                    <span className="material-symbols-outlined text-base text-emerald-600">call</span>
+                    <span className="text-[10px] leading-tight">Llamada (Defecto)</span>
                   </button>
 
                   <button
@@ -1035,14 +993,14 @@ export default function CRMAgendaPage() {
                         setAptTitle('Cita Presencial en Despacho');
                       }
                     }}
-                    className={`p-2.5 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
+                    className={`p-2 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
                       aptModality === 'presencial'
-                        ? 'border-secondary bg-blue-50 text-secondary font-bold shadow-sm ring-2 ring-blue-500/20'
+                        ? 'border-secondary bg-blue-50 text-secondary font-bold shadow-xs ring-2 ring-blue-500/20'
                         : 'border-outline-variant bg-surface text-outline hover:bg-surface-container'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-lg text-secondary">business</span>
-                    <span className="text-[11px] leading-tight">Solo Presencial</span>
+                    <span className="material-symbols-outlined text-base text-secondary">business</span>
+                    <span className="text-[10px] leading-tight">Solo Presencial</span>
                   </button>
 
                   <button
@@ -1053,14 +1011,14 @@ export default function CRMAgendaPage() {
                         setAptTitle('Videollamada Asesoría');
                       }
                     }}
-                    className={`p-2.5 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
+                    className={`p-2 rounded-lg border text-center transition-all flex flex-col items-center gap-1 ${
                       aptModality === 'online_meet'
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold shadow-sm ring-2 ring-indigo-500/20'
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold shadow-xs ring-2 ring-indigo-500/20'
                         : 'border-outline-variant bg-surface text-outline hover:bg-surface-container'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-lg text-indigo-600">videocam</span>
-                    <span className="text-[11px] leading-tight">Videollamada</span>
+                    <span className="material-symbols-outlined text-base text-indigo-600">videocam</span>
+                    <span className="text-[10px] leading-tight">Videollamada</span>
                   </button>
                 </div>
               </div>
@@ -1076,7 +1034,7 @@ export default function CRMAgendaPage() {
                     else if (e.target.value === 'Elena Morales Castillo') setAptPhone('+34 611 223 344');
                     else setAptPhone('+31 6 81239845');
                   }}
-                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                  className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
                 >
                   <option>Maria Popescu</option>
                   <option>Carlos Mendoza Ruiz</option>
@@ -1091,22 +1049,22 @@ export default function CRMAgendaPage() {
                   type="text"
                   value={aptPhone}
                   onChange={(e) => setAptPhone(e.target.value)}
-                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                  className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-outline uppercase font-semibold mb-1">Asunto / Motivo de la Cita</label>
+                <label className="block text-outline uppercase font-semibold mb-1">Asunto de la Cita</label>
                 <input
                   required
                   type="text"
                   value={aptTitle}
                   onChange={(e) => setAptTitle(e.target.value)}
-                  className="w-full h-9 px-3 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
+                  className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="block text-outline uppercase font-semibold mb-1">Fecha</label>
                   <input
@@ -1114,7 +1072,7 @@ export default function CRMAgendaPage() {
                     type="date"
                     value={aptDate}
                     onChange={(e) => setAptDate(e.target.value)}
-                    className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                    className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1124,13 +1082,13 @@ export default function CRMAgendaPage() {
                     type="time"
                     value={aptTime}
                     onChange={(e) => setAptTime(e.target.value)}
-                    className="w-full h-9 px-3 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
+                    className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface font-mono-data focus:border-secondary focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-surface-container">
+            <div className="flex justify-end gap-2 pt-2.5 border-t border-surface-container">
               <button
                 type="button"
                 onClick={() => setShowNewAptModal(false)}
@@ -1140,40 +1098,40 @@ export default function CRMAgendaPage() {
               </button>
               <button
                 type="submit"
-                className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-sm"
+                className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-xs"
               >
-                Guardar Cita ({aptModality === 'llamada' ? 'Llamada' : aptModality === 'presencial' ? 'Presencial' : 'Videollamada'})
+                Guardar Cita ({aptModality === 'llamada' ? 'Llamada' : aptModality === 'presencial' ? 'Presencial' : 'Meet'})
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* MODAL SIMULACIÓN LLAMADA TELEFÓNICA */}
+      {/* MODAL SIMULACIÓN LLAMADA */}
       {callModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest max-w-sm w-full rounded-2xl p-6 text-center space-y-4 shadow-2xl border border-outline-variant animate-in zoom-in-95">
-            <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto animate-pulse">
-              <span className="material-symbols-outlined text-3xl">call</span>
+          <div className="bg-surface-container-lowest max-w-sm w-full rounded-2xl p-5 text-center space-y-3.5 shadow-2xl border border-outline-variant animate-in zoom-in-95">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto animate-pulse">
+              <span className="material-symbols-outlined text-2xl">call</span>
             </div>
             <div>
-              <h4 className="font-bold text-base text-on-surface">Llamar a {callModal.client}</h4>
-              <p className="text-sm font-mono-data font-bold text-secondary mt-1">{callModal.phone}</p>
-              <p className="text-xs text-outline mt-1">Modalidad configurada como llamada telefónica directa.</p>
+              <h4 className="font-bold text-sm sm:text-base text-on-surface">Llamar a {callModal.client}</h4>
+              <p className="text-xs sm:text-sm font-mono-data font-bold text-secondary mt-0.5">{callModal.phone}</p>
+              <p className="text-[11px] text-outline mt-1">Llamada telefónica directa configurada.</p>
             </div>
 
             <div className="pt-2 flex justify-center gap-2">
               <button
                 onClick={() => setCallModal(null)}
-                className="h-9 px-4 border border-outline-variant hover:bg-surface-container text-xs font-semibold rounded"
+                className="h-8 px-3 border border-outline-variant hover:bg-surface-container text-xs font-semibold rounded"
               >
                 Cerrar
               </button>
               <a
                 href={`tel:${callModal.phone}`}
-                className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold rounded text-white flex items-center gap-1.5 shadow-sm"
+                className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold rounded text-white flex items-center gap-1.5 shadow-xs"
               >
-                <span className="material-symbols-outlined text-[16px]">phone_forwarded</span>
+                <span className="material-symbols-outlined text-[15px]">phone_forwarded</span>
                 <span>Llamar Ahora</span>
               </a>
             </div>
@@ -1184,16 +1142,16 @@ export default function CRMAgendaPage() {
       {/* MODAL SIMULACIÓN GOOGLE MEET */}
       {meetModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 text-white max-w-sm w-full rounded-2xl p-6 text-center space-y-4 shadow-2xl">
-            <span className="material-symbols-outlined text-4xl text-emerald-400">videocam</span>
-            <h4 className="font-bold text-base">Sala de Videollamada Preparada</h4>
+          <div className="bg-slate-900 text-white max-w-sm w-full rounded-2xl p-5 text-center space-y-3.5 shadow-2xl">
+            <span className="material-symbols-outlined text-3xl text-emerald-400">videocam</span>
+            <h4 className="font-bold text-sm sm:text-base">Sala de Videollamada Google Meet</h4>
             <p className="text-xs text-slate-300">
               Enlace generado: <span className="font-mono-data font-bold text-secondary-fixed block mt-1">{meetModal}</span>
             </p>
             <div className="pt-2 flex justify-center gap-2">
               <button
                 onClick={() => setMeetModal(null)}
-                className="h-8 px-4 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded"
+                className="h-8 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded"
               >
                 Cerrar
               </button>
