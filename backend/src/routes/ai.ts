@@ -3,22 +3,42 @@ import { query } from '../db/index.js';
 
 const router = Router();
 
-// Helper para llamar a OpenAI o utilizar motor semántico local
-async function callOpenAIOrFallback(systemPrompt: string, userPrompt: string, fallbackFn: () => any) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || apiKey === 'tu-api-key-de-openai-aqui' || apiKey.trim() === '') {
+function normalizeChatUrl(rawUrl?: string): string {
+  let url = (rawUrl || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').trim().replace(/\/+$/, '');
+  if (url.endsWith('/chat/completions')) return url;
+  return `${url}/chat/completions`;
+}
+
+// Helper para llamar a OpenAI / endpoint compatible o utilizar motor semántico local
+async function callOpenAIOrFallback(
+  systemPrompt: string,
+  userPrompt: string,
+  fallbackFn: () => any,
+  options?: { apiKey?: string; apiUrl?: string; model?: string }
+) {
+  const apiKey = (options?.apiKey || process.env.OPENAI_API_KEY || '').trim();
+  const isLocalOllama = (options?.apiUrl || '').includes('localhost') || (options?.apiUrl || '').includes('127.0.0.1');
+
+  if ((!apiKey || apiKey === 'tu-api-key-de-openai-aqui') && !isLocalOllama) {
     return fallbackFn();
   }
 
+  const endpoint = normalizeChatUrl(options?.apiUrl);
+  const model = options?.model?.trim() || process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    const res = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -28,7 +48,7 @@ async function callOpenAIOrFallback(systemPrompt: string, userPrompt: string, fa
     });
 
     if (!res.ok) {
-      console.warn('Fallo al llamar a OpenAI, usando motor heurístico fallback.');
+      console.warn(`Fallo al llamar a API IA (${endpoint}, status ${res.status}), usando motor heurístico fallback.`);
       return fallbackFn();
     }
 
@@ -42,7 +62,7 @@ async function callOpenAIOrFallback(systemPrompt: string, userPrompt: string, fa
       return content;
     }
   } catch (err) {
-    console.error('Error llamando a OpenAI API:', err);
+    console.error('Error llamando a API IA:', err);
     return fallbackFn();
   }
 }
@@ -337,7 +357,7 @@ router.post('/ocr-doc', async (req: Request, res: Response) => {
 // 3. POST /api/ai/generate-letter - Generador de Cartas Oficiales
 router.post('/generate-letter', async (req: Request, res: Response) => {
   try {
-    const { template, client_name, bsn, address, case_details, language = 'nl' } = req.body;
+    const { template, client_name, bsn, address, case_details, language = 'nl', apiKey, apiUrl, model } = req.body;
 
     const systemPrompt = `
       Eres un redactor legal experto en trámites y derecho administrativo neerlandés.
@@ -379,7 +399,7 @@ NexusGest Advies & Gestoría
 Rony P. - Senior Consultant`;
     };
 
-    const letterText = await callOpenAIOrFallback(systemPrompt, userPrompt, fallback);
+    const letterText = await callOpenAIOrFallback(systemPrompt, userPrompt, fallback, { apiKey, apiUrl, model });
 
     res.json({
       success: true,
@@ -388,6 +408,68 @@ Rony P. - Senior Consultant`;
   } catch (error) {
     console.error('Error generando documento con IA:', error);
     res.status(500).json({ error: 'Error al generar documento con IA' });
+  }
+});
+
+// 4. POST /api/ai/test-connection - Test de conectividad en tiempo real
+router.post('/test-connection', async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  try {
+    const { apiKey, apiUrl, model = 'gpt-4o-mini' } = req.body;
+    const key = (apiKey || process.env.OPENAI_API_KEY || '').trim();
+    const isLocalOllama = (apiUrl || '').includes('localhost') || (apiUrl || '').includes('127.0.0.1');
+
+    if (!key && !isLocalOllama) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se ha proporcionado ninguna API Key ni clave en variables de entorno.',
+      });
+    }
+
+    const endpoint = normalizeChatUrl(apiUrl);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (key) {
+      headers['Authorization'] = `Bearer ${key}`;
+    }
+
+    const testRes = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: model.trim() || 'gpt-4o-mini',
+        messages: [{ role: 'user', content: 'Ping test' }],
+        max_tokens: 5,
+      }),
+    });
+
+    const latencyMs = Date.now() - startTime;
+    if (!testRes.ok) {
+      let errText = `HTTP ${testRes.status}: ${testRes.statusText}`;
+      try {
+        const d: any = await testRes.json();
+        if (d?.error?.message) errText = d.error.message;
+      } catch {}
+      return res.status(testRes.status >= 400 && testRes.status < 600 ? testRes.status : 500).json({
+        success: false,
+        error: errText,
+        latencyMs,
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Conexión verificada con éxito',
+      latencyMs,
+      modelUsed: model,
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Error de conexión con el endpoint de IA',
+      latencyMs: Date.now() - startTime,
+    });
   }
 });
 
