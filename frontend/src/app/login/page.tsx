@@ -20,19 +20,6 @@ function LoginForm() {
     }
   }, [router]);
 
-  const handleQuickAccess = (role: 'gestor' | 'admin' = 'gestor') => {
-    setLoading(true);
-    const quickUser: SessionUser = {
-      id: role === 'admin' ? 'usr_admin_master' : 'usr_gestor_ronyp',
-      email: role === 'admin' ? 'admin@nexusgest.nl' : 'gestor@rp-gestoria.tech',
-      full_name: role === 'admin' ? 'Administrador Sistema' : 'Rony (Gestor Principal)',
-      role: role,
-    };
-    saveSession('nexusgest_local_demo', quickUser);
-    const next = searchParams.get('next');
-    router.replace(next && next.startsWith('/') ? next : '/crm');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -93,26 +80,6 @@ function LoginForm() {
 
         {/* Formulario de acceso */}
         <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-xl space-y-5">
-          {/* Botón Acceso Rápido 1-Clic: solo desarrollo local */}
-          {process.env.NODE_ENV !== 'production' && <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-center">
-            <p className="text-xs font-semibold text-primary mb-2 flex items-center justify-center gap-1.5">
-              <span className="material-symbols-outlined text-[18px] text-amber-500">bolt</span>
-              Acceso Rápido sin Contraseña
-            </p>
-            <button
-              type="button"
-              onClick={() => handleQuickAccess('gestor')}
-              disabled={loading}
-              className="w-full py-2.5 px-4 bg-primary text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group cursor-pointer"
-            >
-              <span>Entrar como Gestor Principal</span>
-              <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
-            </button>
-            <p className="text-[11px] text-on-surface-variant/80 mt-1.5">
-              Acceso inmediato al CRM y gestión completa
-            </p>
-          </div>}
-
           <div className="relative flex py-1 items-center">
             <div className="flex-grow border-t border-outline-variant/60"></div>
             <span className="flex-shrink mx-3 text-[11px] font-semibold text-outline uppercase tracking-wider">o con credenciales</span>
@@ -125,13 +92,6 @@ function LoginForm() {
                 <label htmlFor="email" className="block text-xs font-semibold text-on-surface">
                   Email
                 </label>
-                <button
-                  type="button"
-                  onClick={() => { setEmail('gestor@rp-gestoria.tech'); setPassword('admin123'); }}
-                  className="text-[11px] text-secondary hover:underline cursor-pointer"
-                >
-                  Autorellenar
-                </button>
               </div>
               <input
                 id="email"
@@ -141,7 +101,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm text-on-surface focus:outline-none focus:border-secondary transition-colors"
-                placeholder="gestor@rp-gestoria.tech"
+                placeholder="tu@dominio.com"
               />
             </div>
 
@@ -150,7 +110,6 @@ function LoginForm() {
                 <label htmlFor="password" className="block text-xs font-semibold text-on-surface">
                   Contraseña
                 </label>
-                <span className="text-[11px] text-outline">admin123</span>
               </div>
               <input
                 id="password"
@@ -180,28 +139,6 @@ function LoginForm() {
             </button>
           </form>
 
-          {/* Cuentas de demostración predefinidas */}
-          <div className="pt-2 border-t border-outline-variant/40">
-            <p className="text-[11px] font-semibold text-outline mb-2 text-center">Cuentas preconfiguradas:</p>
-            <div className="grid grid-cols-2 gap-2 text-left">
-              <button
-                type="button"
-                onClick={() => { setEmail('gestor@rp-gestoria.tech'); setPassword('admin123'); }}
-                className="p-2 rounded-lg border border-outline-variant/70 hover:border-secondary hover:bg-secondary/5 transition-all text-left cursor-pointer"
-              >
-                <div className="text-[11px] font-bold text-on-surface">Gestor</div>
-                <div className="text-[10px] text-outline truncate">gestor@rp-gestoria.tech</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setEmail('admin@nexusgest.nl'); setPassword('admin123'); }}
-                className="p-2 rounded-lg border border-outline-variant/70 hover:border-secondary hover:bg-secondary/5 transition-all text-left cursor-pointer"
-              >
-                <div className="text-[11px] font-bold text-on-surface">Admin</div>
-                <div className="text-[10px] text-outline truncate">admin@nexusgest.nl</div>
-              </button>
-            </div>
-          </div>
         </div>
 
         <div className="mt-6 text-center">
