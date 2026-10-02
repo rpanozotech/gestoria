@@ -26,10 +26,10 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm w-full">
       <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-        <div className="flex items-center justify-between h-18 sm:h-20">
+        <div className="flex items-center gap-3 lg:gap-5 h-18 sm:h-20">
           
           {/* LOGO OFICIAL - RP GESTORÍA & ASESORÍA */}
-          <Link href="/" className="flex items-center gap-3 shrink-0 group">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group lg:w-[265px] xl:w-[280px]">
             <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-sm border border-slate-200/90 group-hover:scale-105 transition-transform bg-slate-900 flex items-center justify-center shrink-0">
               <Image 
                 src="/logo.png" 
@@ -41,29 +41,29 @@ export default function Navbar() {
               />
             </div>
             <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-1.5">
-                <span className="font-heading font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 leading-none">
+              <div className="flex items-center gap-1">
+                <span className="font-heading font-extrabold text-base sm:text-lg tracking-tight text-slate-900 leading-none">
                   RP Gestoría
                 </span>
-                <span className="font-heading font-extrabold text-lg sm:text-xl tracking-tight text-blue-600 leading-none">
+                <span className="font-heading font-extrabold text-base sm:text-lg tracking-tight text-blue-600 leading-none">
                   & Asesoría
                 </span>
               </div>
-              <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-1 leading-none">
+              <span className="hidden sm:block text-[9px] xl:text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-1 leading-none whitespace-nowrap">
                 Tus trámites en Holanda, fáciles
               </span>
             </div>
           </Link>
 
           {/* NAV LINKS DESKTOP A PÁGINAS INDEPENDIENTES */}
-          <nav className="hidden lg:flex items-center gap-5 xl:gap-8">
+          <nav className="hidden lg:flex flex-1 min-w-0 items-center justify-center gap-2 xl:gap-3">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm font-semibold transition-all py-2 border-b-2 ${
+                  className={`text-xs xl:text-sm font-semibold whitespace-nowrap transition-all py-2 border-b-2 ${
                     isActive
                       ? 'text-blue-600 border-blue-600 font-bold'
                       : 'text-slate-700 hover:text-blue-600 border-transparent hover:border-blue-200'
@@ -76,13 +76,13 @@ export default function Navbar() {
           </nav>
 
           {/* ACCIONES Y BOTONES DE LA DERECHA */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
             {/* SELECTOR DE IDIOMA */}
             <div className="relative">
               <button
                 onClick={() => setLangMenuOpen(!langMenuOpen)}
-                className="h-9 sm:h-10 px-2.5 sm:px-3 flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
+                className="h-9 sm:h-10 px-2 sm:px-2.5 flex items-center gap-1 rounded-xl border border-slate-200/90 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
                 aria-label="Seleccionar idioma"
               >
                 <span className="material-symbols-outlined text-[17px] text-slate-500">language</span>
@@ -121,16 +121,16 @@ export default function Navbar() {
             {/* RESERVAR CITA BUTTON -> /reservar */}
             <Link
               href="/reservar"
-              className="hidden md:inline-flex items-center gap-2 h-9 sm:h-10 px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100/90 rounded-xl transition-all border border-blue-200/80 shadow-sm shrink-0"
+              className="hidden md:inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 xl:px-3.5 text-xs xl:text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100/90 rounded-xl transition-all border border-blue-200/80 shadow-sm shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">calendar_month</span>
               <span>Reservar Cita</span>
             </Link>
 
-            {/* ÁREA CLIENTE BUTTON -> /portal */}
+            {/* ÁREA CLIENTE BUTTON -> acceso al portal */}
             <Link
-              href="/portal"
-              className="inline-flex items-center gap-2 h-9 sm:h-10 px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white bg-slate-900 hover:bg-blue-600 rounded-xl shadow-md hover:shadow-blue-500/20 transition-all shrink-0"
+              href="/portal/login"
+              className="hidden sm:inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 xl:px-3.5 text-xs xl:text-sm font-bold text-white bg-slate-900 hover:bg-blue-600 rounded-xl shadow-md hover:shadow-blue-500/20 transition-all shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">account_circle</span>
               <span>Área Cliente</span>
@@ -181,7 +181,7 @@ export default function Navbar() {
                 <span>Reservar una Cita</span>
               </Link>
               <Link
-                href="/portal"
+                href="/portal/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full text-center py-3 text-sm font-bold text-white bg-slate-900 rounded-xl flex items-center justify-center gap-2"
               >

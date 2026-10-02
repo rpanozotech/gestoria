@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { apiUrl } from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useLanguage } from '@/context/LanguageContext';
+import { formatThousands } from '@/lib/format';
 
 /**
  * Tope del ingreso bruto en los simuladores.
@@ -14,10 +16,9 @@ import Footer from '@/components/Footer';
  * el deslizador se detiene aqui. Los campos numericos aceptan cualquier
  * importe: quien gana mas puede escribirlo a mano.
  */
-const MAX_INCOME = 45000;
-
-// Tipos para soporte multiidioma básico
-type Language = 'ES' | 'EN' | 'NL' | 'RO' | 'PT' | 'PL';
+const MIN_INCOME = 100;
+const MAX_INCOME = 40000;
+const parseAmount = (value: string) => Number(value.replace(/\D/g, '')) || 0;
 
 interface ServiceItem {
   id: string;
@@ -150,7 +151,7 @@ const SERVICES_DATA: ServiceItem[] = [
 ];
 
 export default function PublicHomePage() {
-  const [lang, setLang] = useState<Language>('ES');
+  const { lang, setLang } = useLanguage();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('todos');
@@ -765,22 +766,23 @@ export default function PublicHomePage() {
                     <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                       <span>Ingreso bruto percibido en Holanda:</span>
                       <input
-                        type="number"
-                        min="10000"
+                         type="text"
+                         inputMode="numeric"
+                         min={MIN_INCOME}
                         max={MAX_INCOME}
-                        step="500"
-                        value={grossIncome}
-                        onChange={(e) => setGrossIncome(Number(e.target.value))}
+                         step="100"
+                         value={formatThousands(grossIncome)}
+                         onChange={(e) => setGrossIncome(parseAmount(e.target.value))}
                         className="w-28 text-right text-blue-600 font-extrabold border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                       />
                       <span className="text-blue-600 font-extrabold">€</span>
                     </div>
                     <input
                       type="range"
-                      min="10000"
+                       min={MIN_INCOME}
                       max={MAX_INCOME}
-                      step="500"
-                      value={Math.min(Math.max(grossIncome, 10000), MAX_INCOME)}
+                       step="100"
+                       value={Math.min(Math.max(grossIncome, MIN_INCOME), MAX_INCOME)}
                       onChange={(e) => setGrossIncome(Number(e.target.value))}
                       className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />
@@ -791,22 +793,23 @@ export default function PublicHomePage() {
                     <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                       <span>Impuestos retenidos en nómina (Loonheffing):</span>
                       <input
-                        type="number"
-                        min="0"
+                         type="text"
+                         inputMode="numeric"
+                         min={MIN_INCOME}
                         max={MAX_INCOME}
                         step="100"
-                        value={withheldTax}
-                        onChange={(e) => setWithheldTax(Number(e.target.value))}
+                         value={formatThousands(withheldTax)}
+                         onChange={(e) => setWithheldTax(parseAmount(e.target.value))}
                         className="w-28 text-right text-blue-600 font-extrabold border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                       />
                       <span className="text-blue-600 font-extrabold">€</span>
                     </div>
                     <input
                       type="range"
-                      min="0"
+                       min={MIN_INCOME}
                       max={MAX_INCOME}
                       step="100"
-                      value={Math.min(Math.max(withheldTax, 0), MAX_INCOME)}
+                       value={Math.min(Math.max(withheldTax, MIN_INCOME), MAX_INCOME)}
                       onChange={(e) => setWithheldTax(Number(e.target.value))}
                       className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />
@@ -832,7 +835,7 @@ export default function PublicHomePage() {
                 <div>
                   <span className="text-xs text-slate-500 font-semibold block">Estimación devolución a tu favor:</span>
                   <span className="text-3xl font-heading font-black text-emerald-600">
-                    + {calculateMFormRefund().toLocaleString()} €
+                    + {formatThousands(calculateMFormRefund())} €
                   </span>
                 </div>
                 <Link
@@ -869,22 +872,23 @@ export default function PublicHomePage() {
                     <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                       <span>Ingreso anual bruto estimado:</span>
                       <input
-                        type="number"
-                        min="0"
+                         type="text"
+                         inputMode="numeric"
+                         min={MIN_INCOME}
                         max={MAX_INCOME}
-                        step="500"
-                        value={toeslagIncome}
-                        onChange={(e) => setToeslagIncome(Number(e.target.value))}
+                         step="100"
+                         value={formatThousands(toeslagIncome)}
+                         onChange={(e) => setToeslagIncome(parseAmount(e.target.value))}
                         className="w-28 text-right text-indigo-600 font-extrabold border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                       />
                       <span className="text-indigo-600 font-extrabold">€ / año</span>
                     </div>
                     <input
                       type="range"
-                      min="12000"
+                       min={MIN_INCOME}
                       max={MAX_INCOME}
-                      step="500"
-                      value={Math.min(Math.max(toeslagIncome, 12000), MAX_INCOME)}
+                       step="100"
+                       value={Math.min(Math.max(toeslagIncome, MIN_INCOME), MAX_INCOME)}
                       onChange={(e) => setToeslagIncome(Number(e.target.value))}
                       className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                     />
@@ -895,11 +899,12 @@ export default function PublicHomePage() {
                     <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                       <span>Alquiler mensual de tu vivienda:</span>
                       <input
-                        type="number"
+                         type="text"
+                         inputMode="numeric"
                         min="0"
                         step="25"
-                        value={monthlyRent}
-                        onChange={(e) => setMonthlyRent(Number(e.target.value))}
+                         value={formatThousands(monthlyRent)}
+                         onChange={(e) => setMonthlyRent(parseAmount(e.target.value))}
                         className="w-24 text-right text-indigo-600 font-extrabold border border-slate-300 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                       />
                       <span className="text-indigo-600 font-extrabold">€ / mes</span>

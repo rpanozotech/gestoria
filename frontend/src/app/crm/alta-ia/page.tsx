@@ -3,7 +3,8 @@
 import React, { useState, useRef } from 'react';
 import { useEscapeKey } from '@/lib/a11y';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiUrl } from '@/lib/api';
+import { createPortalAccess } from '@/lib/portal';
 
 interface ExtractedClient {
   id: string;
@@ -20,6 +21,15 @@ interface ExtractedClient {
   source: string;
   confidence: number;
   selected: boolean;
+  sourceFileIds?: string[];
+}
+
+function normalizeIdentity(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 }
 
 /**
@@ -64,6 +74,51 @@ interface UploadedFileItem {
   type: string;
   previewUrl?: string;
   textContent?: string;
+  dataUrl?: string;
+}
+
+async function extractLocalOcr(file: File): Promise<string> {
+  const { createWorker } = await import('tesseract.js');
+  const worker = await createWorker(['nld', 'eng', 'spa']);
+
+  try {
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      const pdfjs: any = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+      const pages: string[] = [];
+      const pageCount = Math.min(pdf.numPages, 5);
+
+      for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const textContent = await page.getTextContent();
+        const embeddedText = textContent.items
+          .map((item: any) => item.str || '')
+          .join(' ')
+          .trim();
+        if (embeddedText) pages.push(embeddedText);
+
+        // Los PDF oficiales suelen contener texto interno. Solo renderiza
+        // la página y ejecuta OCR si no hay texto seleccionable.
+        if (embeddedText.length > 40) continue;
+        const viewport = page.getViewport({ scale: 1.6 });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        const context = canvas.getContext('2d');
+        if (!context) continue;
+        await page.render({ canvasContext: context, viewport }).promise;
+        const result = await worker.recognize(canvas);
+        pages.push(result.data.text);
+      }
+
+      return pages.join('\n');
+    }
+
+    const result = await worker.recognize(file);
+    return result.data.text;
+  } finally {
+    await worker.terminate();
+  }
 }
 
 export default function AltaIAEscaneerPage() {
@@ -78,6 +133,7 @@ export default function AltaIAEscaneerPage() {
   // ==========================================
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [ocrPending, setOcrPending] = useState(false);
   const [nlpPrompt, setNlpPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -90,6 +146,7 @@ export default function AltaIAEscaneerPage() {
   const [saveSuccessModal, setSaveSuccessModal] = useState<any>(null);
   const [aviso, setAviso] = useState<{ texto: string; tipo: 'error' | 'info' } | null>(null);
   const [usadoFallback, setUsadoFallback] = useState(false);
+  const [extraccionLocal, setExtraccionLocal] = useState(false);
 
   // Escape cierra el modal de resultado.
   useEscapeKey(!!saveSuccessModal, () => {
@@ -121,8 +178,17 @@ export default function AltaIAEscaneerPage() {
   const handleFilesSelected = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
+    const validFiles = Array.from(files).filter((file) => {
+      if (file.size === 0) {
+        showToast(`No se puede cargar "${file.name}": el archivo pesa 0 KB. Vuelve a seleccionarlo.`, 'error');
+        return false;
+      }
+      return true;
+    });
+    if (validFiles.length === 0) return;
+
     const newItems: UploadedFileItem[] = [];
-    Array.from(files).forEach((file) => {
+    validFiles.forEach((file) => {
       const isImg = file.type.startsWith('image/');
       const previewUrl = isImg ? URL.createObjectURL(file) : undefined;
 
@@ -143,10 +209,39 @@ export default function AltaIAEscaneerPage() {
         reader.readAsText(file);
       }
 
+      // Las imágenes se envían al modelo vision local/remoto como data URL.
+      // Se limita el tamaño para no saturar el JSON ni Ollama.
+      if ((isImg || file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) && file.size <= 10 * 1024 * 1024) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          item.dataUrl = (e.target?.result as string) || '';
+        };
+        reader.readAsDataURL(file);
+      }
+
       newItems.push(item);
     });
 
     setUploadedFiles((prev) => [...prev, ...newItems]);
+
+    // OCR local para fotos y PDF escaneados. No usa API Key ni ningún modelo IA.
+    setOcrPending(true);
+    void Promise.all(
+      validFiles.map(async (file, index) => {
+        if (!file.type.startsWith('image/') && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+          return;
+        }
+        try {
+          const text = await extractLocalOcr(file);
+          const itemId = newItems[index].id;
+          setUploadedFiles((prev) =>
+            prev.map((item) => (item.id === itemId ? { ...item, textContent: text } : item))
+          );
+        } catch (error) {
+          console.warn('OCR local no disponible para', file.name, error);
+        }
+      })
+    ).finally(() => setOcrPending(false));
   };
 
   const handleRemoveFile = (fileId: string) => {
@@ -206,20 +301,61 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     if (!nlpPrompt.trim() && uploadedFiles.length === 0) return;
     setIsProcessing(true);
 
+    // El modo documental es local: el navegador ya ha leído el PDF o la
+    // imagen mediante PDF.js/Tesseract. No requiere sesión API, Ollama ni IA.
+    if (uploadedFiles.length > 0) {
+      const localFiles = await Promise.all(uploadedFiles.map(async (file) => {
+        if (!file.dataUrl || !file.name.toLowerCase().endsWith('.pdf')) return file;
+        try {
+          const response = process.env.NODE_ENV === 'production'
+            ? await apiFetch('/ai-local/extract', {
+                method: 'POST',
+                body: JSON.stringify({ dataUrl: file.dataUrl }),
+              })
+            : await fetch(apiUrl('/ai-local/extract'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dataUrl: file.dataUrl }),
+              });
+          if (!response.ok) return file;
+          const data = await response.json();
+          return data.text ? { ...file, textContent: data.text } : file;
+        } catch {
+          return file;
+        }
+      }));
+      setUploadedFiles(localFiles);
+      fallbackMultiParse(localFiles);
+      setExtraccionLocal(true);
+      setIsProcessing(false);
+      return;
+    }
+
     try {
+      const savedConfig = typeof window !== 'undefined' ? localStorage.getItem('nexusgest_ai_config') : null;
+      const aiConfig = savedConfig ? JSON.parse(savedConfig) : {};
       const res = await apiFetch('/ai/parse-multi-clients', {
         method: 'POST',
         body: JSON.stringify({
           prompt: nlpPrompt,
+          useAI: false,
+          apiKey: aiConfig.apiKey || '',
+          apiUrl: aiConfig.apiUrl || '',
+          model: aiConfig.model || '',
           files: uploadedFiles.map((f) => ({
             name: f.name,
             type: f.type,
             size: f.size,
             textContent: f.textContent,
+            dataUrl: f.dataUrl,
           })),
         }),
       });
 
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new Error(errorBody.error || `El servidor respondió con HTTP ${res.status}`);
+      }
       const data = await res.json();
       if (data.success && Array.isArray(data.clients) && data.clients.length > 0) {
         setDetectedClients(
@@ -229,11 +365,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             bsn: c.bsn || '',
             phone: c.phone || '',
             email: c.email || '',
-            city: c.city || 'Amsterdam',
+            city: c.city || '',
             address: c.address || '',
             id_document_number: c.id_document_number || '',
-            service_title: c.service_title || 'Declaración Fiscal M-Form',
-            fee: c.fee || 120.0,
+            service_title: c.service_title || 'Consulta general',
+            fee: typeof c.fee === 'number' ? c.fee : 0,
             notes: c.notes || 'Datos extraídos mediante Inteligencia Artificial.',
             source: c.source || 'Análisis IA',
             // Si la API no manda confianza, se asume la MAS BAJA posible.
@@ -245,10 +381,12 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
         );
         setIsReviewMode(true);
         setUsadoFallback(false);
+        setExtraccionLocal(Boolean(data.localOnly));
       } else {
         fallbackMultiParse();
       }
-    } catch {
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo conectar con el motor IA.', 'error');
       fallbackMultiParse();
     } finally {
       setIsProcessing(false);
@@ -256,41 +394,78 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
   };
 
   // Parser de respaldo inteligente en cliente (soporta múltiples clientes en offline)
-  const fallbackMultiParse = () => {
+  const fallbackMultiParse = (sourceFiles: UploadedFileItem[] = uploadedFiles) => {
     // Marca el resultado como coming del extractor local, no de la IA, para
     // que el gestor no confunda ambos en la pantalla de revision.
     setUsadoFallback(true);
     const clients: ExtractedClient[] = [];
 
     // 1. Extraer desde archivos si hay
-    if (uploadedFiles.length > 0) {
-      uploadedFiles.forEach((file, idx) => {
+    if (sourceFiles.length > 0) {
+      sourceFiles.forEach((file, idx) => {
         let name = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
         name = name.replace(/(dni|pasaporte|carta|nomina|contrato|belastingdienst|jaaropgaaf|doc|pdf|jpg|png)/gi, '').trim();
+        const ocr = file.textContent || '';
+        const readLine = (pattern: RegExp) => ocr.match(pattern)?.[1]?.trim() || '';
+        const bsn = ocr.match(/\b\d{9}\b/)?.[0] || '';
+        const email = ocr.match(/[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}/)?.[0] || '';
+        const phone = ocr.match(/(?:\+\d{1,3}|00\d{2,3}|06)[\s.-]?\d[\d\s().-]{7,15}/)?.[0]?.trim() || '';
+        const ocrName = readLine(/(?:naam|name|nombre|full\s*name)\s*[:.-]?\s*(.+)/im);
+        const ocrAddress = readLine(/(?:adres|address|direcci[oó]n)\s*[:.-]?\s*(.+)/im);
+        const ocrCity = readLine(/(?:woonplaats|city|ciudad|plaats)\s*[:.-]?\s*(.+)/im);
+        const ocrId = readLine(/(?:paspoort|passport|document(?:nummer|\s*number)?|dni)\s*[:.-]?\s*([A-Z0-9-]+)/im);
+        const birthDate = readLine(/(?:geboortedatum|date\s*of\s*birth|fecha\s*de\s*nacimiento)\s*[:.-]?\s*(\d{1,2}[-/]\d{1,2}[-/]\d{4})/im);
+        const country = readLine(/(?:land waarin u op 1 januari \d{4} woonde|nationaliteit|country|nacionalidad)\s*[:.-]?\s*([A-Za-zÀ-ÿ ]{3,40})/im);
+        const employers = Array.from(ocr.matchAll(/werkgever\s*:\s*([^\n]+)/gi)).map((m) => m[1].trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ');
+        const refund = ocr.match(/terug te krijgen[^€\n]*€\s*([\d.]+)/i)?.[1] || '';
+        if (ocrName) name = ocrName;
 
-        // El respaldo NO inventa datos. Solo toma lo que se puede deducir
-        // del propio nombre del archivo (el nombre de la persona). El BSN,
-        // el telefono, el email y la direccion se dejan vacios: son datos
-        // fiscales y de contacto, y un valor inventado aqui acaba en una
-        // declaracion submitted. El alta queda bloqueada hasta que el
-        // gestor los introduzca.
-        const cities = ['Amsterdam', 'Rotterdam', 'Utrecht', 'Eindhoven'];
-
+        let serviceTitle = 'Consulta general';
+        let serviceFee = 0;
+        if (/aangifte|inkomstenbelasting|income tax|declaraci[oó]n fiscal/i.test(ocr)) {
+          serviceTitle = 'Declaración Fiscal M-Form';
+          serviceFee = 180;
+        } else if (/zorgtoeslag|digid/i.test(ocr)) {
+          serviceTitle = 'Activación DigiD + Zorgtoeslag';
+          serviceFee = 85;
+        } else if (/huurtoeslag/i.test(ocr)) {
+          serviceTitle = 'Solicitud Subsidio Huurtoeslag (Alquiler)';
+          serviceFee = 95;
+        }
+        const missing = [
+          !phone && 'teléfono',
+          !email && 'correo electrónico',
+          !ocrAddress && 'dirección',
+          !ocrId && 'documento de identidad',
+        ].filter(Boolean).join(', ');
+        const detectedExtra = [
+          birthDate && `Fecha de nacimiento: ${birthDate}`,
+          country && `País/nacionalidad: ${country}`,
+          employers && `Empleador(es): ${employers}`,
+          refund && `Devolución indicada: €${refund}`,
+        ].filter(Boolean).join(' · ');
         clients.push({
           id: `file_client_${Date.now()}_${idx}`,
           full_name: name || `Documento ${idx + 1}`,
-          bsn: '',
-          phone: '',
-          email: '',
-          city: cities[idx % cities.length],
-          address: '',
-          id_document_number: '',
-          service_title: idx === 0 ? 'Declaración Fiscal M-Form' : idx === 1 ? 'Activación DigiD + Zorgtoeslag' : 'Solicitud Subsidio Huurtoeslag',
-          fee: idx === 0 ? 180.0 : idx === 1 ? 85.0 : 95.0,
-          notes: `Datos extraídos automáticamente del archivo adjunto: "${file.name}". El análisis automático no ha podido extraer el BSN, el teléfono ni la dirección: revísalos antes de guardar.`,
+          bsn,
+          phone,
+          email,
+          city: ocrCity,
+          address: ocrAddress,
+          id_document_number: ocrId,
+          service_title: serviceTitle,
+          fee: serviceFee,
+          notes: file.size === 0
+            ? `El archivo "${file.name}" llegó vacío (0 KB). Vuelve a seleccionarlo y comprueba que la carga termine antes de leerlo.`
+            : ocr
+              ? missing
+                ? `Texto leído localmente del archivo "${file.name}". ${detectedExtra ? `${detectedExtra}. ` : ''}No aparecen estos datos en el documento: ${missing}. Revisa antes de guardar.`
+                : `Texto leído localmente del archivo "${file.name}". ${detectedExtra ? `${detectedExtra}. ` : ''}Revisa todos los campos antes de guardar.`
+              : `No se encontró texto legible en "${file.name}". Puede ser un PDF escaneado; revisa que la imagen sea nítida o introduce los datos manualmente.`,
           source: `Archivo: ${file.name} (extracción local)`,
-          confidence: 0.35,
+          confidence: ocr ? 0.55 : 0,
           selected: true,
+          sourceFileIds: [file.id],
         });
       });
     }
@@ -353,7 +528,43 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       });
     }
 
-    setDetectedClients(clients);
+    // Agrupar documentos del mismo lote: el BSN manda; si falta, usamos el
+    // nombre completo normalizado. Los datos no vacíos del segundo documento
+    // completan al primero y las notas conservan el origen de ambos.
+    const merged: ExtractedClient[] = [];
+    clients.forEach((candidate) => {
+      const candidateBsn = candidate.bsn.replace(/\s/g, '');
+      const candidateName = normalizeIdentity(candidate.full_name);
+      const existingIndex = merged.findIndex((current) => {
+        const currentBsn = current.bsn.replace(/\s/g, '');
+        return (candidateBsn && currentBsn && candidateBsn === currentBsn) ||
+          (candidateName.length > 3 && candidateName === normalizeIdentity(current.full_name) &&
+            (!candidateBsn || !currentBsn || candidateBsn === currentBsn));
+      });
+      if (existingIndex === -1) {
+        merged.push(candidate);
+        return;
+      }
+      const current = merged[existingIndex];
+      merged[existingIndex] = {
+        ...current,
+        full_name: current.full_name || candidate.full_name,
+        bsn: current.bsn || candidate.bsn,
+        phone: current.phone || candidate.phone,
+        email: current.email || candidate.email,
+        city: current.city || candidate.city,
+        address: current.address || candidate.address,
+        id_document_number: current.id_document_number || candidate.id_document_number,
+        service_title: current.service_title !== 'Consulta general' ? current.service_title : candidate.service_title,
+        fee: current.fee || candidate.fee,
+        source: `${current.source}; ${candidate.source}`,
+        notes: `${current.notes}\n${candidate.notes}`,
+        confidence: Math.max(current.confidence, candidate.confidence),
+        sourceFileIds: Array.from(new Set([...(current.sourceFileIds || []), ...(candidate.sourceFileIds || [])])),
+      };
+    });
+
+    setDetectedClients(merged);
     setIsReviewMode(true);
   };
 
@@ -407,11 +618,12 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     const toSave = detectedClients.filter((c) => c.selected);
     if (toSave.length === 0) return;
 
-    // Un BSN es obligatorio: es el identificador fiscal con el que la
-    // gestoria trabaja. Sin el, el alta no se puede completar.
-    const missingBsn = toSave.filter((c) => !c.bsn || !/^\d{9}$/.test(c.bsn.trim()));
-    if (missingBsn.length > 0) {
-      showToast(`Falta el BSN o no tiene 9 dígitos en ${missingBsn.length} cliente(s). Revísalo antes de guardar.`, 'error');
+    // El BSN identifica con máxima seguridad. Si no aparece en el documento,
+    // permitimos el alta por nombre completo para poder enlazarlo después;
+    // nunca aceptamos un BSN presente con formato inválido.
+    const invalidIdentity = toSave.filter((c) => c.bsn && !/^\d{9}$/.test(c.bsn.trim()) || !c.full_name.trim());
+    if (invalidIdentity.length > 0) {
+      showToast(`Revisa el BSN o el nombre completo en ${invalidIdentity.length} cliente(s) antes de guardar.`, 'error');
       return;
     }
 
@@ -423,7 +635,33 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       // 1. Intentar persistir en PostgreSQL mediante API Backend
       for (const client of toSave) {
         try {
-          const clientRes = await apiFetch('/clients', {
+          const matchRes = await apiFetch(`/clients/match?bsn=${encodeURIComponent(client.bsn.trim())}&full_name=${encodeURIComponent(client.full_name)}`);
+          const matchData = await matchRes.json().catch(() => ({}));
+          let clientData: any;
+
+          if (matchRes.ok && matchData?.match?.id) {
+            // Un BSN exacto o un único nombre exacto reutiliza la ficha. Así
+            // no se crea un duplicado al importar el segundo documento.
+            const existing = matchData.match;
+            const updateRes = await apiFetch(`/clients/${existing.id}`, {
+              method: 'PUT',
+              body: JSON.stringify({
+                full_name: client.full_name || existing.full_name,
+                email: client.email || existing.email || null,
+                phone: client.phone || existing.phone || null,
+                bsn: client.bsn || existing.bsn || null,
+                id_document_number: client.id_document_number || existing.id_document_number || null,
+                city: client.city || existing.city || null,
+                address: client.address || existing.address || null,
+                notes: [existing.notes, client.notes].filter(Boolean).join('\n'),
+              }),
+            });
+            clientData = updateRes.ok ? await updateRes.json() : { client: existing };
+            clientData.client = clientData.client || existing;
+            const accessRes = await apiFetch(`/clients/${clientData.client.id}/portal-access`, { method: 'POST' });
+            clientData.portal_access = accessRes.ok ? (await accessRes.json()).portal_access : null;
+          } else {
+            const clientRes = await apiFetch('/clients', {
             method: 'POST',
             body: JSON.stringify({
               full_name: client.full_name,
@@ -438,13 +676,18 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               notes: client.notes,
             }),
           });
-          const clientData = await clientRes.json();
+          clientData = await clientRes.json();
 
-          if (!clientData?.client?.id) {
-            throw new Error('La API no devolvió el id del cliente creado');
+          if (!clientRes.ok) {
+            throw new Error(clientData?.error || `No se pudo guardar el cliente (HTTP ${clientRes.status})`);
+          }
           }
 
-          await apiFetch('/dossiers', {
+          if (!clientData?.client?.id) {
+            throw new Error('La API no devolvió el id del cliente resuelto');
+          }
+
+          const dossierRes = await apiFetch('/dossiers', {
             method: 'POST',
             body: JSON.stringify({
               client_id: clientData.client.id,
@@ -454,6 +697,23 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               priority: 'alta',
             }),
           });
+          if (!dossierRes.ok) throw new Error('La ficha existe, pero no se pudo crear el nuevo expediente');
+          const dossierData = await dossierRes.json().catch(() => ({}));
+
+          // Asociar también los PDFs que formaron este registro al cliente y
+          // al expediente recién creado. El archivo nunca se envía a la IA.
+          for (const fileId of client.sourceFileIds || []) {
+            const sourceFile = uploadedFiles.find((file) => file.id === fileId);
+            if (!sourceFile?.dataUrl) continue;
+            const blob = await (await fetch(sourceFile.dataUrl)).blob();
+            const form = new FormData();
+            form.append('file', blob, sourceFile.name);
+            form.append('client_id', clientData.client.id);
+            if (dossierData?.dossier?.id) form.append('dossier_id', dossierData.dossier.id);
+            form.append('category', 'Documento importado');
+            const documentRes = await apiFetch('/documents/upload', { method: 'POST', body: form });
+            if (!documentRes.ok) throw new Error(`No se pudo asociar el documento ${sourceFile.name}`);
+          }
 
           // Solo entra en la lista de persistidos lo que la API confirmó.
           persistedClients.push({
@@ -461,6 +721,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             id: clientData.client.id,
             digid_status: 'pendiente_activar',
             status: 'activo',
+            portal_username: clientData.client.portal_username || clientData.portal_access?.username,
+            portal_password: clientData.portal_access?.password,
           });
         } catch (apiErr) {
           console.warn('No se pudo persistir el cliente en la base de datos:', apiErr);
@@ -514,6 +776,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     service_title: 'Declaración Fiscal M-Form',
     fee: 180.0,
   });
+  const [manualPortalAccess, setManualPortalAccess] = useState<{ portal_username: string; portal_password: string } | null>(null);
 
   const handleSaveSingleManual = (e: React.FormEvent) => {
     e.preventDefault();
@@ -523,9 +786,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       return;
     }
 
+    const portalAccess = createPortalAccess(manualClient.full_name, manualClient.email);
     const newC = {
       id: String(Date.now()),
       ...manualClient,
+      ...portalAccess,
       bsn: manualClient.bsn.replace(/\s/g, ''),
       // No se inventan IBAN ni numero de documento: se dejan vacios para
       // que el gestor los introduzca. Un IBAN generado al azar puede
@@ -559,7 +824,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       localStorage.setItem('nexusgest_clients', JSON.stringify([newC, ...existing]));
     }
 
-    router.push('/crm/clientes');
+    setManualPortalAccess(portalAccess);
+    showToast('Cliente creado y credenciales de portal generadas.');
   };
 
   const selectedCount = detectedClients.filter((c) => c.selected).length;
@@ -731,7 +997,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                           <div className="min-w-0">
                             <p className="font-semibold text-on-surface truncate text-xs">{file.name}</p>
                             <p className="text-[10px] text-outline font-mono-data">
-                              {(file.size / 1024).toFixed(0)} KB · Detectable por IA
+                              {(file.size / 1024).toFixed(0)} KB · OCR local
                             </p>
                           </div>
                         </div>
@@ -798,7 +1064,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                     <span className="text-emerald-700 font-semibold flex items-center gap-1">
                       <span className="material-symbols-outlined text-[15px]">check_circle</span>
                       <span>
-                        Listo para analizar: {uploadedFiles.length} archivos · {nlpPrompt.trim().length > 0 ? 'notas incluidas' : 'sin texto adicional'}
+                        {ocrPending ? 'Preparando OCR local...' : `Listo para leer: ${uploadedFiles.length} archivos · ${nlpPrompt.trim().length > 0 ? 'notas incluidas' : 'sin texto adicional'}`}
                       </span>
                     </span>
                   ) : (
@@ -809,14 +1075,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 <button
                   type="button"
                   onClick={handleProcessMultiAI}
-                  disabled={isProcessing || (uploadedFiles.length === 0 && !nlpPrompt.trim())}
+                  disabled={isProcessing || ocrPending || (uploadedFiles.length === 0 && !nlpPrompt.trim())}
                   className="w-full sm:w-auto h-11 px-6 bg-secondary text-white text-xs font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="material-symbols-outlined text-lg">
                     {isProcessing ? 'hourglass_top' : 'auto_awesome'}
                   </span>
                   <span>
-                    {isProcessing ? 'Analizando con IA y separando clientes...' : 'Analizar con IA (Identificar Clientes)'}
+                    {isProcessing ? 'Leyendo PDF/OCR local...' : ocrPending ? 'Preparando OCR local...' : 'Leer PDF/OCR local y extraer datos'}
                   </span>
                 </button>
               </div>
@@ -830,20 +1096,28 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {/* ========================================================================= */}
       {activeTab === 'ia_multi' && isReviewMode && (
         <div className="space-y-6 animate-in fade-in zoom-in-95">
-          {usadoFallback && (
+          {usadoFallback && !extraccionLocal && (
             <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-start gap-3">
               <span className="material-symbols-outlined text-amber-600 text-xl shrink-0">warning</span>
               <div className="text-xs text-amber-900 leading-relaxed">
                 <p className="font-bold mb-1">
-                  El análisis con IA no ha podido procesar los documentos.
+                  El análisis IA no ha podido procesar los documentos.
                 </p>
                 <p>
-                  Estos datos salen del extractor local, que solo lee el nombre del
-                  archivo. <strong>El BSN, el teléfono y la dirección están vacíos
-                  porque no se han podido extraer.</strong> El alta queda bloqueada
-                  hasta que los introduzcas tú. No confíes en ningún dato de esta
-                  pantalla sin contrastarlo con el documento original.
+                  La aplicación ha usado el extractor local porque el servidor IA no
+                  respondió. <strong>El resultado no debe considerarse una extracción
+                  del contenido del PDF.</strong> Revisa la conexión de Ollama/API y
+                  contrasta siempre los datos con el documento original.
                 </p>
+              </div>
+            </div>
+          )}
+          {extraccionLocal && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-3">
+              <span className="material-symbols-outlined text-blue-600 text-xl shrink-0">verified_user</span>
+              <div className="text-xs text-blue-900 leading-relaxed">
+                <p className="font-bold mb-1">Lectura local de PDF/OCR completada</p>
+                <p>No se ha utilizado IA ni se han enviado los documentos a ningún servidor. Revisa los datos detectados y completa los campos que estén vacíos.</p>
               </div>
             </div>
           )}
@@ -863,7 +1137,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 </div>
                 <h2 className="font-bold text-base text-on-surface">
                   {detectedClients.length} Clientes{' '}
-                  {usadoFallback ? 'Detectados (extracción local)' : 'Identificados por la IA'}
+                  {extraccionLocal ? 'Extraídos localmente' : usadoFallback ? 'Detectados (extracción local)' : 'Identificados por la IA'}
                 </h2>
               </div>
               <p className="text-xs text-on-surface-variant mt-1">
@@ -1198,6 +1472,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {/* VISTA 3: FORMULARIO MANUAL INDIVIDUAL */}
       {/* ========================================================================= */}
       {activeTab === 'manual' && (
+        <>
         <form
           onSubmit={handleSaveSingleManual}
           className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4 w-full"
@@ -1310,6 +1585,34 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             </button>
           </div>
         </form>
+
+        {manualPortalAccess && (
+          <div className="mt-4 p-4 rounded-2xl border border-emerald-300 bg-emerald-50 shadow-sm">
+            <div className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-emerald-600">vpn_key</span>
+              <div>
+                <h4 className="text-sm font-bold text-emerald-900">Acceso del cliente generado</h4>
+                <p className="text-[11px] text-emerald-800 mt-0.5">Envíale estos datos por WhatsApp:</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs font-mono-data">
+              <div className="rounded-lg bg-white border border-emerald-200 px-3 py-2 text-emerald-900">
+                Usuario: <strong>{manualPortalAccess.portal_username}</strong>
+              </div>
+              <div className="rounded-lg bg-white border border-emerald-200 px-3 py-2 text-emerald-900">
+                Contraseña: <strong>{manualPortalAccess.portal_password}</strong>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push('/crm/clientes')}
+              className="mt-3 text-xs font-bold text-emerald-700 hover:text-emerald-900"
+            >
+              Ir al directorio de clientes →
+            </button>
+          </div>
+        )}
+        </>
       )}
 
       {/* ========================================================================= */}
@@ -1376,9 +1679,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             {saveSuccessModal.count > 0 && (
               <div className="p-3 bg-surface-container-low rounded-xl text-left space-y-1.5 max-h-32 overflow-y-auto text-xs">
                 {saveSuccessModal.clients.map((c: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-surface-container last:border-0">
-                    <span className="font-semibold text-on-surface truncate">{c.full_name}</span>
-                    <span className="text-[10px] text-secondary font-mono-data">BSN: {c.bsn || 'N/A'}</span>
+                  <div key={i} className="py-1 border-b border-surface-container last:border-0">
+                    <span className="block font-semibold text-on-surface truncate">{c.full_name}</span>
+                    <span className="block text-[10px] text-secondary font-mono-data">
+                      Usuario: {c.portal_username || 'pendiente'} · Clave: {c.portal_password || 'pendiente'}
+                    </span>
                   </div>
                 ))}
               </div>

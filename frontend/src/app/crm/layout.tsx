@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { getToken, getStoredUser, clearSession } from '@/lib/session';
+import { getToken, getStoredUser, saveSession, clearSession, SessionUser } from '@/lib/session';
 import { apiFetch } from '@/lib/api';
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
@@ -27,8 +27,25 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   // El backend tambien protege sus rutas (401), pero sin esto se renderiza
   // la pantalla y luego cada fetch falla.
   useEffect(() => {
-    if (!getToken()) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    const token = getToken();
+    const isProductionDemo = process.env.NODE_ENV === 'production' && token?.startsWith('nexusgest_local_demo');
+    if (!token || isProductionDemo) {
+      if (process.env.NODE_ENV === 'production') {
+        router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+        return;
+      }
+      // El entorno local puede funcionar sin PostgreSQL (por ejemplo, cuando
+      // solo se está probando el OCR). Conservamos el acceso demo para no
+      // dejar al usuario atrapado en un bucle de redirección al login.
+      const demoUser: SessionUser = {
+        id: 'usr_local_demo',
+        email: 'gestor@rp-gestoria.tech',
+        full_name: 'Rony (Gestor Principal)',
+        role: 'gestor',
+      };
+      saveSession('nexusgest_local_demo', demoUser);
+      setUser(demoUser);
+      setChecking(false);
       return;
     }
     setUser(getStoredUser());
@@ -73,7 +90,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: '/crm', label: 'Dashboard', icon: 'grid_view' },
-    { href: '/crm/tarifas', label: 'Tarifas & Precios Web', icon: 'price_change', highlight: true, badge: 'Terminal' },
+    { href: '/crm/tarifas', label: 'Tarifas & Precios Web', icon: 'price_change' },
     {
       href: '/crm/clientes',
       label: 'Clientes & Ficha 360',
@@ -85,7 +102,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     { href: '/crm/agenda', label: 'Agenda & Citas', icon: 'calendar_today' },
     { href: '/crm/documentos-ia', label: 'Asistente Documentos', icon: 'document_scanner' },
     { href: '/crm/chat-ia', label: 'Chat Asistente IA', icon: 'forum', highlight: true, badge: 'En vivo' },
-    { href: '/crm/backup', label: 'Copia de Seguridad', icon: 'cloud_download', highlight: true, badge: 'Exportar' },
+    { href: '/crm/backup', label: 'Copia de Seguridad', icon: 'cloud_download' },
   ];
 
   const quickSearchResults = [
@@ -163,19 +180,19 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                       : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <span className={`material-symbols-outlined text-[19px] ${item.highlight && !isActive ? 'text-secondary' : ''}`}>
                       {item.icon}
                     </span>
-                    <span>{item.label}</span>
+                    <span className="truncate whitespace-nowrap">{item.label}</span>
                   </div>
                   {item.badge && (
-                    <span className="px-2 py-0.5 bg-surface-container-high text-on-surface text-[10px] font-mono-data rounded-full">
+                    <span className="shrink-0 whitespace-nowrap px-2 py-0.5 bg-surface-container-high text-on-surface text-[10px] font-mono-data rounded-full">
                       {item.badge}
                     </span>
                   )}
-                  {item.highlight && !isActive && (
-                    <span className="px-1.5 py-0.5 bg-secondary text-white text-[10px] font-bold rounded">
+                  {item.highlight && !isActive && !item.badge && (
+                    <span className="shrink-0 px-1.5 py-0.5 bg-secondary text-white text-[10px] font-bold rounded">
                       IA
                     </span>
                   )}
@@ -418,7 +435,9 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content View: Adaptado a pantalla completa sin scrollbar visible a la derecha */}
-        <main className="flex-1 h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-surface">
+        <main className={`flex-1 h-[calc(100dvh-4rem)] overflow-x-hidden px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-surface ${
+          pathname === '/crm/documentos-ia' ? 'overflow-y-auto xl:overflow-hidden' : 'overflow-y-auto'
+        }`}>
           {children}
         </main>
       </div>

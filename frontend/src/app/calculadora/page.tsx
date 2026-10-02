@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { formatThousands } from '@/lib/format';
 
 /**
  * Tope del ingreso bruto en los simuladores.
@@ -12,7 +13,11 @@ import Footer from '@/components/Footer';
  * el deslizador se detiene aqui. Los campos numericos siguen aceptando
  * cualquier importe: quien gana mas puede escribirlo a mano.
  */
-const MAX_INCOME = 45000;
+const MIN_INCOME = 100;
+const MAX_INCOME = 40000;
+
+const formatAmount = formatThousands;
+const parseAmount = (value: string) => Number(value.replace(/\D/g, '')) || 0;
 
 export default function CalculadoraPage() {
   // 1. Calculadora M-Form
@@ -58,40 +63,51 @@ export default function CalculadoraPage() {
         <Navbar />
 
         {/* HERO CALCULADORA */}
-        <section className="pt-16 pb-14 bg-gradient-to-b from-blue-50/50 via-white to-[#F8FAFC] border-b border-slate-100">
-          <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center">
+        <section className="pt-10 sm:pt-14 pb-9 sm:pb-12 bg-gradient-to-br from-blue-50 via-white to-indigo-50/40 border-b border-slate-100">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12 text-center">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 border border-blue-200 text-blue-800 text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">calculate</span>
               <span>Simuladores Fiscales Oficiales 2026</span>
             </div>
 
-            <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
+            <h1 className="font-heading text-3xl sm:text-5xl lg:text-[52px] leading-tight font-extrabold text-slate-900 tracking-tight mb-4">
               Calcula tu devolución y <span className="text-blue-600">subsidios en Holanda</span>
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-4">
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-4 leading-relaxed">
               Descubre en menos de 1 minuto cuánto dinero puedes reclamar legalmente ante la Belastingdienst.
             </p>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] sm:text-xs font-semibold text-slate-500">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200"><span className="material-symbols-outlined text-[15px] text-emerald-600">verified</span>Estimación orientativa</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200"><span className="material-symbols-outlined text-[15px] text-blue-600">lock</span>Sin guardar tus datos</span>
+            </div>
           </div>
         </section>
 
         {/* SIMULADORES GRID */}
-        <section className="py-16">
-          <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
+        <section className="py-10 sm:py-14 bg-[#F8FAFC]">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12">
+
+            <div className="max-w-3xl mx-auto text-center mb-8 sm:mb-10">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 mb-2">Dos simuladores rápidos</p>
+              <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900">Introduce tus datos y descubre tu margen</h2>
+              <p className="text-sm text-slate-500 mt-2">Puedes modificar cualquier cifra y ver el resultado al instante.</p>
+            </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 xl:gap-8 items-stretch">
               
               {/* SIMULADOR 1: M-FORM */}
-              <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/90 shadow-xl flex flex-col justify-between">
+              <div className="relative overflow-hidden bg-white rounded-[28px] p-5 sm:p-7 lg:p-8 border border-slate-200/90 border-t-4 border-t-blue-600 shadow-[0_18px_55px_-28px_rgba(15,23,42,0.45)] flex flex-col justify-between h-full">
                 <div>
-                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-between gap-3 mb-7 pb-5 border-b border-slate-100">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md">
                         <span className="material-symbols-outlined text-[26px]">receipt_long</span>
                       </div>
                       <div>
-                        <h2 className="font-heading font-extrabold text-xl text-slate-900">Simulador Devolución M-Form</h2>
-                        <p className="text-xs text-slate-500">Para tu primer año fiscal al mudarte a Países Bajos</p>
+                        <div className="flex items-center gap-2 mb-1"><span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Simulador 01</span><span className="h-1 w-1 rounded-full bg-blue-300" /></div>
+                        <h2 className="font-heading font-extrabold text-lg sm:text-xl leading-tight text-slate-900">Simulador Devolución M-Form</h2>
+                        <p className="text-xs leading-relaxed text-slate-500 mt-1">Para tu primer año fiscal al mudarte a Países Bajos</p>
                       </div>
                     </div>
                     <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200">
@@ -99,12 +115,23 @@ export default function CalculadoraPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* SLIDER MESES */}
-                    <div>
-                      <div className="flex justify-between w-full text-sm font-semibold text-slate-800 mb-2">
-                        <span>Meses vividos en Holanda este año:</span>
-                        <span className="text-blue-600 font-extrabold text-base">{monthsInNL} meses</span>
+                    <div className="rounded-2xl bg-slate-50/80 border border-slate-200/80 p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full text-sm font-semibold text-slate-800 mb-2">
+                        <span><span className="text-blue-600 font-bold mr-1">01</span> Meses vividos en Holanda este año:</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <input
+                            type="number"
+                            min="1"
+                            max="11"
+                            value={monthsInNL}
+                            onChange={(e) => setMonthsInNL(Number(e.target.value))}
+                            aria-label="Meses vividos en Holanda"
+                            className="w-14 h-8 text-center text-blue-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                          />
+                          <span className="text-blue-600 font-extrabold text-[17px]">meses</span>
+                        </div>
                       </div>
                       <input
                         type="range"
@@ -113,67 +140,65 @@ export default function CalculadoraPage() {
                         value={monthsInNL}
                         onChange={(e) => setMonthsInNL(Number(e.target.value))}
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
-                      />
-                      <input
-                        type="number"
-                        min="1"
-                        max="11"
-                        value={monthsInNL}
-                        onChange={(e) => setMonthsInNL(Number(e.target.value))}
-                        className="mt-2 mx-auto w-48 border border-slate-300 rounded p-1"
                       />
                     </div>
 
                     {/* SLIDER INGRESOS BRUTOS */}
-                    <div>
-                      <div className="flex justify-between w-full text-sm font-semibold text-slate-800 mb-2">
-                        <span>Ingreso bruto percibido en Holanda:</span>
-                        <input
-                          type="number"
-                          min="10000"
+                    <div className="rounded-2xl bg-slate-50/80 border border-slate-200/80 p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full text-sm font-semibold text-slate-800 mb-2">
+                        <span><span className="text-blue-600 font-bold mr-1">02</span> Ingreso bruto percibido en Holanda:</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <input
+                          type="text"
+                          inputMode="numeric"
+                          min={MIN_INCOME}
                           max={MAX_INCOME}
-                          step="500"
-                          value={grossIncome}
-                          onChange={(e) => setGrossIncome(Number(e.target.value))}
-                          className="w-32 text-right text-blue-600 font-extrabold text-base border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                        />
-                        <span className="text-blue-600 font-extrabold text-base">€</span>
+                           step="100"
+                          value={formatAmount(grossIncome)}
+                          onChange={(e) => setGrossIncome(parseAmount(e.target.value))}
+                           className="w-16 h-8 text-center text-blue-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                          />
+                          <span className="text-blue-600 font-extrabold text-[17px]">€</span>
+                        </div>
                       </div>
                       <input
                         type="range"
-                        min="10000"
+                        min={MIN_INCOME}
                         max={MAX_INCOME}
-                        step="500"
-                        value={Math.min(Math.max(grossIncome, 10000), MAX_INCOME)}
+                         step="100"
+                        value={Math.min(Math.max(grossIncome, MIN_INCOME), MAX_INCOME)}
                         onChange={(e) => setGrossIncome(Number(e.target.value))}
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
                       <p className="text-[11px] text-slate-500 mt-1">
-                        Puedes escribir el importe directamente. Rango del deslizador: 10.000 – {MAX_INCOME.toLocaleString('es-ES')} €.
+                        Puedes escribir el importe directamente. Rango del deslizador: {MIN_INCOME.toLocaleString('es-ES')} – {MAX_INCOME.toLocaleString('es-ES')} €.
                       </p>
                     </div>
 
                     {/* SLIDER RETENCIONES */}
-                    <div>
-                      <div className="flex justify-between w-full text-sm font-semibold text-slate-800 mb-2">
-                        <span>Impuestos retenidos en nómina (Loonheffing):</span>
-                        <input
-                          type="number"
-                          min="0"
+                    <div className="rounded-2xl bg-slate-50/80 border border-slate-200/80 p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full text-sm font-semibold text-slate-800 mb-2">
+                        <span><span className="text-blue-600 font-bold mr-1">03</span> Impuestos retenidos en nómina (Loonheffing):</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <input
+                          type="text"
+                          inputMode="numeric"
+                          min={MIN_INCOME}
                           max={MAX_INCOME}
                           step="100"
-                          value={withheldTax}
-                          onChange={(e) => setWithheldTax(Number(e.target.value))}
-                          className="w-32 text-right text-blue-600 font-extrabold text-base border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                        />
-                        <span className="text-blue-600 font-extrabold text-base">€</span>
+                          value={formatAmount(withheldTax)}
+                          onChange={(e) => setWithheldTax(parseAmount(e.target.value))}
+                           className="w-16 h-8 text-center text-blue-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                          />
+                          <span className="text-blue-600 font-extrabold text-[17px]">€</span>
+                        </div>
                       </div>
                       <input
                         type="range"
-                        min="0"
+                        min={MIN_INCOME}
                         max={MAX_INCOME}
                         step="100"
-                        value={Math.min(Math.max(withheldTax, 0), MAX_INCOME)}
+                        value={Math.min(Math.max(withheldTax, MIN_INCOME), MAX_INCOME)}
                         onChange={(e) => setWithheldTax(Number(e.target.value))}
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
@@ -183,14 +208,15 @@ export default function CalculadoraPage() {
                     </div>
 
                     {/* DEDUCCIÓN MUDANZA */}
-                    <label className="flex items-center gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 cursor-pointer">
+                    <label className="flex items-center gap-3 p-3.5 bg-blue-50/60 rounded-2xl border border-blue-100 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={hasRelocation}
                         onChange={(e) => setHasRelocation(e.target.checked)}
                         className="w-4 h-4 text-blue-600 rounded accent-blue-600"
                       />
-                      <span className="text-xs font-semibold text-slate-700">
+                        <span className="text-xs font-semibold text-slate-700">
+                          <span className="text-blue-600 font-bold mr-1">04</span>
                         Aplicar deducción estándar por gastos de mudanza internacional (-1.450 €)
                       </span>
                     </label>
@@ -198,16 +224,16 @@ export default function CalculadoraPage() {
                 </div>
 
                 {/* RESULTADO M-FORM */}
-                <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div>
+                <div className="mt-8 pt-6 border-t border-slate-100 bg-emerald-50/70 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                   <div className="min-w-0">
                     <span className="text-xs text-slate-500 font-bold block uppercase tracking-wider">Estimación a tu favor</span>
                     <span className="text-3xl sm:text-4xl font-heading font-black text-emerald-600">
-                      + {calculateMFormRefund().toLocaleString()} €
+                       + {formatThousands(calculateMFormRefund())} €
                     </span>
                   </div>
                   <Link
                     href="/servicios"
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all text-center"
+                     className="w-full sm:w-auto px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all text-center"
                   >
                     Tramitar mi M-Form (89€)
                   </Link>
@@ -215,16 +241,17 @@ export default function CalculadoraPage() {
               </div>
 
               {/* SIMULADOR 2: SUBSIDIOS TOESLAGEN */}
-              <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/90 shadow-xl flex flex-col justify-between">
+              <div className="relative overflow-hidden bg-white rounded-[28px] p-5 sm:p-7 lg:p-8 border border-slate-200/90 border-t-4 border-t-indigo-600 shadow-[0_18px_55px_-28px_rgba(15,23,42,0.45)] flex flex-col justify-between h-full">
                 <div>
-                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-between gap-3 mb-7 pb-5 border-b border-slate-100">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
                         <span className="material-symbols-outlined text-[26px]">payments</span>
                       </div>
                       <div>
-                        <h2 className="font-heading font-extrabold text-xl text-slate-900">Calculadora Subsidios Toeslagen</h2>
-                        <p className="text-xs text-slate-500">Zorgtoeslag (Salud) & Huurtoeslag (Alquiler mensual)</p>
+                        <div className="flex items-center gap-2 mb-1"><span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Simulador 02</span><span className="h-1 w-1 rounded-full bg-indigo-300" /></div>
+                        <h2 className="font-heading font-extrabold text-lg sm:text-xl leading-tight text-slate-900">Calculadora Subsidios Toeslagen</h2>
+                        <p className="text-xs leading-relaxed text-slate-500 mt-1">Zorgtoeslag (Salud) & Huurtoeslag (Alquiler mensual)</p>
                       </div>
                     </div>
                     <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-200">
@@ -232,49 +259,55 @@ export default function CalculadoraPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* SLIDER INGRESOS ANUALES */}
-                    <div>
-                      <div className="flex justify-between text-sm font-semibold text-slate-800 mb-2">
-                        <span>Ingreso anual bruto estimado:</span>
-                        <input
-                          type="number"
-                          min="0"
+                    <div className="rounded-2xl bg-slate-50/80 border border-slate-200/80 p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm font-semibold text-slate-800 mb-2">
+                        <span><span className="text-indigo-600 font-bold mr-1">01</span> Ingreso anual bruto estimado:</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <input
+                          type="text"
+                          inputMode="numeric"
+                          min={MIN_INCOME}
                           max={MAX_INCOME}
-                          step="500"
-                          value={toeslagIncome}
-                          onChange={(e) => setToeslagIncome(Number(e.target.value))}
-                          className="w-32 text-right text-indigo-600 font-extrabold text-base border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                        />
-                        <span className="text-indigo-600 font-extrabold text-base">€ / año</span>
+                           step="100"
+                          value={formatAmount(toeslagIncome)}
+                          onChange={(e) => setToeslagIncome(parseAmount(e.target.value))}
+                           className="w-16 h-8 text-center text-indigo-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                          />
+                           <span className="text-indigo-600 font-extrabold text-[17px]">€ / año</span>
+                        </div>
                       </div>
                       <input
                         type="range"
-                        min="12000"
+                        min={MIN_INCOME}
                         max={MAX_INCOME}
-                        step="500"
-                        value={Math.min(Math.max(toeslagIncome, 12000), MAX_INCOME)}
+                         step="100"
+                        value={Math.min(Math.max(toeslagIncome, MIN_INCOME), MAX_INCOME)}
                         onChange={(e) => setToeslagIncome(Number(e.target.value))}
                         className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
                       <p className="text-[11px] text-slate-500 mt-1">
-                        Puedes escribir el importe directamente. El deslizador llega hasta {MAX_INCOME.toLocaleString('es-ES')} €.
+                        Puedes escribir el importe directamente. El deslizador va de {MIN_INCOME.toLocaleString('es-ES')} a {MAX_INCOME.toLocaleString('es-ES')} €.
                       </p>
                     </div>
 
                     {/* SLIDER ALQUILER */}
-                    <div>
-                      <div className="flex justify-between text-sm font-semibold text-slate-800 mb-2">
-                        <span>Alquiler mensual de tu vivienda:</span>
-                        <input
-                          type="number"
+                    <div className="rounded-2xl bg-slate-50/80 border border-slate-200/80 p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm font-semibold text-slate-800 mb-2">
+                        <span><span className="text-indigo-600 font-bold mr-1">02</span> Alquiler mensual de tu vivienda:</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <input
+                          type="text"
+                          inputMode="numeric"
                           min="0"
                           step="25"
-                          value={monthlyRent}
-                          onChange={(e) => setMonthlyRent(Number(e.target.value))}
-                          className="w-28 text-right text-indigo-600 font-extrabold text-base border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                        />
-                        <span className="text-indigo-600 font-extrabold text-base">€ / mes</span>
+                          value={formatAmount(monthlyRent)}
+                          onChange={(e) => setMonthlyRent(parseAmount(e.target.value))}
+                           className="w-16 h-8 text-center text-indigo-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                          />
+                           <span className="text-indigo-600 font-extrabold text-[17px]">€ / mes</span>
+                        </div>
                       </div>
                       <input
                         type="range"
@@ -291,7 +324,9 @@ export default function CalculadoraPage() {
                     </div>
 
                     {/* SITUACIÓN */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800 mb-2"><span className="text-indigo-600 font-bold mr-1">03</span> Situación familiar</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <label className="flex items-center gap-2.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 cursor-pointer">
                         <input
                           type="checkbox"
@@ -311,13 +346,14 @@ export default function CalculadoraPage() {
                         />
                         <span className="text-xs font-semibold text-slate-700">Con hijos menores</span>
                       </label>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* RESULTADO TOESLAGEN */}
-                <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div>
+                <div className="mt-8 pt-6 border-t border-slate-100 bg-indigo-50/70 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                   <div className="min-w-0">
                     <span className="text-xs text-slate-500 font-bold block uppercase tracking-wider">Total Subsidios Mensuales</span>
                     <span className="text-3xl sm:text-4xl font-heading font-black text-indigo-600">
                       {totalMonthlyAid} € <span className="text-xs font-normal text-slate-500">/ mes</span>
@@ -325,7 +361,7 @@ export default function CalculadoraPage() {
                   </div>
                   <Link
                     href="/servicios"
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all text-center"
+                     className="w-full sm:w-auto px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all text-center"
                   >
                     Solicitar Subsidios (45€)
                   </Link>

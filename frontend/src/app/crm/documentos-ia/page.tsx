@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { exportDocumentToDocx } from '@/lib/docxExport';
+import { apiFetch } from '@/lib/api';
 
 // Presets de proveedores de IA
 const AI_PRESETS = [
@@ -307,11 +308,22 @@ const SAMPLE_CLIENTS = [
   { name: 'Lucía Navarro Gil', bsn: '628194032', address: 'Oudegracht 120, 3511 AZ Utrecht' },
 ];
 
+const OFFICIAL_DESTINATIONS = [
+  'Belastingdienst / Postbus 2500, 6401 DA Heerlen',
+  'Dienst Toeslagen / Postbus 4510, 6401 JA Heerlen',
+  'Het CAK / Postbus 84015, 2508 AA Den Haag',
+  'IND / Postbus 9, 9560 AA Ter Apel',
+  'Gemeente Eindhoven / Postbus 90150, 5600 RB Eindhoven',
+  'UWV / Postbus 244, 1000 AE Amsterdam',
+  'SVB / Postbus 1100, 1180 BH Amstelveen',
+  'HollandZorg / Postbus 8700, 5605 LS Eindhoven',
+];
+
 export default function DocumentosIAPage() {
   // Vista principal: generador de cartas o analizador
   const [activeView, setActiveView] = useState<'generador' | 'analizador'>('generador');
 
-  // Estado de la Barra Lateral del Chat Asistente (abierta por defecto en pantallas grandes)
+  // Estado de la Barra Lateral del Chat Asistente (cerrada por defecto)
   const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false);
 
   // Configuración de IA
@@ -347,9 +359,6 @@ export default function DocumentosIAPage() {
 
   // Cargar configuración guardada y plantillas personalizadas al montar
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth >= 1280) {
-      setIsChatSidebarOpen(true);
-    }
     try {
       const savedConfig = localStorage.getItem('nexusgest_ai_config');
       if (savedConfig) {
@@ -372,6 +381,8 @@ export default function DocumentosIAPage() {
   // ESTADOS DEL FORMULARIO DE GENERACIÓN
   // -------------------------------------------------------------
   const [clientName, setClientName] = useState('Maria Popescu');
+  const [clientSearch, setClientSearch] = useState('Maria Popescu');
+  const [crmClients, setCrmClients] = useState<any[]>(SAMPLE_CLIENTS);
   const [bsn, setBsn] = useState('982145672');
   const [address, setAddress] = useState('Strijpsestraat 142, 5616 GP Eindhoven');
   const [details, setDetails] = useState(
@@ -382,6 +393,39 @@ export default function DocumentosIAPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Directorio conectado a la ficha CRM: primero carga la caché local y
+  // después intenta actualizarla con los clientes reales del backend.
+  useEffect(() => {
+    try {
+      const storedClients = localStorage.getItem('nexusgest_clients');
+      if (storedClients) {
+        const parsedClients = JSON.parse(storedClients);
+        if (Array.isArray(parsedClients) && parsedClients.length > 0) {
+          setCrmClients(parsedClients);
+        }
+      }
+    } catch {
+      // Mantener el catálogo inicial si la caché local no es válida.
+    }
+
+    apiFetch('/clients')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.clients) && data.clients.length > 0) {
+          setCrmClients(data.clients);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const filteredCrmClients = crmClients.filter((client) => {
+    const term = clientSearch.trim().toLocaleLowerCase();
+    if (!term) return false;
+    return [client.full_name || client.name, client.bsn, client.email, client.phone]
+      .filter(Boolean)
+      .some((value) => String(value).toLocaleLowerCase().includes(term));
+  }).slice(0, 6);
 
   // Reemplazar variables dinámicas en una plantilla
   const replaceVariables = (text: string): string => {
@@ -397,7 +441,7 @@ export default function DocumentosIAPage() {
       .replace(/\{\{direccion\}\}/g, address || 'Eindhoven, Nederland')
       .replace(/\{\{motivo\}\}/g, details || 'Revisión formal de expediente')
       .replace(/\{\{organismo\}\}/g, activeTemplateObj.targetEntity || 'Belastingdienst')
-      .replace(/\{\{gestor_nombre\}\}/g, 'Rony P. - Senior Consultant');
+      .replace(/\{\{gestor_nombre\}\}/g, '');
   };
 
   // Contenido de la carta generada
@@ -416,12 +460,15 @@ export default function DocumentosIAPage() {
     }
   };
 
-  // Seleccionar cliente rápido
-  const handlePickClient = (c: (typeof SAMPLE_CLIENTS)[0]) => {
-    setClientName(c.name);
-    setBsn(c.bsn);
-    setAddress(c.address);
-    showToast(`Datos fiscales de ${c.name} cargados en el documento`);
+  // Seleccionar cliente desde la ficha CRM
+  const handlePickClient = (c: any) => {
+    const name = c.full_name || c.name || '';
+    const clientAddress = c.address || [c.postal_code, c.city].filter(Boolean).join(' ') || 'Eindhoven, Nederland';
+    setClientName(name);
+    setClientSearch(name);
+    setBsn(c.bsn || '');
+    setAddress(clientAddress);
+    showToast(`Datos fiscales de ${name} cargados en el documento`);
   };
 
   // Guardar configuración de IA
@@ -1020,7 +1067,7 @@ ${
   };
 
   return (
-    <div className="space-y-5 max-w-[1850px] mx-auto pb-6">
+    <div className="space-y-3 max-w-[1850px] mx-auto min-w-0 h-auto xl:h-full overflow-visible xl:overflow-hidden pb-3">
       {/* Toast de Notificaciones */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-indigo-500/40 animate-in fade-in duration-200 no-print">
@@ -1030,10 +1077,10 @@ ${
       )}
 
       {/* Header Principal */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-surface-container no-print">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2 border-b border-surface-container no-print">
+        <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-on-surface">Asistente y Documentos IA</h1>
+            <h1 className="text-xl font-bold tracking-tight text-on-surface">Asistente y Documentos IA</h1>
             {config.apiKey ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold rounded-full">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -1046,13 +1093,13 @@ ${
               </span>
             )}
           </div>
-          <p className="text-xs text-on-surface-variant mt-1">
+          <p className="text-[11px] text-on-surface-variant mt-0.5">
             Redacción oficial con <strong>Chat Asistente en Barra Lateral</strong>, creador de plantillas y exportación a{' '}
             <strong>Word (.docx)</strong>, <strong>PDF</strong> e <strong>Impresión legal</strong>.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Botón para Alternar Barra Lateral del Chat */}
           <button
             onClick={() => {
@@ -1100,10 +1147,10 @@ ${
       </div>
 
       {/* Selector de Modo Principal (Generador / Analizador) */}
-      <div className="flex border-b border-surface-container gap-3 no-print">
+      <div className="flex border-b border-surface-container gap-1 no-print">
         <button
           onClick={() => setActiveView('generador')}
-          className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
+            className={`pb-2 px-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-colors ${
             activeView === 'generador'
               ? 'border-secondary text-secondary'
               : 'border-transparent text-outline hover:text-on-surface'
@@ -1115,7 +1162,7 @@ ${
 
         <button
           onClick={() => setActiveView('analizador')}
-          className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition-colors ${
+            className={`pb-2 px-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-colors ${
             activeView === 'analizador'
               ? 'border-secondary text-secondary'
               : 'border-transparent text-outline hover:text-on-surface'
@@ -1129,16 +1176,16 @@ ${
       {/* ============================================================== */}
       {/* CONTENEDOR PRINCIPAL: PANTALLA DIVIDIDA CON BARRA LATERAL      */}
       {/* ============================================================== */}
-      <div className="flex flex-col xl:flex-row gap-6 items-start">
+      <div className="flex min-w-0 flex-col xl:flex-row gap-3 items-start">
         {/* ========================================== */}
         {/* COLUMNAS CENTRALES (GENERADOR O ANALIZADOR) */}
         {/* ========================================== */}
-        <div className={`transition-all duration-300 ${isChatSidebarOpen ? 'w-full xl:flex-1 min-w-0' : 'w-full'}`}>
+        <div className={`min-w-0 transition-all duration-300 ${isChatSidebarOpen ? 'w-full xl:flex-1' : 'w-full'}`}>
           {/* MODO 1: GENERADOR Y EDITOR DE DOCUMENTOS */}
           {activeView === 'generador' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 h-auto xl:h-[calc(100dvh-264px)] xl:min-h-[620px]">
               {/* Formulario y Plantillas (5 cols en lg) */}
-              <div className="lg:col-span-5 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm space-y-4 no-print">
+              <div className="lg:col-span-5 self-start h-fit xl:h-[650px] bg-surface-container-lowest p-3 rounded-lg border border-outline-variant shadow-sm space-y-2.5 overflow-hidden min-h-0 flex flex-col no-print">
                 {/* Cabecera del catálogo */}
                 <div className="flex items-center justify-between pb-2 border-b border-surface-container">
                   <div>
@@ -1207,41 +1254,39 @@ ${
                   </select>
                 </div>
 
-                {/* Selector de Cliente Rápido */}
-                <div>
-                  <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
-                    Cargar Cliente Rápido
-                  </label>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {SAMPLE_CLIENTS.map((c) => (
-                      <button
-                        key={c.bsn}
-                        type="button"
-                        onClick={() => handlePickClient(c)}
-                        className={`text-left p-1.5 rounded-lg border text-[11px] transition-all ${
-                          clientName === c.name
-                            ? 'border-secondary bg-secondary/5 font-semibold text-secondary'
-                            : 'border-outline-variant/60 hover:border-outline-variant bg-surface text-on-surface'
-                        }`}
-                      >
-                        <div className="truncate font-medium">{c.name}</div>
-                        <div className="text-[10px] text-outline font-mono-data">BSN: {c.bsn}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Campos del Documento */}
-                <div className="space-y-2.5 text-xs">
+                <div className="space-y-2 text-xs">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Cliente</label>
-                      <input
-                        type="text"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
-                      />
+                      <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Buscar cliente CRM</label>
+                      <div className="relative">
+                        <input
+                          type="search"
+                          value={clientSearch}
+                          onChange={(e) => {
+                            setClientSearch(e.target.value);
+                            setClientName('');
+                          }}
+                          placeholder="Nombre, apellido o BSN"
+                          autoComplete="off"
+                          className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none text-xs font-medium"
+                        />
+                        {clientSearch !== clientName && filteredCrmClients.length > 0 && (
+                          <div className="absolute left-0 right-0 top-9 z-30 overflow-hidden rounded-lg border border-outline-variant bg-white shadow-xl">
+                            {filteredCrmClients.map((c) => (
+                              <button
+                                key={String(c.id || c.bsn || c.full_name || c.name)}
+                                type="button"
+                                onClick={() => handlePickClient(c)}
+                                className="flex w-full items-center justify-between gap-2 border-b border-surface-container px-2.5 py-2 text-left text-[11px] last:border-b-0 hover:bg-secondary/5"
+                              >
+                                <span className="min-w-0 truncate font-semibold text-on-surface">{c.full_name || c.name}</span>
+                                <span className="shrink-0 font-mono-data text-[10px] text-secondary">BSN: {c.bsn || '—'}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label className="block text-outline uppercase font-semibold text-[10px] mb-1">BSN</label>
@@ -1249,7 +1294,7 @@ ${
                         type="text"
                         value={bsn}
                         onChange={(e) => setBsn(e.target.value)}
-                        className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface font-mono-data font-bold text-secondary focus:border-secondary focus:outline-none text-xs"
+                        className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface font-mono-data font-bold text-secondary focus:border-secondary focus:outline-none text-xs"
                       />
                     </div>
                   </div>
@@ -1260,7 +1305,7 @@ ${
                       type="text"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
-                      className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs"
+                      className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none text-xs font-medium"
                     />
                   </div>
 
@@ -1270,7 +1315,7 @@ ${
                       <select
                         value={language}
                         onChange={(e: any) => setLanguage(e.target.value)}
-                        className="w-full h-8 px-2 border border-outline-variant rounded bg-surface text-xs focus:border-secondary focus:outline-none"
+                        className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface text-xs font-medium focus:border-secondary focus:outline-none"
                       >
                         <option value="nl">Neerlandés (NL)</option>
                         <option value="es">Español (ES)</option>
@@ -1282,7 +1327,7 @@ ${
                       <select
                         value={tone}
                         onChange={(e: any) => setTone(e.target.value)}
-                        className="w-full h-8 px-2 border border-outline-variant rounded bg-surface text-xs focus:border-secondary focus:outline-none"
+                        className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface text-xs font-medium focus:border-secondary focus:outline-none"
                       >
                         <option value="juridico">Awb Jurídico</option>
                         <option value="formal">Formal</option>
@@ -1296,11 +1341,11 @@ ${
                       Hechos del Caso y Justificación
                     </label>
                     <textarea
-                      rows={3}
+                      rows={5}
                       value={details}
                       onChange={(e) => setDetails(e.target.value)}
                       placeholder="Explica las discrepancias de ingresos o la petición..."
-                      className="w-full p-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none text-xs leading-relaxed"
+                      className="w-full h-[230px] px-3 py-2.5 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none text-xs font-medium leading-relaxed resize-none"
                     />
                   </div>
                 </div>
@@ -1309,7 +1354,7 @@ ${
                 <button
                   onClick={() => handleGenerate()}
                   disabled={isGenerating}
-                  className="w-full h-10 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                  className="w-full h-10 mt-auto bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-[17px] text-amber-400">
                     {isGenerating ? 'hourglass_top' : 'auto_awesome'}
@@ -1319,8 +1364,8 @@ ${
               </div>
 
               {/* Vista Previa del Documento y Exportaciones (7 cols en lg) */}
-              <div className="lg:col-span-7 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between print-area">
-                <div>
+              <div className="lg:col-span-7 h-full bg-surface-container-lowest p-3 rounded-lg border border-outline-variant shadow-sm flex flex-col min-h-0 overflow-hidden print-area">
+                <div className="flex min-h-0 flex-1 flex-col">
                   {/* Barra de Herramientas de Exportación */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-surface-container mb-3 no-print">
                     <div className="flex items-center gap-1.5">
@@ -1403,17 +1448,7 @@ ${
                   </div>
 
                   {/* Hoja de Documento A4 */}
-                  <div className="p-6 bg-white border border-surface-container rounded-xl shadow-inner font-mono-data text-xs text-slate-800 leading-relaxed whitespace-pre-line min-h-[480px] print-page-a4">
-                    {/* Encabezado Corporativo */}
-                    <div className="pb-3 mb-3 border-b border-slate-300">
-                      <div className="font-bold text-sm text-slate-900 tracking-tight">
-                        NexusGest Advies & Gestoría B.V.
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-sans mt-0.5">
-                        Fiscale Dienstverlening & Juridische Zaken · KvK: 89123847 · Eindhoven
-                      </div>
-                    </div>
-
+                  <div className="flex-1 min-h-[420px] overflow-hidden p-5 bg-white border border-surface-container rounded-lg shadow-inner font-mono-data text-xs text-slate-800 leading-relaxed whitespace-pre-line print-page-a4">
                     {/* Texto del Documento */}
                     <div className="font-sans text-xs leading-relaxed text-slate-900 whitespace-pre-line">
                       {generatedLetter}
@@ -1431,7 +1466,7 @@ ${
 
           {/* MODO 2: ANALIZADOR DE RESOLUCIONES Y CARTAS */}
           {activeView === 'analizador' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 xl:h-[calc(100dvh-264px)] xl:min-h-[620px] no-print">
               {/* Input oculto para subir archivos */}
               <input
                 ref={analyzerFileInputRef}
@@ -1456,7 +1491,7 @@ ${
                     handleAttachDocs(e.dataTransfer.files);
                   }
                 }}
-                className={`lg:col-span-6 bg-surface-container-lowest p-5 rounded-xl border shadow-sm space-y-4 transition-all relative ${
+                className={`lg:col-span-6 xl:h-[650px] bg-surface-container-lowest p-3 rounded-lg border shadow-sm space-y-4 transition-all relative flex flex-col overflow-hidden ${
                   isDraggingDoc ? 'border-secondary ring-2 ring-secondary/20 bg-blue-50/20' : 'border-outline-variant'
                 }`}
               >
@@ -1604,7 +1639,7 @@ ${
                 )}
 
                 {/* Editor / Visualizador del Texto Extraído con OCR */}
-                <div className="space-y-1.5">
+                <div className="flex min-h-0 flex-1 flex-col space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] text-outline">
                     <span className="font-semibold text-on-surface-variant">
                       Texto del Documento {activeDocId && `(${attachedDocs.find((d) => d.id === activeDocId)?.name || 'Activo'})`}
@@ -1628,14 +1663,14 @@ ${
                     value={docToAnalyze}
                     onChange={(e) => setDocToAnalyze(e.target.value)}
                     placeholder="Pega aquí el texto completo del documento oficial o arrastra un archivo PDF / foto..."
-                    className="w-full p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none"
+                  className="w-full flex-1 min-h-[260px] p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none resize-none"
                   />
                 </div>
 
                 <button
                   onClick={handleAnalyzeDoc}
                   disabled={isAnalyzing || !docToAnalyze.trim()}
-                  className="w-full h-10 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                  className="w-full h-10 mt-auto bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-[17px] text-amber-400">
                     {isAnalyzing ? 'hourglass_top' : 'auto_awesome'}
@@ -1645,7 +1680,7 @@ ${
               </div>
 
               {/* Columna Derecha: Puntos Clave Extraídos */}
-              <div className="lg:col-span-6 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+              <div className="lg:col-span-6 xl:h-[650px] bg-surface-container-lowest p-3 rounded-lg border border-outline-variant shadow-sm flex flex-col justify-between overflow-hidden">
                 <div>
                   <h3 className="font-bold text-sm text-on-surface pb-3 border-b border-surface-container flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
@@ -1727,7 +1762,7 @@ ${
         {/* BARRA LATERAL: CHAT ASISTENTE LEGAL CON AUTO-SCROLL EN VIVO   */}
         {/* ============================================================== */}
         {isChatSidebarOpen && (
-          <aside className="w-full xl:w-[410px] 2xl:w-[450px] shrink-0 sticky top-20 bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col h-[760px] max-h-[calc(100vh-100px)] no-print animate-in slide-in-from-right duration-200">
+          <aside className="w-full xl:w-[410px] 2xl:w-[450px] shrink-0 sticky top-3 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant shadow-sm flex flex-col h-[600px] xl:h-[calc(100dvh-264px)] xl:min-h-[620px] no-print animate-in slide-in-from-right duration-200">
             {/* Header de la Barra Lateral */}
             <div className="flex items-center justify-between pb-3 border-b border-surface-container">
               <div className="flex items-center gap-2">
@@ -1879,20 +1914,6 @@ ${
           </aside>
         )}
       </div>
-
-      {/* Botón flotante para reabrir la barra lateral si está cerrada */}
-      {!isChatSidebarOpen && (
-        <button
-          onClick={() => {
-            setIsChatSidebarOpen(true);
-            setTimeout(() => scrollToBottom(true), 100);
-          }}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-secondary hover:bg-blue-700 text-white px-3 py-2.5 rounded-l-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-in slide-in-from-right no-print transition-all"
-        >
-          <span className="material-symbols-outlined text-[18px]">forum</span>
-          <span className="writing-vertical">Chat Asistente IA</span>
-        </button>
-      )}
 
       {/* ============================================================== */}
       {/* MODAL FULLSCREEN: DOCUMENTO O CARTA A ANALIZAR A PANTALLA COMPLETA */}
@@ -2203,8 +2224,8 @@ ${
       {/* ============================================================== */}
       {showTemplateModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 no-print">
-          <div className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white flex items-center justify-between border-b border-blue-900/50">
+          <div className="bg-surface-container-lowest max-w-3xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
+            <div className="px-5 py-3.5 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white flex items-center justify-between border-b border-blue-900/50">
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-amber-300 text-2xl">post_add</span>
                 <div>
@@ -2224,7 +2245,7 @@ ${
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4 text-xs">
+            <div className="p-5 overflow-y-auto space-y-5 text-xs bg-surface">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-outline uppercase font-semibold text-[10px] mb-1">
@@ -2276,8 +2297,14 @@ ${
                     value={templateForm.targetEntity || ''}
                     onChange={(e) => setTemplateForm({ ...templateForm, targetEntity: e.target.value })}
                     placeholder="Ej: Dienst Toeslagen / Postbus 4510, Heerlen"
+                    list="official-destinations"
                     className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
                   />
+                  <datalist id="official-destinations">
+                    {OFFICIAL_DESTINATIONS.map((destination) => (
+                      <option key={destination} value={destination} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -2312,7 +2339,7 @@ ${
                 <label className="block text-outline uppercase font-semibold text-[10px] mb-1.5">
                   Insertar Variable Dinámica con 1 Clic
                 </label>
-                <div className="flex flex-wrap gap-1.5 p-2 bg-surface-container rounded-lg border border-surface-container-high">
+                <div className="flex flex-wrap gap-1.5 p-3 bg-blue-50/70 rounded-xl border border-blue-100">
                   {[
                     { key: 'cliente_nombre', label: 'Nombre Cliente' },
                     { key: 'bsn', label: 'BSN' },
@@ -2326,7 +2353,7 @@ ${
                       key={v.key}
                       type="button"
                       onClick={() => handleInsertVariable(v.key)}
-                      className="px-2 py-1 bg-surface hover:bg-white text-secondary font-mono-data text-[10px] font-bold rounded border border-outline-variant/60 shadow-xs transition-colors"
+                      className="px-2.5 py-1.5 bg-white hover:bg-blue-50 text-secondary font-mono-data text-[10px] font-bold rounded-lg border border-blue-200 shadow-xs transition-colors"
                     >
                       + {`{{${v.key}}}`} ({v.label})
                     </button>
@@ -2340,11 +2367,11 @@ ${
                   Estructura y Texto Base de la Plantilla *
                 </label>
                 <textarea
-                  rows={8}
+                  rows={10}
                   value={templateForm.templateContent || ''}
                   onChange={(e) => setTemplateForm({ ...templateForm, templateContent: e.target.value })}
                   placeholder="Redacta la plantilla usando las etiquetas {{cliente_nombre}}, {{bsn}}, etc..."
-                  className="w-full p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none"
+                  className="w-full h-52 p-3.5 border border-outline-variant rounded-xl bg-white font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none"
                 />
               </div>
 
@@ -2363,7 +2390,7 @@ ${
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-surface border-t border-surface-container flex items-center justify-end gap-2">
+            <div className="px-5 py-3.5 bg-surface-container-lowest border-t border-surface-container flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setShowTemplateModal(false)}

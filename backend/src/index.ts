@@ -7,9 +7,12 @@ import clientsRouter from './routes/clients.js';
 import dossiersRouter from './routes/dossiers.js';
 import invoicesRouter from './routes/invoices.js';
 import appointmentsRouter from './routes/appointments.js';
-import aiRouter from './routes/ai.js';
+import aiRouter, { localPdfRouter } from './routes/ai.js';
 import documentsRouter from './routes/documents.js';
+import backupRouter from './routes/backup.js';
+import portalRouter from './routes/portal.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
+import { query } from './db/index.js';
 
 dotenv.config();
 
@@ -47,15 +50,24 @@ app.get('/health', (req: Request, res: Response) => {
 // Login. POST /appointments (reserva web) tambien es publico, pero el guard
 // va dentro del router para no duplicar el montaje: ver routes/appointments.ts.
 app.use('/api/auth', authRouter);
+app.use('/api/portal', portalRouter);
 
 // --- Rutas internas (solo gestor/admin) ---
 // Todo lo demas expone datos fiscales y bancarios del cliente (BSN, IBAN).
 const gestorOnly = [requireAuth, requireRole('admin', 'gestor')];
+// En desarrollo se permite el lector local sin login para probar OCR. En
+// produccion queda protegido igual que el resto de datos del CRM.
+if (process.env.NODE_ENV === 'production') {
+  app.use('/api/ai-local', gestorOnly, localPdfRouter);
+} else {
+  app.use('/api/ai-local', localPdfRouter);
+}
 app.use('/api/dashboard', gestorOnly, dashboardRouter);
 app.use('/api/clients', gestorOnly, clientsRouter);
 app.use('/api/dossiers', gestorOnly, dossiersRouter);
 app.use('/api/ai', gestorOnly, aiRouter);
 app.use('/api/documents', gestorOnly, documentsRouter);
+app.use('/api/backup', gestorOnly, backupRouter);
 app.use('/api/appointments', appointmentsRouter);
 // invoicesRouter se monta al final a proposito: este montage en '/api' captura
 // TODAS las subrutas de /api, asi que si fuera antes aplicaria el guard a
@@ -68,7 +80,19 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ error: 'Error interno en el servidor NexusGest' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 NexusGest API corriendo en el puerto ${PORT}`);
-  console.log(`🩺 Health check disponible en http://localhost:${PORT}/health`);
-});
+async function start() {
+  // Migración idempotente para instalaciones existentes que ya tenían la
+  // tabla clients antes de activar el portal real.
+  try {
+    await query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS portal_username VARCHAR(80)');
+    await query('CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_portal_username ON clients(portal_username) WHERE portal_username IS NOT NULL');
+  } catch (error) {
+    console.warn('No se pudo aplicar la migración opcional del portal:', error instanceof Error ? error.message : error);
+  }
+  app.listen(PORT, () => {
+    console.log(`🚀 NexusGest API corriendo en el puerto ${PORT}`);
+    console.log(`🩺 Health check disponible en http://localhost:${PORT}/health`);
+  });
+}
+
+void start();

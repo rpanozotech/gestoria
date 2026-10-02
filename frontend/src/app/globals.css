@@ -5,6 +5,15 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Paleta distintiva NexusGest — fiscal neerlandés, institucional */
+    --delft: #003366;
+    --concrete: #4A4A4A;
+    --oranje-subdued: #FF8C00;
+    --dutch-green: #6B8E23;
+    --amber-fosco: #D97706;
+    --surface-deep: #F8F9FF;
+  }
   html, body {
     margin: 0;
     padding: 0;
@@ -91,6 +100,17 @@
 /* Tabular figures for amounts and tax numbers */
 .font-mono-data {
   font-feature-settings: 'tnum' 1, 'cv05' 1;
+}
+
+/* Campos numéricos limpios: el valor se edita directamente sin spinners. */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 
 /* ========================================================= */

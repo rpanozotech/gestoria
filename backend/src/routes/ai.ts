@@ -1,7 +1,28 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
+import { PDFParse } from 'pdf-parse';
 
 const router = Router();
+
+// Extractor local de PDF: no llama a IA ni necesita autenticacion de gestor.
+// Se usa solo para leer el texto de un documento en el propio servidor local.
+export const localPdfRouter = Router();
+localPdfRouter.post('/extract', async (req: Request, res: Response) => {
+  try {
+    const { dataUrl } = req.body || {};
+    if (typeof dataUrl !== 'string' || !dataUrl.includes('base64,')) {
+      return res.status(400).json({ error: 'Falta el contenido PDF en base64' });
+    }
+    const base64 = dataUrl.slice(dataUrl.indexOf('base64,') + 7);
+    const parser = new PDFParse({ data: Buffer.from(base64, 'base64') });
+    const result = await parser.getText();
+    await parser.destroy();
+    return res.json({ success: true, text: result.text || '' });
+  } catch (error) {
+    console.error('No se pudo extraer el PDF local:', error);
+    return res.status(422).json({ error: 'El PDF no se pudo leer localmente' });
+  }
+});
 
 function normalizeChatUrl(rawUrl?: string): string {
   let url = (rawUrl || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').trim().replace(/\/+$/, '');
@@ -9,10 +30,54 @@ function normalizeChatUrl(rawUrl?: string): string {
   return `${url}/chat/completions`;
 }
 
+function extractMultilingualFields(text: string) {
+  const clean = text.replace(/\r/g, ' ').replace(/\s+/g, ' ').trim();
+  const lineValue = (labels: string[]) => {
+    const pattern = new RegExp('(?:' + labels.join('|') + ')\\s*[:#-]?\\s*([^,;|\\n]{2,100})', 'i');
+    return clean.match(pattern)?.[1]?.trim() || '';
+  };
+  const bsn = clean.match(/(?:bsn|burgerservicenummer|citizen service number|citizen\s+number|n[uú]mero\s+de\s+servicio)\D{0,24}(\d{8,9})/i)?.[1]
+    || clean.match(/\b\d{9}\b/)?.[0] || '';
+  const email = clean.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] || '';
+  const phone = clean.match(/(?:\+31|\+34|0031|0034|06)\s?[\d\s().-]{7,16}/)?.[0]?.trim() || '';
+  const fullName = lineValue(['full name', 'name', 'naam', 'volledige naam', 'nombre completo', 'nombre y apellidos', 'nombre']);
+  const address = lineValue(['address', 'adres', 'woonadres', 'direcci[oó]n', 'domicilio']);
+  const city = lineValue(['city', 'plaats', 'woonplaats', 'ciudad', 'localidad']);
+  const idDocument = lineValue(['passport', 'paspoort', 'pasaporte', 'id document', 'documento de identidad', 'dni']);
+  return { bsn, email, phone, fullName, address, city, idDocument };
+}
+
+function detectMultilingualService(text: string) {
+  if (/digid|zorgtoeslag|healthcare allowance|subsidio.*m[eé]dico/i.test(text)) return 'DigiD / Zorgtoeslag';
+  if (/huurtoeslag|rent allowance|subsidio.*alquiler/i.test(text)) return 'Huurtoeslag / subsidio de alquiler';
+  if (/m-?form|income tax|inkomstenbelasting|declaraci[oó]n fiscal|renta/i.test(text)) return 'M-Form / declaración fiscal';
+  if (/bezwaarschrift|appeal|recurso|objection/i.test(text)) return 'Bezwaarschrift / recurso';
+  if (/kvk|eenmanszaak|zzp|aut[oó]nomo|self-employed/i.test(text)) return 'Alta KVK / autónomo';
+  return 'Consulta general';
+}
+
+async function extractPdfText(files: any[]) {
+  return Promise.all(files.map(async (file) => {
+    if (file?.textContent || !String(file?.type || '').includes('pdf') || typeof file?.dataUrl !== 'string') {
+      return file;
+    }
+    try {
+      const base64 = file.dataUrl.replace(/^data:application\/pdf;base64,/, '');
+      const parser = new PDFParse({ data: Buffer.from(base64, 'base64') });
+      const result = await parser.getText();
+      await parser.destroy();
+      return { ...file, textContent: result.text || '' };
+    } catch (error) {
+      console.warn('No se pudo extraer texto del PDF:', file?.name, error);
+      return { ...file, textContent: '' };
+    }
+  }));
+}
+
 // Helper para llamar a OpenAI / endpoint compatible o utilizar motor semántico local
 async function callOpenAIOrFallback(
   systemPrompt: string,
-  userPrompt: string,
+  userPrompt: string | Array<{ type: string; text?: string; image_url?: { url: string } }>,
   fallbackFn: () => any,
   options?: { apiKey?: string; apiUrl?: string; model?: string }
 ) {
@@ -153,7 +218,8 @@ router.post('/parse-client', async (req: Request, res: Response) => {
 // 1b. POST /api/ai/parse-multi-clients - Extracción de múltiples clientes a partir de notas y archivos
 router.post('/parse-multi-clients', async (req: Request, res: Response) => {
   try {
-    const { prompt, files } = req.body;
+    const { prompt, files: rawFiles, apiKey, apiUrl, model, useAI = true } = req.body;
+    const files = await extractPdfText(Array.isArray(rawFiles) ? rawFiles : []);
     if (!prompt && (!files || files.length === 0)) {
       return res.status(400).json({ error: 'Debes proporcionar notas de texto o archivos' });
     }
@@ -161,8 +227,13 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
     const systemPrompt = `
       Eres un asistente experto de una gestoría y asesoría en los Países Bajos (NexusGest).
       Tu tarea es analizar el texto, notas o archivos recibidos e IDENTIFICAR A TODOS LOS CLIENTES individuales.
+      Los documentos pueden estar en neerlandés, inglés, español o mezclados. Reconoce Naam, Achternaam, Adres,
+      Woonadres, Postcode, Plaats, Telefoon, E-mail, BSN/Burgerservicenummer; Name, Surname, Address, City,
+      Phone, Email; y Nombre, Apellidos, Dirección, Ciudad, Teléfono, Correo.
       Puede haber 1, 2, 3 o más clientes diferentes en el mismo texto o conjunto de archivos.
       Separa claramente a cada persona y extrae todos sus datos.
+      Nunca inventes, completes ni supongas datos personales, BSN, teléfonos, correos, direcciones, documentos o tarifas.
+      Si un dato no aparece de forma verificable, devuelve null. Conserva nombres y direcciones tal como aparecen.
       Responde EXCLUSIVAMENTE con un JSON con la clave "clients":
       {
         "clients": [
@@ -178,7 +249,7 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
             "fee": number o null,
             "notes": string o null,
             "source": string o null,
-            "confidence": number (entre 0.85 y 0.99)
+            "confidence": number (entre 0 y 0.99, según la evidencia disponible)
           }
         ]
       }
@@ -200,32 +271,26 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
       if (files && Array.isArray(files) && files.length > 0) {
         files.forEach((f: any, idx: number) => {
           const fileName = f.name || `Archivo_${idx + 1}`;
-          const cleanName = fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
-          let possibleName = cleanName.replace(/(dni|pasaporte|carta|nomina|contrato|belastingdienst|factura|recibo|jaaropgaaf|doc)/gi, '').trim();
-          if (!possibleName || possibleName.length < 3) {
-            possibleName = idx === 0 ? 'Lucía Navarro Gil' : idx === 1 ? 'Mateo Fernández Gómez' : 'David Gómez Castillo';
-          }
-
           const fileText = f.textContent || '';
           const combined = `${fileName} ${fileText}`;
-          const bsnMatch = combined.match(/\b\d{8,9}\b/);
-          const phoneMatch = combined.match(/(?:\+31|\+34|0031|0034|06)\s?[\d\s-]{7,12}/);
-          const emailMatch = combined.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+          const extracted = extractMultilingualFields(combined);
+          const cleanName = fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ')
+            .replace(/(dni|pasaporte|paspoort|passport|carta|letter|nomina|contrato|contract|belastingdienst|factura|invoice|recibo|jaaropgaaf|doc)/gi, '').trim();
 
           detectedClients.push({
             id: `client_file_${Date.now()}_${idx}`,
-            full_name: possibleName,
-            bsn: bsnMatch ? bsnMatch[0] : (980000000 + Math.floor(Math.random() * 1000000)).toString(),
-            phone: phoneMatch ? phoneMatch[0] : '+31 6 ' + Math.floor(10000000 + Math.random() * 90000000),
-            email: emailMatch ? emailMatch[0] : `${possibleName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
-            city: idx % 2 === 0 ? 'Amsterdam' : 'Rotterdam',
-            address: idx % 2 === 0 ? 'Keizersgracht 142' : 'Coolsingel 88',
-            id_document_number: 'NL' + Math.floor(1000000 + Math.random() * 9000000),
-            service_title: /m-?form/i.test(fileName) ? 'Declaración Fiscal M-Form' : /digid/i.test(fileName) ? 'Activación DigiD + Zorgtoeslag' : 'Declaración Fiscal M-Form',
-            fee: 180.00,
-            notes: `Cliente extraído del archivo: ${fileName}`,
+            full_name: extracted.fullName || cleanName || 'Documento ' + (idx + 1),
+            bsn: extracted.bsn || null,
+            phone: extracted.phone || null,
+            email: extracted.email || null,
+            city: extracted.city || null,
+            address: extracted.address || null,
+            id_document_number: extracted.idDocument || null,
+            service_title: detectMultilingualService(combined),
+            fee: null,
+            notes: fileText ? 'Datos detectados; revisa los campos antes de guardar.' : 'No hay texto extraído. Activa OCR/IA visual o introduce los datos manualmente.',
             source: `Archivo: ${fileName}`,
-            confidence: 0.96,
+            confidence: fileText ? 0.55 : 0,
             selected: true,
           });
         });
@@ -270,14 +335,14 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
         detectedClients.push({
           id: `client_txt_${Date.now()}_${idx}`,
           full_name: name,
-          bsn: bsnMatch ? bsnMatch[0] : (710000000 + Math.floor(Math.random() * 1000000)).toString(),
-          phone: phoneMatch ? phoneMatch[0] : '+31 6 ' + Math.floor(10000000 + Math.random() * 90000000),
-          email: emailMatch ? emailMatch[0] : `${name.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
-          city: city,
-          address: 'Strijpsestraat 24',
-          id_document_number: 'ES' + Math.floor(1000000 + Math.random() * 9000000),
+          bsn: bsnMatch ? bsnMatch[0] : null,
+          phone: phoneMatch ? phoneMatch[0] : null,
+          email: emailMatch ? emailMatch[0] : null,
+          city: city === 'Países Bajos' ? null : city,
+          address: null,
+          id_document_number: null,
           service_title: service,
-          fee: feeMatch ? parseFloat(feeMatch[1].replace(',', '.')) : 120.00,
+          fee: feeMatch ? parseFloat(feeMatch[1].replace(',', '.')) : null,
           notes: `Extraído automáticamente de notas: "${block.substring(0, 80)}..."`,
           source: `Nota de texto #${idx + 1}`,
           confidence: 0.94,
@@ -288,18 +353,18 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
       if (detectedClients.length === 0) {
         detectedClients.push({
           id: `client_def_${Date.now()}`,
-          full_name: 'Mateo Fernández Gómez',
-          bsn: '884719203',
-          phone: '+31 6 55443322',
-          email: 'mateo.fernandez@gmail.com',
-          city: 'Amsterdam',
-          address: 'Keizersgracht 45',
-          id_document_number: '48920194B',
-          service_title: 'Declaración Fiscal M-Form',
-          fee: 180.00,
-          notes: 'Cliente extraído mediante IA.',
-          source: 'Entrada General',
-          confidence: 0.96,
+          full_name: 'Documento sin datos identificables',
+          bsn: null,
+          phone: null,
+          email: null,
+          city: null,
+          address: null,
+          id_document_number: null,
+          service_title: 'Consulta general',
+          fee: null,
+          notes: 'No se encontraron datos personales verificables.',
+          source: 'Entrada general',
+          confidence: 0,
           selected: true,
         });
       }
@@ -307,7 +372,18 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
       return { clients: detectedClients };
     };
 
-    const aiResponse = await callOpenAIOrFallback(systemPrompt, userPrompt, fallback);
+    const imageParts = Array.isArray(files)
+      ? files
+        .filter((f: any) => typeof f.dataUrl === 'string' && f.dataUrl.startsWith('data:image/'))
+        .slice(0, 4)
+        .map((f: any) => ({ type: 'image_url', image_url: { url: f.dataUrl } }))
+      : [];
+    const multimodalPrompt = imageParts.length > 0
+      ? [{ type: 'text', text: userPrompt }, ...imageParts]
+      : userPrompt;
+    const aiResponse = useAI
+      ? await callOpenAIOrFallback(systemPrompt, multimodalPrompt, fallback, { apiKey, apiUrl, model })
+      : fallback();
     let finalClients = aiResponse?.clients || (Array.isArray(aiResponse) ? aiResponse : fallback().clients);
 
     finalClients = finalClients.map((c: any, index: number) => ({
@@ -321,7 +397,7 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
       ['alta_multi_clientes', prompt || 'Archivos', JSON.stringify({ clientsCount: finalClients.length })]
     );
 
-    res.json({ success: true, clients: finalClients });
+    res.json({ success: true, clients: finalClients, localOnly: !useAI });
   } catch (error) {
     console.error('Error procesando multi-clientes con IA:', error);
     res.status(500).json({ error: 'Error procesando solicitud de IA' });

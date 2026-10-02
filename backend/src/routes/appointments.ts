@@ -8,6 +8,32 @@ const router = Router();
 // POST es la reserva publica y por eso NO lleva guard (ver index.ts).
 const gestorOnly = [requireAuth, requireRole('admin', 'gestor')];
 
+// Disponibilidad pública: solo expone fecha, hora y duración, nunca datos
+// personales de los clientes del CRM.
+router.get('/availability', async (req: Request, res: Response) => {
+  try {
+    const { date } = req.query;
+    const params: any[] = [];
+    let sql = `
+      SELECT appointment_date, appointment_time, duration_minutes, status
+      FROM appointments
+      WHERE status NOT IN ('cancelada', 'completada')
+    `;
+
+    if (date) {
+      params.push(date);
+      sql += ` AND appointment_date = $${params.length}`;
+    }
+
+    sql += ' ORDER BY appointment_date ASC, appointment_time ASC';
+    const result = await query(sql, params);
+    res.json({ appointments: result.rows });
+  } catch (error) {
+    console.error('Error consultando disponibilidad:', error);
+    res.status(500).json({ error: 'No se pudo consultar la disponibilidad' });
+  }
+});
+
 // GET /api/appointments - Lista de citas
 router.get('/', gestorOnly, async (req: Request, res: Response) => {
   try {
@@ -61,6 +87,28 @@ router.post('/', async (req: Request, res: Response) => {
 
     if (!client_id || !appointment_date || !appointment_time) {
       return res.status(400).json({ error: 'Faltan campos obligatorios para agendar la cita' });
+    }
+
+    // Cada cita ocupa 30 minutos y exige 15 minutos libres antes de la
+    // siguiente. La comprobación vive en el servidor para evitar carreras
+    // aunque dos usuarios reserven simultáneamente.
+    const conflict = await query(
+      `
+        SELECT id
+        FROM appointments
+        WHERE appointment_date = $1
+          AND status NOT IN ('cancelada', 'completada')
+          AND ($2::time < appointment_time + ((COALESCE(duration_minutes, 30) + 15) * interval '1 minute'))
+          AND (($2::time + interval '45 minutes') > appointment_time)
+        LIMIT 1
+      `,
+      [appointment_date, appointment_time]
+    );
+
+    if (conflict.rows.length > 0) {
+      return res.status(409).json({
+        error: 'Ese horario no está disponible. Cada cita dura 30 minutos y debe existir un margen de 15 minutos entre citas.',
+      });
     }
 
     const sql = `

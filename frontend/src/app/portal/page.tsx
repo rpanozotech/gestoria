@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { apiUrl } from '@/lib/api';
+import { formatThousands } from '@/lib/format';
 
 /**
  * Pago del portal del cliente.
@@ -19,8 +21,6 @@ const WHATSAPP_PAGO = '';
 
 const FACTURA_REF = 'FAC-2026-0002';
 const FACTURA_TOTAL = '102,85';
-const FACTURA_BASE = '85,00';
-const FACTURA_BTW_PCT = '21';
 
 interface ClientMessage {
   id: string;
@@ -49,6 +49,7 @@ interface PortalAppointment {
 }
 
 export default function PortalClientePage() {
+  const router = useRouter();
   // Clientes disponibles para simular o cambiar vista
   const defaultClients = [
     {
@@ -129,9 +130,68 @@ export default function PortalClientePage() {
     },
   ];
 
-  // Estado del cliente activo
-  const [currentClientIndex, setCurrentClientIndex] = useState(0);
-  const client = defaultClients[currentClientIndex];
+  // El portal usa el mismo registro que el CRM. Se conserva un cliente demo
+  // como respaldo para que la maqueta siga siendo navegable si no hay sesión.
+  const [portalClientData, setPortalClientData] = useState<any>(null);
+  const [portalLoading, setPortalLoading] = useState(true);
+  const [currentClientIndex] = useState(0);
+
+  useEffect(() => {
+    const syncClientFromCrm = async () => {
+      try {
+        const token = window.localStorage.getItem('rp_portal_token');
+        if (!token) {
+          router.replace('/portal/login');
+          return;
+        }
+        const response = await fetch(`${apiUrl('/portal/me')}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (response.status === 401 || response.status === 403) {
+          window.localStorage.removeItem('rp_portal_token');
+          window.localStorage.removeItem('rp_portal_session_user');
+          router.replace('/portal/login');
+          return;
+        }
+        if (!response.ok) throw new Error('No se pudo cargar el portal');
+        const data = await response.json();
+        setPortalClientData(data);
+      } catch {
+        setPortalClientData(null);
+      } finally {
+        setPortalLoading(false);
+      }
+    };
+
+    syncClientFromCrm();
+    window.addEventListener('storage', syncClientFromCrm);
+    window.addEventListener('nexusgest_clients_updated', syncClientFromCrm);
+    return () => {
+      window.removeEventListener('storage', syncClientFromCrm);
+      window.removeEventListener('nexusgest_clients_updated', syncClientFromCrm);
+    };
+  }, [router]);
+
+  const baseClient = {
+    id: '', full_name: '', email: '', phone: '', bsn: '', city: '', address: '', iban: '',
+    digid_status: 'sin_digid', dossier_code: '', dossier_title: '', dossier_status: 'en_preparacion',
+    dossier_progress: 0, refund_amount: 0, monthly_zorg: 0, monthly_huur: 0, advisor: 'Tu gestor',
+  };
+  const firstDossier = portalClientData?.dossiers?.[0];
+  const client = portalClientData
+    ? {
+        ...baseClient,
+        ...portalClientData,
+        dossier_code: firstDossier?.code || baseClient.dossier_code,
+        dossier_title: firstDossier?.title || baseClient.dossier_title,
+        dossier_status: firstDossier?.status || baseClient.dossier_status,
+        dossier_progress: firstDossier?.progress_percentage ?? baseClient.dossier_progress,
+        advisor: portalClientData.advisor || baseClient.advisor,
+      }
+    : baseClient;
+  const latestInvoice = client.invoices?.[0];
+  const portalInvoiceRef = latestInvoice?.code || FACTURA_REF;
+  const portalInvoiceTotal = latestInvoice?.total != null
+    ? Number(latestInvoice.total).toFixed(2).replace('.', ',')
+    : FACTURA_TOTAL;
 
   // Tabs de navegación
   const [activeTab, setActiveTab] = useState<
@@ -198,6 +258,20 @@ export default function PortalClientePage() {
       status: 'Listo para firma',
     },
   ]);
+
+  useEffect(() => {
+    if (!portalClientData?.documents?.length) return;
+    setDocumentList(
+      portalClientData.documents.map((doc: any) => ({
+        id: String(doc.id),
+        name: doc.name,
+        category: doc.category || 'Documento del expediente',
+        date: doc.date || new Date().toISOString().slice(0, 10),
+        size: doc.size || '—',
+        status: doc.added_by === 'cliente' ? 'Enviado por ti' : 'Disponible para ti',
+      }))
+    );
+  }, [portalClientData]);
 
   const [previewDoc, setPreviewDoc] = useState<any>(null);
 
@@ -488,7 +562,7 @@ export default function PortalClientePage() {
       {
         id: `m-init-${client.id}`,
         sender: 'ia',
-        text: `👋 ¡Hola ${client.full_name.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest**.\n\nTengo en pantalla tu expediente **${client.dossier_code}** (*${client.dossier_title}*). Tu saldo estimado a devolver es de **€ ${client.refund_amount.toLocaleString('es-ES')}** y tu próximo subsidio mensual es de **€ ${client.monthly_zorg}/mes**.\n\n¿En qué te puedo asesorar?`,
+        text: `👋 ¡Hola ${client.full_name.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest**.\n\nTengo en pantalla tu expediente **${client.dossier_code}** (*${client.dossier_title}*). Tu saldo estimado a devolver es de **€ ${formatThousands(client.refund_amount)}** y tu próximo subsidio mensual es de **€ ${formatThousands(client.monthly_zorg)}/mes**.\n\n¿En qué te puedo asesorar?`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
@@ -526,7 +600,7 @@ export default function PortalClientePage() {
         reply = `Cuando te llegue la carta física de la Belastingdienst con el código de activación DigiD a tu dirección (**${client.address}, ${client.city}**):\n\n1. Entra a la pestaña **Subir Cartas**.\n2. Hazle una foto con tu móvil o sube el archivo PDF.\n3. Nuestro sistema OCR extraerá el código al instante y tu gestor completará la activación en menos de 24 horas.`;
         action = { label: 'Ir a Subir Cartas', tab: 'documentos' };
       } else if (lower.includes('devolución') || lower.includes('mform') || lower.includes('m-form') || lower.includes('renta')) {
-        reply = `Tu declaración **M-Form 2026** tiene un saldo estimado a tu favor de **€ ${client.refund_amount.toLocaleString('es-ES')}** gracias a las deducciones por relocalización internacional.\n\nEl expediente se encuentra formalmente presentado ante la oficina fiscal de Heerlen y el plazo medio habitual de resolución oscila entre **3 y 6 semanas**.`;
+        reply = `Tu declaración **M-Form 2026** tiene un saldo estimado a tu favor de **€ ${formatThousands(client.refund_amount)}** gracias a las deducciones por relocalización internacional.\n\nEl expediente se encuentra formalmente presentado ante la oficina fiscal de Heerlen y el plazo medio habitual de resolución oscila entre **3 y 6 semanas**.`;
         action = { label: 'Consultar Expediente', tab: 'resumen' };
       } else if (lower.includes('cita') || lower.includes('asesor') || lower.includes('hablar')) {
         const nextApt = nextClientAppointment;
@@ -592,7 +666,7 @@ export default function PortalClientePage() {
           </span>
         </div>
 
-        {/* Acciones y Selector de Perfil */}
+        {/* Acciones del cliente */}
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Botón destacado rápido para solicitar cita */}
           <button
@@ -604,22 +678,6 @@ export default function PortalClientePage() {
             <span className="hidden sm:inline">Solicitar Cita</span>
             <span className="sm:hidden">Cita</span>
           </button>
-
-          {/* Selector de cliente para demostración */}
-          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs">
-            <span className="text-slate-400 text-[10px] hidden sm:inline">Ver como:</span>
-            <select
-              value={currentClientIndex}
-              onChange={(e) => setCurrentClientIndex(Number(e.target.value))}
-              className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer"
-            >
-              {defaultClients.map((c, i) => (
-                <option key={c.id} value={i} className="bg-slate-900 text-white">
-                  {c.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
 
           {/* Notificaciones */}
           <div className="relative">
@@ -761,7 +819,7 @@ export default function PortalClientePage() {
               <span className="material-symbols-outlined text-blue-400 text-lg">account_balance</span>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono-data text-emerald-400">
-              {client.refund_amount > 0 ? `€ ${client.refund_amount.toLocaleString('es-ES')}` : '€ 0,00'}
+              {client.refund_amount > 0 ? `€ ${formatThousands(client.refund_amount)}` : '€ 0,00'}
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
               <span className="text-slate-400">M-Form 2026</span>
@@ -1465,7 +1523,7 @@ export default function PortalClientePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-data text-xs font-bold">
-                      FACTURA FAC-2026-0002
+                      FACTURA {portalInvoiceRef}
                     </span>
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">
                       PENDIENTE DE PAGO
@@ -1476,8 +1534,8 @@ export default function PortalClientePage() {
                 </div>
 
                 <div className="text-left sm:text-right">
-                  <span className="text-3xl font-extrabold font-mono-data text-white">€ 102,85</span>
-                  <span className="block text-[11px] text-slate-400">Base € 85,00 + 21% BTW (€ 17,85)</span>
+                  <span className="text-3xl font-extrabold font-mono-data text-white">€ {portalInvoiceTotal}</span>
+                  <span className="block text-[11px] text-slate-400">Importe registrado por tu gestor en el CRM</span>
                 </div>
               </div>
 
@@ -1501,7 +1559,7 @@ export default function PortalClientePage() {
                       return;
                     }
                     const mensaje = encodeURIComponent(
-                      `Hola, quiero pagar la factura ${FACTURA_REF} de mi gestoría (importe ${FACTURA_TOTAL} EUR, base ${FACTURA_BASE} EUR + ${FACTURA_BTW_PCT}% BTW). ¿Me confirmas las coordenadas para Doing en cuenta?`
+                      `Hola, quiero pagar la factura ${portalInvoiceRef} de mi gestoría (importe ${portalInvoiceTotal} EUR). ¿Me confirmas las coordenadas para hacer el pago?`
                     );
                     window.open(`https://wa.me/${WHATSAPP_PAGO}?text=${mensaje}`, '_blank', 'noopener,noreferrer');
                   }}

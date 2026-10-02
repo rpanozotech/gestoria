@@ -398,7 +398,7 @@ export default function CRMClientesPage() {
 
   // Sincronización con localStorage y Backend
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
       try {
         const stored = localStorage.getItem('nexusgest_clients');
         if (stored) {
@@ -451,9 +451,10 @@ export default function CRMClientesPage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && clients.length > 0) {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production' && clients.length > 0) {
       try {
         localStorage.setItem('nexusgest_clients', JSON.stringify(clients));
+        window.dispatchEvent(new CustomEvent('nexusgest_clients_updated'));
       } catch (err) {
         console.warn('Error al guardar clientes en localStorage:', err);
       }
@@ -938,6 +939,29 @@ export default function CRMClientesPage() {
       return;
     }
 
+    const removeLocalClient = () => {
+      const remaining = clients.filter((c) => c.id !== selectedClient.id);
+      setClients(remaining);
+      setSelectedClient(null);
+      try {
+        localStorage.setItem('nexusgest_clients', JSON.stringify(remaining));
+        window.dispatchEvent(new CustomEvent('nexusgest_clients_updated'));
+      } catch {
+        // La vista ya se ha actualizado aunque el navegador no permita guardar.
+      }
+      showToast('Cliente eliminado del directorio local.');
+    };
+
+    // Los clientes de demostración/locales usan ids numéricos y no existen
+    // en PostgreSQL. No se deben enviar al endpoint que espera un UUID.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      String(selectedClient.id)
+    );
+    if (!isUuid) {
+      removeLocalClient();
+      return;
+    }
+
     const ejecutarBorrado = async (confirmar: boolean) => {
       const url = confirmar ? `/clients/${selectedClient.id}?confirmar=SI` : `/clients/${selectedClient.id}`;
       const res = await apiFetch(url, { method: 'DELETE' });
@@ -966,9 +990,7 @@ export default function CRMClientesPage() {
         return;
       }
 
-      setClients(clients.filter((c) => c.id !== selectedClient.id));
-      setSelectedClient(null);
-      showToast('Cliente eliminado.');
+      removeLocalClient();
     };
 
     try {

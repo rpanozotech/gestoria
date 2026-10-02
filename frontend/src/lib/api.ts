@@ -24,11 +24,12 @@ export const apiUrl = (path: string): string => `${API_BASE}${path}`;
  */
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const token = getToken();
+  const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData;
 
   const res = await fetch(apiUrl(path), {
     ...init,
     headers: {
-      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(init.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init.headers || {}),
     },
@@ -36,7 +37,8 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
 
   // 401 = token ausente, invalido o expirado. La sesion ya no sirve, asi que
   // se limpia y se manda al login en vez de dejar la UI con datos a medias.
-  if (res.status === 401) {
+  const isLocalDemo = process.env.NODE_ENV !== 'production' && token?.startsWith('nexusgest_local_demo');
+  if (res.status === 401 && !isLocalDemo) {
     clearSession();
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
       window.location.href = '/login';

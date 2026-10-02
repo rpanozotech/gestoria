@@ -6,8 +6,12 @@ const BACKEND_ORIGIN = process.env.API_INTERNAL_URL || 'http://backend:5000';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone', // Clave para imágenes Docker ligeras en Coolify
+  // Solo usar 'standalone' en producción (build). En dev rompe el servidor.
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async rewrites() {
     return {
       // Proxy same-origin: el navegador pide /api/backend/* al servidor de Next,

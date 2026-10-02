@@ -1,9 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiUrl } from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+
+const APPOINTMENT_MINUTES = 30;
+const BUFFER_MINUTES = 15;
+const SLOT_MINUTES = APPOINTMENT_MINUTES + BUFFER_MINUTES;
+// Jornada de 09:00 a 21:00: la última cita puede comenzar a las 20:15
+// para ocupar 30 minutos y conservar 15 minutos de margen hasta las 21:00.
+const BOOKING_SLOTS = Array.from({ length: 16 }, (_, index) => {
+  const total = 9 * 60 + index * SLOT_MINUTES;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+});
+
+type BusyAppointment = {
+  appointment_date: string;
+  appointment_time: string;
+  duration_minutes?: number;
+  status?: string;
+};
 
 export default function ReservarCitaPage() {
   const [bookName, setBookName] = useState('');
@@ -15,12 +32,109 @@ export default function ReservarCitaPage() {
   const [bookModality, setBookModality] = useState<'meet' | 'phone' | 'office'>('meet');
   const [bookSuccess, setBookSuccess] = useState(false);
   const [bookLoading, setBookLoading] = useState(false);
+  const [busyAppointments, setBusyAppointments] = useState<BusyAppointment[]>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [bookingError, setBookingError] = useState('');
+
+  const toMinutes = (time: string) => {
+    const [hours, minutes] = time.slice(0, 5).split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const isSlotAvailable = (slot: string, appointments = busyAppointments) => {
+    const start = toMinutes(slot);
+    const end = start + APPOINTMENT_MINUTES;
+    return !appointments.some((appointment) => {
+      if (appointment.status === 'cancelada' || appointment.status === 'completada') return false;
+      const existingStart = toMinutes(appointment.appointment_time);
+      const existingEnd = existingStart + (appointment.duration_minutes || APPOINTMENT_MINUTES);
+      return start < existingEnd + BUFFER_MINUTES && end + BUFFER_MINUTES > existingStart;
+    });
+  };
+
+  const availableSlots = BOOKING_SLOTS.filter((slot) => isSlotAvailable(slot));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAvailability = async () => {
+      setAvailabilityLoading(true);
+      const localAppointments: BusyAppointment[] = [];
+      try {
+        const stored = window.localStorage.getItem('nexusgest_appointments');
+        const parsed = stored ? JSON.parse(stored) : [];
+        if (Array.isArray(parsed)) {
+          localAppointments.push(
+            ...parsed.filter((appointment: BusyAppointment) => appointment.appointment_date === bookDate)
+          );
+        }
+      } catch {
+        // El servidor sigue siendo la fuente principal si el almacenamiento local falla.
+      }
+
+      try {
+        const response = await fetch(apiUrl(`/appointments/availability?date=${bookDate}`));
+        if (response.ok) {
+          const data = await response.json();
+          localAppointments.push(...(Array.isArray(data.appointments) ? data.appointments : []));
+        }
+      } catch {
+        // Permitir reservar con la agenda local si el backend no está disponible.
+      }
+
+      if (!cancelled) {
+        const unique = new Map<string, BusyAppointment>();
+        localAppointments.forEach((appointment) => {
+          unique.set(`${appointment.appointment_date}-${appointment.appointment_time}`, appointment);
+        });
+        const nextBusy = Array.from(unique.values());
+        setBusyAppointments(nextBusy);
+        setBookTime((current) => isSlotAvailable(current, nextBusy) ? current : (BOOKING_SLOTS.find((slot) => isSlotAvailable(slot, nextBusy)) || ''));
+        setAvailabilityLoading(false);
+      }
+    };
+
+    loadAvailability();
+    return () => { cancelled = true; };
+  }, [bookDate]);
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!bookTime || !isSlotAvailable(bookTime)) {
+      setBookingError('Ese horario ya no está disponible. Elige otra hora libre.');
+      return;
+    }
+    setBookingError('');
     setBookLoading(true);
+    const modality = bookModality === 'meet' ? 'online_meet' : bookModality === 'phone' ? 'llamada' : 'presencial';
+    const newAppointment = {
+      id: `web-${Date.now()}`,
+      title: `Cita Web: ${bookService}`,
+      client_name: bookName,
+      client_phone: bookPhone,
+      appointment_date: bookDate,
+      appointment_time: `${bookTime}:00`,
+      duration_minutes: APPOINTMENT_MINUTES,
+      modality,
+      status: 'pendiente',
+      notes: `Reserva realizada desde la web. Email: ${bookEmail}`,
+    };
+
+    // Copia local compartida: permite que el CRM muestre la reserva aunque
+    // el backend esté temporalmente fuera de línea.
     try {
-      await fetch(apiUrl('/appointments'), {
+      const stored = window.localStorage.getItem('nexusgest_appointments');
+      const existing = stored ? JSON.parse(stored) : [];
+      const appointments = Array.isArray(existing) ? existing : [];
+      window.localStorage.setItem('nexusgest_appointments', JSON.stringify([newAppointment, ...appointments]));
+      window.dispatchEvent(new CustomEvent('nexusgest_appointments_updated'));
+    } catch {
+      // La confirmación del backend sigue siendo la fuente principal cuando
+      // el navegador no permite usar almacenamiento local.
+    }
+
+    try {
+      const response = await fetch(apiUrl('/appointments'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -30,12 +144,26 @@ export default function ReservarCitaPage() {
           title: `Cita Web: ${bookService}`,
           appointment_date: bookDate,
           appointment_time: bookTime,
-          modality: bookModality === 'meet' ? 'online_meet' : bookModality === 'phone' ? 'llamada' : 'presencial',
+          duration_minutes: APPOINTMENT_MINUTES,
+          modality,
         }),
       });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Ese horario ya no está disponible.');
+      }
       setBookSuccess(true);
     } catch {
-      setBookSuccess(true);
+      // Si el servidor rechaza por solapamiento, no confirmamos la cita.
+      setBookingError('Ese horario no está disponible. Elige otra hora libre.');
+      try {
+        const stored = window.localStorage.getItem('nexusgest_appointments');
+        const parsed = stored ? JSON.parse(stored) : [];
+        window.localStorage.setItem(
+          'nexusgest_appointments',
+          JSON.stringify(Array.isArray(parsed) ? parsed.filter((appointment: any) => appointment.id !== newAppointment.id) : [])
+        );
+      } catch {}
     } finally {
       setBookLoading(false);
     }
@@ -177,14 +305,14 @@ export default function ReservarCitaPage() {
                       <select
                         value={bookTime}
                         onChange={(e) => setBookTime(e.target.value)}
+                        disabled={availabilityLoading || availableSlots.length === 0}
                         className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
                       >
-                        <option value="09:30">09:30 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="12:30">12:30 PM</option>
-                        <option value="15:00">15:00 PM</option>
-                        <option value="16:30">16:30 PM</option>
-                        <option value="18:00">18:00 PM</option>
+                        {availableSlots.length === 0 ? (
+                          <option value="">No hay horarios libres</option>
+                        ) : (
+                          availableSlots.map((slot) => <option key={slot} value={slot}>{slot}</option>)
+                        )}
                       </select>
                     </div>
                   </div>
@@ -234,9 +362,15 @@ export default function ReservarCitaPage() {
                     </div>
                   </div>
 
+                  {bookingError && (
+                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
+                      {bookingError}
+                    </p>
+                  )}
+
                   <button
                     type="submit"
-                    disabled={bookLoading}
+                    disabled={bookLoading || availabilityLoading || availableSlots.length === 0}
                     className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-heading font-extrabold text-base tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2"
                   >
                     {bookLoading ? (

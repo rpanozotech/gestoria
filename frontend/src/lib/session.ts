@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * Gestion de la sesion del CRM.
- *
- * El token JWT se guarda en localStorage, no en cookies: las rutas del CRM
- * son client components ('use client'), asi que no hay servidor que lo
- * lea. Asumir el riesgo de XSS que implica localStorage; si alguna vez
- * estas rutas pasan a server components, mover a cookie httpOnly.
- */
-
 const TOKEN_KEY = 'nexusgest_token';
 const USER_KEY = 'nexusgest_user';
 
@@ -20,28 +11,52 @@ export interface SessionUser {
   avatar_url?: string | null;
 }
 
+function readCookie(key: string): string | null {
+  const value = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${key}=`))
+    ?.slice(key.length + 1);
+  return value ? decodeURIComponent(value) : null;
+}
+
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem(TOKEN_KEY);
+  try {
+    const token = window.localStorage.getItem(TOKEN_KEY) || readCookie(TOKEN_KEY);
+    // Versiones anteriores generaban tokens locales con timestamp. No son
+    // JWT y el backend los rechaza; conviértelos al token demo estable.
+    if (token?.startsWith('nexusgest_session_token_') || token?.startsWith('nexusgest_token_')) {
+      return 'nexusgest_local_demo';
+    }
+    return token;
+  } catch {
+    return readCookie(TOKEN_KEY);
+  }
 }
 
 export function getStoredUser(): SessionUser | null {
   if (typeof window === 'undefined') return null;
-  const raw = window.localStorage.getItem(USER_KEY);
+  let raw: string | null = null;
+  try { raw = window.localStorage.getItem(USER_KEY); } catch {}
+  raw = raw || readCookie(USER_KEY);
   if (!raw) return null;
-  try {
-    return JSON.parse(raw) as SessionUser;
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(raw) as SessionUser; } catch { return null; }
 }
 
 export function saveSession(token: string, user: SessionUser): void {
-  window.localStorage.setItem(TOKEN_KEY, token);
-  window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+  try {
+    window.localStorage.setItem(TOKEN_KEY, token);
+    window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } catch {}
+  document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax`;
+  document.cookie = `${USER_KEY}=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`;
 }
 
 export function clearSession(): void {
-  window.localStorage.removeItem(TOKEN_KEY);
-  window.localStorage.removeItem(USER_KEY);
+  try {
+    window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(USER_KEY);
+  } catch {}
+  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax`;
+  document.cookie = `${USER_KEY}=; path=/; max-age=0; SameSite=Lax`;
 }

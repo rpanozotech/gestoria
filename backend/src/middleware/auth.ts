@@ -6,6 +6,7 @@ export interface AuthUser {
   email: string;
   full_name: string;
   role: 'admin' | 'gestor' | 'cliente';
+  client_id?: string;
 }
 
 declare global {
@@ -46,6 +47,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
       email: decoded.email,
       full_name: decoded.full_name,
       role: decoded.role,
+      client_id: decoded.client_id,
     };
     next();
   } catch {

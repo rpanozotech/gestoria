@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { activableConTeclado } from '@/lib/a11y';
+import { formatThousands } from '@/lib/format';
 
 // El dia se deriva del reloj del navegador, nunca se escribe a mano: una
 // fecha fija en el dashboard hace que el gestor no se fie de la agenda.
@@ -106,7 +107,7 @@ export default function CRMDashboardPage() {
           className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
         >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Clientes Activos</span>
+            <span className="text-[11px] font-semibold tracking-normal text-outline group-hover:text-[--delft]">Clientes Activos</span>
             <span className="material-symbols-outlined text-[18px] text-secondary">group</span>
           </div>
           <div className="mt-3">
@@ -123,7 +124,7 @@ export default function CRMDashboardPage() {
           className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
         >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Citas de Hoy</span>
+            <span className="text-[11px] font-semibold tracking-normal text-outline group-hover:text-secondary">Citas de Hoy</span>
             <span className="material-symbols-outlined text-[18px] text-primary">calendar_clock</span>
           </div>
           <div className="mt-3">
@@ -149,7 +150,7 @@ export default function CRMDashboardPage() {
           className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
         >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">En Trámite</span>
+            <span className="text-[11px] font-semibold tracking-normal text-outline group-hover:text-secondary">En Trámite</span>
             <span className="material-symbols-outlined text-[18px] text-secondary">pending_actions</span>
           </div>
           <div className="mt-3">
@@ -170,12 +171,12 @@ export default function CRMDashboardPage() {
           className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
         >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Facturación Mes</span>
+            <span className="text-[11px] font-semibold tracking-normal text-outline group-hover:text-secondary">Facturación Mes</span>
             <span className="material-symbols-outlined text-[18px] text-emerald-600">payments</span>
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold font-mono-data">€ {stats.kpis.finances.monthly_revenue.toLocaleString('es-ES')}</span>
+              <span className="text-2xl font-bold font-mono-data">€ {formatThousands(stats.kpis.finances.monthly_revenue)}</span>
             </div>
             <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">+14.2% vs mes anterior</p>
           </div>
@@ -187,12 +188,12 @@ export default function CRMDashboardPage() {
           className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
         >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Cobros Pendientes</span>
+            <span className="text-[11px] font-semibold tracking-normal text-outline group-hover:text-secondary">Cobros Pendientes</span>
             <span className="material-symbols-outlined text-[18px] text-amber-600">receipt</span>
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold font-mono-data">€ {stats.kpis.finances.pending_revenue.toLocaleString('es-ES')}</span>
+              <span className="text-2xl font-bold font-mono-data">€ {formatThousands(stats.kpis.finances.pending_revenue)}</span>
             </div>
             <p className="text-[10px] text-outline mt-0.5">{stats.kpis.finances.pending_invoices_count} facturas emitidas</p>
           </div>
@@ -204,7 +205,7 @@ export default function CRMDashboardPage() {
           className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
         >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-outline group-hover:text-secondary">Pasarela iDEAL</span>
+            <span className="text-[11px] font-semibold tracking-normal text-outline group-hover:text-secondary">Pasarela iDEAL</span>
             <span className="material-symbols-outlined text-[18px] text-secondary">credit_card</span>
           </div>
           <div className="mt-3">
@@ -224,7 +225,7 @@ export default function CRMDashboardPage() {
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-600 text-[22px]">smart_toy</span>
           <div>
-            <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-indigo-950 tracking-normal">
               Asistente NexusGest AI · 3 Acciones Recomendadas
             </h4>
             <p className="text-xs text-indigo-800 mt-0.5">
@@ -258,13 +259,13 @@ export default function CRMDashboardPage() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
+                <thead className="bg-surface-container-low text-[--concrete] font-semibold border-b border-[--concrete]/20">
                   <tr>
-                    <th className="px-5 py-3">Código</th>
-                    <th className="px-5 py-3">Cliente / BSN</th>
-                    <th className="px-5 py-3">Trámite</th>
-                    <th className="px-5 py-3">Estado</th>
-                    <th className="px-5 py-3">Progreso</th>
+                    <th className="px-5 py-3 text-left">Código</th>
+                    <th className="px-5 py-3 text-left">Cliente / BSN</th>
+                    <th className="px-5 py-3 text-left">Trámite</th>
+                    <th className="px-5 py-3 text-left">Estado</th>
+                    <th className="px-5 py-3 text-left">Progreso</th>
                     <th className="px-5 py-3 text-right">Tarifa</th>
                   </tr>
                 </thead>

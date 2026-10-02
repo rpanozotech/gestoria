@@ -1,7 +1,43 @@
 import { Router, Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { query } from '../db/index.js';
 
 const router = Router();
+
+// GET /api/clients/count - Recuento de clientes por estado
+//
+// Debe declararse ANTES que '/:id': Express prueba las rutas en orden, y si
+// '/:id' va primero, GET /clients/count se interpretaria como buscar un
+// cliente con id='count' y devolveria 404.
+//
+// Endpoint aparte del listado porque el menu lateral solo necesita el
+// numero, no las fichas completas con sus JOIN a dossiers e invoices.
+router.get('/count', async (req: Request, res: Response) => {
+  try {
+    const result = await query(
+      `SELECT status, COUNT(*)::int AS n
+       FROM clients
+       GROUP BY status
+       ORDER BY status;`
+    );
+
+    const porEstado = result.rows.reduce((acc: Record<string, number>, r: any) => {
+      acc[r.status] = r.n;
+      return acc;
+    }, {});
+
+    res.json({
+      total: result.rows.reduce((sum: number, r: any) => sum + r.n, 0),
+      activos: porEstado['activo'] || 0,
+      prospectos: porEstado['prospecto'] || 0,
+      inactivos: porEstado['inactivo'] || 0,
+    });
+  } catch (error) {
+    console.error('Error al contar clientes:', error);
+    res.status(500).json({ error: 'Error al obtener el recuento de clientes' });
+  }
+});
 
 // GET /api/clients - Directorio con búsqueda y filtrado
 router.get('/', async (req: Request, res: Response) => {
@@ -35,6 +71,71 @@ router.get('/', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error al listar clientes:', error);
     res.status(500).json({ error: 'Error al consultar clientes' });
+  }
+});
+
+// GET /api/clients/match - Resolver un cliente al importar varios documentos.
+// El BSN es la identidad fuerte; el nombre solo se devuelve si la coincidencia
+// es exacta e inequívoca para que el frontend pueda evitar duplicados.
+router.get('/match', async (req: Request, res: Response) => {
+  try {
+    const bsn = String(req.query.bsn || '').replace(/\s/g, '');
+    const fullName = String(req.query.full_name || '').trim();
+    if (!bsn && !fullName) return res.json({ match: null, candidates: [] });
+
+    if (bsn) {
+      const byBsn = await query('SELECT * FROM clients WHERE bsn = $1 LIMIT 2', [bsn]);
+      if (byBsn.rows.length === 1) return res.json({ match: byBsn.rows[0], matched_by: 'bsn' });
+      if (byBsn.rows.length > 1) return res.status(409).json({ error: 'Hay varios clientes con el mismo BSN', candidates: byBsn.rows });
+    }
+
+    // El nombre solo es fallback cuando el documento no trae BSN. Si un PDF
+    // trae un BSN distinto, nunca debemos unirlo por nombre.
+    if (!bsn && fullName) {
+      const byName = await query(
+        `SELECT * FROM clients
+         WHERE lower(trim(full_name)) = lower(trim($1))
+         ORDER BY created_at DESC LIMIT 2`,
+        [fullName]
+      );
+      if (byName.rows.length === 1) return res.json({ match: byName.rows[0], matched_by: 'full_name' });
+      if (byName.rows.length > 1) return res.status(409).json({ error: 'Hay varias coincidencias por nombre', candidates: byName.rows });
+    }
+
+    return res.json({ match: null, candidates: [] });
+  } catch (error) {
+    console.error('Error resolviendo coincidencia de cliente:', error);
+    res.status(500).json({ error: 'No se pudo buscar el cliente existente' });
+  }
+});
+
+// POST /api/clients/:id/portal-access - Crear o regenerar acceso del cliente.
+router.post('/:id/portal-access', async (req: Request, res: Response) => {
+  try {
+    const clientResult = await query('SELECT * FROM clients WHERE id = $1', [req.params.id]);
+    if (clientResult.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
+    const client = clientResult.rows[0];
+    const baseUsername = client.full_name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '').slice(0, 32) || 'cliente';
+    const username = client.portal_username || `${baseUsername}-${crypto.randomBytes(3).toString('hex')}`;
+    const password = `RP-${crypto.randomBytes(6).toString('base64url')}`;
+    const hash = await bcrypt.hash(password, 12);
+    let userId = client.user_id;
+    if (userId) {
+      await query('UPDATE users SET password_hash = $1, is_active = true, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [hash, userId]);
+    } else {
+      const user = await query(
+        `INSERT INTO users (email, password_hash, full_name, role, is_active)
+         VALUES ($1, $2, $3, 'cliente', true) RETURNING id`,
+        [`${username}@portal.local`, hash, client.full_name]
+      );
+      userId = user.rows[0].id;
+    }
+    await query('UPDATE clients SET user_id = $1, portal_username = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3', [userId, username, client.id]);
+    res.json({ portal_access: { username, password }, message: 'Acceso del portal listo' });
+  } catch (error) {
+    console.error('Error generando acceso de portal:', error);
+    res.status(500).json({ error: 'No se pudo generar el acceso del portal' });
   }
 });
 
@@ -125,8 +226,34 @@ router.post('/', async (req: Request, res: Response) => {
       notes || null,
     ];
 
-    const result = await query(insertSql, values);
-    res.status(201).json({ client: result.rows[0], message: 'Cliente registrado exitosamente' });
+    const clientResult = await query(insertSql, values);
+    const client = clientResult.rows[0];
+
+    // Credenciales reales del portal: la clave se muestra una sola vez en la
+    // respuesta y solo el hash queda guardado en PostgreSQL.
+    const baseUsername = full_name.trim()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '').slice(0, 32) || 'cliente';
+    const portalUsername = `${baseUsername}-${crypto.randomBytes(3).toString('hex')}`;
+    const portalPassword = `RP-${crypto.randomBytes(6).toString('base64url')}`;
+    const portalHash = await bcrypt.hash(portalPassword, 12);
+    const userResult = await query(
+      `INSERT INTO users (email, password_hash, full_name, role, is_active)
+       VALUES ($1, $2, $3, 'cliente', true) RETURNING id, email, full_name, role`,
+      [`${portalUsername}@portal.local`, portalHash, full_name.trim()]
+    );
+    await query(
+      'UPDATE clients SET user_id = $1, portal_username = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+      [userResult.rows[0].id, portalUsername, client.id]
+    );
+    client.user_id = userResult.rows[0].id;
+    client.portal_username = portalUsername;
+
+    res.status(201).json({
+      client,
+      portal_access: { username: portalUsername, password: portalPassword },
+      message: 'Cliente registrado exitosamente',
+    });
   } catch (error: any) {
     if (error.code === '23505') {
       return res.status(409).json({ error: 'Ya existe un cliente con ese número de BSN' });

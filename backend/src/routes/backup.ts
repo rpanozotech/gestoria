@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { query } from '../db/index.js';
+import { unlink } from 'node:fs/promises';
+import path from 'node:path';
+import { pool, query } from '../db/index.js';
 
 const router = Router();
 
@@ -95,6 +97,62 @@ router.get('/stats', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Error al obtener estadísticas de backup:', err);
     res.status(500).json({ error: 'Error al consultar datos de backup' });
+  }
+});
+
+/**
+ * POST /api/backup/reset
+ * Vacía los datos operativos del CRM, pero conserva las cuentas del equipo
+ * gestor y la estructura de la base de datos para poder empezar de nuevo.
+ * Requiere una frase exacta para evitar borrados accidentales.
+ */
+router.post('/reset', async (req: Request, res: Response) => {
+  if (req.body?.confirmation !== 'RESETEAR CRM') {
+    return res.status(400).json({ error: 'Confirmación incorrecta. Escribe RESETEAR CRM para continuar.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const documentFiles = await client.query<{ file_path: string }>(
+      'SELECT file_path FROM documents WHERE file_path IS NOT NULL'
+    );
+
+    // Las tablas relacionadas con clientes tienen ON DELETE CASCADE.
+    // El orden explícito mantiene el endpoint seguro aunque cambie el esquema.
+    await client.query('DELETE FROM ai_logs');
+    await client.query('DELETE FROM documents');
+    await client.query('DELETE FROM appointments');
+    await client.query('DELETE FROM invoices');
+    await client.query('DELETE FROM quotes');
+    await client.query('DELETE FROM dossier_steps');
+    await client.query('DELETE FROM dossiers');
+    await client.query('DELETE FROM clients');
+
+    await client.query('COMMIT');
+
+    // Borra también los binarios, pero nunca permite salir de la carpeta
+    // configurada de uploads aunque la ruta almacenada estuviera manipulada.
+    const uploadRoot = path.resolve(process.env.UPLOAD_DIR || './uploads');
+    await Promise.all(documentFiles.rows.map(async ({ file_path }) => {
+      const absoluteFile = path.resolve(file_path);
+      const isInsideUploadDir = absoluteFile.startsWith(`${uploadRoot}${path.sep}`);
+      if (isInsideUploadDir) {
+        await unlink(absoluteFile).catch(() => undefined);
+      }
+    }));
+
+    return res.json({
+      message: 'CRM reseteado correctamente',
+      preserved: ['users'],
+    });
+  } catch (err: any) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    console.error('Error al resetear CRM:', err);
+    return res.status(500).json({ error: 'No se pudo resetear el CRM. No se ha borrado ningún dato.' });
+  } finally {
+    client.release();
   }
 });
 

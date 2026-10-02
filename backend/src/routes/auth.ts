@@ -63,6 +63,43 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
+// Acceso separado del portal: acepta el usuario visible al cliente o su email
+// y solo emite un JWT con rol cliente y el client_id asociado.
+router.post('/portal-login', async (req: Request, res: Response) => {
+  try {
+    const identifier = String(req.body?.identifier || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    if (!identifier || !password) return res.status(400).json({ error: 'Debes proporcionar usuario y contraseña' });
+
+    const result = await query(
+      `SELECT u.*, c.id AS client_id, c.portal_username
+       FROM users u
+       JOIN clients c ON c.user_id = u.id
+       WHERE u.role = 'cliente' AND u.is_active = true
+         AND (lower(u.email) = $1 OR lower(c.portal_username) = $1)
+       LIMIT 1`,
+      [identifier]
+    );
+    if (result.rows.length === 0 || !(await bcrypt.compare(password, result.rows[0].password_hash))) {
+      return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    }
+
+    const user = result.rows[0];
+    const token = jwt.sign(
+      { id: user.id, email: user.email, full_name: user.full_name, role: 'cliente', client_id: user.client_id },
+      jwtSecret(),
+      { expiresIn: '7d' }
+    );
+    res.json({
+      token,
+      user: { id: user.id, client_id: user.client_id, email: user.email, full_name: user.full_name, role: 'cliente' },
+    });
+  } catch (error) {
+    console.error('Error en /portal-login:', error);
+    res.status(500).json({ error: 'Error interno al autenticar el portal' });
+  }
+});
+
 // Obtener perfil actual
 router.get('/me', async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;

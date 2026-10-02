@@ -209,6 +209,33 @@ export default function CRMAgendaPage() {
     }
   }, []);
 
+  // Actualización inmediata si una reserva se confirma desde otra pestaña o
+  // desde la página pública sin recargar manualmente el CRM.
+  useEffect(() => {
+    const syncUpdatedAppointments = () => {
+      try {
+        const stored = window.localStorage.getItem('nexusgest_appointments');
+        const parsed = stored ? JSON.parse(stored) : [];
+        if (!Array.isArray(parsed)) return;
+        setAppointments((prev) => {
+          const map = new Map<string, Appointment>();
+          prev.forEach((appointment) => map.set(String(appointment.id), appointment));
+          parsed.forEach((appointment: Appointment) => map.set(String(appointment.id), appointment));
+          return Array.from(map.values());
+        });
+      } catch {
+        // Mantener la agenda actual si el almacenamiento está corrupto.
+      }
+    };
+
+    window.addEventListener('storage', syncUpdatedAppointments);
+    window.addEventListener('nexusgest_appointments_updated', syncUpdatedAppointments);
+    return () => {
+      window.removeEventListener('storage', syncUpdatedAppointments);
+      window.removeEventListener('nexusgest_appointments_updated', syncUpdatedAppointments);
+    };
+  }, []);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && appointments.length > 0) {
       try {
@@ -345,13 +372,33 @@ export default function CRMAgendaPage() {
     };
   }, [appointments, calendarYear, calendarMonth]);
 
-  const handleToggleComplete = (id: string) => {
-    setAppointments(
-      appointments.map((a) =>
-        a.id === id ? { ...a, status: a.status === 'completada' ? 'confirmada' : 'completada' } : a
-      )
-    );
-    showToast('Estado de la cita actualizado.');
+  const isBackendAppointmentId = (id: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+
+  const handleToggleComplete = async (id: string) => {
+    const current = appointments.find((a) => a.id === id);
+    if (!current) return;
+    const nextStatus = current.status === 'completada' ? 'confirmada' : 'completada';
+
+    if (isBackendAppointmentId(id)) {
+      try {
+        const res = await apiFetch(`/appointments/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: nextStatus }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showToast(data.error || 'No se pudo actualizar la cita.', 'error');
+          return;
+        }
+      } catch {
+        showToast('Error de conexión al actualizar la cita.', 'error');
+        return;
+      }
+    }
+
+    setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: nextStatus } : a)));
+    showToast(nextStatus === 'completada' ? 'Cita marcada como completada.' : 'Cita reabierta.');
   };
 
   const handleExportAgendaCsv = () => {
@@ -379,6 +426,12 @@ export default function CRMAgendaPage() {
       return;
     }
 
+    if (!isBackendAppointmentId(id)) {
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
+      showToast('Cita eliminada de la agenda.');
+      return;
+    }
+
     try {
       const res = await apiFetch(`/appointments/${id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
@@ -388,7 +441,7 @@ export default function CRMAgendaPage() {
         return;
       }
 
-      setAppointments(appointments.filter((a) => a.id !== id));
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
       showToast('Cita eliminada.');
     } catch {
       showToast('Error de conexión al eliminar la cita.', 'error');
@@ -399,6 +452,12 @@ export default function CRMAgendaPage() {
   // correcto cuando el cliente ya tenía la cita reservada.
   const handleCancelAppointment = async (id: string) => {
     if (!confirm('¿Marcar esta cita como cancelada?\n\nSe conserva en el historial; no se elimina de la agenda.')) {
+      return;
+    }
+
+    if (!isBackendAppointmentId(id)) {
+      setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'cancelada' } : a)));
+      showToast('Cita marcada como cancelada.');
       return;
     }
 
@@ -414,7 +473,7 @@ export default function CRMAgendaPage() {
         return;
       }
 
-      setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: 'cancelada' } : a)));
+      setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'cancelada' } : a)));
       showToast('Cita marcada como cancelada.');
     } catch {
       showToast('Error de conexión al actualizar la cita.', 'error');

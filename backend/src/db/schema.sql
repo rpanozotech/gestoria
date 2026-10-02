@@ -37,9 +37,14 @@ CREATE TABLE IF NOT EXISTS clients (
     digid_status VARCHAR(50) DEFAULT 'sin_digid', -- 'activo', 'pendiente_activar', 'sin_digid'
     status VARCHAR(50) DEFAULT 'activo', -- 'activo', 'inactivo', 'prospecto'
     notes TEXT,
+    portal_username VARCHAR(80),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Compatibilidad con instalaciones ya inicializadas antes del portal real.
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS portal_username VARCHAR(80);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_portal_username ON clients(portal_username) WHERE portal_username IS NOT NULL;
 
 -- 3. Tabla de Expedientes / Trámites
 CREATE TABLE IF NOT EXISTS dossiers (

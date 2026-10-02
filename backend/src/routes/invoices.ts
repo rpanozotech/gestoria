@@ -175,4 +175,74 @@ router.post('/invoices/:id/pay', async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /api/invoices/:id - Eliminar factura
+//
+// Una factura pagada NO se borra nunca: tiene obligacion legal de
+// conservacion (7 años para la administracion fiscal neerlandesa). Para
+// esas, la via es marcarla como 'cancelada' con el PATCH.
+//
+// Las facturas en estado 'borrador' o 'emitida' si se pueden eliminar, que
+// todavia no han dado lugar a un cobro ni a un asiento definitivo.
+router.delete('/invoices/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const found = await query('SELECT id, code, status, total FROM invoices WHERE id = $1', [id]);
+    if (found.rows.length === 0) {
+      return res.status(404).json({ error: 'Factura no encontrada' });
+    }
+    const factura = found.rows[0];
+
+    if (factura.status === 'pagada') {
+      return res.status(409).json({
+        error:
+          `La factura ${factura.code} está pagada y no se puede eliminar. ` +
+          'Por obligación de conservación fiscal debe mantenerse. ' +
+          'Si procede, márcala como "cancelada" para conservar el registro.',
+      });
+    }
+
+    await query('DELETE FROM invoices WHERE id = $1', [id]);
+
+    res.json({ message: `Factura ${factura.code} eliminada`, factura });
+  } catch (error) {
+    console.error('Error al eliminar factura:', error);
+    res.status(500).json({ error: 'Error al eliminar la factura' });
+  }
+});
+
+// PATCH /api/invoices/:id - Cambiar estado de la factura
+//
+// Permite anular una factura pagada conservando el registro, que es lo
+// que exige la contabilidad cuando se emite una factura rectificativa.
+router.patch('/invoices/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const ESTADOS = ['borrador', 'emitida', 'pagada', 'vencida', 'cancelada'];
+    if (!ESTADOS.includes(status)) {
+      return res.status(400).json({
+        error: `Estado no válido: ${status}. Valores admitidos: ${ESTADOS.join(', ')}.`,
+      });
+    }
+
+    const result = await query(
+      `UPDATE invoices SET status = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING *;`,
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Factura no encontrada' });
+    }
+
+    res.json({ invoice: result.rows[0], message: `Factura marcada como "${status}"` });
+  } catch (error) {
+    console.error('Error actualizando factura:', error);
+    res.status(500).json({ error: 'Error al actualizar la factura' });
+  }
+});
+
 export default router;
