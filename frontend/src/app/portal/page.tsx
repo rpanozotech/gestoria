@@ -13,14 +13,9 @@ import { formatThousands } from '@/lib/format';
  * cliente abre WhatsApp con el mensaje ya escrito y el gestor le confirma
  * importe, coordenadas e IBAN. Nada se cobra desde la web.
  *
- * Rellena WHATSAPP_PAGO con el numero en formato internacional, sin
- * espacios ni simbolos (ej: 31612345678). Si se deja vacio, el boton
- * avisa al cliente en lugar de abrir un chat roto.
+ * Número oficial de RP Gestoría en formato internacional, sin símbolos.
  */
-const WHATSAPP_PAGO = '';
-
-const FACTURA_REF = 'FAC-2026-0002';
-const FACTURA_TOTAL = '102,85';
+const WHATSAPP_PAGO = '31685291402';
 
 interface ClientMessage {
   id: string;
@@ -42,7 +37,7 @@ interface PortalAppointment {
   appointment_date: string;
   appointment_time: string;
   modality: 'llamada' | 'presencial' | 'online_meet';
-  status: 'confirmada' | 'completada' | 'pendiente';
+  status: 'confirmada' | 'completada' | 'pendiente' | 'cancelada';
   advisor: string;
   notes?: string;
   created_at?: string;
@@ -188,10 +183,10 @@ export default function PortalClientePage() {
       }
     : baseClient;
   const latestInvoice = client.invoices?.[0];
-  const portalInvoiceRef = latestInvoice?.code || FACTURA_REF;
+  const portalInvoiceRef = latestInvoice?.code || '';
   const portalInvoiceTotal = latestInvoice?.total != null
     ? Number(latestInvoice.total).toFixed(2).replace('.', ',')
-    : FACTURA_TOTAL;
+    : '';
 
   // Tabs de navegación
   const [activeTab, setActiveTab] = useState<
@@ -218,8 +213,6 @@ export default function PortalClientePage() {
   ]);
   const [unreadNotifications, setUnreadNotifications] = useState(2);
 
-  // Estado simulación iDEAL
-  
   // Subsidios interactivos
   const [huurtoeslagRequested, setHuurtoeslagRequested] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -229,72 +222,77 @@ export default function PortalClientePage() {
     setTimeout(() => setToastMsg(null), 3500);
   };
 
-  // Subida de carta con archivo real o simulado
+  // Documentos del cliente
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [isScanningFile, setIsScanningFile] = useState(false);
-  const [documentList, setDocumentList] = useState([
-    {
-      id: 'doc-1',
-      name: 'Confirmacion_Solicitud_DigiD_Belastingdienst.pdf',
-      category: 'Oficial Belastingdienst',
-      date: '2026-10-02',
-      size: '420 KB',
-      status: 'Validado por OCR',
-    },
-    {
-      id: 'doc-2',
-      name: 'Poliza_Seguro_Salud_HollandZorg_2026.pdf',
-      category: 'Seguro Médico',
-      date: '2026-10-03',
-      size: '1.2 MB',
-      status: 'Aprobado para Zorgtoeslag',
-    },
-    {
-      id: 'doc-3',
-      name: 'Borrador_Declaracion_MForm_2026.pdf',
-      category: 'Fiscalidad',
-      date: '2026-10-05',
-      size: '850 KB',
-      status: 'Listo para firma',
-    },
-  ]);
+  const [documentList, setDocumentList] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!portalClientData?.documents?.length) return;
+    if (!Array.isArray(portalClientData?.documents)) return;
     setDocumentList(
       portalClientData.documents.map((doc: any) => ({
         id: String(doc.id),
-        name: doc.name,
+        name: doc.file_name,
         category: doc.category || 'Documento del expediente',
-        date: doc.date || new Date().toISOString().slice(0, 10),
-        size: doc.size || '—',
-        status: doc.added_by === 'cliente' ? 'Enviado por ti' : 'Disponible para ti',
+        date: doc.created_at ? new Date(doc.created_at).toLocaleDateString('es-NL') : '—',
+        size: doc.file_size ? `${Math.max(1, Math.round(doc.file_size / 1024))} KB` : '—',
+        status: doc.uploaded_by ? 'Subido por ti' : doc.is_verified ? 'Revisado por tu gestor' : 'Disponible para ti',
       }))
     );
   }, [portalClientData]);
 
   const [previewDoc, setPreviewDoc] = useState<any>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setIsScanningFile(true);
-      setTimeout(() => {
-        setUploadedFile(file.name);
-        setIsScanningFile(false);
-        setDocumentList((prev) => [
-          {
-            id: String(Date.now()),
-            name: file.name,
-            category: 'Carta Escaneada',
-            date: new Date().toISOString().slice(0, 10),
-            size: `${(file.size / 1024).toFixed(0)} KB`,
-            status: 'Analizado por IA',
-          },
-          ...prev,
-        ]);
-        showToast(`Documento "${file.name}" digitalizado y notificado a tu asesor.`);
-      }, 1200);
+    const input = e.currentTarget;
+    if (!file) return;
+
+    setUploadedFile(null);
+    setIsScanningFile(true);
+    try {
+      const token = window.localStorage.getItem('rp_portal_token');
+      if (!token) throw new Error('Tu sesión ha caducado. Vuelve a iniciar sesión.');
+      const form = new FormData();
+      form.append('file', file);
+      const response = await fetch(apiUrl('/portal/documents'), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo subir el documento.');
+
+      setPortalClientData((previous: any) => previous
+        ? { ...previous, documents: [data.document, ...(previous.documents || [])] }
+        : previous);
+      setUploadedFile(file.name);
+      showToast(`"${file.name}" ya está disponible para tu gestor en el CRM.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo subir el documento.');
+    } finally {
+      setIsScanningFile(false);
+      input.value = '';
+    }
+  };
+
+  const handleDownloadDocument = async (document: any) => {
+    try {
+      const token = window.localStorage.getItem('rp_portal_token');
+      if (!token) throw new Error('Tu sesión ha caducado. Vuelve a iniciar sesión.');
+      const response = await fetch(apiUrl(`/portal/documents/${encodeURIComponent(document.id)}/download`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('No se pudo descargar el documento.');
+      const url = window.URL.createObjectURL(await response.blob());
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = document.name;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      setPreviewDoc(null);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo descargar el documento.');
     }
   };
 
@@ -400,30 +398,25 @@ export default function PortalClientePage() {
     },
   ];
 
-  const [allAppointments, setAllAppointments] = useState<PortalAppointment[]>(initialAppointments);
+  const [allAppointments, setAllAppointments] = useState<PortalAppointment[]>(
+    process.env.NODE_ENV === 'production' ? [] : initialAppointments
+  );
   const [aptFilter, setAptFilter] = useState<'todas' | 'proximas' | 'completadas'>('todas');
 
-  // Sincronización con localStorage para persistir las citas solicitadas por el cliente
+  // La agenda del portal refleja las citas guardadas en PostgreSQL.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('nexusgest_appointments');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setAllAppointments((prev) => {
-              const map = new Map();
-              prev.forEach((a) => map.set(String(a.id), a));
-              parsed.forEach((a: any) => map.set(String(a.id), a));
-              return Array.from(map.values());
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('Error al leer citas de localStorage:', err);
-      }
-    }
-  }, []);
+    if (!Array.isArray(portalClientData?.appointments)) return;
+    setAllAppointments(portalClientData.appointments.map((appointment: any) => ({
+      ...appointment,
+      id: String(appointment.id),
+      appointment_date: String(appointment.appointment_date).slice(0, 10),
+      appointment_time: String(appointment.appointment_time).slice(0, 8),
+      client_name: appointment.client_name || client.full_name,
+      client_phone: appointment.client_phone || client.phone,
+      status: appointment.status || 'pendiente',
+      advisor: client.advisor || 'Tu gestor',
+    })));
+  }, [portalClientData, client.full_name, client.phone, client.advisor]);
 
   // Citas pertenecientes al cliente actualmente seleccionado
   const clientAppointments = allAppointments.filter((a) => {
@@ -450,45 +443,13 @@ export default function PortalClientePage() {
   const handleCreateClientAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingApt(true);
-
-    const newApt: PortalAppointment = {
-      id: String(Date.now()),
-      client_name: client.full_name,
-      client_phone: client.phone,
-      title: bookingTopic,
-      appointment_date: bookingDate,
-      appointment_time: `${bookingTime}:00`,
-      modality: bookingModality,
-      status: 'confirmada',
-      advisor: 'Rony P.',
-      notes: bookingNotes.trim()
-        ? `Solicitada por el cliente desde su portal: ${bookingNotes}`
-        : `Solicitada por el cliente desde el portal (${bookingModality === 'online_meet' ? 'Google Meet' : bookingModality === 'llamada' ? 'Llamada telefónica' : 'Presencial'})`,
-      created_at: new Date().toISOString(),
-    };
-
-    // Actualizar estado local
-    const updated = [newApt, ...allAppointments];
-    setAllAppointments(updated);
-
-    // Guardar en localStorage para que el gestor la vea de inmediato en /crm/agenda
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('nexusgest_appointments', JSON.stringify(updated));
-      } catch (err) {
-        console.warn('Error al guardar cita en localStorage:', err);
-      }
-    }
-
-    // Intentar remitir a API backend
     try {
-      await fetch(apiUrl('/appointments'), {
+      const token = window.localStorage.getItem('rp_portal_token');
+      if (!token) throw new Error('Tu sesión ha caducado. Vuelve a iniciar sesión.');
+      const response = await fetch(apiUrl('/portal/appointments'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          full_name: client.full_name,
-          email: client.email,
-          phone: client.phone,
           title: bookingTopic,
           appointment_date: bookingDate,
           appointment_time: `${bookingTime}:00`,
@@ -496,40 +457,46 @@ export default function PortalClientePage() {
           notes: bookingNotes,
         }),
       });
-    } catch {}
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo guardar la solicitud.');
 
-    // Notificación en la campana
-    setNotificationsList((prev) => [
-      {
+      const savedAppointment: PortalAppointment = {
+        ...data.appointment,
+        id: String(data.appointment.id),
+        appointment_date: String(data.appointment.appointment_date).slice(0, 10),
+        appointment_time: String(data.appointment.appointment_time).slice(0, 8),
+        client_name: client.full_name,
+        client_phone: client.phone,
+        advisor: client.advisor || 'Tu gestor',
+      };
+      setAllAppointments((previous) => [savedAppointment, ...previous]);
+      setPortalClientData((previous: any) => previous
+        ? { ...previous, appointments: [data.appointment, ...(previous.appointments || [])] }
+        : previous);
+
+      setNotificationsList((prev) => [{
         id: String(Date.now()),
-        title: 'Cita Agendada con Éxito',
+        title: 'Solicitud de cita registrada',
         date: 'Ahora',
-        text: `${bookingTopic} programada para el ${bookingDate} a las ${bookingTime}.`,
-        type: 'success',
-      },
-      ...prev,
-    ]);
-    setUnreadNotifications((n) => n + 1);
+        text: `${bookingTopic} · ${bookingDate} a las ${bookingTime}. Pendiente de revisión por tu gestor.`,
+        type: 'info',
+      }, ...prev]);
+      setUnreadNotifications((count) => count + 1);
 
-    // Mensaje automático en el Asistente IA
-    setChatMessages((prev) => [
-      ...prev,
-      {
+      setChatMessages((prev) => [...prev, {
         id: String(Date.now()),
         sender: 'ia',
-        text: `📅 ¡Listo, ${client.full_name.split(' ')[0]}! He registrado tu nueva cita para el **${bookingDate} a las ${bookingTime}** (${
-          bookingModality === 'online_meet'
-            ? 'Videollamada Google Meet'
-            : bookingModality === 'llamada'
-            ? `Llamada telefónica al ${client.phone}`
-            : 'Presencial en despacho'
-        }).\n\nTu asesor personal **Rony P.** ha recibido la confirmación en su agenda y revisará previamente tu expediente **${client.dossier_code}**.`,
+        text: `He registrado tu solicitud para el **${bookingDate} a las ${bookingTime}**. Tu gestor la revisará; la cita aún no está confirmada.`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         suggestedAction: { label: 'Ver mis Citas', tab: 'citas' },
-      },
-    ]);
+      }]);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo guardar la solicitud de cita.');
+      return;
+    } finally {
+      setIsSubmittingApt(false);
+    }
 
-    setIsSubmittingApt(false);
     setShowBookingModal(false);
     setBookingNotes('');
     setActiveTab('citas');
@@ -612,7 +579,7 @@ export default function PortalClientePage() {
           action = { label: 'Solicitar Nueva Cita', tab: 'citas', action: 'open_booking' };
         }
       } else if (lower.includes('factura') || lower.includes('pagar') || lower.includes('ideal')) {
-        reply = `Puedes abonar cómodamente la gestión de tus trámites mediante la pasarela segura **iDEAL** utilizando cualquiera de los principales bancos neerlandeses (ING, ABN AMRO, Rabobank, Bunq) o descargar tu factura oficial con el 21% BTW desglosado.`;
+        reply = `Puedes coordinar el pago de tu factura directamente con tu gestor por **WhatsApp**. Abre la pestaña de facturas para iniciar la conversación con el número y la referencia preparados.`;
         action = { label: 'Ver Facturas y Pago', tab: 'facturas' };
       } else {
         reply = `He registrado tu consulta sobre *"${message}"*. Tu asesor personal **Rony P.** tiene visibilidad de este chat en su CRM y revisará cualquier detalle específico en tu expediente **${client.dossier_code}**.\n\n¿Deseas que te oriente sobre tus **subsidios**, tu **declaración M-Form** o **agendar una cita** directa?`;
@@ -896,7 +863,7 @@ export default function PortalClientePage() {
             { id: 'citas', icon: 'event', label: 'Mis Citas & Solicitar', badge: `${clientAppointments.length}` },
             { id: 'ia', icon: 'smart_toy', label: 'Asistente IA 24/7' },
             { id: 'toeslagen', icon: 'health_and_safety', label: 'Subsidios & Toeslagen Hub' },
-            { id: 'facturas', icon: 'credit_card', label: 'Facturas & Pago iDEAL' },
+            { id: 'facturas', icon: 'chat', label: 'Facturas & Pago WhatsApp' },
             { id: 'documentos', icon: 'folder_shared', label: 'Bóveda de Documentos' },
           ].map((t) => (
             <button
@@ -1514,10 +1481,11 @@ export default function PortalClientePage() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 4: FACTURAS & PAGO SEGURO IDEAL */}
+        {/* TAB 4: FACTURAS Y PAGO POR WHATSAPP */}
         {/* ========================================================================= */}
         {activeTab === 'facturas' && (
           <div className="max-w-3xl mx-auto space-y-6">
+            {latestInvoice ? (
             <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
                 <div>
@@ -1526,7 +1494,7 @@ export default function PortalClientePage() {
                       FACTURA {portalInvoiceRef}
                     </span>
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">
-                      PENDIENTE DE PAGO
+                      {latestInvoice.status === 'pagada' ? 'PAGADA' : String(latestInvoice.status || 'pendiente').toUpperCase()}
                     </span>
                   </div>
                   <h3 className="text-lg font-bold text-white mt-1.5">{client.dossier_title}</h3>
@@ -1552,12 +1520,8 @@ export default function PortalClientePage() {
                   </p>
                 </div>
 
-                <button
+                {latestInvoice.status !== 'pagada' && <button
                   onClick={() => {
-                    if (!WHATSAPP_PAGO) {
-                      showToast('El pago por WhatsApp aún no está configurado. Contacta a tu gestor por email.');
-                      return;
-                    }
                     const mensaje = encodeURIComponent(
                       `Hola, quiero pagar la factura ${portalInvoiceRef} de mi gestoría (importe ${portalInvoiceTotal} EUR). ¿Me confirmas las coordenadas para hacer el pago?`
                     );
@@ -1567,7 +1531,7 @@ export default function PortalClientePage() {
                 >
                   <span className="material-symbols-outlined text-[18px]">chat</span>
                   <span>Pagar por WhatsApp</span>
-                </button>
+                </button>}
 
                 <p className="text-[11px] text-slate-400 text-center leading-relaxed">
                   Te abrimos WhatsApp con el mensaje ya escrito. Tu gestor te confirmará las
@@ -1575,6 +1539,13 @@ export default function PortalClientePage() {
                 </p>
               </div>
             </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
+                <span className="material-symbols-outlined text-3xl text-slate-500">receipt_long</span>
+                <h3 className="mt-3 text-sm font-bold text-white">No tienes facturas registradas</h3>
+                <p className="mt-1 text-xs text-slate-400">Cuando tu gestor cree una factura en el CRM, aparecerá aquí.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -1591,7 +1562,7 @@ export default function PortalClientePage() {
               <div className="max-w-md mx-auto">
                 <h3 className="font-bold text-base text-white">Sube la carta que recibiste en tu buzón</h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Nuestra Inteligencia Artificial leerá el código DigiD o la resolución de impuestos de la Belastingdienst al instante y avisará a tu gestor.
+                  El archivo se guardará de forma segura y quedará disponible para tu gestor en el CRM.
                 </p>
               </div>
 
@@ -1603,53 +1574,21 @@ export default function PortalClientePage() {
                 className="hidden"
               />
 
-              {uploadedFile ? (
-                <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold rounded-xl space-y-1 max-w-md mx-auto">
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined text-lg text-emerald-400">check_circle</span>
-                    <span>Archivo &quot;{uploadedFile}&quot; digitalizado correctamente.</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400">Tu gestor Rony P. ha sido notificado para la revisión.</p>
-                </div>
-              ) : isScanningFile ? (
+              {isScanningFile ? (
                 <div className="p-4 bg-blue-500/10 text-blue-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 max-w-md mx-auto">
                   <span className="material-symbols-outlined animate-spin text-lg">sync</span>
-                  <span>Extrayendo código y datos fiscales con el motor IA...</span>
+                  <span>Guardando documento...</span>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div className="flex flex-col items-center justify-center gap-3">
                   <label
                     htmlFor="portalDocUploadInput"
                     className="h-11 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md inline-flex items-center gap-2 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                    <span>Seleccionar Archivo (Foto o PDF)</span>
+                    <span>{uploadedFile ? 'Subir otro documento' : 'Seleccionar archivo (PDF o foto)'}</span>
                   </label>
-                  <button
-                    onClick={() => {
-                      setIsScanningFile(true);
-                      setTimeout(() => {
-                        setUploadedFile('Carta_Belastingdienst_DigiD_Code.pdf');
-                        setIsScanningFile(false);
-                        setDocumentList((prev) => [
-                          {
-                            id: String(Date.now()),
-                            name: 'Carta_Belastingdienst_DigiD_Code.pdf',
-                            category: 'Carta Escaneada',
-                            date: new Date().toISOString().slice(0, 10),
-                            size: '540 KB',
-                            status: 'Validado por OCR',
-                          },
-                          ...prev,
-                        ]);
-                        showToast('Carta oficial de DigiD digitalizada con éxito.');
-                      }, 1200);
-                    }}
-                    className="h-11 px-4 border border-slate-700 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5"
-                  >
-                    <span className="material-symbols-outlined text-[16px] text-blue-400">auto_awesome</span>
-                    <span>Simular Subida Automática</span>
-                  </button>
+                  {uploadedFile && <p className="text-[11px] text-emerald-300">Último archivo guardado: {uploadedFile}</p>}
                 </div>
               )}
             </div>
@@ -1662,6 +1601,7 @@ export default function PortalClientePage() {
               </div>
 
               <div className="space-y-2.5">
+                {documentList.length === 0 && <p className="py-5 text-center text-xs text-slate-400">No hay documentos asociados a tu expediente.</p>}
                 {documentList.map((doc) => (
                   <div
                     key={doc.id}
@@ -1910,10 +1850,7 @@ export default function PortalClientePage() {
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
-                onClick={() => {
-                  showToast(`Descargando "${previewDoc.name}"...`);
-                  setPreviewDoc(null);
-                }}
+                onClick={() => handleDownloadDocument(previewDoc)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
               >
                 <span className="material-symbols-outlined text-[16px]">download</span>
