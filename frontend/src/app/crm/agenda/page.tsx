@@ -40,7 +40,7 @@ function formatLongDate(dateStr: string): string {
 
 export default function CRMAgendaPage() {
   const router = useRouter();
-  const [appointments, setAppointments] = useState<Appointment[]>([
+  const [appointments, setAppointments] = useState<Appointment[]>(process.env.NODE_ENV === 'production' ? [] : [
     {
       id: '1',
       title: 'Seguimiento Telefónico Zorgtoeslag',
@@ -167,9 +167,12 @@ export default function CRMAgendaPage() {
   // Cargar citas reales de la API backend si está disponible
   useEffect(() => {
     apiFetch('/appointments')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('No se pudieron cargar las citas.');
+        return res.json();
+      })
       .then((data) => {
-        if (data.appointments && data.appointments.length > 0) {
+        if (Array.isArray(data.appointments)) {
           const mapped: Appointment[] = data.appointments.map((a: any) => ({
             id: String(a.id),
             title: a.title,
@@ -181,15 +184,23 @@ export default function CRMAgendaPage() {
             status: a.status || 'confirmada',
             notes: a.notes || '',
           }));
-          setAppointments(mapped);
+          if (process.env.NODE_ENV === 'production') {
+            setAppointments(mapped);
+          } else {
+            setAppointments((prev) => {
+              const map = new Map(prev.map((appointment) => [String(appointment.id), appointment]));
+              mapped.forEach((appointment) => map.set(String(appointment.id), appointment));
+              return Array.from(map.values());
+            });
+          }
         }
       })
-      .catch(() => {});
+      .catch((error) => console.error('Error al cargar citas del CRM:', error));
   }, []);
 
   // Sincronización con localStorage (citas solicitadas desde el portal del cliente)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
       try {
         const stored = localStorage.getItem('nexusgest_appointments');
         if (stored) {
@@ -212,6 +223,8 @@ export default function CRMAgendaPage() {
   // Actualización inmediata si una reserva se confirma desde otra pestaña o
   // desde la página pública sin recargar manualmente el CRM.
   useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+
     const syncUpdatedAppointments = () => {
       try {
         const stored = window.localStorage.getItem('nexusgest_appointments');
@@ -237,7 +250,7 @@ export default function CRMAgendaPage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && appointments.length > 0) {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production' && appointments.length > 0) {
       try {
         localStorage.setItem('nexusgest_appointments', JSON.stringify(appointments));
       } catch (err) {

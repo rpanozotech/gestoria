@@ -60,16 +60,18 @@ export default function ReservarCitaPage() {
     const loadAvailability = async () => {
       setAvailabilityLoading(true);
       const localAppointments: BusyAppointment[] = [];
-      try {
-        const stored = window.localStorage.getItem('nexusgest_appointments');
-        const parsed = stored ? JSON.parse(stored) : [];
-        if (Array.isArray(parsed)) {
-          localAppointments.push(
-            ...parsed.filter((appointment: BusyAppointment) => appointment.appointment_date === bookDate)
-          );
+      if (process.env.NODE_ENV !== 'production') {
+        try {
+          const stored = window.localStorage.getItem('nexusgest_appointments');
+          const parsed = stored ? JSON.parse(stored) : [];
+          if (Array.isArray(parsed)) {
+            localAppointments.push(
+              ...parsed.filter((appointment: BusyAppointment) => appointment.appointment_date === bookDate)
+            );
+          }
+        } catch {
+          // El servidor sigue siendo la fuente principal si el almacenamiento local falla.
         }
-      } catch {
-        // El servidor sigue siendo la fuente principal si el almacenamiento local falla.
       }
 
       try {
@@ -120,17 +122,16 @@ export default function ReservarCitaPage() {
       notes: `Reserva realizada desde la web. Email: ${bookEmail}`,
     };
 
-    // Copia local compartida: permite que el CRM muestre la reserva aunque
-    // el backend esté temporalmente fuera de línea.
-    try {
-      const stored = window.localStorage.getItem('nexusgest_appointments');
-      const existing = stored ? JSON.parse(stored) : [];
-      const appointments = Array.isArray(existing) ? existing : [];
-      window.localStorage.setItem('nexusgest_appointments', JSON.stringify([newAppointment, ...appointments]));
-      window.dispatchEvent(new CustomEvent('nexusgest_appointments_updated'));
-    } catch {
-      // La confirmación del backend sigue siendo la fuente principal cuando
-      // el navegador no permite usar almacenamiento local.
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const stored = window.localStorage.getItem('nexusgest_appointments');
+        const existing = stored ? JSON.parse(stored) : [];
+        const appointments = Array.isArray(existing) ? existing : [];
+        window.localStorage.setItem('nexusgest_appointments', JSON.stringify([newAppointment, ...appointments]));
+        window.dispatchEvent(new CustomEvent('nexusgest_appointments_updated'));
+      } catch {
+        // El guardado en PostgreSQL sigue siendo obligatorio.
+      }
     }
 
     try {
@@ -153,17 +154,20 @@ export default function ReservarCitaPage() {
         throw new Error(data.error || 'Ese horario ya no está disponible.');
       }
       setBookSuccess(true);
-    } catch {
-      // Si el servidor rechaza por solapamiento, no confirmamos la cita.
-      setBookingError('Ese horario no está disponible. Elige otra hora libre.');
-      try {
-        const stored = window.localStorage.getItem('nexusgest_appointments');
-        const parsed = stored ? JSON.parse(stored) : [];
-        window.localStorage.setItem(
-          'nexusgest_appointments',
-          JSON.stringify(Array.isArray(parsed) ? parsed.filter((appointment: any) => appointment.id !== newAppointment.id) : [])
-        );
-      } catch {}
+    } catch (error) {
+      setBookingError(error instanceof Error && error.message !== 'Failed to fetch'
+        ? error.message
+        : 'No se pudo conectar con el servidor. La cita no se ha confirmado.');
+      if (process.env.NODE_ENV !== 'production') {
+        try {
+          const stored = window.localStorage.getItem('nexusgest_appointments');
+          const parsed = stored ? JSON.parse(stored) : [];
+          window.localStorage.setItem(
+            'nexusgest_appointments',
+            JSON.stringify(Array.isArray(parsed) ? parsed.filter((appointment: any) => appointment.id !== newAppointment.id) : [])
+          );
+        } catch {}
+      }
     } finally {
       setBookLoading(false);
     }
@@ -206,7 +210,7 @@ export default function ReservarCitaPage() {
                     ¡Cita programada con éxito!
                   </h3>
                   <p className="text-slate-600 max-w-md mx-auto text-sm leading-relaxed">
-                    Hemos enviado la confirmación y el enlace de la videollamada a <strong>{bookEmail}</strong>. Tu gestor asignado revisará tu caso antes de la reunión.
+                    Tu reserva quedó registrada. Nos pondremos en contacto contigo para confirmar los detalles de la cita.
                   </p>
                   <div className="pt-4 flex justify-center gap-3">
                     <button
