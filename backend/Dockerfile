@@ -18,6 +18,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=5000
 
+RUN apk add --no-cache postgresql-client
+
 # Create non-root user for security.
 # --ingroup nodejs es explicito: sin el, adduser asigna el grupo por defecto
 # y el `--chown=nextjs:nodejs` de mas abajo dependeria de esa suposicion.

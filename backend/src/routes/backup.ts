@@ -1,9 +1,112 @@
 import { Router, Request, Response } from 'express';
-import { unlink } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { cp, mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
+import multer from 'multer';
+import * as tar from 'tar';
+import type { PoolClient } from 'pg';
 import { pool, query } from '../db/index.js';
 
 const router = Router();
+const BACKUP_FORMAT = 'nexusgest-full-backup-v1';
+const MAX_BACKUP_SIZE = 3 * 1024 * 1024 * 1024;
+
+const fullBackupUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, callback) => callback(null, os.tmpdir()),
+    filename: (_req, _file, callback) => callback(null, `nexusgest-restore-${crypto.randomBytes(12).toString('hex')}.tar.gz`),
+  }),
+  limits: { fileSize: MAX_BACKUP_SIZE },
+  fileFilter: (_req, file, callback) => callback(null, file.originalname.toLowerCase().endsWith('.tar.gz')),
+});
+
+const receiveFullBackup = (req: Request, res: Response, next: (error?: any) => void) => {
+  fullBackupUpload.single('backup')(req, res, (error) => {
+    if (error) return res.status(400).json({ error: 'El archivo no es válido o supera el límite de 3 GB.' });
+    next();
+  });
+};
+
+function pgToolEnvironment(): NodeJS.ProcessEnv {
+  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL no está configurada.');
+  const connection = new URL(process.env.DATABASE_URL);
+  const sslmode = connection.searchParams.get('sslmode');
+  return {
+    ...process.env,
+    PGHOST: decodeURIComponent(connection.hostname),
+    PGPORT: connection.port || '5432',
+    PGUSER: decodeURIComponent(connection.username),
+    PGPASSWORD: decodeURIComponent(connection.password),
+    PGDATABASE: decodeURIComponent(connection.pathname.replace(/^\//, '')),
+    PGAPPNAME: 'nexusgest-manual-backup',
+    ...(sslmode ? { PGSSLMODE: sslmode } : {}),
+  };
+}
+
+function runPostgresTool(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { env, stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (chunk: string) => { stderr = `${stderr}${chunk}`.slice(-8000); });
+    child.once('error', reject);
+    child.once('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`${command} terminó con código ${code}: ${stderr.trim()}`));
+    });
+  });
+}
+
+function normalizedBackupEntry(entryPath: string): string | null {
+  const normalizedInput = entryPath.replace(/\\/g, '/');
+  if (path.posix.isAbsolute(normalizedInput) || normalizedInput.split('/').includes('..') || /^[a-zA-Z]:/.test(normalizedInput)) {
+    return null;
+  }
+  const normalized = path.posix.normalize(normalizedInput).replace(/^(\.\/)+/, '').replace(/\/+$/, '');
+  if (normalized === 'database.dump' || normalized === 'metadata.json' || normalized === 'uploads' || normalized.startsWith('uploads/')) {
+    return normalized;
+  }
+  return null;
+}
+
+async function extractFullBackup(archivePath: string, targetDir: string): Promise<any> {
+  const requiredEntries = new Set<string>();
+  let expandedBytes = 0;
+  await tar.t({
+    file: archivePath,
+    strict: true,
+    onentry(entry) {
+      const normalized = normalizedBackupEntry(entry.path);
+      if (!normalized || !['File', 'Directory'].includes(entry.type)) {
+        throw new Error('El archivo contiene rutas o tipos de archivo no permitidos.');
+      }
+      if (entry.size > MAX_BACKUP_SIZE * 5) throw new Error('El contenido descomprimido supera el límite permitido.');
+      expandedBytes += entry.size;
+      if (expandedBytes > MAX_BACKUP_SIZE * 5) throw new Error('El contenido descomprimido supera el límite permitido.');
+      requiredEntries.add(normalized);
+    },
+  });
+
+  if (!requiredEntries.has('database.dump') || !requiredEntries.has('metadata.json') || !requiredEntries.has('uploads')) {
+    throw new Error('La copia no contiene la base de datos, los documentos y los metadatos.');
+  }
+
+  await tar.x({
+    file: archivePath,
+    cwd: targetDir,
+    strict: true,
+    filter: (entryPath) => normalizedBackupEntry(entryPath) !== null,
+  });
+
+  const metadata = JSON.parse(await readFile(path.join(targetDir, 'metadata.json'), 'utf8'));
+  if (metadata?.format !== BACKUP_FORMAT || !metadata.counts) {
+    throw new Error('La copia no es un respaldo completo de NexusGest.');
+  }
+  await runPostgresTool('pg_restore', ['--list', path.join(targetDir, 'database.dump')], pgToolEnvironment());
+  return metadata;
+}
 
 const RESTORE_TABLES = {
   clients: ['id', 'full_name', 'email', 'phone', 'bsn', 'id_document_number', 'nationality', 'address', 'city', 'postal_code', 'country', 'iban', 'digid_status', 'status', 'notes', 'created_at', 'updated_at'],
@@ -105,6 +208,132 @@ router.get('/stats', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Error al obtener estadísticas de backup:', err);
     res.status(500).json({ error: 'Error al consultar datos de backup' });
+  }
+});
+
+router.post('/full', async (req: Request, res: Response) => {
+  let workDir: string | undefined;
+  let snapshotClient: PoolClient | undefined;
+  let snapshotOpen = false;
+
+  try {
+    const pgEnv = pgToolEnvironment();
+    workDir = await mkdtemp(path.join(os.tmpdir(), 'nexusgest-backup-'));
+    const dumpPath = path.join(workDir, 'database.dump');
+    const archivePath = path.join(workDir, 'nexusgest-full-backup.tar.gz');
+    const uploadsPath = path.resolve(process.env.UPLOAD_DIR || './uploads');
+    const countTables = {
+      clients: 'clients',
+      dossiers: 'dossiers',
+      quotes: 'quotes',
+      invoices: 'invoices',
+      appointments: 'appointments',
+      documents: 'documents',
+      users: 'users',
+      ai_logs: 'ai_logs',
+    } as const;
+    const counts: Record<string, number> = {};
+
+    const exporter = await pool.connect();
+    snapshotClient = exporter;
+    await exporter.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    snapshotOpen = true;
+    for (const [key, table] of Object.entries(countTables)) {
+      const result = await exporter.query(`SELECT COUNT(*)::bigint AS count FROM ${table}`);
+      counts[key] = Number(result.rows[0].count);
+    }
+    const snapshotResult = await exporter.query('SELECT pg_export_snapshot() AS snapshot');
+    await runPostgresTool('pg_dump', [
+      '--format=custom',
+      '--no-owner',
+      '--no-acl',
+      `--snapshot=${snapshotResult.rows[0].snapshot}`,
+      '--file',
+      dumpPath,
+    ], pgEnv);
+    await exporter.query('COMMIT');
+    snapshotOpen = false;
+    snapshotClient.release();
+    snapshotClient = undefined;
+
+    await runPostgresTool('pg_restore', ['--list', dumpPath], pgEnv);
+    await cp(uploadsPath, path.join(workDir, 'uploads'), { recursive: true, force: true });
+    const metadata = {
+      format: BACKUP_FORMAT,
+      createdAt: new Date().toISOString(),
+      counts,
+    };
+    await writeFile(path.join(workDir, 'metadata.json'), JSON.stringify(metadata, null, 2), 'utf8');
+    await tar.c({ gzip: true, file: archivePath, cwd: workDir, portable: true }, [
+      'database.dump',
+      'metadata.json',
+      'uploads',
+    ]);
+
+    const date = new Date().toISOString().replace(/[:.]/g, '-');
+    res.setHeader('X-Backup-Counts', JSON.stringify(counts));
+    res.setHeader('Content-Type', 'application/gzip');
+    return res.download(archivePath, `nexusgest-backup-${date}.tar.gz`, (error) => {
+      if (error) console.error('Error enviando copia completa:', error);
+      void rm(workDir!, { recursive: true, force: true }).catch(() => undefined);
+    });
+  } catch (error) {
+    if (snapshotClient) {
+      if (snapshotOpen) await snapshotClient.query('ROLLBACK').catch(() => undefined);
+      snapshotClient.release();
+    }
+    if (workDir) await rm(workDir, { recursive: true, force: true }).catch(() => undefined);
+    console.error('Error creando copia completa:', error);
+    return res.status(500).json({ error: 'No se pudo crear la copia completa de PostgreSQL y documentos.' });
+  }
+});
+
+router.post('/full/inspect', receiveFullBackup, async (req: Request, res: Response) => {
+  let workDir: string | undefined;
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Selecciona un archivo .tar.gz de NexusGest.' });
+    workDir = await mkdtemp(path.join(os.tmpdir(), 'nexusgest-inspect-'));
+    const metadata = await extractFullBackup(req.file.path, workDir);
+    return res.json({ metadata });
+  } catch (error) {
+    console.error('Error inspeccionando copia completa:', error);
+    return res.status(400).json({ error: 'El archivo no es una copia completa válida de NexusGest.' });
+  } finally {
+    if (workDir) await rm(workDir, { recursive: true, force: true }).catch(() => undefined);
+    if (req.file) await unlink(req.file.path).catch(() => undefined);
+  }
+});
+
+router.post('/full/restore', receiveFullBackup, async (req: Request, res: Response) => {
+  let workDir: string | undefined;
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Selecciona un archivo .tar.gz de NexusGest.' });
+    if (req.body?.confirmation !== 'RESTAURAR COPIA COMPLETA') {
+      return res.status(400).json({ error: 'Confirmación incorrecta. Vuelve a revisar la copia antes de restaurar.' });
+    }
+
+    workDir = await mkdtemp(path.join(os.tmpdir(), 'nexusgest-restore-'));
+    const metadata = await extractFullBackup(req.file.path, workDir);
+    const restoredUploads = path.join(workDir, 'uploads');
+    const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
+    await cp(restoredUploads, uploadDir, { recursive: true, force: true });
+    await runPostgresTool('pg_restore', [
+      '--clean',
+      '--if-exists',
+      '--no-owner',
+      '--no-acl',
+      '--single-transaction',
+      '--exit-on-error',
+      path.join(workDir, 'database.dump'),
+    ], pgToolEnvironment());
+
+    return res.json({ message: 'Copia completa restaurada.', restored: metadata.counts, createdAt: metadata.createdAt });
+  } catch (error) {
+    console.error('Error restaurando copia completa:', error);
+    return res.status(500).json({ error: 'No se pudo restaurar la copia. PostgreSQL conserva sus datos si la restauración falla.' });
+  } finally {
+    if (workDir) await rm(workDir, { recursive: true, force: true }).catch(() => undefined);
+    if (req.file) await unlink(req.file.path).catch(() => undefined);
   }
 });
 

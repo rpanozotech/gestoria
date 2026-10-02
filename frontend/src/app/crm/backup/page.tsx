@@ -35,6 +35,7 @@ export default function CRMBackupPage() {
   });
 
   const [loadingStats, setLoadingStats] = useState(true);
+  const [isCreatingFullBackup, setIsCreatingFullBackup] = useState(false);
   const [isExportingJson, setIsExportingJson] = useState(false);
   const [exportingCsvType, setExportingCsvType] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -45,6 +46,8 @@ export default function CRMBackupPage() {
   // Estados para restauración / importación
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<any | null>(null);
+  const [isInspectingBackup, setIsInspectingBackup] = useState(false);
+  const [hasDownloadedCurrentBackup, setHasDownloadedCurrentBackup] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
   const showToast = (msg: string) => {
@@ -117,6 +120,33 @@ export default function CRMBackupPage() {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+  };
+
+  const handleCreateFullBackup = async (): Promise<boolean> => {
+    setIsCreatingFullBackup(true);
+    try {
+      const res = await apiFetch('/backup/full', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || 'No se pudo crear la copia completa.');
+      }
+      const counts = JSON.parse(res.headers.get('X-Backup-Counts') || '{}');
+      const filename = res.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/i)?.[1]
+        || `nexusgest-backup-${new Date().toISOString().slice(0, 10)}.tar.gz`;
+      triggerDownload(await res.blob(), filename);
+      showToast(`Copia completa: ${counts.clients ?? 0} clientes, ${counts.invoices ?? 0} facturas, ${counts.appointments ?? 0} citas y ${counts.documents ?? 0} documentos.`);
+      return true;
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo crear la copia completa.');
+      return false;
+    } finally {
+      setIsCreatingFullBackup(false);
+    }
+  };
+
+  const handleSaveCurrentBackupBeforeRestore = async () => {
+    const created = await handleCreateFullBackup();
+    setHasDownloadedCurrentBackup(created);
   };
 
   // 1. Descargar Backup Completo en JSON
@@ -274,53 +304,67 @@ export default function CRMBackupPage() {
     }
   };
 
-  // 3. Procesar archivo de copia de seguridad para previsualizar antes de restaurar
-  const handleFileSelectForRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 3. Inspeccionar la copia completa antes de ofrecer la restauración
+  const handleFileSelectForRestore = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+    const input = e.currentTarget;
     setImportFile(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target?.result as string);
-        if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.clients)) {
-          throw new Error('El JSON no contiene clientes.');
-        }
-        setImportPreview(parsed);
-      } catch (err) {
-        showToast('El archivo seleccionado no es un JSON válido.');
-        setImportPreview(null);
-        setImportFile(null);
-      }
-    };
-    reader.readAsText(file);
+    setImportPreview(null);
+    setHasDownloadedCurrentBackup(false);
+    if (!file.name.toLowerCase().endsWith('.tar.gz')) {
+      showToast('Selecciona una copia completa de NexusGest (.tar.gz).');
+      setImportFile(null);
+      input.value = '';
+      return;
+    }
+
+    setIsInspectingBackup(true);
+    try {
+      const form = new FormData();
+      form.append('backup', file);
+      const res = await apiFetch('/backup/full/inspect', { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'No se pudo leer la copia.');
+      setImportPreview(data.metadata);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo leer la copia.');
+      setImportFile(null);
+      input.value = '';
+    } finally {
+      setIsInspectingBackup(false);
+    }
   };
 
   // 4. Restaurar copia de seguridad en el sistema
   const handleExecuteRestore = async () => {
-    if (!importPreview) return;
+    if (!importPreview || !importFile || !hasDownloadedCurrentBackup) return;
 
-    if (!confirm('¿Deseas importar esta copia a PostgreSQL? Los registros con el mismo ID se actualizarán. Los documentos adjuntos no están incluidos en el JSON.')) {
+    const counts = importPreview.counts || {};
+    const summary = `Clientes: ${counts.clients ?? 0}\nFacturas: ${counts.invoices ?? 0}\nCitas: ${counts.appointments ?? 0}\nExpedientes: ${counts.dossiers ?? 0}\nDocumentos: ${counts.documents ?? 0}`;
+    if (!confirm(`Vas a reemplazar los datos actuales y el esquema por la copia del ${new Date(importPreview.createdAt).toLocaleString('es-ES')}.\n\n${summary}\n\nEsta acción no se puede deshacer. ¿Continuar?`)) {
       return;
     }
 
     setIsImporting(true);
     try {
-      const res = await apiFetch('/backup/restore', {
-        method: 'POST',
-        body: JSON.stringify({ confirmation: 'RESTAURAR RESPALDO', backup: importPreview }),
-      });
+      const form = new FormData();
+      form.append('backup', importFile);
+      form.append('confirmation', 'RESTAURAR COPIA COMPLETA');
+      const res = await apiFetch('/backup/full/restore', { method: 'POST', body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data?.error || 'No se pudo restaurar la copia en PostgreSQL.');
+        throw new Error(data?.error || 'No se pudo restaurar la copia completa.');
       }
 
       localStorage.removeItem('nexusgest_clients');
+      localStorage.removeItem('nexusgest_appointments');
       window.dispatchEvent(new CustomEvent('nexusgest_clients_updated'));
-      showToast(`Restaurados ${data.restored?.clients || 0} clientes en PostgreSQL.${data.skippedDocuments ? ` ${data.skippedDocuments} documentos no se restauraron porque el JSON no incluye los archivos.` : ''}`);
+      window.dispatchEvent(new CustomEvent('nexusgest_appointments_updated'));
+      showToast(`Restaurados ${data.restored?.clients ?? 0} clientes, ${data.restored?.invoices ?? 0} facturas y ${data.restored?.appointments ?? 0} citas.`);
       setImportPreview(null);
       setImportFile(null);
+      setHasDownloadedCurrentBackup(false);
       const statsRes = await apiFetch('/backup/stats').catch(() => null);
       if (statsRes?.ok) setStats(await statsRes.json());
     } catch (err: any) {
@@ -386,28 +430,31 @@ export default function CRMBackupPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-on-surface">Copia de Seguridad & Portabilidad CRM</h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono-data font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Exportación desde PostgreSQL
+              Copia completa manual y exportaciones
             </span>
           </div>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Exporta registros de PostgreSQL en JSON o CSV. Los archivos adjuntos requieren el backup de archivos del servidor.
+            Crea una copia manual completa de PostgreSQL y los documentos, o exporta registros en JSON/CSV para migración.
           </p>
         </div>
 
         {/* Botón Principal Destacado */}
         <button
-          onClick={handleDownloadFullBackup}
-          disabled={isExportingJson}
+          onClick={handleCreateFullBackup}
+          disabled={isCreatingFullBackup}
           className="h-10 px-5 bg-secondary hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 shrink-0 disabled:opacity-50"
         >
           <span className="material-symbols-outlined text-[18px]">
-            {isExportingJson ? 'hourglass_top' : 'cloud_download'}
+            {isCreatingFullBackup ? 'hourglass_top' : 'cloud_download'}
           </span>
-          <span>{isExportingJson ? 'Generando Copia...' : 'Descargar Copia Completa (JSON)'}</span>
+          <span>{isCreatingFullBackup ? 'Creando copia completa...' : 'Crear y descargar copia completa'}</span>
         </button>
       </div>
 
-      {/* KPI Stats de Registros Respaldados */}
+      {/* Conteos actuales consultados desde PostgreSQL */}
+      <p className="text-[11px] text-on-surface-variant">
+        Conteos actuales del servidor. El aviso de creación indica los registros exactos incluidos en cada copia.
+      </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <div className="p-4 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xs">
           <div className="flex items-center justify-between text-outline">
@@ -630,14 +677,14 @@ export default function CRMBackupPage() {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-secondary flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">all_inclusive</span>
-                  <span>Paquete Completo JSON</span>
+                  <span>Exportación de registros JSON</span>
                 </span>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-secondary text-white">
-                  Backup Total
+                  Exportación JSON
                 </span>
               </div>
               <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
-                Registros del CRM en JSON; los archivos adjuntos se respaldan por separado en el servidor.
+                Para migrar registros. No incluye los adjuntos y no sustituye la copia completa .tar.gz.
               </p>
             </div>
             <button
@@ -661,9 +708,9 @@ export default function CRMBackupPage() {
                 <span className="material-symbols-outlined text-lg">restore</span>
               </div>
               <div>
-                <h2 className="text-sm font-bold text-on-surface">Restaurar Copia de Seguridad</h2>
+                <h2 className="text-sm font-bold text-on-surface">Restaurar copia completa</h2>
                 <p className="text-[11px] text-on-surface-variant">
-                  Importa los registros del archivo JSON en PostgreSQL. Los documentos adjuntos requieren el backup de archivos del servidor.
+                  Sube un .tar.gz creado desde este CRM. Verás sus conteos antes de reemplazar los datos actuales.
                 </p>
               </div>
             </div>
@@ -671,13 +718,13 @@ export default function CRMBackupPage() {
             <div className="p-4 border-2 border-dashed border-outline-variant rounded-xl bg-surface text-center space-y-3">
               <span className="material-symbols-outlined text-3xl text-outline">upload_file</span>
               <div>
-                <p className="text-xs font-semibold text-on-surface">Selecciona el fichero de respaldo</p>
-                <p className="text-[11px] text-outline mt-0.5">Copia JSON generada por NexusGest</p>
+                <p className="text-xs font-semibold text-on-surface">Selecciona una copia completa</p>
+                <p className="text-[11px] text-outline mt-0.5">Archivo .tar.gz descargado desde NexusGest</p>
               </div>
 
               <input
                 type="file"
-                accept=".json"
+                accept=".tar.gz"
                 onChange={handleFileSelectForRestore}
                 className="hidden"
                 id="restore-upload-input"
@@ -687,23 +734,43 @@ export default function CRMBackupPage() {
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg text-xs font-semibold cursor-pointer transition-colors border border-outline-variant"
               >
                 <span className="material-symbols-outlined text-[16px]">folder_open</span>
-                <span>Explorar Archivo JSON</span>
+                <span>Explorar copia .tar.gz</span>
               </label>
             </div>
 
-            {/* Previsualización del archivo si se cargó uno */}
+            {isInspectingBackup && (
+              <p className="mt-4 text-center text-xs text-outline">Validando copia y leyendo conteos...</p>
+            )}
+
+            {/* Conteos leídos desde los metadatos de la copia validada */}
             {importPreview && (
               <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-xs">
                 <div className="flex items-center justify-between text-emerald-900 font-bold">
-                  <span>Archivo Detectado: {importFile?.name}</span>
-                  <span className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded font-mono-data">Válido</span>
+                  <span>Copia verificada: {importFile?.name}</span>
+                  <span className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded font-mono-data">Completa</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-emerald-800">
-                  <div>Clientes detectados: <strong>{importPreview.clients?.length || 0}</strong></div>
-                  <div>Trámites/Expedientes: <strong>{importPreview.dossiers?.length || 0}</strong></div>
-                  <div>Facturas registradas: <strong>{importPreview.invoices?.length || 0}</strong></div>
-                  <div>Exportado originalmente: <strong>{importPreview.meta?.exported_at?.slice(0, 10) || '—'}</strong></div>
+                  <div>Clientes: <strong>{importPreview.counts?.clients ?? 0}</strong></div>
+                  <div>Facturas: <strong>{importPreview.counts?.invoices ?? 0}</strong></div>
+                  <div>Citas: <strong>{importPreview.counts?.appointments ?? 0}</strong></div>
+                  <div>Expedientes: <strong>{importPreview.counts?.dossiers ?? 0}</strong></div>
+                  <div>Presupuestos: <strong>{importPreview.counts?.quotes ?? 0}</strong></div>
+                  <div>Documentos: <strong>{importPreview.counts?.documents ?? 0}</strong></div>
+                  <div>Usuarios: <strong>{importPreview.counts?.users ?? 0}</strong></div>
+                  <div>Fecha: <strong>{importPreview.createdAt ? new Date(importPreview.createdAt).toLocaleString('es-ES') : '—'}</strong></div>
                 </div>
+                {hasDownloadedCurrentBackup ? (
+                  <p className="pt-2 text-[11px] font-semibold text-emerald-800">Copia del estado actual descargada. Ya puedes restaurar este archivo.</p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSaveCurrentBackupBeforeRestore}
+                    disabled={isCreatingFullBackup || isInspectingBackup}
+                    className="mt-2 h-9 w-full rounded-lg border border-emerald-300 bg-white px-3 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                  >
+                    {isCreatingFullBackup ? 'Descargando copia actual...' : '1. Descargar copia del estado actual'}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -711,16 +778,16 @@ export default function CRMBackupPage() {
           <div className="pt-4 border-t border-surface-container flex justify-end">
             <button
               onClick={handleExecuteRestore}
-              disabled={!importPreview || isImporting}
+              disabled={!importPreview || !hasDownloadedCurrentBackup || isImporting || isInspectingBackup}
               className="h-9 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px]">settings_backup_restore</span>
-              <span>{isImporting ? 'Restaurando...' : 'Confirmar Restauración de Datos'}</span>
+              <span>{isImporting ? 'Restaurando...' : '2. Restaurar esta copia completa'}</span>
             </button>
           </div>
         </div>
 
-        {/* SECCIÓN 3: INFORMACIÓN DE SEGURIDAD & COPIAS AUTOMÁTICAS EN SERVIDOR */}
+        {/* SECCIÓN 3: INFORMACIÓN DE COPIAS MANUALES */}
         <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm p-6 space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2.5 pb-3 border-b border-surface-container mb-4">
@@ -728,9 +795,9 @@ export default function CRMBackupPage() {
                 <span className="material-symbols-outlined text-lg">dns</span>
               </div>
               <div>
-                <h2 className="text-sm font-bold text-on-surface">Backups automáticos en servidor</h2>
+                <h2 className="text-sm font-bold text-on-surface">Qué contiene la copia completa</h2>
                 <p className="text-[11px] text-on-surface-variant">
-                  El script está disponible en Docker; configura un Cron Job en Coolify para ejecutarlo automáticamente.
+                  Se genera únicamente cuando pulsas “Crear y descargar copia completa”.
                 </p>
               </div>
             </div>
@@ -738,41 +805,44 @@ export default function CRMBackupPage() {
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-surface rounded-xl border border-surface-container space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-on-surface">Script de Backup Diario:</span>
-                  <span className="font-mono-data text-amber-700 font-bold text-[11px]">Requiere Cron Job</span>
+                  <span className="font-semibold text-on-surface">Base de datos:</span>
+                  <span className="font-mono-data text-secondary font-bold text-[11px]">Dump PostgreSQL completo</span>
                 </div>
                 <p className="text-[11px] text-outline">
-                  Al ejecutarse, genera un volcado de PostgreSQL y comprime los documentos de /app/uploads.
+                  Incluye las tablas, datos y estructura existentes al crear la copia.
                 </p>
               </div>
 
               <div className="p-3 bg-surface rounded-xl border border-surface-container space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-on-surface">Volumen Persistente:</span>
-                  <span className="font-mono-data text-secondary font-bold text-[11px]">backups_data (/backups)</span>
+                  <span className="font-semibold text-on-surface">Archivos:</span>
+                  <span className="font-mono-data text-secondary font-bold text-[11px]">Documentos subidos</span>
                 </div>
                 <p className="text-[11px] text-outline">
-                  Los dumps se almacenan fuera del ciclo de vida del contenedor para garantizar que nunca se pierdan al actualizar versiones.
+                  El .tar.gz se descarga en tu equipo. Guarda una copia en otro lugar seguro.
+                </p>
+                <p className="text-[11px] text-outline">
+                  Contiene datos personales y financieros; protégelo como información confidencial.
                 </p>
               </div>
 
               <div className="p-3 bg-surface rounded-xl border border-surface-container space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-on-surface">Política de Retención:</span>
-                  <span className="font-mono-data font-bold text-[11px]">14 días por ejecución</span>
+                  <span className="font-semibold text-on-surface">Restauración:</span>
+                  <span className="font-mono-data font-bold text-[11px]">Con vista previa</span>
                 </div>
                 <p className="text-[11px] text-outline">
-                  La retención se aplica cuando el Cron Job ejecuta el script.
+                  El CRM muestra los conteos del archivo antes de reemplazar los datos actuales.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="pt-4 border-t border-surface-container flex items-center justify-between text-xs">
-            <span className="text-outline">Estado general del respaldo:</span>
+            <span className="text-outline">Estado general:</span>
             <span className="font-bold text-amber-700 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              Exportación disponible; backup diario pendiente de configurar
+              Copia manual bajo demanda; no automática
             </span>
           </div>
         </div>
