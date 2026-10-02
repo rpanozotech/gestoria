@@ -220,6 +220,12 @@ export default function CRMBackupPage() {
       console.warn('Backend CSV export failed, generating from client data:', e);
     }
 
+    if (process.env.NODE_ENV === 'production') {
+      showToast('No se pudo exportar desde PostgreSQL. No se generó un CSV local.');
+      setExportingCsvType(null);
+      return;
+    }
+
     // Fallback generador de CSV en cliente
     try {
       let csvContent = '\uFEFF';
@@ -278,6 +284,9 @@ export default function CRMBackupPage() {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
+        if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.clients)) {
+          throw new Error('El JSON no contiene clientes.');
+        }
         setImportPreview(parsed);
       } catch (err) {
         showToast('El archivo seleccionado no es un JSON válido.');
@@ -289,25 +298,33 @@ export default function CRMBackupPage() {
   };
 
   // 4. Restaurar copia de seguridad en el sistema
-  const handleExecuteRestore = () => {
+  const handleExecuteRestore = async () => {
     if (!importPreview) return;
 
-    if (!confirm('¿Deseas restaurar esta copia de seguridad en NexusGest?\n\nLos registros de clientes, facturas y trámites se importarán en tu base de datos y memoria local.')) {
+    if (!confirm('¿Deseas importar esta copia a PostgreSQL? Los registros con el mismo ID se actualizarán. Los documentos adjuntos no están incluidos en el JSON.')) {
       return;
     }
 
     setIsImporting(true);
     try {
-      const clientsToRestore = importPreview.clients || [];
-      if (Array.isArray(clientsToRestore) && clientsToRestore.length > 0) {
-        localStorage.setItem('nexusgest_clients', JSON.stringify(clientsToRestore));
+      const res = await apiFetch('/backup/restore', {
+        method: 'POST',
+        body: JSON.stringify({ confirmation: 'RESTAURAR RESPALDO', backup: importPreview }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || 'No se pudo restaurar la copia en PostgreSQL.');
       }
-      showToast(`¡Copia restaurada con éxito! Se cargaron ${clientsToRestore.length} clientes.`);
+
+      localStorage.removeItem('nexusgest_clients');
+      window.dispatchEvent(new CustomEvent('nexusgest_clients_updated'));
+      showToast(`Restaurados ${data.restored?.clients || 0} clientes en PostgreSQL.${data.skippedDocuments ? ` ${data.skippedDocuments} documentos no se restauraron porque el JSON no incluye los archivos.` : ''}`);
       setImportPreview(null);
       setImportFile(null);
-      readLocalStats();
-    } catch (err) {
-      showToast('Error durante la restauración de datos.');
+      const statsRes = await apiFetch('/backup/stats').catch(() => null);
+      if (statsRes?.ok) setStats(await statsRes.json());
+    } catch (err: any) {
+      showToast(err?.message || 'Error durante la restauración de datos.');
     } finally {
       setIsImporting(false);
     }
@@ -369,11 +386,11 @@ export default function CRMBackupPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-on-surface">Copia de Seguridad & Portabilidad CRM</h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono-data font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Datos 100% Exportables
+              Exportación desde PostgreSQL
             </span>
           </div>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Descarga una copia completa de tu gestoría en formato estándar (JSON / CSV) lista para migrar a cualquier otro CRM (Salesforce, HubSpot, Zoho, Holded o Excel).
+            Exporta registros de PostgreSQL en JSON o CSV. Los archivos adjuntos requieren el backup de archivos del servidor.
           </p>
         </div>
 
@@ -620,7 +637,7 @@ export default function CRMBackupPage() {
                 </span>
               </div>
               <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
-                Todos los datos anteriores unificados en un único fichero JSON estructurado de alta fidelidad.
+                Registros del CRM en JSON; los archivos adjuntos se respaldan por separado en el servidor.
               </p>
             </div>
             <button
@@ -646,7 +663,7 @@ export default function CRMBackupPage() {
               <div>
                 <h2 className="text-sm font-bold text-on-surface">Restaurar Copia de Seguridad</h2>
                 <p className="text-[11px] text-on-surface-variant">
-                  Carga un archivo de respaldo previo (formato .json) para restaurar clientes y expedientes.
+                  Importa los registros del archivo JSON en PostgreSQL. Los documentos adjuntos requieren el backup de archivos del servidor.
                 </p>
               </div>
             </div>
@@ -655,7 +672,7 @@ export default function CRMBackupPage() {
               <span className="material-symbols-outlined text-3xl text-outline">upload_file</span>
               <div>
                 <p className="text-xs font-semibold text-on-surface">Selecciona el fichero de respaldo</p>
-                <p className="text-[11px] text-outline mt-0.5">Archivo .json generado por NexusGest</p>
+                <p className="text-[11px] text-outline mt-0.5">Copia JSON generada por NexusGest</p>
               </div>
 
               <input
@@ -711,9 +728,9 @@ export default function CRMBackupPage() {
                 <span className="material-symbols-outlined text-lg">dns</span>
               </div>
               <div>
-                <h2 className="text-sm font-bold text-on-surface">Copia Continua en Servidor (Coolify / Docker)</h2>
+                <h2 className="text-sm font-bold text-on-surface">Backups automáticos en servidor</h2>
                 <p className="text-[11px] text-on-surface-variant">
-                  Protección automatizada a nivel de infraestructura para el despliegue en producción.
+                  El script está disponible en Docker; configura un Cron Job en Coolify para ejecutarlo automáticamente.
                 </p>
               </div>
             </div>
@@ -722,10 +739,10 @@ export default function CRMBackupPage() {
               <div className="p-3 bg-surface rounded-xl border border-surface-container space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-on-surface">Script de Backup Diario:</span>
-                  <span className="font-mono-data text-emerald-600 font-bold text-[11px]">backup.sh (Activo)</span>
+                  <span className="font-mono-data text-amber-700 font-bold text-[11px]">Requiere Cron Job</span>
                 </div>
                 <p className="text-[11px] text-outline">
-                  Genera volcados completos de PostgreSQL y comprime la carpeta de documentos subidos (/app/uploads).
+                  Al ejecutarse, genera un volcado de PostgreSQL y comprime los documentos de /app/uploads.
                 </p>
               </div>
 
@@ -742,10 +759,10 @@ export default function CRMBackupPage() {
               <div className="p-3 bg-surface rounded-xl border border-surface-container space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-on-surface">Política de Retención:</span>
-                  <span className="font-mono-data font-bold text-[11px]">14 Días con Rotación Automática</span>
+                  <span className="font-mono-data font-bold text-[11px]">14 días por ejecución</span>
                 </div>
                 <p className="text-[11px] text-outline">
-                  Eliminación periódica de volcados obsoletos para mantener optimizado el espacio en disco.
+                  La retención se aplica cuando el Cron Job ejecuta el script.
                 </p>
               </div>
             </div>
@@ -753,9 +770,9 @@ export default function CRMBackupPage() {
 
           <div className="pt-4 border-t border-surface-container flex items-center justify-between text-xs">
             <span className="text-outline">Estado general del respaldo:</span>
-            <span className="font-bold text-emerald-600 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Protegido y Listo para Exportar
+            <span className="font-bold text-amber-700 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              Exportación disponible; backup diario pendiente de configurar
             </span>
           </div>
         </div>

@@ -68,7 +68,7 @@ export default function CRMClientesPage() {
   ]);
 
   // Lista de clientes con sus datos, trámites, presupuestos, facturas, citas y documentos
-  const [clients, setClients] = useState<any[]>([
+  const [clients, setClients] = useState<any[]>(process.env.NODE_ENV === 'production' ? [] : [
     {
       id: '1',
       full_name: 'Maria Popescu',
@@ -396,7 +396,7 @@ export default function CRMClientesPage() {
     showToast(`¡${clients.length} clientes exportados a CSV con éxito!`);
   };
 
-  // Sincronización con localStorage y Backend
+  // En desarrollo se conserva la lista de demostración; en producción manda PostgreSQL.
   useEffect(() => {
     if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
       try {
@@ -422,32 +422,34 @@ export default function CRMClientesPage() {
         console.warn('Error al leer clientes de localStorage:', err);
       }
 
-      // Sincronizar clientes desde backend si está disponible
-      apiFetch('/clients')
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (Array.isArray(data?.clients) && data.clients.length > 0) {
-            setClients((prev) => {
-              const map = new Map();
-              prev.forEach((c) => map.set(String(c.id), c));
-              data.clients.forEach((c: any) => {
-                const existing = map.get(String(c.id));
-                map.set(String(c.id), {
-                  ...existing,
-                  ...c,
-                  dossiers: existing?.dossiers || [],
-                  quotes: existing?.quotes || [],
-                  invoices: existing?.invoices || [],
-                  appointments: existing?.appointments || [],
-                  documents: existing?.documents || [],
-                });
-              });
-              return Array.from(map.values());
-            });
-          }
-        })
-        .catch(() => {});
     }
+
+    apiFetch('/clients')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.clients)) {
+          setClients((prev) => {
+            const map = new Map();
+            if (process.env.NODE_ENV !== 'production') {
+              prev.forEach((c) => map.set(String(c.id), c));
+            }
+            data.clients.forEach((c: any) => {
+              const existing = map.get(String(c.id));
+              map.set(String(c.id), {
+                ...existing,
+                ...c,
+                dossiers: existing?.dossiers || [],
+                quotes: existing?.quotes || [],
+                invoices: existing?.invoices || [],
+                appointments: existing?.appointments || [],
+                documents: existing?.documents || [],
+              });
+            });
+            return Array.from(map.values());
+          });
+        }
+      })
+      .catch((error) => console.error('No se pudieron cargar los clientes:', error));
   }, []);
 
   useEffect(() => {

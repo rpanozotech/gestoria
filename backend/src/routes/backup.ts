@@ -5,6 +5,14 @@ import { pool, query } from '../db/index.js';
 
 const router = Router();
 
+const RESTORE_TABLES = {
+  clients: ['id', 'full_name', 'email', 'phone', 'bsn', 'id_document_number', 'nationality', 'address', 'city', 'postal_code', 'country', 'iban', 'digid_status', 'status', 'notes', 'created_at', 'updated_at'],
+  dossiers: ['id', 'code', 'client_id', 'title', 'category', 'description', 'status', 'priority', 'progress_percentage', 'fee', 'deadline', 'created_at', 'updated_at'],
+  quotes: ['id', 'code', 'client_id', 'dossier_id', 'items', 'subtotal', 'tax_rate', 'tax_amount', 'total', 'status', 'valid_until', 'notes', 'created_at', 'updated_at'],
+  invoices: ['id', 'code', 'quote_id', 'client_id', 'dossier_id', 'items', 'subtotal', 'tax_rate', 'tax_amount', 'total', 'status', 'payment_method', 'payment_reference', 'paid_at', 'due_date', 'notes', 'created_at', 'updated_at'],
+  appointments: ['id', 'client_id', 'title', 'appointment_date', 'appointment_time', 'duration_minutes', 'modality', 'status', 'notes', 'created_at', 'updated_at'],
+} as const;
+
 /**
  * Convierte un array de objetos a formato CSV con formato estándar RFC 4180
  * e incluye el BOM UTF-8 (\uFEFF) para que Excel y otros CRM reconozcan
@@ -151,6 +159,65 @@ router.post('/reset', async (req: Request, res: Response) => {
     await client.query('ROLLBACK').catch(() => undefined);
     console.error('Error al resetear CRM:', err);
     return res.status(500).json({ error: 'No se pudo resetear el CRM. No se ha borrado ningún dato.' });
+  } finally {
+    client.release();
+  }
+});
+
+router.post('/restore', async (req: Request, res: Response) => {
+  if (req.body?.confirmation !== 'RESTAURAR RESPALDO') {
+    return res.status(400).json({ error: 'Confirmación incorrecta.' });
+  }
+
+  const backup = req.body?.backup;
+  if (!backup || typeof backup !== 'object' || !Array.isArray(backup.clients)) {
+    return res.status(400).json({ error: 'El archivo no contiene una copia válida de NexusGest.' });
+  }
+
+  for (const table of Object.keys(RESTORE_TABLES) as (keyof typeof RESTORE_TABLES)[]) {
+    const rows = backup[table] ?? [];
+    if (!Array.isArray(rows) || rows.some((row: any) => !row || typeof row !== 'object' || Array.isArray(row) || !row.id)) {
+      return res.status(400).json({ error: `La sección ${table} no contiene registros válidos.` });
+    }
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const restored: Record<string, number> = {};
+
+    for (const table of Object.keys(RESTORE_TABLES) as (keyof typeof RESTORE_TABLES)[]) {
+      const columns = RESTORE_TABLES[table];
+      const rows = backup[table] ?? [];
+      restored[table] = rows.length;
+
+      for (const row of rows) {
+        const rowColumns = columns.filter((column) => row[column] !== undefined);
+        const values = rowColumns.map((column) => row[column]);
+        const placeholders = rowColumns.map((_, index) => `$${index + 1}`);
+        const updates = rowColumns.filter((column) => column !== 'id');
+        const onConflict = updates.length
+          ? `DO UPDATE SET ${updates.map((column) => `${column} = EXCLUDED.${column}`).join(', ')}`
+          : 'DO NOTHING';
+
+        await client.query(
+          `INSERT INTO ${table} (${rowColumns.join(', ')}) VALUES (${placeholders.join(', ')}) ON CONFLICT (id) ${onConflict}`,
+          values
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    return res.json({
+      message: 'Copia restaurada en PostgreSQL.',
+      restored,
+      skippedDocuments: Array.isArray(backup.documents) ? backup.documents.length : 0,
+    });
+  } catch (err: any) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    console.error('Error al restaurar backup:', err);
+    const status = err.code === '23505' || err.code === '23503' ? 409 : 500;
+    return res.status(status).json({ error: 'No se pudo restaurar la copia. No se aplicaron cambios.' });
   } finally {
     client.release();
   }
