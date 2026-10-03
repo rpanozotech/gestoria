@@ -501,25 +501,72 @@ export default function CRMAgendaPage() {
     setShowNewAptModal(true);
   };
 
-  const handleCreateAppointment = (e: React.FormEvent) => {
+  const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newApt: Appointment = {
-      id: String(Date.now()),
-      title: aptTitle,
-      client_name: aptClientName,
-      client_phone: aptPhone,
-      appointment_date: aptDate,
-      appointment_time: `${aptTime}:00`,
-      modality: aptModality,
-      status: 'confirmada',
-      notes: `Cita registrada como: ${
-        aptModality === 'llamada'
-          ? 'Llamada telefónica'
-          : aptModality === 'presencial'
-          ? 'Solo presencial'
-          : 'Videollamada Google Meet'
-      }`,
-    };
+    const notes = `Cita registrada como: ${
+      aptModality === 'llamada'
+        ? 'Llamada telefónica'
+        : aptModality === 'presencial'
+        ? 'Solo presencial'
+        : 'Videollamada Google Meet'
+    }`;
+
+    let newApt: Appointment | null = null;
+    try {
+      const clientsResponse = await apiFetch(`/clients?search=${encodeURIComponent(aptClientName)}`);
+      const clientsData = clientsResponse.ok ? await clientsResponse.json() : {};
+      const matchedClient = (clientsData.clients || []).find((client: any) =>
+        String(client.full_name || '').trim().toLowerCase() === aptClientName.trim().toLowerCase()
+      );
+      const response = await apiFetch('/appointments', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: matchedClient?.id,
+          full_name: aptClientName,
+          phone: aptPhone,
+          title: aptTitle,
+          appointment_date: aptDate,
+          appointment_time: `${aptTime}:00`,
+          duration_minutes: 30,
+          modality: aptModality,
+          notes,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo guardar la cita.');
+      const saved = data.appointment;
+      newApt = {
+        id: String(saved.id),
+        title: saved.title,
+        client_name: aptClientName,
+        client_phone: aptPhone,
+        appointment_date: String(saved.appointment_date).slice(0, 10),
+        appointment_time: saved.appointment_time,
+        modality: saved.modality,
+        status: saved.status,
+        notes: saved.notes || notes,
+      };
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudo guardar la cita.', 'error');
+        return;
+      }
+      // El modo local permite probar la interfaz sin PostgreSQL.
+      newApt = {
+        id: String(Date.now()),
+        title: aptTitle,
+        client_name: aptClientName,
+        client_phone: aptPhone,
+        appointment_date: aptDate,
+        appointment_time: `${aptTime}:00`,
+        modality: aptModality,
+        status: 'confirmada',
+        notes,
+      };
+      showToast('Cita guardada solo en modo local: PostgreSQL no responde.', 'error');
+    }
+
+    if (!newApt) return;
 
     setAppointments([newApt, ...appointments]);
     setSelectedDate(aptDate);

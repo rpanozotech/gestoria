@@ -159,6 +159,23 @@ CREATE TABLE IF NOT EXISTS ai_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 10. Catálogo de tarifas y servicios del CRM
+CREATE TABLE IF NOT EXISTS service_prices (
+    id VARCHAR(80) PRIMARY KEY,
+    code VARCHAR(80) UNIQUE NOT NULL,
+    icon VARCHAR(80) NOT NULL DEFAULT 'receipt_long',
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(50) NOT NULL DEFAULT 'otros',
+    base_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    btw_rate DECIMAL(5, 4) NOT NULL DEFAULT 0.2100,
+    badge VARCHAR(100) NOT NULL DEFAULT 'Servicio',
+    duration VARCHAR(100) NOT NULL DEFAULT 'Según caso',
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Índices de alto rendimiento
 CREATE INDEX IF NOT EXISTS idx_clients_bsn ON clients(bsn);
 CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
@@ -168,3 +185,4 @@ CREATE INDEX IF NOT EXISTS idx_invoices_client ON invoices(client_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_code ON invoices(code);
 CREATE INDEX IF NOT EXISTS idx_quotes_code ON quotes(code);
 CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(appointment_date);
+CREATE INDEX IF NOT EXISTS idx_service_prices_active ON service_prices(active);

@@ -10,13 +10,18 @@ const router = Router();
 // GET /api/quotes - Listado de presupuestos
 router.get('/quotes', async (req: Request, res: Response) => {
   try {
+    const { client_id } = req.query;
+    const params: any[] = [];
+    const filter = client_id ? `WHERE q.client_id = $1` : '';
+    if (client_id) params.push(client_id);
     const sql = `
       SELECT q.*, c.full_name as client_name, c.email as client_email, c.bsn as client_bsn
       FROM quotes q
       JOIN clients c ON q.client_id = c.id
+      ${filter}
       ORDER BY q.created_at DESC
     `;
-    const result = await query(sql);
+    const result = await query(sql, params);
     res.json({ quotes: result.rows });
   } catch (error) {
     console.error('Error listando presupuestos:', error);
@@ -130,13 +135,18 @@ router.post('/quotes/:id/convert', async (req: Request, res: Response) => {
 // GET /api/invoices - Listado de facturas
 router.get('/invoices', async (req: Request, res: Response) => {
   try {
+    const { client_id } = req.query;
+    const params: any[] = [];
+    const filter = client_id ? `WHERE i.client_id = $1` : '';
+    if (client_id) params.push(client_id);
     const sql = `
       SELECT i.*, c.full_name as client_name, c.email as client_email, c.bsn as client_bsn
       FROM invoices i
       JOIN clients c ON i.client_id = c.id
+      ${filter}
       ORDER BY i.created_at DESC
     `;
-    const result = await query(sql);
+    const result = await query(sql, params);
     res.json({ invoices: result.rows });
   } catch (error) {
     console.error('Error listando facturas:', error);

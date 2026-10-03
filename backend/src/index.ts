@@ -11,6 +11,7 @@ import aiRouter, { localPdfRouter } from './routes/ai.js';
 import documentsRouter from './routes/documents.js';
 import backupRouter from './routes/backup.js';
 import portalRouter from './routes/portal.js';
+import servicesRouter from './routes/services.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import { query } from './db/index.js';
 
@@ -69,6 +70,7 @@ app.use('/api/ai', gestorOnly, aiRouter);
 app.use('/api/documents', gestorOnly, documentsRouter);
 app.use('/api/backup', gestorOnly, backupRouter);
 app.use('/api/appointments', appointmentsRouter);
+app.use('/api/services', gestorOnly, servicesRouter);
 // invoicesRouter se monta al final a proposito: este montage en '/api' captura
 // TODAS las subrutas de /api, asi que si fuera antes aplicaria el guard a
 // /api/appointments y bloquearia la reserva publica.
@@ -86,6 +88,22 @@ async function start() {
   try {
     await query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS portal_username VARCHAR(80)');
     await query('CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_portal_username ON clients(portal_username) WHERE portal_username IS NOT NULL');
+    await query(`CREATE TABLE IF NOT EXISTS service_prices (
+      id VARCHAR(80) PRIMARY KEY,
+      code VARCHAR(80) UNIQUE NOT NULL,
+      icon VARCHAR(80) NOT NULL DEFAULT 'receipt_long',
+      title VARCHAR(255) NOT NULL,
+      category VARCHAR(50) NOT NULL DEFAULT 'otros',
+      base_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+      btw_rate DECIMAL(5, 4) NOT NULL DEFAULT 0.2100,
+      badge VARCHAR(100) NOT NULL DEFAULT 'Servicio',
+      duration VARCHAR(100) NOT NULL DEFAULT 'Según caso',
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      description TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )`);
+    await query('CREATE INDEX IF NOT EXISTS idx_service_prices_active ON service_prices(active)');
   } catch (error) {
     console.warn('No se pudo aplicar la migración opcional del portal:', error instanceof Error ? error.message : error);
   }

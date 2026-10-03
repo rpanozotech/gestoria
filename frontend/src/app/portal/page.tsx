@@ -599,6 +599,36 @@ export default function PortalClientePage() {
     }, 900);
   };
 
+  if (portalLoading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+        <p className="text-sm text-slate-300">Cargando tu expediente seguro…</p>
+      </main>
+    );
+  }
+
+  // Nunca mostrar una ficha vacía ni datos demo si la sesión no está vinculada
+  // a un cliente real. Esto evita que un token antiguo deje ver un portal sin
+  // identidad o que el cliente crea que sus datos se han perdido.
+  if (!portalClientData) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+        <section className="max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center shadow-xl">
+          <span className="material-symbols-outlined text-4xl text-amber-400">lock</span>
+          <h1 className="mt-4 text-xl font-bold">Sesión de cliente no disponible</h1>
+          <p className="mt-2 text-sm text-slate-300">Vuelve a iniciar sesión para acceder a tu expediente.</p>
+          <button
+            type="button"
+            onClick={() => router.replace('/portal/login')}
+            className="mt-6 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold hover:bg-blue-500"
+          >
+            Ir al acceso del portal
+          </button>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased">
       {/* Toast flotante */}

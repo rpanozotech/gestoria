@@ -16,6 +16,8 @@ interface ClientDocument {
   added_by: 'gestor' | 'ia' | 'cliente';
   content_text?: string;
   url?: string;
+  file_name?: string;
+  mime_type?: string;
 }
 
 interface ClientAIAction {
@@ -452,6 +454,29 @@ export default function CRMClientesPage() {
       .catch((error) => console.error('No se pudieron cargar los clientes:', error));
   }, []);
 
+  // El catálogo usado por expedientes y presupuestos debe ser el mismo que
+  // administra la pantalla de Tarifas. En desarrollo se conserva el catálogo
+  // inicial si PostgreSQL no está disponible.
+  useEffect(() => {
+    apiFetch('/services')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('No se pudo cargar el catálogo de servicios.');
+        const data = await response.json();
+        if (!Array.isArray(data.services) || data.services.length === 0) return;
+        setServicesCatalog(data.services.map((service: any) => ({
+          id: String(service.id),
+          title: service.title,
+          category: service.category || 'Otros trámites',
+          defaultFee: Number(service.basePrice) || 0,
+        })));
+      })
+      .catch((error) => {
+        if (process.env.NODE_ENV === 'production') {
+          showToast(error instanceof Error ? error.message : 'No se pudo cargar el catálogo.', 'error');
+        }
+      });
+  }, []);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production' && clients.length > 0) {
       try {
@@ -469,6 +494,9 @@ export default function CRMClientesPage() {
 
   // Cliente seleccionado para la Ficha 360°
   const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [portalAccess, setPortalAccess] = useState<{ username: string; password: string } | null>(null);
+  const [isGeneratingPortalAccess, setIsGeneratingPortalAccess] = useState(false);
+  const [showPortalPassword, setShowPortalPassword] = useState(false);
   const [active360Tab, setActive360Tab] = useState<
     'resumen' | 'personales' | 'servicios' | 'documentos' | 'presupuestos' | 'facturas' | 'citas' | 'tareas' | 'historial' | 'ia'
   >('resumen');
@@ -513,6 +541,7 @@ export default function CRMClientesPage() {
 
   // MODAL VISUALIZADOR DE DOCUMENTO
   const [previewDoc, setPreviewDoc] = useState<ClientDocument | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // CHAT DEL ASISTENTE IA DEL CLIENTE (Ficha 360°)
   const [clientAiMessages, setClientAiMessages] = useState<ClientAIMessage[]>([]);
@@ -552,6 +581,8 @@ export default function CRMClientesPage() {
   // Abrir Ficha 360° al pulsar sobre el cliente
   const handleOpenClient = (client: any) => {
     setSelectedClient(client);
+    setPortalAccess(null);
+    setShowPortalPassword(false);
     setEditedNotes(client.notes || '');
     setIsEditingNotes(false);
     setActive360Tab('resumen');
@@ -565,6 +596,56 @@ export default function CRMClientesPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
+
+    // El listado solo trae contadores. Cargar la ficha completa al abrirla
+    // evita mostrar presupuestos locales antiguos y permite crear sobre el
+    // cliente real de PostgreSQL.
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(client.id))) {
+      apiFetch(`/clients/${client.id}`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          if (!data?.client) return;
+          const completeClient = {
+            ...data.client,
+            dossiers: data.dossiers || [],
+            quotes: data.quotes || [],
+            invoices: data.invoices || [],
+            appointments: data.appointments || [],
+            documents: (data.documents || []).map((doc: any) => ({
+              ...doc,
+              id: String(doc.id),
+              name: doc.name || doc.file_name || 'Documento',
+              date: doc.date || (doc.created_at ? String(doc.created_at).slice(0, 10) : ''),
+              size: doc.size || `${Math.max(1, Math.round(Number(doc.file_size || 0) / 1024))} KB`,
+              file_type: doc.file_type || (String(doc.mime_type || '').includes('pdf') ? 'pdf' : String(doc.mime_type || '').startsWith('image/') ? 'image' : 'otro'),
+              added_by: doc.added_by || 'gestor',
+            })),
+          };
+          setSelectedClient(completeClient);
+          setClients((current) => current.map((item) => item.id === completeClient.id ? { ...item, ...completeClient } : item));
+        })
+        .catch(() => showToast('No se pudo cargar la ficha completa desde PostgreSQL.'));
+    }
+  };
+
+  const handlePreviewDocument = async (doc: ClientDocument) => {
+    setPreviewDoc(doc);
+    setPreviewUrl(null);
+    if (doc.content_text || !doc.id) return;
+    try {
+      const response = await apiFetch(`/documents/${encodeURIComponent(doc.id)}/download`);
+      if (!response.ok) throw new Error('No se pudo abrir el archivo.');
+      const blob = await response.blob();
+      setPreviewUrl(URL.createObjectURL(blob));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo abrir el archivo.', 'error');
+    }
+  };
+
+  const closeDocumentPreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewDoc(null);
   };
 
   // Auto-seleccionar cliente desde parámetro URL (ej: /crm/clientes?client=Maria+Popescu&from=agenda)
@@ -619,6 +700,8 @@ export default function CRMClientesPage() {
   // Cerrar Ficha 360° y retornar al origen o limpiar URL
   const handleCloseFicha = () => {
     setSelectedClient(null);
+    setPortalAccess(null);
+    setShowPortalPassword(false);
     if (returnOrigin === 'agenda') {
       router.push('/crm/agenda');
     } else if (typeof window !== 'undefined') {
@@ -649,6 +732,40 @@ export default function CRMClientesPage() {
     setShowEditClientModal(true);
   };
 
+  const handleGeneratePortalAccess = async () => {
+    if (!selectedClient) return;
+    setIsGeneratingPortalAccess(true);
+    try {
+      const response = await apiFetch(`/clients/${selectedClient.id}/portal-access`, { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.portal_access) throw new Error(data.error || 'No se pudo generar el acceso del portal.');
+      setPortalAccess(data.portal_access);
+      setShowPortalPassword(true);
+      setSelectedClient((current: any) => ({ ...current, portal_username: data.portal_access.username }));
+      showToast('Acceso del portal generado. Guarda la contraseña antes de cerrar esta ficha.');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo generar el acceso del portal.', 'error');
+    } finally {
+      setIsGeneratingPortalAccess(false);
+    }
+  };
+
+  const handlePreparePortalWhatsApp = () => {
+    if (!selectedClient?.phone || !portalAccess) return;
+    const phone = String(selectedClient.phone).replace(/\D/g, '');
+    const message = [
+      `Hola ${selectedClient.full_name},`,
+      '',
+      'Ya tienes acceso a tu Portal Cliente de RP Gestoría:',
+      'Enlace: https://rp-gestoria.tech/portal/login',
+      `Usuario: ${portalAccess.username}`,
+      `Contraseña inicial: ${portalAccess.password}`,
+      '',
+      'Por seguridad, cambia la contraseña después de entrar.',
+    ].join('\n');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+  };
+
   // Guardar Edición Completa del Cliente
   const handleSaveClientEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -659,23 +776,44 @@ export default function CRMClientesPage() {
       ...editFormData,
     };
 
+    try {
+      const response = await apiFetch(`/clients/${updatedClient.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(editFormData),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudieron guardar los datos del cliente.');
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudieron guardar los datos.', 'error');
+        return;
+      }
+      showToast('Datos actualizados solo en modo local: PostgreSQL no responde.', 'error');
+    }
+
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
     setShowEditClientModal(false);
     showToast(`¡Datos de ${updatedClient.full_name} actualizados con éxito!`);
-
-    // Intentar persistir en backend
-    try {
-      await apiFetch(`/clients/${updatedClient.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(editFormData),
-      });
-    } catch {}
   };
 
   // Guardar notas internas rápidas
-  const handleSaveNotes = () => {
+  const handleSaveNotes = async () => {
     if (!selectedClient) return;
+    try {
+      const response = await apiFetch(`/clients/${selectedClient.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ notes: editedNotes }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudieron guardar las notas.');
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudieron guardar las notas.', 'error');
+        return;
+      }
+      showToast('Notas guardadas solo en modo local: PostgreSQL no responde.', 'error');
+    }
     const updatedClient = { ...selectedClient, notes: editedNotes };
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
@@ -797,15 +935,15 @@ export default function CRMClientesPage() {
     if (file.type.startsWith('text') || ext === 'txt' || ext === 'md') {
       const reader = new FileReader();
       reader.onload = (event) => {
-        saveUploadedDoc(file.name, sizeStr, fileType, event.target?.result as string);
+        void saveUploadedDoc(file.name, sizeStr, fileType, event.target?.result as string, file);
       };
       reader.readAsText(file);
     } else {
-      saveUploadedDoc(file.name, sizeStr, fileType);
+      void saveUploadedDoc(file.name, sizeStr, fileType, undefined, file);
     }
   };
 
-  const saveUploadedDoc = (name: string, size: string, fileType: ClientDocument['file_type'], textContent?: string) => {
+  const saveUploadedDoc = async (name: string, size: string, fileType: ClientDocument['file_type'], textContent?: string, file?: File) => {
     const newDoc: ClientDocument = {
       id: String(Date.now()),
       name: uploadDocName.trim() || name,
@@ -816,6 +954,29 @@ export default function CRMClientesPage() {
       added_by: 'gestor',
       content_text: textContent || uploadTextNote,
     };
+
+    if (file && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(selectedClient.id))) {
+      try {
+        const form = new FormData();
+        form.append('file', file, file.name);
+        form.append('client_id', selectedClient.id);
+        if (selectedClient.dossiers?.[0]?.id) form.append('dossier_id', selectedClient.dossiers[0].id);
+        form.append('category', uploadCategory);
+        const response = await apiFetch('/documents/upload', { method: 'POST', body: form });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'No se pudo guardar el documento.');
+        newDoc.id = String(data.document?.id || newDoc.id);
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') {
+          showToast(error instanceof Error ? error.message : 'No se pudo guardar el documento.', 'error');
+          return;
+        }
+        showToast('Documento conservado solo en modo local: PostgreSQL no responde.', 'error');
+      }
+    } else if (process.env.NODE_ENV === 'production') {
+      showToast('No se puede guardar el documento porque la ficha no tiene un ID real de PostgreSQL.', 'error');
+      return;
+    }
 
     const updatedClient = {
       ...selectedClient,
@@ -831,7 +992,7 @@ export default function CRMClientesPage() {
   };
 
   // Crear Documento de Texto / Nota Escrita
-  const handleSaveTextDocument = (e: React.FormEvent) => {
+  const handleSaveTextDocument = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient || !textDocTitle.trim()) return;
 
@@ -847,6 +1008,33 @@ export default function CRMClientesPage() {
       content_text: textDocContent,
     };
 
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(selectedClient.id))) {
+      try {
+        const response = await apiFetch('/documents/text', {
+          method: 'POST',
+          body: JSON.stringify({
+            client_id: selectedClient.id,
+            dossier_id: selectedClient.dossiers?.[0]?.id || null,
+            category: textDocCategory,
+            file_name: docName,
+            content: textDocContent,
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'No se pudo guardar el documento.');
+        newDoc.id = String(data.document?.id || newDoc.id);
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') {
+          showToast(error instanceof Error ? error.message : 'No se pudo guardar el documento.', 'error');
+          return;
+        }
+        showToast('Documento guardado solo en modo local: PostgreSQL no responde.', 'error');
+      }
+    } else if (process.env.NODE_ENV === 'production') {
+      showToast('La ficha no tiene un ID real de PostgreSQL.', 'error');
+      return;
+    }
+
     const updatedClient = {
       ...selectedClient,
       documents: [newDoc, ...(selectedClient.documents || [])],
@@ -861,7 +1049,7 @@ export default function CRMClientesPage() {
   };
 
   // Generación Automática de Documentos con IA
-  const handleGenerateAIDocument = (docType: string) => {
+  const handleGenerateAIDocument = async (docType: string) => {
     if (!selectedClient) return;
 
     let title = '';
@@ -888,6 +1076,31 @@ export default function CRMClientesPage() {
       added_by: 'ia',
       content_text: content,
     };
+
+    const isRealClientId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(selectedClient.id));
+    if (isRealClientId) {
+      try {
+        const response = await apiFetch('/documents/text', {
+          method: 'POST',
+          body: JSON.stringify({
+            client_id: selectedClient.id,
+            dossier_id: selectedClient.dossiers?.[0]?.id || null,
+            category,
+            file_name: title,
+            content,
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'No se pudo archivar el documento generado.');
+        newDoc.id = String(data.document?.id || newDoc.id);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'No se pudo archivar el documento generado.', 'error');
+        return;
+      }
+    } else if (process.env.NODE_ENV === 'production') {
+      showToast('No se puede archivar el documento porque la ficha no tiene un ID real de PostgreSQL.', 'error');
+      return;
+    }
 
     const updatedClient = {
       ...selectedClient,
@@ -1034,10 +1247,11 @@ export default function CRMClientesPage() {
     setIsClientAiSending(true);
 
     // Motor de ejecución de acciones con IA
-    setTimeout(() => {
+    setTimeout(async () => {
       const lower = textToSend.toLowerCase();
       let aiReply = '';
       let executedAction: ClientAIAction | undefined = undefined;
+      const isRealClientId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(selectedClient.id));
 
       // ACCIÓN 1: CREAR FACTURA
       if (lower.includes('factura') || lower.includes('facturar') || lower.includes('cobro')) {
@@ -1054,7 +1268,7 @@ export default function CRMClientesPage() {
           ? 'Gestión Subsidio de Alquiler Huurtoeslag'
           : 'Asesoría y Servicios Gestoría Fiscal';
 
-        const newInvoice = {
+        let newInvoice: any = {
           id: String(Date.now()),
           code,
           concept,
@@ -1065,20 +1279,47 @@ export default function CRMClientesPage() {
           items: [{ description: concept, total: fee }],
         };
 
-        const updated = {
-          ...selectedClient,
-          invoices: [newInvoice, ...(selectedClient.invoices || [])],
-        };
-        setSelectedClient(updated);
-        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+        if (isRealClientId) {
+          try {
+            const quoteResponse = await apiFetch('/quotes', {
+              method: 'POST',
+              body: JSON.stringify({
+                client_id: selectedClient.id,
+                dossier_id: selectedClient.dossiers?.[0]?.id || null,
+                items: [{ description: concept, quantity: 1, unit_price: fee }],
+                valid_until: '2026-11-30',
+                notes: 'Generada desde el Asistente IA',
+              }),
+            });
+            const quoteData = await quoteResponse.json().catch(() => ({}));
+            if (!quoteResponse.ok || !quoteData.quote?.id) throw new Error(quoteData.error || 'No se pudo guardar la factura base.');
+            const invoiceResponse = await apiFetch(`/quotes/${quoteData.quote.id}/convert`, { method: 'POST' });
+            const invoiceData = await invoiceResponse.json().catch(() => ({}));
+            if (!invoiceResponse.ok || !invoiceData.invoice?.id) throw new Error(invoiceData.error || 'No se pudo guardar la factura.');
+            newInvoice = { ...invoiceData.invoice, concept, client_name: selectedClient.full_name };
+          } catch (error) {
+            aiReply = `⚠️ No se ha creado la factura en PostgreSQL: ${error instanceof Error ? error.message : 'error de persistencia'}.`;
+          }
+        } else if (process.env.NODE_ENV === 'production') {
+          aiReply = '⚠️ No se puede crear la factura porque la ficha no tiene un ID real de PostgreSQL.';
+        }
 
-        executedAction = {
-          type: 'invoice_created',
-          summary: `Factura oficial ${code} emitida por € ${total.toFixed(2)}`,
-          data: newInvoice,
-        };
+        if (!aiReply) {
+          const updated = {
+            ...selectedClient,
+            invoices: [newInvoice, ...(selectedClient.invoices || [])],
+          };
+          setSelectedClient(updated);
+          setClients((current) => current.map((c) => (c.id === updated.id ? updated : c)));
 
-        aiReply = `✅ **¡Factura oficial emitida con éxito!**\n\nHe generado la factura **${code}** para **${selectedClient.full_name}** por un importe base de **€ ${fee.toFixed(2)}** (+ 21% BTW = **€ ${total.toFixed(2)}**).\nConcepto: *${concept}*.\nEstado: **Emitida / Pendiente de Pago (iDEAL)**. Puedes verla en la pestaña de facturación o pulsar el botón a continuación.`;
+          executedAction = {
+            type: 'invoice_created',
+            summary: `Factura oficial ${newInvoice.code || code} emitida por € ${total.toFixed(2)}`,
+            data: newInvoice,
+          };
+
+          aiReply = `✅ **¡Factura oficial emitida con éxito!**\n\nHe generado la factura **${newInvoice.code || code}** para **${selectedClient.full_name}** por un importe base de **€ ${fee.toFixed(2)}** (+ 21% BTW = **€ ${total.toFixed(2)}**).\nConcepto: *${concept}*.\nEstado: **Emitida / Pendiente de Pago (iDEAL)**. Puedes verla en la pestaña de facturación o pulsar el botón a continuación.`;
+        }
       }
       // ACCIÓN 2: CREAR PRESUPUESTO
       else if (lower.includes('presupuesto') || lower.includes('presupuestar') || lower.includes('cotizacion')) {
@@ -1094,7 +1335,7 @@ export default function CRMClientesPage() {
           ? 'Tramitación de Subsidios ante Belastingdienst'
           : 'Presupuesto de Asesoría y Gestoría Fiscal';
 
-        const newQuote = {
+        let newQuote: any = {
           id: String(Date.now()),
           code,
           concept,
@@ -1106,25 +1347,49 @@ export default function CRMClientesPage() {
           items: [{ description: concept, total: fee }],
         };
 
-        const updated = {
-          ...selectedClient,
-          quotes: [newQuote, ...(selectedClient.quotes || [])],
-        };
-        setSelectedClient(updated);
-        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+        if (isRealClientId) {
+          try {
+            const response = await apiFetch('/quotes', {
+              method: 'POST',
+              body: JSON.stringify({
+                client_id: selectedClient.id,
+                dossier_id: selectedClient.dossiers?.[0]?.id || null,
+                items: [{ description: concept, quantity: 1, unit_price: fee }],
+                valid_until: '2026-11-30',
+                notes: 'Generado desde el Asistente IA',
+              }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.quote?.id) throw new Error(data.error || 'No se pudo guardar el presupuesto.');
+            newQuote = { ...data.quote, concept, client_name: selectedClient.full_name };
+          } catch (error) {
+            aiReply = `⚠️ No se ha creado el presupuesto en PostgreSQL: ${error instanceof Error ? error.message : 'error de persistencia'}.`;
+          }
+        } else if (process.env.NODE_ENV === 'production') {
+          aiReply = '⚠️ No se puede crear el presupuesto porque la ficha no tiene un ID real de PostgreSQL.';
+        }
 
-        executedAction = {
-          type: 'quote_created',
-          summary: `Presupuesto ${code} generado por € ${total.toFixed(2)}`,
-          data: newQuote,
-        };
+        if (!aiReply) {
+          const updated = {
+            ...selectedClient,
+            quotes: [newQuote, ...(selectedClient.quotes || [])],
+          };
+          setSelectedClient(updated);
+          setClients((current) => current.map((c) => (c.id === updated.id ? updated : c)));
 
-        aiReply = `✅ **Presupuesto creado y registrado:**\n\nHe preparado el presupuesto **${code}** para **${selectedClient.full_name}** por un total de **€ ${total.toFixed(2)}** (Base: € ${fee.toFixed(2)} + BTW 21%).\nVálido hasta: 30 de noviembre de 2026. Ha quedado guardado en su sección de presupuestos.`;
+          executedAction = {
+            type: 'quote_created',
+            summary: `Presupuesto ${newQuote.code || code} generado por € ${total.toFixed(2)}`,
+            data: newQuote,
+          };
+
+          aiReply = `✅ **Presupuesto creado y registrado:**\n\nHe preparado el presupuesto **${newQuote.code || code}** para **${selectedClient.full_name}** por un total de **€ ${total.toFixed(2)}** (Base: € ${fee.toFixed(2)} + BTW 21%).\nVálido hasta: 30 de noviembre de 2026. Ha quedado guardado en su sección de presupuestos.`;
+        }
       }
       // ACCIÓN 3: AGENDAR CITA
       else if (lower.includes('cita') || lower.includes('llamada') || lower.includes('reunión') || lower.includes('agendar')) {
         const modality = lower.includes('presencial') ? 'presencial' : lower.includes('meet') || lower.includes('video') ? 'online_meet' : 'llamada';
-        const newApt = {
+        let newApt: any = {
           id: String(Date.now()),
           title: `Cita Asesoría con ${selectedClient.full_name}`,
           date: '2026-10-16',
@@ -1134,20 +1399,45 @@ export default function CRMClientesPage() {
           notes: `Cita programada mediante el Asistente IA para ${selectedClient.full_name}.`,
         };
 
-        const updated = {
-          ...selectedClient,
-          appointments: [newApt, ...(selectedClient.appointments || [])],
-        };
-        setSelectedClient(updated);
-        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+        if (isRealClientId) {
+          try {
+            const response = await apiFetch('/appointments', {
+              method: 'POST',
+              body: JSON.stringify({
+                client_id: selectedClient.id,
+                title: newApt.title,
+                appointment_date: newApt.date,
+                appointment_time: newApt.time,
+                modality: newApt.modality,
+                notes: newApt.notes,
+              }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.appointment?.id) throw new Error(data.error || 'No se pudo guardar la cita.');
+            newApt = { ...newApt, ...data.appointment };
+          } catch (error) {
+            aiReply = `⚠️ No se ha guardado la cita en PostgreSQL: ${error instanceof Error ? error.message : 'error de persistencia'}.`;
+          }
+        } else if (process.env.NODE_ENV === 'production') {
+          aiReply = '⚠️ No se puede guardar la cita porque la ficha no tiene un ID real de PostgreSQL.';
+        }
 
-        executedAction = {
-          type: 'appointment_created',
-          summary: `Cita registrada para el ${newApt.date} a las ${newApt.time} (${modality})`,
-          data: newApt,
-        };
+        if (!aiReply) {
+          const updated = {
+            ...selectedClient,
+            appointments: [newApt, ...(selectedClient.appointments || [])],
+          };
+          setSelectedClient(updated);
+          setClients((current) => current.map((c) => (c.id === updated.id ? updated : c)));
 
-        aiReply = `✅ **Cita agendada en calendario:**\n\nHe programado la cita para el **${newApt.date} a las ${newApt.time}** con **${selectedClient.full_name}**.\nModalidad: **${modality === 'llamada' ? 'Llamada Telefónica (Prioritaria)' : modality === 'online_meet' ? 'Videollamada Google Meet' : 'Presencial en Despacho'}**.\nPuedes consultarla en la pestaña Citas o en el módulo Agenda general.`;
+          executedAction = {
+            type: 'appointment_created',
+            summary: `Cita registrada para el ${newApt.date} a las ${newApt.time} (${modality})`,
+            data: newApt,
+          };
+
+          aiReply = `✅ **Cita agendada en calendario:**\n\nHe programado la cita para el **${newApt.date} a las ${newApt.time}** con **${selectedClient.full_name}**.\nModalidad: **${modality === 'llamada' ? 'Llamada Telefónica (Prioritaria)' : modality === 'online_meet' ? 'Videollamada Google Meet' : 'Presencial en Despacho'}**.\nPuedes consultarla en la pestaña Citas o en el módulo Agenda general.`;
+        }
       }
       // ACCIÓN 4: GENERAR Y ARCHIVAR DOCUMENTO / NOTA EN SU EXPEDIENTE
       else if (lower.includes('documento') || lower.includes('informe') || lower.includes('archivar') || lower.includes('resumen') || lower.includes('redacta')) {
@@ -1165,20 +1455,44 @@ export default function CRMClientesPage() {
           content_text: contentText,
         };
 
-        const updated = {
-          ...selectedClient,
-          documents: [newDoc, ...(selectedClient.documents || [])],
-        };
-        setSelectedClient(updated);
-        setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+        if (isRealClientId) {
+          try {
+            const response = await apiFetch('/documents/text', {
+              method: 'POST',
+              body: JSON.stringify({
+                client_id: selectedClient.id,
+                dossier_id: selectedClient.dossiers?.[0]?.id || null,
+                category: 'nota_ia',
+                file_name: docTitle,
+                content: contentText,
+              }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.document?.id) throw new Error(data.error || 'No se pudo archivar el documento.');
+            newDoc.id = String(data.document.id);
+          } catch (error) {
+            aiReply = `⚠️ No se ha archivado el documento en PostgreSQL: ${error instanceof Error ? error.message : 'error de persistencia'}.`;
+          }
+        } else if (process.env.NODE_ENV === 'production') {
+          aiReply = '⚠️ No se puede archivar el documento porque la ficha no tiene un ID real de PostgreSQL.';
+        }
 
-        executedAction = {
-          type: 'document_created',
-          summary: `Documento "${docTitle}" guardado en la carpeta del cliente`,
-          data: newDoc,
-        };
+        if (!aiReply) {
+          const updated = {
+            ...selectedClient,
+            documents: [newDoc, ...(selectedClient.documents || [])],
+          };
+          setSelectedClient(updated);
+          setClients((current) => current.map((c) => (c.id === updated.id ? updated : c)));
 
-        aiReply = `✅ **Documento redactado y archivado:**\n\nHe generado el documento **"${docTitle}"** y lo he guardado automáticamente en el apartado **Documentos** de ${selectedClient.full_name}.\nPuedes abrirlo, previsualizarlo o descargarlo desde la pestaña Documentos.`;
+          executedAction = {
+            type: 'document_created',
+            summary: `Documento "${docTitle}" guardado en la carpeta del cliente`,
+            data: newDoc,
+          };
+
+          aiReply = `✅ **Documento redactado y archivado:**\n\nHe generado el documento **"${docTitle}"** y lo he guardado automáticamente en el apartado **Documentos** de ${selectedClient.full_name}.\nPuedes abrirlo, previsualizarlo o descargarlo desde la pestaña Documentos.`;
+        }
       }
       // ACCIÓN 5: MODIFICAR DATOS DEL CLIENTE
       else if (lower.includes('cambiar') || lower.includes('modificar') || lower.includes('actualizar') || lower.includes('telefono') || lower.includes('teléfono') || lower.includes('direccion') || lower.includes('dirección')) {
@@ -1331,7 +1645,7 @@ export default function CRMClientesPage() {
     }
   };
 
-  const handleSaveDossier = (e: React.FormEvent) => {
+  const handleSaveDossier = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient || !dossierTitle.trim()) return;
 
@@ -1347,17 +1661,41 @@ export default function CRMClientesPage() {
 
     const nextCount = (selectedClient.dossiers?.length || 0) + 1;
     const year = new Date().getFullYear();
-    const newDossier = {
-      id: String(Date.now()),
-      code: `EXP-${year}-${String(nextCount).padStart(4, '0')}`,
-      title: dossierTitle,
-      category: dossierCategory,
-      status: 'en_proceso',
-      progress_percentage: 20,
-      fee: dossierFee,
-      deadline: dossierDeadline,
-      description: `Trámite registrado para ${selectedClient.full_name}.`,
-    };
+    let newDossier: any = null;
+    try {
+      const response = await apiFetch('/dossiers', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: selectedClient.id,
+          title: dossierTitle.trim(),
+          category: dossierCategory,
+          description: `Trámite registrado para ${selectedClient.full_name}.`,
+          fee: dossierFee,
+          deadline: dossierDeadline || null,
+          priority: 'media',
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo guardar el expediente.');
+      newDossier = data.dossier;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudo guardar el expediente.');
+        return;
+      }
+      newDossier = {
+        id: String(Date.now()),
+        code: `EXP-${year}-${String(nextCount).padStart(4, '0')}`,
+        title: dossierTitle,
+        category: dossierCategory,
+        status: 'en_proceso',
+        progress_percentage: 20,
+        fee: dossierFee,
+        deadline: dossierDeadline,
+        description: `Trámite registrado para ${selectedClient.full_name}.`,
+      };
+      showToast('Expediente guardado solo en modo local: PostgreSQL no responde.');
+    }
 
     const updatedClient = {
       ...selectedClient,
@@ -1370,19 +1708,52 @@ export default function CRMClientesPage() {
     showToast(`Trámite ${newDossier.code} asignado.`);
   };
 
-  const handleSaveAppointment = (e: React.FormEvent) => {
+  const handleSaveAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
 
-    const newApt = {
-      id: String(Date.now()),
-      title: aptTitle,
-      date: aptDate,
-      time: aptTime,
-      modality: aptModality,
-      status: 'confirmada',
-      notes: `Cita con ${selectedClient.full_name} (${selectedClient.phone})`,
-    };
+    let newApt: any;
+    try {
+      const response = await apiFetch('/appointments', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: selectedClient.id,
+          title: aptTitle,
+          appointment_date: aptDate,
+          appointment_time: `${aptTime}:00`,
+          modality: aptModality,
+          duration_minutes: 30,
+          notes: `Cita con ${selectedClient.full_name} (${selectedClient.phone || ''})`,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo guardar la cita.');
+      const saved = data.appointment;
+      newApt = {
+        id: String(saved.id),
+        title: saved.title,
+        appointment_date: String(saved.appointment_date).slice(0, 10),
+        appointment_time: saved.appointment_time,
+        modality: saved.modality,
+        status: saved.status,
+        notes: saved.notes || '',
+      };
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudo guardar la cita.');
+        return;
+      }
+      newApt = {
+        id: String(Date.now()),
+        title: aptTitle,
+        appointment_date: aptDate,
+        appointment_time: `${aptTime}:00`,
+        modality: aptModality,
+        status: 'confirmada',
+        notes: `Cita con ${selectedClient.full_name} (${selectedClient.phone || ''})`,
+      };
+      showToast('Cita guardada solo en modo local: PostgreSQL no responde.');
+    }
 
     const updatedClient = {
       ...selectedClient,
@@ -1396,7 +1767,7 @@ export default function CRMClientesPage() {
     showToast('Cita agendada.');
   };
 
-  const handleSaveQuote = (e: React.FormEvent) => {
+  const handleSaveQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
 
@@ -1409,16 +1780,50 @@ export default function CRMClientesPage() {
     const tax = quoteTax;
     const total = quoteTotal;
 
+    const apiItems = items.length > 0
+      ? items.map((item) => ({ description: item.title, quantity: 1, unit_price: item.fee }))
+      : [{ description: quoteConcept.trim(), quantity: 1, unit_price: subtotal }];
+
+    let persistedQuote: any = null;
+    try {
+      const response = await apiFetch('/quotes', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: selectedClient.id,
+          dossier_id: selectedClient.dossiers?.[0]?.id || null,
+          items: apiItems,
+          valid_until: quoteValidUntil,
+          notes: quoteConcept.trim() || null,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (process.env.NODE_ENV === 'production') {
+          showToast(data?.error || 'No se pudo guardar el presupuesto en PostgreSQL.');
+          return;
+        }
+        showToast('PostgreSQL no está disponible: se conserva solo en modo local de desarrollo.');
+      } else {
+        persistedQuote = data.quote;
+      }
+    } catch {
+      if (process.env.NODE_ENV === 'production') {
+        showToast('No se pudo conectar con PostgreSQL. El presupuesto no se ha creado.');
+        return;
+      }
+      showToast('PostgreSQL no está disponible: se conserva solo en modo local de desarrollo.');
+    }
+
     const newQuote = {
-      id: String(Date.now()),
-      code: `PRE-${year}-${String(nextCount).padStart(4, '0')}`,
+      id: persistedQuote?.id || String(Date.now()),
+      code: persistedQuote?.code || `PRE-${year}-${String(nextCount).padStart(4, '0')}`,
       concept: quoteConcept.trim() || (items.length > 0 ? items.map((i) => i.title).join(' + ') : 'Trámites y Asesoría Gestoría'),
       amount: subtotal,
       tax_amount: tax,
       total: total,
-      status: 'enviado',
-      valid_until: quoteValidUntil,
-      items: items.map((i) => ({ description: i.title, total: i.fee })),
+      status: persistedQuote?.status || 'enviado',
+      valid_until: persistedQuote?.valid_until || quoteValidUntil,
+      items: persistedQuote?.items || items.map((i) => ({ description: i.title, total: i.fee })),
     };
 
     const updatedClient = {
@@ -1433,19 +1838,32 @@ export default function CRMClientesPage() {
     showToast(`Presupuesto ${newQuote.code} generado.`);
   };
 
-  const handleConvertQuoteInFicha = (quote: any) => {
-    const nextCount = (selectedClient.invoices?.length || 0) + 1;
-    const year = new Date().getFullYear();
-    const newInvoice = {
-      id: String(Date.now()),
-      code: `FAC-${year}-${String(nextCount).padStart(4, '0')}`,
-      concept: quote.concept,
-      total: quote.total,
-      status: 'emitida',
-      due_date: '2026-11-15',
-      payment_method: 'ideal',
-      items: quote.items || [{ description: quote.concept, total: quote.amount }],
-    };
+  const handleConvertQuoteInFicha = async (quote: any) => {
+    let newInvoice: any = null;
+    try {
+      const response = await apiFetch(`/quotes/${quote.id}/convert`, { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo convertir el presupuesto.');
+      newInvoice = data.invoice;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudo convertir el presupuesto.', 'error');
+        return;
+      }
+      const nextCount = (selectedClient.invoices?.length || 0) + 1;
+      const year = new Date().getFullYear();
+      newInvoice = {
+        id: String(Date.now()),
+        code: `FAC-${year}-${String(nextCount).padStart(4, '0')}`,
+        concept: quote.concept,
+        total: quote.total,
+        status: 'emitida',
+        due_date: '2026-11-15',
+        payment_method: 'ideal',
+        items: quote.items || [{ description: quote.concept, total: quote.amount }],
+      };
+      showToast('Factura creada solo en modo local: PostgreSQL no responde.', 'error');
+    }
 
     const updatedQuotes = selectedClient.quotes.map((q: any) =>
       q.id === quote.id ? { ...q, status: 'convertido' } : q
@@ -2000,52 +2418,35 @@ export default function CRMClientesPage() {
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Documento subido */}
-                        <div className="p-3 bg-surface rounded-xl border border-surface-container flex flex-col justify-between gap-3">
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 bg-blue-50 text-secondary rounded-lg">
-                              <span className="material-symbols-outlined text-[20px]">description</span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <span className="font-bold text-xs text-on-surface block truncate">Copia Pasaporte / DNI</span>
-                              <span className="text-[10px] text-outline block">Verificado por OCR IA</span>
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 mt-1">
-                                <span className="material-symbols-outlined text-[13px]">verified</span>
-                                <span>Documento Válido</span>
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setActive360Tab('documentos')}
-                            className="w-full py-1 bg-surface-container hover:bg-surface-container-high rounded text-[11px] font-semibold text-on-surface"
-                          >
-                            Abrir Archivo
-                          </button>
-                        </div>
-
-                        {/* Documento Faltante o Alerta */}
-                        <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/30 flex flex-col justify-between gap-3">
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 bg-amber-500/20 text-amber-800 rounded-lg">
-                              <span className="material-symbols-outlined text-[20px]">pending_actions</span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-xs text-amber-900 block truncate">Jaaropgave 2025</span>
-                                <span className="px-1.5 py-0.2 bg-amber-200 text-amber-900 font-bold text-[9px] rounded uppercase">Pendiente</span>
+                        {(selectedClient.documents || []).length > 0 ? (
+                          selectedClient.documents.slice(0, 2).map((doc: any) => (
+                            <div key={doc.id} className="p-3 bg-surface rounded-xl border border-surface-container flex flex-col justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 bg-blue-50 text-secondary rounded-lg">
+                                  <span className="material-symbols-outlined text-[20px]">description</span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <span className="font-bold text-xs text-on-surface block truncate">{doc.name || doc.file_name || 'Documento'}</span>
+                                  <span className="text-[10px] text-outline block">{doc.category || 'Documento del cliente'}</span>
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 mt-1">
+                                    <span className="material-symbols-outlined text-[13px]">verified</span>
+                                    <span>{doc.ocr_status === 'completado' ? 'Lectura completada' : 'Registrado'}</span>
+                                  </span>
+                                </div>
                               </div>
-                              <span className="text-[10px] text-amber-800 block mt-0.5">Certificado anual de ingresos laborales</span>
-                              <span className="text-[10px] text-amber-700 block">Requerido para Belastingdienst</span>
+                              <button
+                                onClick={() => setActive360Tab('documentos')}
+                                className="w-full py-1 bg-surface-container hover:bg-surface-container-high rounded text-[11px] font-semibold text-on-surface"
+                              >
+                                Abrir documento
+                              </button>
                             </div>
+                          ))
+                        ) : (
+                          <div className="sm:col-span-2 text-center py-6 text-outline text-xs border border-dashed border-outline-variant rounded-xl">
+                            No hay documentos registrados para este cliente.
                           </div>
-                          <button
-                            onClick={() => showToast(`Solicitud de Jaaropgave enviada por WhatsApp y Email a ${selectedClient.full_name}`)}
-                            className="w-full py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-semibold flex items-center justify-center gap-1"
-                          >
-                            <span className="material-symbols-outlined text-[14px]">send</span>
-                            <span>Solicitar por WhatsApp / Email</span>
-                          </button>
-                        </div>
+                        )}
                       </div>
 
                       <div className="pt-1 flex justify-end">
@@ -2069,34 +2470,27 @@ export default function CRMClientesPage() {
                           <span className="material-symbols-outlined text-secondary text-2xl">receipt</span>
                           <h3 className="font-bold text-sm text-on-surface">Presupuesto Activo</h3>
                         </div>
-                        <span className="px-2 py-0.5 bg-blue-50 text-secondary font-mono-data font-bold text-xs rounded border border-secondary/20">
-                          {selectedClient.quotes?.[0]?.code || 'PRE-2026-0003'}
-                        </span>
+                        {selectedClient.quotes?.[0]?.code && (
+                          <span className="px-2 py-0.5 bg-blue-50 text-secondary font-mono-data font-bold text-xs rounded border border-secondary/20">
+                            {selectedClient.quotes[0].code}
+                          </span>
+                        )}
                       </div>
 
-                      <div className="p-3.5 bg-surface rounded-xl border border-surface-container space-y-2 text-xs">
-                        <div className="flex items-center justify-between text-on-surface-variant">
-                          <span>{selectedClient.quotes?.[0]?.concept || 'Gestión Solicitud Zorgtoeslag y Registro'}</span>
-                          <span className="font-mono-data font-semibold text-on-surface">
-                            € {selectedClient.quotes?.[0]?.amount ? selectedClient.quotes[0].amount.toFixed(2) : '85.00'}
-                          </span>
+                      {selectedClient.quotes?.[0] ? (
+                        <div className="p-3.5 bg-surface rounded-xl border border-surface-container space-y-2 text-xs">
+                          <div className="flex items-center justify-between text-on-surface-variant">
+                            <span>{selectedClient.quotes[0].concept || selectedClient.quotes[0].items?.[0]?.description || 'Presupuesto'}</span>
+                            <span className="font-mono-data font-semibold text-on-surface">€ {getDocTotals(selectedClient.quotes[0]).subtotal.toFixed(2)}</span>
+                          </div>
+                          <div className="h-px bg-surface-container" />
+                          <div className="flex items-center justify-between text-outline text-[11px]"><span>Subtotal</span><span className="font-mono-data">€ {getDocTotals(selectedClient.quotes[0]).subtotal.toFixed(2)}</span></div>
+                          <div className="flex items-center justify-between text-outline text-[11px]"><span>IVA (21% BTW)</span><span className="font-mono-data">€ {getDocTotals(selectedClient.quotes[0]).tax.toFixed(2)}</span></div>
+                          <div className="flex items-center justify-between text-sm font-bold text-on-surface pt-1 border-t border-surface-container"><span>Total Presupuesto</span><span className="font-mono-data text-secondary">€ {getDocTotals(selectedClient.quotes[0]).total.toFixed(2)}</span></div>
                         </div>
-                        <div className="h-px bg-surface-container" />
-                        <div className="flex items-center justify-between text-outline text-[11px]">
-                          <span>Subtotal</span>
-                          <span className="font-mono-data">€ {selectedClient.quotes?.[0]?.amount ? selectedClient.quotes[0].amount.toFixed(2) : '85.00'}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-outline text-[11px]">
-                          <span>IVA (21% BTW)</span>
-                          <span className="font-mono-data">€ {selectedClient.quotes?.[0]?.tax_amount ? selectedClient.quotes[0].tax_amount.toFixed(2) : '17.85'}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm font-bold text-on-surface pt-1 border-t border-surface-container">
-                          <span>Total Presupuesto</span>
-                          <span className="font-mono-data text-secondary">
-                            € {selectedClient.quotes?.[0]?.total ? selectedClient.quotes[0].total.toFixed(2) : '102.85'}
-                          </span>
-                        </div>
-                      </div>
+                      ) : (
+                        <div className="text-center py-6 text-outline text-xs border border-dashed border-outline-variant rounded-xl">No hay presupuestos registrados para este cliente.</div>
+                      )}
 
                       {selectedClient.quotes && selectedClient.quotes.length > 0 && selectedClient.quotes[0].status !== 'convertido' ? (
                         <button
@@ -2128,20 +2522,21 @@ export default function CRMClientesPage() {
                         </span>
                       </div>
 
-                      <div className="p-3.5 bg-surface rounded-xl border border-surface-container flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-blue-50 text-secondary flex flex-col items-center justify-center shrink-0 border border-secondary/20">
-                          <span className="text-[10px] font-bold uppercase leading-none">OCT</span>
-                          <span className="text-base font-bold leading-none mt-1">10</span>
+                      {selectedClient.appointments?.[0] ? (
+                        <div className="p-3.5 bg-surface rounded-xl border border-surface-container flex items-start gap-3">
+                          <div className="w-12 h-12 rounded-lg bg-blue-50 text-secondary flex flex-col items-center justify-center shrink-0 border border-secondary/20">
+                            <span className="text-[10px] font-bold uppercase leading-none">{new Date(selectedClient.appointments[0].appointment_date || selectedClient.appointments[0].date).toLocaleDateString('es-ES', { month: 'short' })}</span>
+                            <span className="text-base font-bold leading-none mt-1">{new Date(selectedClient.appointments[0].appointment_date || selectedClient.appointments[0].date).getDate()}</span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="font-mono-data font-bold text-xs text-on-surface">{selectedClient.appointments[0].appointment_time || selectedClient.appointments[0].time || 'Hora pendiente'}</span>
+                            <span className="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5 font-medium"><span className="material-symbols-outlined text-[15px] text-emerald-600">event</span><span>{selectedClient.appointments[0].title || 'Cita'}</span></span>
+                            <span className="text-[11px] text-outline block mt-0.5">Estado: {selectedClient.appointments[0].status || 'confirmada'}</span>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="font-mono-data font-bold text-xs text-on-surface">10:00 - 10:30 CET</span>
-                          <span className="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5 font-medium">
-                            <span className="material-symbols-outlined text-[15px] text-emerald-600">call</span>
-                            <span>Consulta Telefónica (Zorgtoeslag)</span>
-                          </span>
-                          <span className="text-[11px] text-outline block mt-0.5">Asesor: Elena Martínez</span>
-                        </div>
-                      </div>
+                      ) : (
+                        <div className="text-center py-6 text-outline text-xs border border-dashed border-outline-variant rounded-xl">No hay citas registradas para este cliente.</div>
+                      )}
 
                       <div className="flex items-center gap-2">
                         <a
@@ -2411,7 +2806,7 @@ export default function CRMClientesPage() {
                           <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                             <button
                               type="button"
-                              onClick={() => setPreviewDoc(doc)}
+                              onClick={() => void handlePreviewDocument(doc)}
                               className="h-7 px-2.5 bg-surface-container border border-outline-variant hover:bg-surface-container-high rounded text-[11px] font-semibold flex items-center gap-1 text-on-surface transition-colors"
                               title="Previsualizar documento"
                             >
@@ -2886,6 +3281,43 @@ export default function CRMClientesPage() {
                   <div className="p-3 bg-surface rounded-xl border border-surface-container">
                     <span className="text-[10px] font-bold uppercase text-outline">Estado del Cliente:</span>
                     <p className="font-bold text-sm mt-0.5 uppercase text-secondary">{selectedClient.status}</p>
+                  </div>
+
+                  <div className="sm:col-span-2 p-4 rounded-xl border border-blue-200 bg-blue-50/60 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-blue-700">Acceso al Portal Cliente</span>
+                        <p className="text-xs text-blue-900 mt-1">Genera o regenera las credenciales para que el cliente entre en su perfil.</p>
+                      </div>
+                      <span className="material-symbols-outlined text-blue-600">lock_person</span>
+                    </div>
+                    {portalAccess ? (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+                        <div className="p-2 rounded-lg bg-white border border-blue-200">
+                          <span className="block text-[10px] font-bold uppercase text-outline">Usuario</span>
+                          <span className="font-mono-data text-xs text-on-surface break-all">{portalAccess.username}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white border border-blue-200">
+                          <span className="block text-[10px] font-bold uppercase text-outline">Contraseña inicial</span>
+                          <span className="font-mono-data text-xs text-on-surface">{showPortalPassword ? portalAccess.password : '••••••••••••'}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => setShowPortalPassword((value) => !value)} className="h-9 px-3 rounded-lg border border-blue-300 bg-white text-blue-700 text-xs font-semibold">
+                            {showPortalPassword ? 'Ocultar' : 'Mostrar'}
+                          </button>
+                          <button type="button" onClick={handlePreparePortalWhatsApp} disabled={!selectedClient.phone} className="h-9 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold disabled:opacity-40">
+                            WhatsApp
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-3">
+                        {selectedClient.portal_username && <span className="text-xs text-blue-900">Usuario existente: <strong>{selectedClient.portal_username}</strong>. La contraseña no se puede recuperar; regénérala si es necesario.</span>}
+                        <button type="button" onClick={handleGeneratePortalAccess} disabled={isGeneratingPortalAccess} className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-50">
+                          {isGeneratingPortalAccess ? 'Generando…' : selectedClient.portal_username ? 'Regenerar acceso' : 'Generar acceso'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3656,13 +4088,21 @@ export default function CRMClientesPage() {
                   </span>
                 </div>
               </div>
-              <button onClick={() => setPreviewDoc(null)} className="text-outline hover:text-on-surface">
+              <button onClick={closeDocumentPreview} className="text-outline hover:text-on-surface">
                 <span className="material-symbols-outlined text-base">close</span>
               </button>
             </div>
 
-            <div className="p-6 flex-1 overflow-y-auto font-mono-data text-xs leading-relaxed bg-surface/30 whitespace-pre-wrap">
-              {previewDoc.content_text || `[Archivo Binario: ${previewDoc.name}]\nDocumento digital verificado en el sistema NexusGest.\nTipo: ${previewDoc.file_type.toUpperCase()} · Tamaño: ${previewDoc.size}\nCliente asignado: ${selectedClient?.full_name}\n\nPara consultar el contenido gráfico o PDF original, puedes descargar el archivo a tu dispositivo.`}
+            <div className="p-4 flex-1 min-h-[420px] overflow-auto bg-surface/30">
+              {previewDoc.content_text ? (
+                <pre className="font-mono-data text-xs leading-relaxed whitespace-pre-wrap">{previewDoc.content_text}</pre>
+              ) : previewUrl && (previewDoc.file_type === 'pdf' || previewDoc.mime_type === 'application/pdf' || previewDoc.name?.toLowerCase().endsWith('.pdf')) ? (
+                <iframe title={`Vista previa de ${previewDoc.name}`} src={previewUrl} className="w-full h-[58vh] rounded-lg border border-outline-variant bg-white" />
+              ) : previewUrl && (previewDoc.file_type === 'image' || previewDoc.mime_type?.startsWith('image/')) ? (
+                <div className="w-full min-h-[420px] flex items-center justify-center bg-slate-100 rounded-lg p-3"><img src={previewUrl} alt={previewDoc.name} className="max-w-full max-h-[58vh] object-contain rounded shadow-sm" /></div>
+              ) : (
+                <div className="h-[420px] flex items-center justify-center text-sm text-outline">Cargando archivo…</div>
+              )}
             </div>
 
             <div className="p-3 bg-surface-container-low border-t border-surface-container flex items-center justify-between shrink-0">
@@ -3679,7 +4119,12 @@ export default function CRMClientesPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (previewDoc.content_text) {
+                    if (previewUrl) {
+                      const a = document.createElement('a');
+                      a.href = previewUrl;
+                      a.download = previewDoc.name || 'documento';
+                      a.click();
+                    } else if (previewDoc.content_text) {
                       const blob = new Blob([previewDoc.content_text], { type: 'text/plain;charset=utf-8' });
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');
@@ -4140,9 +4585,9 @@ export default function CRMClientesPage() {
       {/* ========================================================================= */}
       {selectedDoc && (
         <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-surface-container-lowest max-w-3xl w-full rounded-2xl shadow-2xl border border-outline-variant overflow-hidden my-auto animate-in zoom-in-95">
+          <div className="print-document bg-surface-container-lowest max-w-3xl w-full rounded-2xl shadow-2xl border border-outline-variant overflow-hidden my-auto animate-in zoom-in-95">
             {/* Barra Superior del Visor Documental */}
-            <div className="bg-surface-container-low px-6 py-3.5 border-b border-surface-container flex items-center justify-between">
+            <div className="no-print bg-surface-container-low px-6 py-3.5 border-b border-surface-container flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-secondary">
                   {selectedDoc.type === 'invoice' ? 'receipt_long' : 'request_quote'}
@@ -4296,7 +4741,7 @@ export default function CRMClientesPage() {
             </div>
 
             {/* Pie de Acciones */}
-            <div className="bg-surface-container px-6 py-3 border-t border-surface-container-high flex items-center justify-between">
+            <div className="no-print bg-surface-container px-6 py-3 border-t border-surface-container-high flex items-center justify-between">
               <div className="text-[11px] text-outline">
                 Documento legal emitido por NexusGest · Países Bajos
               </div>

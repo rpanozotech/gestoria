@@ -33,7 +33,13 @@ UPLOADS_DIR="${UPLOADS_DIR:-/app/uploads}"
 
 TIMESTAMP="$(date -u +%Y%m%d-%H%M%S)"
 DUMP_FILENAME="nexusgest-${TIMESTAMP}.sql.gz"
-UPLOADS_FILENAME="uploads-${TIMESTAMP}.sql.gz.tmp"
+DB_DUMP_TMP="${DUMP_FILENAME}.tmp"
+UPLOADS_FILENAME="uploads-${TIMESTAMP}.tar.gz.tmp"
+
+if [ ! -d "$UPLOADS_DIR" ]; then
+  echo "ERROR: $UPLOADS_DIR no existe; no se puede crear un backup completo." >&2
+  exit 1
+fi
 
 # pg_dump falla si no recibe contrasena y no hay PGPASSFILE ni .pgpass.
 # Sin esto el backup fallaria en cuanto Postgres tenga password.
@@ -42,22 +48,24 @@ PGUSER_VALUE="${POSTGRES_USER:-nexusgest_user}"
 PGDB_VALUE="${POSTGRES_DB:-nexusgest_db}"
 
 mkdir -p "$BACKUP_DIR"
+umask 077
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "$WORK_DIR"; rm -f "$BACKUP_DIR/$DB_DUMP_TMP" "$BACKUP_DIR/$UPLOADS_FILENAME"' 0
 
 # --- 1. Base de datos -------------------------------------------------
 # Formato plano (NO -Fc): portable entre versiones de Postgres y
 # restaurable con psql, no solo con pg_restore.
-pg_dump -U "$PGUSER_VALUE" -d "$PGDB_VALUE" | gzip -9 > "$BACKUP_DIR/$DUMP_FILENAME"
+pg_dump -U "$PGUSER_VALUE" -d "$PGDB_VALUE" -f "$WORK_DIR/database.sql"
 
-# gzip sobre un stream vacio produce un fichero de 20 bytes (la cabecera
-# gzip), NO uno de 0. Un `test -s` lo daria por bueno y restaurarlo dejaria
-# la base de datos vacia sin avisar. Por eso se comprueba el contenido
-# DESCOMPRIMIDO: un dump real de Postgres empieza por comentarios "--".
-if [ "$(gunzip -c "$BACKUP_DIR/$DUMP_FILENAME" 2>/dev/null | head -c 2)" != "--" ]; then
+if [ ! -s "$WORK_DIR/database.sql" ] || [ "$(head -c 2 "$WORK_DIR/database.sql")" != "--" ]; then
   echo "ERROR: el backup de la BD esta vacio o corrupto (pg_dump no produjo nada)." >&2
   echo "       No se conserva. Revisar logs del contenedor postgres." >&2
-  rm -f "${BACKUP_DIR:?}/${DUMP_FILENAME:?}"
   exit 1
 fi
+
+gzip -9 -c "$WORK_DIR/database.sql" > "$BACKUP_DIR/$DB_DUMP_TMP"
+gzip -t "$BACKUP_DIR/$DB_DUMP_TMP"
+mv "$BACKUP_DIR/$DB_DUMP_TMP" "$BACKUP_DIR/$DUMP_FILENAME"
 
 echo "OK: $BACKUP_DIR/$DUMP_FILENAME ($(du -h "$BACKUP_DIR/$DUMP_FILENAME" | cut -f1))"
 
@@ -71,8 +79,6 @@ if [ -d "$UPLOADS_DIR" ]; then
   gzip -t "$BACKUP_DIR/$UPLOADS_FILENAME"
   mv "$BACKUP_DIR/$UPLOADS_FILENAME" "$BACKUP_DIR/uploads-${TIMESTAMP}.tar.gz"
   echo "OK: $BACKUP_DIR/uploads-${TIMESTAMP}.tar.gz ($(du -h "$BACKUP_DIR/uploads-${TIMESTAMP}.tar.gz" | cut -f1), $FILE_COUNT ficheros)"
-else
-  echo "AVISO: $UPLOADS_DIR no existe. La BD si se ha respaldado." >&2
 fi
 
 # --- 3. Rotacion ------------------------------------------------------

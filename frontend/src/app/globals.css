@@ -165,4 +165,31 @@ input[type='number'] {
     background-color: transparent !important;
     box-shadow: none !important;
   }
+
+  /* Cuando se imprime un presupuesto o factura desde la Ficha 360,
+     conservar únicamente la hoja oficial, nunca el CRM que queda detrás. */
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-document,
+  .print-document * {
+    visibility: visible !important;
+  }
+
+  .print-document {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  .print-document .no-print {
+    display: none !important;
+  }
 }

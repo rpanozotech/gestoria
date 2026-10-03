@@ -35,10 +35,29 @@ function normalizarFactura(inv: any) {
   };
 }
 
+function normalizarPresupuesto(quote: any) {
+  let items: any[] = [];
+  if (Array.isArray(quote?.items)) items = quote.items;
+  else if (typeof quote?.items === 'string') {
+    try {
+      const parsed = JSON.parse(quote.items);
+      items = Array.isArray(parsed) ? parsed : [];
+    } catch { items = []; }
+  }
+  return {
+    ...quote,
+    items,
+    subtotal: Number(quote?.subtotal || 0),
+    tax_amount: Number(quote?.tax_amount || 0),
+    tax_rate: Number(quote?.tax_rate || 21),
+    total: Number(quote?.total || 0),
+  };
+}
+
 export default function CRMFacturacionPage() {
   const [tab, setTab] = useState<'facturas' | 'presupuestos'>('facturas');
 
-  const [quotes, setQuotes] = useState<any[]>([
+  const [quotes, setQuotes] = useState<any[]>(process.env.NODE_ENV === 'production' ? [] : [
     {
       id: '1',
       code: 'PRE-2026-0001',
@@ -70,7 +89,7 @@ export default function CRMFacturacionPage() {
     },
   ]);
 
-  const [invoices, setInvoices] = useState<any[]>([
+  const [invoices, setInvoices] = useState<any[]>(process.env.NODE_ENV === 'production' ? [] : [
     {
       id: '1',
       code: 'FAC-2026-0001',
@@ -105,22 +124,34 @@ export default function CRMFacturacionPage() {
   // escrito en el codigo, asi que los botones de eliminar no tenian contra
   // que trabajar: el id '1' no existia en la base de datos.
   const [cargandoFacturas, setCargandoFacturas] = useState(true);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+
+  const cargarFacturacion = async () => {
+    setCargandoFacturas(true);
+    setErrorCarga(null);
+    try {
+      const [invoicesResponse, quotesResponse] = await Promise.all([
+        apiFetch('/invoices'),
+        apiFetch('/quotes'),
+      ]);
+      const [invoicesData, quotesData] = await Promise.all([
+        invoicesResponse.json().catch(() => ({})),
+        quotesResponse.json().catch(() => ({})),
+      ]);
+      if (!invoicesResponse.ok) throw new Error(invoicesData?.error || 'No se pudieron cargar las facturas.');
+      if (!quotesResponse.ok) throw new Error(quotesData?.error || 'No se pudieron cargar los presupuestos.');
+      setInvoices(Array.isArray(invoicesData?.invoices) ? invoicesData.invoices.map(normalizarFactura) : []);
+      setQuotes(Array.isArray(quotesData?.quotes) ? quotesData.quotes.map(normalizarPresupuesto) : []);
+    } catch (error) {
+      setErrorCarga(error instanceof Error ? error.message : 'No se pudo cargar la facturación desde PostgreSQL.');
+    } finally {
+      setCargandoFacturas(false);
+    }
+  };
 
   useEffect(() => {
     let cancelado = false;
-
-    apiFetch('/invoices')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (cancelado) return;
-        if (Array.isArray(data?.invoices)) {
-          setInvoices(data.invoices.map(normalizarFactura));
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelado) setCargandoFacturas(false);
-      });
+    void cargarFacturacion();
 
     return () => {
       cancelado = true;
@@ -280,69 +311,117 @@ export default function CRMFacturacionPage() {
     setShowNewQuoteModal(true);
   };
 
-  const handleCreateQuote = (e: React.FormEvent) => {
+  const handleCreateQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     const items = getSelectedQuoteItems();
     if (items.length === 0 && !quoteConcept.trim()) return;
 
-    const count = quotes.length + 1;
-    const code = `PRE-2026-${String(count).padStart(4, '0')}`;
     const subtotal = quoteSubtotal;
     const tax_amount = quoteTax;
     const total = quoteTotal;
 
-    const clientBsnMap: Record<string, string> = {
-      'Maria Popescu': '982145672',
-      'Carlos Mendoza Ruiz': '817293845',
-      'Elena Morales Castillo': '639102847',
-      'Lars Van Dijk': '728194028',
-    };
+    let newQ: any = null;
+    try {
+      const clientResponse = await apiFetch(`/clients?search=${encodeURIComponent(newQuoteClient)}`);
+      const clientData = clientResponse.ok ? await clientResponse.json() : {};
+      const client = (clientData.clients || []).find((item: any) =>
+        String(item.full_name || '').trim().toLowerCase() === newQuoteClient.trim().toLowerCase()
+      );
+      if (!client?.id) throw new Error('Selecciona un cliente real de PostgreSQL para crear el presupuesto.');
+      const response = await apiFetch('/quotes', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: client.id,
+          items: items.length > 0
+            ? items.map((item) => ({ description: item.title, quantity: 1, unit_price: item.fee }))
+            : [{ description: quoteConcept.trim(), quantity: 1, unit_price: subtotal }],
+          valid_until: quoteValidUntil,
+          notes: quoteConcept.trim() || null,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo crear el presupuesto.');
+      newQ = normalizarPresupuesto({ ...data.quote, client_name: client.full_name, client_bsn: client.bsn });
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudo crear el presupuesto.');
+        return;
+      }
+      const count = quotes.length + 1;
+      newQ = {
+        id: String(Date.now()),
+        code: `PRE-2026-${String(count).padStart(4, '0')}`,
+        client_name: newQuoteClient,
+        client_bsn: '',
+        subtotal,
+        tax_amount,
+        total,
+        status: 'enviado',
+        valid_until: quoteValidUntil,
+        items: items.length > 0 ? items.map((i) => ({ description: i.title, total: i.fee })) : [{ description: quoteConcept, total: subtotal }],
+      };
+      showToast('Presupuesto guardado solo en modo local: PostgreSQL no responde.');
+    }
 
-    const newQ = {
-      id: String(Date.now()),
-      code,
-      client_name: newQuoteClient,
-      client_bsn: clientBsnMap[newQuoteClient] || '982145672',
-      subtotal,
-      tax_amount,
-      total,
-      status: 'enviado',
-      valid_until: quoteValidUntil,
-      items: items.length > 0
-        ? items.map((i) => ({ description: i.title, total: i.fee }))
-        : [{ description: quoteConcept, total: subtotal }],
-    };
-
-    setQuotes([newQ, ...quotes]);
+    setQuotes((current) => [newQ, ...current]);
     setShowNewQuoteModal(false);
     setTab('presupuestos');
+    if (process.env.NODE_ENV === 'production') await cargarFacturacion();
   };
 
   // Convertir presupuesto a factura correlativa
-  const handleConvertToInvoice = (quote: any) => {
-    const nextNum = invoices.length + 1;
-    const invoiceCode = `FAC-2026-${String(nextNum).padStart(4, '0')}`;
+  const handleConvertToInvoice = async (quote: any) => {
+    let newInvoice: any = null;
+    try {
+      const response = await apiFetch(`/quotes/${quote.id}/convert`, { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo convertir el presupuesto.');
+      newInvoice = normalizarFactura({ ...data.invoice, client_name: quote.client_name, client_bsn: quote.client_bsn });
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudo convertir el presupuesto.');
+        return;
+      }
+      const nextNum = invoices.length + 1;
+      newInvoice = {
+        id: String(Date.now()),
+        code: `FAC-2026-${String(nextNum).padStart(4, '0')}`,
+        client_name: quote.client_name,
+        client_bsn: quote.client_bsn,
+        total: quote.total,
+        status: 'emitida',
+        payment_method: 'ideal',
+        due_date: '2026-10-25',
+        items: quote.items,
+      };
+      showToast('Factura creada solo en modo local: PostgreSQL no responde.');
+    }
 
-    const newInvoice = {
-      id: String(Date.now()),
-      code: invoiceCode,
-      client_name: quote.client_name,
-      client_bsn: quote.client_bsn,
-      total: quote.total,
-      status: 'emitida',
-      payment_method: 'ideal',
-      due_date: '2026-10-25',
-      items: quote.items,
-    };
-
-    setInvoices([newInvoice, ...invoices]);
+    setInvoices((current) => [newInvoice, ...current]);
     // Actualizar estado del presupuesto a 'convertido'
-    setQuotes(quotes.map((q) => (q.id === quote.id ? { ...q, status: 'convertido' } : q)));
+    setQuotes((current) => current.map((q) => (q.id === quote.id ? { ...q, status: 'convertido' } : q)));
     setTab('facturas');
+    if (process.env.NODE_ENV === 'production') await cargarFacturacion();
   };
 
   // Registrar cobro iDEAL
-  const handleMarkAsPaid = (invoiceId: string) => {
+  const handleMarkAsPaid = async (invoiceId: string) => {
+    try {
+      const response = await apiFetch(`/invoices/${invoiceId}/pay`, {
+        method: 'POST',
+        body: JSON.stringify({ payment_method: 'ideal' }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo registrar el pago.');
+      setInvoices((current) => current.map((invoice) => invoice.id === invoiceId ? normalizarFactura({ ...invoice, ...data.invoice }) : invoice));
+      showToast('Pago registrado y guardado en PostgreSQL.');
+      return;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        showToast(error instanceof Error ? error.message : 'No se pudo registrar el pago.');
+        return;
+      }
+    }
     setInvoices(
       invoices.map((inv) =>
         inv.id === invoiceId
@@ -354,6 +433,7 @@ export default function CRMFacturacionPage() {
           : inv
       )
     );
+    showToast('Pago guardado solo en modo local.');
   };
 
   // Eliminar factura: llama al backend. El backend bloquea el borrado de
@@ -474,6 +554,15 @@ export default function CRMFacturacionPage() {
           <span>Presupuestos ({quotes.length})</span>
         </button>
       </div>
+
+      {errorCarga && (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-xs text-error">
+          <span>{errorCarga}</span>
+          <button type="button" onClick={() => void cargarFacturacion()} className="font-semibold underline">
+            Reintentar
+          </button>
+        </div>
+      )}
 
       {/* TAB FACTURAS */}
       {tab === 'facturas' && (
@@ -950,9 +1039,9 @@ export default function CRMFacturacionPage() {
       {/* MODAL VISUALIZADOR OFICIAL DE FACTURA O PRESUPUESTO */}
       {selectedDoc && (
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="bg-surface-container-lowest max-w-3xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95">
+          <div className="print-document bg-surface-container-lowest max-w-3xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95">
             {/* Barra de Herramientas Superior */}
-            <div className="bg-surface-container px-3 sm:px-6 py-2.5 sm:py-3 border-b border-surface-container-high flex flex-wrap items-center justify-between gap-2">
+            <div className="no-print bg-surface-container px-3 sm:px-6 py-2.5 sm:py-3 border-b border-surface-container-high flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span
                   className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold font-mono-data uppercase ${
@@ -1166,7 +1255,7 @@ export default function CRMFacturacionPage() {
             </div>
 
             {/* Pie de Acciones Inferior */}
-            <div className="bg-surface-container px-6 py-3 border-t border-surface-container-high flex items-center justify-between">
+            <div className="no-print bg-surface-container px-6 py-3 border-t border-surface-container-high flex items-center justify-between">
               <div className="text-[11px] text-outline">
                 Documento legal emitido por NexusGest · Países Bajos
               </div>

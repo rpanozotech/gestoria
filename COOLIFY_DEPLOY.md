@@ -27,11 +27,11 @@ NexusGest está preparado para ser desplegado en Coolify mediante **Docker Compo
 5. En la rama elige `main` (o `master`).
 6. Coolify leerá automáticamente el archivo `docker-compose.yml`.
 
-### Opción B: Despliegue Manual con Docker Compose en Coolify
+### Compose Raw
 
-1. En Coolify haz clic en **"+ New Resource"** ➔ **"Docker Compose"** ➔ **"Raw Compose"**.
-2. Pega el contenido de nuestro archivo `docker-compose.yml`.
-3. Guarda los cambios.
+No uses **Raw Compose** para este proyecto: necesita el repositorio completo
+para construir las imágenes y montar `backend/src/db/schema.sql` y `backup.sh`.
+Despliega desde Git para que esas rutas existan en el servidor.
 
 ---
 

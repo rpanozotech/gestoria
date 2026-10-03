@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
 
 export interface ServicePriceItem {
   id: string;
@@ -207,32 +208,52 @@ export default function TerminalTarifasPage() {
   const [newBadge, setNewBadge] = useState('Nuevo');
   const [newDesc, setNewDesc] = useState('');
 
-  // Cargar de localStorage
+  // Cargar desde PostgreSQL; localStorage solo sirve como respaldo de desarrollo.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('rpgestoria_service_prices');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setServices(parsed);
+    apiFetch('/services')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('No se pudo cargar el catálogo.');
+        const data = await response.json();
+        if (Array.isArray(data.services) && data.services.length > 0) setServices(data.services);
+      })
+      .catch(() => {
+        if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+          const stored = localStorage.getItem('rpgestoria_service_prices');
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed) && parsed.length > 0) setServices(parsed);
+            } catch {
+              // Conserva el catálogo inicial.
+            }
           }
-        } catch {
-          // fallback a defaults
         }
-      }
-    }
+      });
   }, []);
 
-  // Guardar en localStorage y sincronizar
-  const persistServices = (updated: ServicePriceItem[]) => {
-    setServices(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('rpgestoria_service_prices', JSON.stringify(updated));
-      window.dispatchEvent(new Event('rpgestoria_prices_updated'));
+  // Guardar en PostgreSQL y mantener respaldo local solo en desarrollo.
+  const persistServices = async (updated: ServicePriceItem[]) => {
+    try {
+      const response = await apiFetch('/services/bulk', {
+        method: 'PUT',
+        body: JSON.stringify({ services: updated }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo guardar el catálogo.');
+      setServices(Array.isArray(data.services) && data.services.length > 0 ? data.services : updated);
+      setSaveToast(true);
+      setTimeout(() => setSaveToast(false), 3000);
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        setSaveToast(false);
+        window.alert(error instanceof Error ? error.message : 'No se pudo guardar el catálogo.');
+        return;
+      }
+      setServices(updated);
+      if (typeof window !== 'undefined') localStorage.setItem('rpgestoria_service_prices', JSON.stringify(updated));
+      setSaveToast(true);
+      setTimeout(() => setSaveToast(false), 3000);
     }
-    setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 3000);
   };
 
   const handleStartEdit = (srv: ServicePriceItem) => {
@@ -241,7 +262,7 @@ export default function TerminalTarifasPage() {
     setTempBadge(srv.badge);
   };
 
-  const handleSaveEdit = (id: string) => {
+  const handleSaveEdit = async (id: string) => {
     const updated = services.map((s) => {
       if (s.id === id) {
         return {
@@ -252,30 +273,30 @@ export default function TerminalTarifasPage() {
       }
       return s;
     });
-    persistServices(updated);
+    await persistServices(updated);
     setEditingId(null);
   };
 
-  const handleToggleActive = (id: string) => {
+  const handleToggleActive = async (id: string) => {
     const updated = services.map((s) => (s.id === id ? { ...s, active: !s.active } : s));
-    persistServices(updated);
+    await persistServices(updated);
   };
 
-  const handleApplyBulkDiscount = (percentage: number) => {
+  const handleApplyBulkDiscount = async (percentage: number) => {
     const updated = services.map((s) => ({
       ...s,
       basePrice: Math.round(s.basePrice * (1 + percentage / 100)),
     }));
-    persistServices(updated);
+    await persistServices(updated);
   };
 
-  const handleResetDefaults = () => {
+  const handleResetDefaults = async () => {
     if (confirm('¿Estás seguro de que deseas restablecer todas las tarifas a los valores estándar oficiales?')) {
-      persistServices(DEFAULT_SERVICES);
+      await persistServices(DEFAULT_SERVICES);
     }
   };
 
-  const handleCreateNewService = (e: React.FormEvent) => {
+  const handleCreateNewService = async (e: React.FormEvent) => {
     e.preventDefault();
     const newSrv: ServicePriceItem = {
       id: `srv-${Date.now()}`,
@@ -290,7 +311,7 @@ export default function TerminalTarifasPage() {
       active: true,
       desc: newDesc || 'Trámite especializado gestionado por el equipo de RP Gestoría.',
     };
-    persistServices([...services, newSrv]);
+    await persistServices([...services, newSrv]);
     setShowAddModal(false);
     setNewTitle('');
     setNewCode('');

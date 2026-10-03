@@ -1,12 +1,17 @@
-import { Router, Request, Response } from 'express';
-import { query } from '../db/index.js';
+import { Router, Request, Response, NextFunction } from 'express';
+import { pool, query } from '../db/index.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
 // GET/PATCH de citas es la agenda interna del CRM: requiere gestor.
-// POST es la reserva publica y por eso NO lleva guard (ver index.ts).
+// Las reservas públicas no envían client_id; vincular una cita existente exige rol gestor.
 const gestorOnly = [requireAuth, requireRole('admin', 'gestor')];
+
+const requireGestorForLinkedClient = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.body?.client_id) return next();
+  return requireAuth(req, res, () => requireRole('admin', 'gestor')(req, res, next));
+};
 
 // Disponibilidad pública: solo expone fecha, hora y duración, nunca datos
 // personales de los clientes del CRM.
@@ -67,65 +72,83 @@ router.get('/', gestorOnly, async (req: Request, res: Response) => {
 });
 
 // POST /api/appointments - Crear o reservar cita (Web pública o CRM)
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireGestorForLinkedClient, async (req: Request, res: Response) => {
   try {
-    let { client_id, full_name, email, phone, title, appointment_date, appointment_time, duration_minutes, modality, notes } = req.body;
+    let { client_id, full_name, email, phone, title, appointment_date, appointment_time, duration_minutes, modality, notes } = req.body || {};
 
-    // Si viene de la web pública sin client_id, buscar o crear cliente
-    if (!client_id && full_name) {
-      const existing = await query('SELECT id FROM clients WHERE email = $1 OR phone = $2', [email, phone]);
-      if (existing.rows.length > 0) {
-        client_id = existing.rows[0].id;
-      } else {
-        const newClient = await query(
-          'INSERT INTO clients (full_name, email, phone, status, notes) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [full_name, email, phone, 'prospecto', 'Cliente registrado mediante reserva web pública']
-        );
-        client_id = newClient.rows[0].id;
-      }
-    }
-
-    if (!client_id || !appointment_date || !appointment_time) {
+    if (!appointment_date || !appointment_time || (!client_id && (!String(full_name || '').trim() || (!email && !phone)))) {
       return res.status(400).json({ error: 'Faltan campos obligatorios para agendar la cita' });
     }
 
-    // Cada cita ocupa 30 minutos y exige 15 minutos libres antes de la
-    // siguiente. La comprobación vive en el servidor para evitar carreras
-    // aunque dos usuarios reserven simultáneamente.
-    const conflict = await query(
-      `
-        SELECT id
-        FROM appointments
-        WHERE appointment_date = $1
-          AND status NOT IN ('cancelada', 'completada')
-          AND ($2::time < appointment_time + ((COALESCE(duration_minutes, 30) + 15) * interval '1 minute'))
-          AND (($2::time + interval '45 minutes') > appointment_time)
-        LIMIT 1
-      `,
-      [appointment_date, appointment_time]
-    );
-
-    if (conflict.rows.length > 0) {
-      return res.status(409).json({
-        error: 'Ese horario no está disponible. Cada cita dura 30 minutos y debe existir un margen de 15 minutos entre citas.',
-      });
+    const requestedDuration = Number(duration_minutes ?? 30);
+    if (!Number.isInteger(requestedDuration) || requestedDuration < 1 || requestedDuration > 480) {
+      return res.status(400).json({ error: 'La duración de la cita no es válida.' });
     }
 
-    const sql = `
-      INSERT INTO appointments (client_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, 'confirmada', $7)
-      RETURNING *;
-    `;
+    // Cada cita exige su duración más 15 minutos libres antes de la siguiente.
+    // El bloqueo transaccional por fecha serializa la comprobación
+    // y la inserción incluso si llegan dos reservas a la vez.
+    const client = await pool.connect();
+    let transactionOpen = false;
+    let result;
+    try {
+      await client.query('BEGIN');
+      transactionOpen = true;
+      await client.query('SELECT pg_advisory_xact_lock(48127, hashtext($1))', [appointment_date]);
 
-    const result = await query(sql, [
-      client_id,
-      title || 'Asesoría y Trámites Gestoría',
-      appointment_date,
-      appointment_time,
-      duration_minutes || 30,
-      modality || 'online_meet',
-      notes || null,
-    ]);
+      const conflict = await client.query(
+        `
+          SELECT id
+          FROM appointments
+          WHERE appointment_date = $1
+            AND status NOT IN ('cancelada', 'completada')
+            AND ($2::time < appointment_time + ((COALESCE(duration_minutes, 30) + 15) * interval '1 minute'))
+            AND (($2::time + (($3::int + 15) * interval '1 minute')) > appointment_time)
+          LIMIT 1
+        `,
+        [appointment_date, appointment_time, requestedDuration]
+      );
+
+      if (conflict.rows.length > 0) {
+        await client.query('ROLLBACK');
+        transactionOpen = false;
+        return res.status(409).json({
+          error: 'Ese horario no está disponible. Respeta la duración de la cita y deja 15 minutos entre citas.',
+        });
+      }
+
+      if (!client_id) {
+        const newClient = await client.query(
+          'INSERT INTO clients (full_name, email, phone, status, notes) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+          [String(full_name).trim(), email || null, phone || null, 'prospecto', 'Cliente registrado mediante reserva web pública']
+        );
+        client_id = newClient.rows[0].id;
+      }
+
+      result = await client.query(
+        `
+          INSERT INTO appointments (client_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes)
+          VALUES ($1, $2, $3, $4, $5, $6, 'confirmada', $7)
+          RETURNING *
+        `,
+        [
+          client_id,
+          title || 'Asesoría y Trámites Gestoría',
+          appointment_date,
+          appointment_time,
+          requestedDuration,
+          modality || 'online_meet',
+          notes || null,
+        ]
+      );
+      await client.query('COMMIT');
+      transactionOpen = false;
+    } catch (error) {
+      if (transactionOpen) await client.query('ROLLBACK').catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
 
     res.status(201).json({ appointment: result.rows[0], message: 'Cita reservada con éxito' });
   } catch (error) {
