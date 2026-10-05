@@ -17,6 +17,21 @@
 # En Coolify: anadir un Cron Job en el resource apuntando al servicio
 # `postgres`, con BACKUP_DIR=/backups (volumen backups_data).
 #
+# COPIA OFFSITE (recomendada): los volumenes backups_data, uploads_data y la
+# BD viven en la MISMA maquina. Un `docker compose down -v`, un fallo de disco o
+# un ransomware se lleva las tres cosas a la vez, backup incluido. Definir estas
+# variables en Coolify sube cada backup a un bucket S3-compatible (Backblaze B2,
+# AWS S3, Cloudflare R2, MinIO...) que ya no depende de este servidor:
+#
+#   S3_ENDPOINT=https://s3.eu-west-003.backblazeb2.com
+#   S3_BUCKET=nexusgest-backups
+#   S3_ACCESS_KEY_ID=...
+#   S3_SECRET_ACCESS_KEY=...
+#   S3_PREFIX=nexusgest           # opcional
+#
+# Sin ellas el script funciona igual y el backup se queda solo en local, pero
+# entonces hay que aceptar que no protege de la perdida del servidor.
+#
 # Restaurar la BD (DESTRUYE los datos actuales):
 #   gunzip -c /backups/nexusgest-20261001-030000.sql.gz | \
 #     docker compose exec -T postgres psql -U nexusgest_user -d nexusgest_db
@@ -30,6 +45,12 @@ BACKUP_DIR="${BACKUP_DIR:-/backups}"
 RETENTION_DAYS="${RETENTION_DAYS:-14}"
 # Volumen uploads_data montado en solo lectura dentro de postgres.
 UPLOADS_DIR="${UPLOADS_DIR:-/app/uploads}"
+
+S3_BUCKET="${S3_BUCKET:-}"
+S3_ACCESS_KEY_ID="${S3_ACCESS_KEY_ID:-}"
+S3_SECRET_ACCESS_KEY="${S3_SECRET_ACCESS_KEY:-}"
+S3_ENDPOINT="${S3_ENDPOINT:-https://s3.amazonaws.com}"
+S3_PREFIX="${S3_PREFIX:-nexusgest}"
 
 TIMESTAMP="$(date -u +%Y%m%d-%H%M%S)"
 DUMP_FILENAME="nexusgest-${TIMESTAMP}.sql.gz"
@@ -81,7 +102,68 @@ if [ -d "$UPLOADS_DIR" ]; then
   echo "OK: $BACKUP_DIR/uploads-${TIMESTAMP}.tar.gz ($(du -h "$BACKUP_DIR/uploads-${TIMESTAMP}.tar.gz" | cut -f1), $FILE_COUNT ficheros)"
 fi
 
-# --- 3. Rotacion ------------------------------------------------------
+# --- 3. Copia offsite (opcional) --------------------------------------
+# Si hay credenciales S3, se sube una copia fuera del servidor. Un fallo aqui
+# NO es motivo para fallar el backup: la copia local ya esta escrita y es
+# valida, asi que se avisa pero se sale con 0.
+subir_a_s3() {
+  archivo="$1"
+  nombre="$(basename "$archivo")"
+  destino="${S3_PREFIX}/${nombre}"
+
+  # Firma AWS SigV4 con curl. Los buckets S3-compatibles (B2, R2, MinIO)
+  # aceptan este mismo esquema.
+  fecha="$(date -u +%Y%m%dT%H%M%SZ)"
+  sello="$(date -u +%Y%m%d)"
+  region="${S3_REGION:-us-east-1}"
+  servicio="s3"
+  host="$(echo "$S3_ENDPOINT" | sed -e 's|^https\?://||' -e 's|/$||')"
+  suma="$(sha256sum "$archivo" | cut -d' ' -f1)"
+
+  # Payload canonico para PUT (conexion vacia).
+  canonico_cabeceras="host:${host}\nx-amz-content-sha256:${suma}\nx-amz-date:${fecha}\n"
+  cadena_a_firmar="PUT\n/${destino}\n\n${canonico_cabeceras}\n${suma}"
+
+  # Derivar clave con openssl si esta disponible; sin openssl no hay firma.
+  if ! command -v openssl >/dev/null 2>&1; then
+    echo "AVISO: openssl no disponible, se omite la copia offsite de $nombre" >&2
+    return 0
+  fi
+
+  k_fecha="$(printf '%s' "$sello" | openssl dgst -sha256 -hmac "$S3_SECRET_ACCESS_KEY" -binary | openssl base64 -A)"
+  k_region="$(printf '%s' "$region" | openssl dgst -sha256 -hmac "$k_fecha" -binary | openssl base64 -A)"
+  k_servicio="$(printf '%s' "$servicio" | openssl dgst -sha256 -hmac "$k_region" -binary | openssl base64 -A)"
+
+  # La firma se deriva de la cadena-a-firmar, y el encabezado Authorization se
+  # monta con ella: ambos se calculan aqui, en este orden.
+  k_firma="$(printf '%s' "$cadena_a_firmar" | openssl dgst -sha256 -hmac "$k_servicio" -binary | openssl base64 -A)"
+  firma_fin="AWS4-HMAC-SHA256 Credential=${S3_ACCESS_KEY_ID}/${sello}/${region}/${servicio}/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=${k_firma}"
+
+  codigo="$(curl -s -o /dev/null -w '%{http_code}' -X PUT \
+    -H "Host: ${host}" \
+    -H "x-amz-content-sha256: ${suma}" \
+    -H "x-amz-date: ${fecha}" \
+    -H "Authorization: ${firma_fin}" \
+    --data-binary "@${archivo}" \
+    "${S3_ENDPOINT}/${destino}")"
+
+  case "$codigo" in
+    2*) echo "OK offsite: ${S3_ENDPOINT}/${destino}" ;;
+    *)  echo "AVISO: la copia offsite de ${nombre} devolvio HTTP ${codigo} (sigue valido en local)" >&2 ;;
+  esac
+  return 0
+}
+
+if [ -n "$S3_BUCKET" ] && [ -n "$S3_ACCESS_KEY_ID" ] && [ -n "$S3_SECRET_ACCESS_KEY" ]; then
+  echo "--- copia offsite a s3://${S3_BUCKET}/${S3_PREFIX}/ ---"
+  # El bucket va en el Host (virtual-hosted style), que es lo que espera B2/R2/S3.
+  S3_ENDPOINT="https://${S3_BUCKET}.${S3_ENDPOINT}"
+  subir_a_s3 "$BACKUP_DIR/$DUMP_FILENAME"
+  [ -f "$BACKUP_DIR/uploads-${TIMESTAMP}.tar.gz" ] && subir_a_s3 "$BACKUP_DIR/uploads-${TIMESTAMP}.tar.gz"
+  unset S3_ENDPOINT
+fi
+
+# --- 4. Rotacion ------------------------------------------------------
 # Borra los backups con mas de RETENTION_DAYS dias, de los dos tipos.
 find "$BACKUP_DIR" \( -name 'nexusgest-*.sql.gz' -o -name 'uploads-*.tar.gz' \) \
   -type f -mtime "+$RETENTION_DAYS" -print -delete

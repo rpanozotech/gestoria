@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-
-function normalizeChatUrl(rawUrl?: string): string {
-  let url = (rawUrl || 'https://api.openai.com/v1').trim().replace(/\/+$/, '');
-  if (url.endsWith('/chat/completions')) {
-    return url;
-  }
-  return `${url}/chat/completions`;
-}
+import { validarEndpointIA, normalizeChatUrl, fetchConRedireccionesSeguras, EndpointNoPermitido } from '@/lib/ai-endpoint-guard';
+import { exigeSesionGestor } from '@/lib/server-auth';
 
 export async function POST(request: Request) {
+  // Sin sesion no se ejecuta nada: este endpoint gasta OPENAI_API_KEY del
+  // servidor y hace fetch a una URL que elige el llamante.
+  const noAutorizado = exigeSesionGestor(request);
+  if (noAutorizado) return noAutorizado;
+
   try {
     const body = await request.json();
     const {
@@ -45,7 +44,19 @@ export async function POST(request: Request) {
 
     // Si hay API Key o es Ollama local, hacer la petición real
     if (key || isLocalOllama) {
-      const endpoint = normalizeChatUrl(apiUrl);
+      // Validar la URL que eligió el cliente antes de usarla como destino del
+      // fetch del servidor. Ver lib/ai-endpoint-guard.ts.
+      let destino: URL;
+      try {
+        destino = validarEndpointIA(apiUrl, { permitirHostsLocales: true });
+      } catch (error) {
+        if (error instanceof EndpointNoPermitido) {
+          return NextResponse.json({ error: error.message }, { status: 400 });
+        }
+        throw error;
+      }
+
+      const endpoint = normalizeChatUrl(destino.toString());
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -57,7 +68,7 @@ export async function POST(request: Request) {
       const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s para generación larga
 
       try {
-        const res = await fetch(endpoint, {
+        const res = await fetchConRedireccionesSeguras(endpoint, {
           method: 'POST',
           headers,
           signal: controller.signal,

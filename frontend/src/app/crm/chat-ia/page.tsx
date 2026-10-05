@@ -5,6 +5,24 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { exportDocumentToDocx } from '@/lib/docxExport';
 import { apiFetch } from '@/lib/api';
+import { getToken } from '@/lib/session';
+
+/**
+ * Cabeceras para los route handlers /api/ai/*.
+ *
+ * Esos handlers exigen sesion de gestor (ver lib/server-auth.ts): hacen fetch
+ * a una URL que elige el usuario y adjuntan OPENAI_API_KEY del servidor. Sin
+ * esta cabecera, el servidor responde 401.
+ *
+ * El token va en la cabecera Authorization en vez de en el body para no
+ * repetirlo en cada llamada ni arriesgarlo a que quede en un log.
+ */
+function aiAuthHeaders(): Record<string, string> {
+  const token = getToken();
+  return token
+    ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    : { 'Content-Type': 'application/json' };
+}
 
 // Presets de proveedores de IA (sincronizados con el resto del sistema)
 const AI_PRESETS = [
@@ -312,7 +330,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: aiAuthHeaders(),
         body: JSON.stringify({
           apiKey: config.apiKey,
           apiUrl: config.apiUrl,
@@ -382,7 +400,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
     try {
       const res = await fetch('/api/ai/test-connection', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: aiAuthHeaders(),
         body: JSON.stringify({
           apiKey: config.apiKey,
           apiUrl: config.apiUrl,

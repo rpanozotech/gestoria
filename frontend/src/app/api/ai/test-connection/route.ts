@@ -1,23 +1,40 @@
 import { NextResponse } from 'next/server';
-
-function normalizeChatUrl(rawUrl?: string): string {
-  let url = (rawUrl || 'https://api.openai.com/v1').trim().replace(/\/+$/, '');
-  if (url.endsWith('/chat/completions')) {
-    return url;
-  }
-  return `${url}/chat/completions`;
-}
+import { validarEndpointIA, normalizeChatUrl, fetchConRedireccionesSeguras, EndpointNoPermitido } from '@/lib/ai-endpoint-guard';
+import { exigeSesionGestor } from '@/lib/server-auth';
 
 export async function POST(request: Request) {
   const startTime = Date.now();
+
+  // Sin sesion no se ejecuta nada. Este endpoint hace un fetch a una URL que
+  // elige el llamante, con el Authorization de OPENAI_API_KEY del servidor, y
+  // devuelve el cuerpo de la respuesta: sin esta comprobacion es SSRF con
+  // lectura de respuesta y robo de la clave, abierto a cualquiera.
+  const noAutorizado = exigeSesionGestor(request);
+  if (noAutorizado) return noAutorizado;
+
   try {
     const body = await request.json();
     const { apiKey, apiUrl, model = 'gpt-4o-mini' } = body;
 
-    const key = apiKey || process.env.OPENAI_API_KEY;
-    const isLocalOllama = (apiUrl || '').includes('localhost') || (apiUrl || '').includes('127.0.0.1');
+    // Validar ANTES de construir el endpoint ni de hacer fetch. Sin esto, el
+    // body decide a donde va la peticion del servidor.
+    let destino: URL;
+    try {
+      destino = validarEndpointIA(apiUrl, { permitirHostsLocales: true });
+    } catch (error) {
+      if (error instanceof EndpointNoPermitido) {
+        return NextResponse.json(
+          { success: false, error: error.message },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
 
-    if (!key && !isLocalOllama) {
+    const key = apiKey || process.env.OPENAI_API_KEY;
+    const esOllamaLocal = destino.port === '11434';
+
+    if (!key && !esOllamaLocal) {
       return NextResponse.json(
         {
           success: false,
@@ -27,7 +44,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const endpoint = normalizeChatUrl(apiUrl);
+    const endpoint = normalizeChatUrl(destino.toString());
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -40,7 +57,7 @@ export async function POST(request: Request) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
 
-    const res = await fetch(endpoint, {
+    const res = await fetchConRedireccionesSeguras(endpoint, {
       method: 'POST',
       headers,
       signal: controller.signal,
@@ -97,6 +114,17 @@ export async function POST(request: Request) {
   } catch (error: any) {
     const latencyMs = Date.now() - startTime;
     const isTimeout = error.name === 'AbortError';
+
+    // Una redireccion bloqueada por el guard no es un error de red: es un
+    // intento de acceso bloqueado, y merece un 400 explicito en vez de un 500
+    // que invite a reintentar.
+    if (error instanceof EndpointNoPermitido) {
+      return NextResponse.json(
+        { success: false, error: error.message, latencyMs },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: false,

@@ -3,6 +3,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { exportDocumentToDocx } from '@/lib/docxExport';
 import { apiFetch } from '@/lib/api';
+import { getToken } from '@/lib/session';
+
+/**
+ * Cabeceras para los route handlers /api/ai/*, que exigen sesion de gestor
+ * (ver lib/server-auth.ts): hacen fetch a una URL elegida por el usuario y
+ * adjuntan OPENAI_API_KEY del servidor. Ver el mismo helper en chat-ia.
+ */
+function aiAuthHeaders(): Record<string, string> {
+  const token = getToken();
+  return token
+    ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    : { 'Content-Type': 'application/json' };
+}
 
 // Presets de proveedores de IA
 const AI_PRESETS = [
@@ -471,7 +484,7 @@ export default function DocumentosIAPage() {
     try {
       const res = await fetch('/api/ai/test-connection', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: aiAuthHeaders(),
         body: JSON.stringify({
           apiKey: config.apiKey,
           apiUrl: config.apiUrl,
@@ -637,7 +650,7 @@ Estructura requerida: Encabezado corporativo, fecha de hoy, número BSN, motivo 
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: aiAuthHeaders(),
         body: JSON.stringify({
           apiKey: config.apiKey,
           apiUrl: config.apiUrl,
@@ -783,7 +796,7 @@ ${
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: aiAuthHeaders(),
         body: JSON.stringify({
           apiKey: config.apiKey,
           apiUrl: config.apiUrl,
@@ -992,7 +1005,7 @@ ${
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: aiAuthHeaders(),
         body: JSON.stringify({
           apiKey: config.apiKey,
           apiUrl: config.apiUrl,

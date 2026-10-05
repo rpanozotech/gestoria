@@ -60,8 +60,14 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       UPLOAD_DIR: /app/uploads
+      # El panel de backup (/api/backup/stats) lee este directorio para
+      # decir la verdad sobre la ultima copia. En solo lectura: el backend
+      # nunca escribe backups, solo los crea el cron del servicio postgres.
+      BACKUP_DIR: /backups
+      RETENTION_DAYS: ${RETENTION_DAYS:-14}
     volumes:
       - uploads_data:/app/uploads
+      - backups_data:/backups:ro
     # Puerto expuesto solo si necesitas depurar el API directamente.
     # Coolify enruta el tráfico público por el frontend, no por aquí.
     expose:

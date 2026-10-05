@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { spawn } from 'node:child_process';
-import { cp, mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, readdir, readFile, rm, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -192,6 +192,76 @@ router.get('/stats', async (req: Request, res: Response) => {
     const appointmentsCount = await query('SELECT COUNT(*)::int AS n FROM appointments');
     const documentsCount = await query('SELECT COUNT(*)::int AS n FROM documents');
 
+    // Estado real de la copia de seguridad.
+    //
+    // Antes esto devolvia `lastBackupDate: new Date()` y `databaseStatus:
+    // 'healthy'` fijos, o sea que el panel anunciaba "healthy, backup ahora
+    // mismo" aunque el backup llevara semanas sin correr o fallando. La red de
+    // seguridad se reportaba a si misma como sana.
+    //
+    // Ahora se lee el directorio de backups del disco. Si esta vacio o no se
+    // puede leer, se dice explicitamente que no hay backup, en vez de mentir.
+    const backupDir = process.env.BACKUP_DIR || '/backups';
+    const retentionDays = Number(process.env.RETENTION_DAYS || 14);
+    let backup: {
+      lastBackupDate: string | null;
+      databaseStatus: 'healthy' | 'sin_backup' | 'degradado';
+      backupFiles: number;
+      uploadsBackedUp: boolean;
+      retentionDays: number;
+      warning: string | null;
+    };
+
+    try {
+      const entries = await readdir(backupDir);
+      const dbBackups = entries.filter((f) => /^nexusgest-\d{8}-\d{6}\.sql\.gz$/.test(f));
+      const uploadsBackups = entries.filter((f) => /^uploads-\d{8}-\d{6}\.tar\.gz$/.test(f));
+
+      let lastBackupDate: string | null = null;
+      for (const file of dbBackups) {
+        const stamp = file.match(/nexusgest-(\d{8})-(\d{6})\.sql\.gz$/);
+        if (!stamp) continue;
+        const iso = `${stamp[1].slice(0, 4)}-${stamp[1].slice(4, 6)}-${stamp[1].slice(6, 8)}T${stamp[2].slice(0, 2)}:${stamp[2].slice(2, 4)}:${stamp[2].slice(4, 6)}Z`;
+        if (!lastBackupDate || iso > lastBackupDate) lastBackupDate = iso;
+      }
+
+      const ageHours = lastBackupDate ? (Date.now() - new Date(lastBackupDate).getTime()) / 36e5 : Infinity;
+      const stale = ageHours > retentionDays * 24;
+
+      if (dbBackups.length === 0) {
+        backup = {
+          lastBackupDate: null,
+          databaseStatus: 'sin_backup',
+          backupFiles: 0,
+          uploadsBackedUp: uploadsBackups.length > 0,
+          retentionDays,
+          warning: 'No hay ninguna copia de la base de datos en el servidor. Configura el cron job en Coolify para ejecutar backup.sh.',
+        };
+      } else {
+        backup = {
+          lastBackupDate,
+          databaseStatus: stale ? 'degradado' : 'healthy',
+          backupFiles: dbBackups.length,
+          uploadsBackedUp: uploadsBackups.length > 0,
+          retentionDays,
+          warning: stale
+            ? `La ultima copia es de hace ${Math.floor(ageHours / 24)} dias, mas alla de la retencion de ${retentionDays}. Revisa el cron job.`
+            : uploadsBackups.length === 0
+              ? 'Hay copias de la base de datos pero ninguna de los documentos (uploads).'
+              : null,
+        };
+      }
+    } catch {
+      backup = {
+        lastBackupDate: null,
+        databaseStatus: 'sin_backup',
+        backupFiles: 0,
+        uploadsBackedUp: false,
+        retentionDays,
+        warning: `No se pudo leer ${backupDir}. Comprueba que el volumen backups_data este montado en el backend.`,
+      };
+    }
+
     res.json({
       counts: {
         clients: clientsCount.rows[0]?.n || 0,
@@ -201,9 +271,7 @@ router.get('/stats', async (req: Request, res: Response) => {
         appointments: appointmentsCount.rows[0]?.n || 0,
         documents: documentsCount.rows[0]?.n || 0,
       },
-      lastBackupDate: new Date().toISOString(),
-      databaseStatus: 'healthy',
-      retentionDays: 14,
+      ...backup,
     });
   } catch (err: any) {
     console.error('Error al obtener estadísticas de backup:', err);

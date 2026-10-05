@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
 import { PDFParse } from 'pdf-parse';
+import { validarEndpointIA, EndpointNoPermitido } from './ai-endpoint-guard.js';
 
 const router = Router();
 
@@ -28,6 +29,59 @@ function normalizeChatUrl(rawUrl?: string): string {
   let url = (rawUrl || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').trim().replace(/\/+$/, '');
   if (url.endsWith('/chat/completions')) return url;
   return `${url}/chat/completions`;
+}
+
+/**
+ * Normaliza la URL de la API de IA validandola antes.
+ *
+ * Cuando el cliente no envia `apiUrl` se usa OPENAI_BASE_URL del servidor, que
+ * es de fiar y no necesita pasar por el filtro. Cuando si lo envia, pasa por
+ * validarEndpointIA: sin eso, el body controla el destino del fetch y el
+ * Authorization con la OPENAI_API_KEY del servidor viaja a el.
+ */
+async function resolveChatUrl(rawUrl?: string): Promise<string> {
+  const supplied = (rawUrl || '').trim();
+  if (!supplied) return normalizeChatUrl(undefined);
+  await validarEndpointIA(supplied);
+  return normalizeChatUrl(supplied);
+}
+
+/**
+ * fetch que revalida cada salto de redireccion.
+ *
+ * Validar solo la URL inicial no basta: `fetch` sigue redirecciones por
+ * defecto, asi que un host aparentemente legitimo (attacker.com) puede
+ * responder 302 hacia http://169.254.169.254/ y el fetch acabaria ahi. Como la
+ * cabecera Authorization se reenvia automaticamente en el salto, la
+ * OPENAI_API_KEY del servidor llegaria al destino interno.
+ *
+ * Se usa `redirect: 'manual'` y se resuelve la cadena a mano, pasando cada
+ * destino por el mismo filtro. El limite de 4 saltos evita bucles.
+ */
+async function fetchConRedireccionesSeguras(
+  url: string,
+  opciones: RequestInit,
+  maxSaltos = 4
+): Promise<globalThis.Response> {
+  let actual = url;
+
+  for (let salto = 0; salto <= maxSaltos; salto++) {
+    const respuesta = await fetch(actual, { ...opciones, redirect: 'manual' });
+
+    const esRedireccion = [301, 302, 303, 307, 308].includes(respuesta.status);
+    const destino = respuesta.headers.get('location');
+    if (!esRedireccion || !destino) return respuesta;
+
+    if (salto === maxSaltos) {
+      throw new EndpointNoPermitido('Demasiadas redirecciones.');
+    }
+
+    // El mismo filtro que la URL inicial, ahora sobre el destino del salto.
+    await validarEndpointIA(destino);
+    actual = destino;
+  }
+
+  throw new EndpointNoPermitido('No se pudo resolver la URL de la API.');
 }
 
 function extractMultilingualFields(text: string) {
@@ -88,7 +142,21 @@ async function callOpenAIOrFallback(
     return fallbackFn();
   }
 
-  const endpoint = normalizeChatUrl(options?.apiUrl);
+  // Una URL de cliente invalida cae al motor local en vez de propagar el error:
+  // el fallback heuristico siempre existe, y una URL rechazada no debe dejar
+  // al gestor sin respuesta. La URL del servidor (OPENAI_BASE_URL) no pasa por
+  // aqui porque resolverChatUrl solo filtra lo que el cliente envia.
+  let endpoint: string;
+  try {
+    endpoint = await resolveChatUrl(options?.apiUrl);
+  } catch (error) {
+    if (error instanceof EndpointNoPermitido) {
+      console.warn(`Endpoint de IA rechazado, se usa el motor local: ${error.message}`);
+      return fallbackFn();
+    }
+    throw error;
+  }
+
   const model = options?.model?.trim() || process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
   try {
@@ -99,7 +167,7 @@ async function callOpenAIOrFallback(
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
 
-    const res = await fetch(endpoint, {
+    const res = await fetchConRedireccionesSeguras(endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -502,7 +570,22 @@ router.post('/test-connection', async (req: Request, res: Response) => {
       });
     }
 
-    const endpoint = normalizeChatUrl(apiUrl);
+    // Este endpoint es el mas peligroso de los tres: hace el fetch y devuelve
+    // el cuerpo de la respuesta al cliente. Sin validacion, el cuerpo elige el
+    // destino, el servidor adjunta el Authorization con OPENAI_API_KEY, y la
+    // respuesta vuelve al atacante. Aqui no hay fallback posible — el usuario
+    // quiere saber si la conexion funciona — asi que se responde 400 con el
+    // motivo en vez de degradar en silencio.
+    let endpoint: string;
+    try {
+      endpoint = await resolveChatUrl(apiUrl);
+    } catch (error) {
+      if (error instanceof EndpointNoPermitido) {
+        return res.status(400).json({ success: false, error: error.message });
+      }
+      throw error;
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -510,7 +593,7 @@ router.post('/test-connection', async (req: Request, res: Response) => {
       headers['Authorization'] = `Bearer ${key}`;
     }
 
-    const testRes = await fetch(endpoint, {
+    const testRes = await fetchConRedireccionesSeguras(endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify({
