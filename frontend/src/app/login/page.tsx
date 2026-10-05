@@ -43,23 +43,8 @@ function LoginForm() {
       // Backend offline o proxy no disponible: pasar a modo local transparente
     }
 
-    if (process.env.NODE_ENV === 'production') {
-      setLoading(false);
-      setError('No se pudo validar el acceso. Comprueba el servidor y tus credenciales.');
-      return;
-    }
-
-    // Solo en desarrollo: permite revisar la interfaz sin PostgreSQL.
-    const role: 'gestor' | 'admin' = email.toLowerCase().includes('admin') ? 'admin' : 'gestor';
-    const fallbackUser: SessionUser = {
-      id: 'usr_' + Date.now(),
-      email: email.trim() || 'gestor@rp-gestoria.tech',
-      full_name: email.toLowerCase().includes('admin') ? 'Administrador Sistema' : 'Gestor Principal',
-      role,
-    };
-    saveSession('nexusgest_local_demo', fallbackUser);
-    const next = searchParams.get('next');
-    router.replace(next && next.startsWith('/') ? next : '/crm');
+    setLoading(false);
+    setError('No se pudo validar el acceso. Comprueba el servidor y tus credenciales.');
   };
 
   return (

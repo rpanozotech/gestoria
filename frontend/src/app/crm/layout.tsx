@@ -28,24 +28,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   // la pantalla y luego cada fetch falla.
   useEffect(() => {
     const token = getToken();
-    const isProductionDemo = process.env.NODE_ENV === 'production' && token?.startsWith('nexusgest_local_demo');
-    if (!token || isProductionDemo) {
-      if (process.env.NODE_ENV === 'production') {
-        router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-        return;
-      }
-      // El entorno local puede funcionar sin PostgreSQL (por ejemplo, cuando
-      // solo se está probando el OCR). Conservamos el acceso demo para no
-      // dejar al usuario atrapado en un bucle de redirección al login.
-      const demoUser: SessionUser = {
-        id: 'usr_local_demo',
-        email: 'gestor@rp-gestoria.tech',
-        full_name: 'Rony (Gestor Principal)',
-        role: 'gestor',
-      };
-      saveSession('nexusgest_local_demo', demoUser);
-      setUser(demoUser);
-      setChecking(false);
+    if (!token) {
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
       return;
     }
     setUser(getStoredUser());
@@ -107,14 +91,9 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
   const quickSearchResults = [
     { title: 'Descargar Copia de Seguridad Completa (JSON)', category: 'Backup', href: '/crm/backup' },
-    { title: 'Exportar Clientes a CSV (Excel / Otros CRM)', category: 'Exportar', href: '/crm/backup' },
+    { title: 'Exportar Clientes a CSV', category: 'Exportar', href: '/crm/backup' },
     { title: 'Exportar Facturación Oficial a CSV', category: 'Exportar', href: '/crm/backup' },
-    { title: 'Maria Popescu (BSN: 982145672)', category: 'Cliente', href: '/crm/clientes' },
-    { title: 'Carlos Mendoza Ruiz (BSN: 817293845)', category: 'Cliente', href: '/crm/clientes' },
-    { title: 'EXP-2026-0041: Activación DigiD + Zorgtoeslag', category: 'Expediente', href: '/crm' },
-    { title: 'EXP-2026-0042: M-Form 2025 Belastingdienst', category: 'Expediente', href: '/crm' },
-    { title: 'FAC-2026-0001: € 266,20 (Pagada iDEAL)', category: 'Factura', href: '/crm/facturacion' },
-    { title: 'Tarifas Oficiales: M-Form, DigiD, ZZP', category: 'Tarifas', href: '/crm/tarifas' },
+    { title: 'Tarifas Oficiales', category: 'Tarifas', href: '/crm/tarifas' },
   ].filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   // Mientras se verifica la sesion no se renderiza el CRM: si no, se ve
@@ -324,7 +303,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                       className="p-2.5 rounded-lg bg-blue-50 border border-blue-200 block hover:bg-blue-100 transition-colors"
                     >
                       <span className="font-bold text-blue-900 block">Resolución Belastingdienst</span>
-                      <span className="text-[11px] text-blue-800">Nueva carta de liquidación recibida para Maria Popescu.</span>
+                      <span className="text-[11px] text-blue-800">Nueva carta de liquidación recibida para Cliente seleccionado.</span>
                     </Link>
 
                     <Link
@@ -342,7 +321,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                       className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 block hover:bg-emerald-100 transition-colors"
                     >
                       <span className="font-bold text-emerald-900 block">Cita Confirmada</span>
-                      <span className="text-[11px] text-emerald-800">Videollamada M-Form con Carlos Mendoza a las 10:00.</span>
+                      <span className="text-[11px] text-emerald-800">Videollamada M-Form con Cliente seleccionado a las 10:00.</span>
                     </Link>
                   </div>
                 </div>

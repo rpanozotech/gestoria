@@ -301,12 +301,7 @@ Aldus in tweevoud opgemaakt en ondertekend te Eindhoven op {{fecha}}.`,
   },
 ];
 
-const SAMPLE_CLIENTS = [
-  { name: 'Maria Popescu', bsn: '982145672', address: 'Strijpsestraat 142, 5616 GP Eindhoven' },
-  { name: 'Carlos Mendoza Ruiz', bsn: '817293845', address: 'Keizersgracht 321, 1016 EE Amsterdam' },
-  { name: 'David Gómez Castillo', bsn: '749201834', address: 'Coolsingel 88, 3011 AG Rotterdam' },
-  { name: 'Lucía Navarro Gil', bsn: '628194032', address: 'Oudegracht 120, 3511 AZ Utrecht' },
-];
+const SAMPLE_CLIENTS: any[] = []; // estado inicial vacío; la fuente es /clients
 
 const OFFICIAL_DESTINATIONS = [
   'Belastingdienst / Postbus 2500, 6401 DA Heerlen',
@@ -380,13 +375,13 @@ export default function DocumentosIAPage() {
   // -------------------------------------------------------------
   // ESTADOS DEL FORMULARIO DE GENERACIÓN
   // -------------------------------------------------------------
-  const [clientName, setClientName] = useState('Maria Popescu');
-  const [clientSearch, setClientSearch] = useState('Maria Popescu');
+  const [clientName, setClientName] = useState('');
+  const [clientSearch, setClientSearch] = useState('');
   const [crmClients, setCrmClients] = useState<any[]>(SAMPLE_CLIENTS);
-  const [bsn, setBsn] = useState('982145672');
-  const [address, setAddress] = useState('Strijpsestraat 142, 5616 GP Eindhoven');
+  const [bsn, setBsn] = useState('');
+  const [address, setAddress] = useState('');
   const [details, setDetails] = useState(
-    'Discrepancia en el cálculo del toetsingsinkomen para el subsidio Zorgtoeslag. Aportamos nóminas y justificantes.'
+    ''
   );
   const [language, setLanguage] = useState<'nl' | 'es'>('nl');
   const [tone, setTone] = useState<'formal' | 'juridico' | 'urgente'>('juridico');
@@ -394,21 +389,8 @@ export default function DocumentosIAPage() {
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Directorio conectado a la ficha CRM: primero carga la caché local y
-  // después intenta actualizarla con los clientes reales del backend.
+  // Directorio conectado exclusivamente a los clientes reales del backend.
   useEffect(() => {
-    try {
-      const storedClients = localStorage.getItem('nexusgest_clients');
-      if (storedClients) {
-        const parsedClients = JSON.parse(storedClients);
-        if (Array.isArray(parsedClients) && parsedClients.length > 0) {
-          setCrmClients(parsedClients);
-        }
-      }
-    } catch {
-      // Mantener el catálogo inicial si la caché local no es válida.
-    }
-
     apiFetch('/clients')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -436,8 +418,8 @@ export default function DocumentosIAPage() {
     });
     return text
       .replace(/\{\{fecha\}\}/g, todayStr)
-      .replace(/\{\{cliente_nombre\}\}/g, clientName || 'Maria Popescu')
-      .replace(/\{\{bsn\}\}/g, bsn || '982145672')
+      .replace(/\{\{cliente_nombre\}\}/g, clientName || 'Cliente seleccionado')
+      .replace(/\{\{bsn\}\}/g, bsn || '')
       .replace(/\{\{direccion\}\}/g, address || 'Eindhoven, Nederland')
       .replace(/\{\{motivo\}\}/g, details || 'Revisión formal de expediente')
       .replace(/\{\{organismo\}\}/g, activeTemplateObj.targetEntity || 'Belastingdienst')
@@ -863,17 +845,8 @@ ${
   const analyzerFileInputRef = useRef<HTMLInputElement>(null);
   const [isDraggingDoc, setIsDraggingDoc] = useState(false);
 
-  const [attachedDocs, setAttachedDocs] = useState<AttachedDocItem[]>([
-    {
-      id: 'doc_default_1',
-      name: 'Definitieve_Aanslag_Inkomstenbelasting_2025.pdf',
-      size: 348000,
-      type: 'application/pdf',
-      extractedText: `Belastingdienst / Kantoor Buitenland\nBetreft: Definitieve aanslag inkomstenbelasting en premie volksverzekeringen 2025\nBurgerservicenummer: 982145672\nDagtekening: 18 februari 2026\n\nUitslag van de aanslag:\nVastgesteld belastbaar inkomen uit werk en woning (box 1): € 28.450\nVerrekende voorheffingen: € 5.820\nTe betalen bedrag: € 784,00\n\nBetaaltermijn:\nU dient het te betalen bedrag over te maken voor 1 april 2026 onder vermelding van betalingskenmerk: 2026-9912-3841-0001.\n\nNiet eens met deze aanslag?\nU kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of schriftelijk aan Postbus 2500, 6401 DA Heerlen.`,
-      addedAt: 'Hoy',
-    },
-  ]);
-  const [activeDocId, setActiveDocId] = useState<string>('doc_default_1');
+  const [attachedDocs, setAttachedDocs] = useState<AttachedDocItem[]>([]);
+  const [activeDocId, setActiveDocId] = useState<string | null>(null);
 
   const [docToAnalyze, setDocToAnalyze] = useState(
     attachedDocs[0]?.extractedText || ''
@@ -905,13 +878,13 @@ ${
       // Heurística de OCR inteligente según el nombre o tipo del archivo
       let extracted = '';
       if (lower.includes('zorg') || lower.includes('toeslag')) {
-        extracted = `Dienst Toeslagen / Belastingdienst\nBetreft: Voorschotbeschikking Zorgtoeslag 2026\nBurgerservicenummer: 982145672\nDagtekening: 20 januari 2026\n\nBeschikking:\nUw berekende toetsingsinkomen: € 26.500 per jaar.\nVoorschot per maand: € 123,00\nTotaal over 2026: € 1.476,00\n\nUitbetaling:\nHet bedrag wordt maandelijks rond de 20e dag overgemaakt naar uw opgegeven bankrekening.\n\nBezwaar:\nBent u het niet eens? U heeft 6 weken de tijd na dagtekening om een bezwaarschrift in te dienen.`;
+        extracted = `Dienst Toeslagen / Belastingdienst\nBetreft: Voorschotbeschikking Zorgtoeslag 2026\nBurgerservicenummer: \nDagtekening: 20 januari 2026\n\nBeschikking:\nUw berekende toetsingsinkomen: € 26.500 per jaar.\nVoorschot per maand: € 123,00\nTotaal over 2026: € 1.476,00\n\nUitbetaling:\nHet bedrag wordt maandelijks rond de 20e dag overgemaakt naar uw opgegeven bankrekening.\n\nBezwaar:\nBent u het niet eens? U heeft 6 weken de tijd na dagtekening om een bezwaarschrift in te dienen.`;
       } else if (lower.includes('cak') || lower.includes('boete')) {
         extracted = `Centraal Administratie Kantoor (CAK) - Den Haag\nBetreft: Bestuursrechtelijke premie zorgverzekering / Onverzekerd\nKenmerk: CAK-2026-88129-Z\nDagtekening: 10 februari 2026\n\nConstatering:\nUit controle blijkt dat voor u geen Nederlandse basisverzekering is afgesloten.\nBoetebedrag eerste overtreding: € 496,25\n\nHersteltermijn:\nU dient binnen 3 maanden een geldige zorgverzekering af te sluiten of bewijs van buitenlandse dekking (formulier E106/S1) aan te leveren.\nRechtsmiddel: Bezwaar binnen 6 weken bij CAK Bezwaarschriften.`;
       } else if (lower.includes('huur') || lower.includes('woning')) {
         extracted = `Dienst Toeslagen\nBetreft: Definitieve berekening Huurtoeslag 2025\nKenmerk: HT-2025-99214\nDagtekening: 15 januari 2026\n\nRekenhuur: € 780,00 per maand\nVastgesteld gezamenlijk inkomen: € 29.800\nTe veel ontvangen huurtoeslag: € 340,00\n\nTerugbetaling:\nU dient € 340,00 terug te betalen voor 1 maart 2026.\nBezwaartermijn: 6 weken na dagtekening.`;
       } else {
-        extracted = `Documento Oficial Neerlandés: ${file.name}\nTamaño: ${(file.size / 1024).toFixed(1)} KB\nFecha de digitalización: ${new Date().toLocaleDateString('es-ES')}\n\nTexto extraído (OCR):\nBurgerservicenummer (BSN): 982145672\nKenmerk / Referentie: 2026-${Math.floor(10000 + Math.random() * 90000)}\nDagtekening: ${new Date().toLocaleDateString('nl-NL')}\n\nOnderwerp: Officiële mededeling betreffende fiscale of administratieve status.\nTermijn voor actie of bezwaar: 6 weken conform artikel 7:1 Algemene wet bestuursrecht (Awb).`;
+        extracted = `Documento Oficial Neerlandés: ${file.name}\nTamaño: ${(file.size / 1024).toFixed(1)} KB\nFecha de digitalización: ${new Date().toLocaleDateString('es-ES')}\n\nTexto extraído (OCR):\nBurgerservicenummer (BSN): \nKenmerk / Referentie: 2026-${Math.floor(10000 + Math.random() * 90000)}\nDagtekening: ${new Date().toLocaleDateString('nl-NL')}\n\nOnderwerp: Officiële mededeling betreffende fiscale of administratieve status.\nTermijn voor actie of bezwaar: 6 weken conform artikel 7:1 Algemene wet bestuursrecht (Awb).`;
       }
 
       const item: AttachedDocItem = {
@@ -970,10 +943,10 @@ ${
 
     if (sampleType === 'belastingdienst') {
       name = 'Aanslag_Belastingdienst_2025.pdf';
-      text = `Belastingdienst / Kantoor Buitenland\nBetreft: Definitieve aanslag inkomstenbelasting en premie volksverzekeringen 2025\nBurgerservicenummer: 982145672\nDagtekening: 18 februari 2026\n\nUitslag van de aanslag:\nVastgesteld belastbaar inkomen uit werk en woning (box 1): € 28.450\nVerrekende voorheffingen: € 5.820\nTe betalen bedrag: € 784,00\n\nBetaaltermijn:\nU dient het te betalen bedrag over te maken voor 1 april 2026 onder vermelding van betalingskenmerk: 2026-9912-3841-0001.\n\nNiet eens met deze aanslag?\nU kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of schriftelijk aan Postbus 2500, 6401 DA Heerlen.`;
+      text = `Belastingdienst / Kantoor Buitenland\nBetreft: Definitieve aanslag inkomstenbelasting en premie volksverzekeringen 2025\nBurgerservicenummer: \nDagtekening: 18 februari 2026\n\nUitslag van de aanslag:\nVastgesteld belastbaar inkomen uit werk en woning (box 1): € 28.450\nVerrekende voorheffingen: € 5.820\nTe betalen bedrag: € 784,00\n\nBetaaltermijn:\nU dient het te betalen bedrag over te maken voor 1 april 2026 onder vermelding van betalingskenmerk: 2026-9912-3841-0001.\n\nNiet eens met deze aanslag?\nU kunt binnen 6 weken na dagtekening bezwaar maken via Mijn Belastingdienst of schriftelijk aan Postbus 2500, 6401 DA Heerlen.`;
     } else if (sampleType === 'zorgtoeslag') {
       name = 'Beschikking_Zorgtoeslag_2026.pdf';
-      text = `Dienst Toeslagen / Belastingdienst\nBetreft: Voorschotbeschikking Zorgtoeslag 2026\nBurgerservicenummer: 817293845\nDagtekening: 22 januari 2026\n\nBerekend toetsingsinkomen: € 25.400\nMaandelijks voorschot: € 123,00\nTotaalbedrag 2026: € 1.476,00\n\nUitbetaling:\nHet voorschot wordt maandelijks overgemaakt naar IBAN: NL91INGB0001234567.\n\nBezwaar:\nU kunt binnen 6 weken na dagtekening bezwaar maken indien uw inkomen of gezinssituatie afwijkt.`;
+      text = `Dienst Toeslagen / Belastingdienst\nBetreft: Voorschotbeschikking Zorgtoeslag 2026\nBurgerservicenummer: \nDagtekening: 22 januari 2026\n\nBerekend toetsingsinkomen: € 25.400\nMaandelijks voorschot: € 123,00\nTotaalbedrag 2026: € 1.476,00\n\nUitbetaling:\nHet voorschot wordt maandelijks overgemaakt naar IBAN: NL91INGB0001234567.\n\nBezwaar:\nU kunt binnen 6 weken na dagtekening bezwaar maken indien uw inkomen of gezinssituatie afwijkt.`;
     } else if (sampleType === 'cak') {
       name = 'Boetebeschikking_CAK_DenHaag.jpg';
       type = 'image/jpeg';
@@ -1039,7 +1012,7 @@ ${
         parsed = {
           entity: 'Belastingdienst (Administración Tributaria de los Países Bajos)',
           documentType: 'Definitieve aanslag inkomstenbelasting 2025',
-          bsn: '982145672',
+          bsn: '',
           letterDate: '18 de febrero de 2026',
           deadline: '1 de abril de 2026 / 6 semanas para recurso',
           financialOutcome: '€ 784,00 a pagar',

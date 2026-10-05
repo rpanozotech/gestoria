@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { apiUrl } from '@/lib/api';
 
 interface ServiceItem {
   id: string;
@@ -12,209 +13,54 @@ interface ServiceItem {
   badge?: string;
   desc: string;
   price: string;
+  visible?: boolean;
   category: 'impuestos' | 'subsidios' | 'llegada' | 'empresas' | 'vehiculos' | 'otros';
   requirements: string[];
   duration: string;
 }
 
-const SERVICES_DATA: ServiceItem[] = [
-  {
-    id: 'renta-mform',
-    icon: 'receipt_long',
-    title: 'Declaración de la Renta (M-Form / P-Form)',
-    badge: 'Más Solicitado',
-    desc: 'Maximizamos tu devolución en tu primer año o años completos. Aplicamos deducciones de mudanza, seguro de salud y vivienda.',
-    price: 'Desde 89€',
-    category: 'impuestos',
-    requirements: ['Jaaropgaaf (Certificado anual nómina)', 'BSN', 'Fecha exacta de empadronamiento en Holanda'],
-    duration: '24-48 horas',
-  },
-  {
-    id: 'digid',
-    icon: 'fingerprint',
-    title: 'DigiD (Identidad Digital Holandesa)',
-    badge: 'Esencial',
-    desc: 'Solicitud, activación y desbloqueo de tu clave digital holandesa sin perderte con las cartas postales en neerlandés.',
-    price: 'Desde 29€',
-    category: 'llegada',
-    requirements: ['BSN oficial', 'Dirección registrada en Países Bajos', 'Móvil holandés o internacional'],
-    duration: '3-5 días (carta postal)',
-  },
-  {
-    id: 'zorgtoeslag',
-    icon: 'medical_services',
-    title: 'Zorgtoeslag (Subsidio de Salud)',
-    badge: 'Hasta 154€/mes',
-    desc: 'Reclama el subsidio mensual del gobierno para recuperar la mayor parte del coste de tu seguro médico en Holanda.',
-    price: 'Desde 45€',
-    category: 'subsidios',
-    requirements: ['Póliza de seguro médico activa en NL', 'Cuenta bancaria IBAN', 'Estimación de ingresos anuales'],
-    duration: '2-4 semanas de resolución',
-  },
-  {
-    id: 'seguro-medico',
-    icon: 'health_and_safety',
-    title: 'Seguro Médico Obligatorio',
-    badge: 'Ahorro Garantizado',
-    desc: 'Te asesoramos para elegir y darte de alta en la mejor póliza básica holandesa al precio más económico del mercado.',
-    price: 'Desde 35€',
-    category: 'llegada',
-    requirements: ['BSN', 'Copia de pasaporte / DNI', 'Contrato laboral o de estudios'],
-    duration: 'Mismo día',
-  },
-  {
-    id: 'formulario-u1',
-    icon: 'description',
-    title: 'Formulario U1 (Exportar Paro)',
-    badge: 'Trámite Rápido',
-    desc: 'Certifica y traslada todos tus periodos cotizados en Países Bajos para cobrar el paro en España u otro país de la UE.',
-    price: 'Desde 55€',
-    category: 'otros',
-    requirements: ['Últimas nóminas holandesas', 'Finiquito o carta de rescisión', 'BSN'],
-    duration: '2-3 semanas (UWV)',
-  },
-  {
-    id: 'desempleo-ww',
-    icon: 'work_outline',
-    title: 'Prestación por Desempleo WW (UWV)',
-    badge: 'Soporte Completo',
-    desc: 'Tramitación y defensa de tu solicitud de paro holandés ante el UWV tras finalizar o rescindir tu contrato de trabajo.',
-    price: 'Desde 95€',
-    category: 'subsidios',
-    requirements: ['DigiD activo', 'Contrato de trabajo finalizado', 'Mínimo 26 semanas cotizadas'],
-    duration: '4 semanas',
-  },
-  {
-    id: 'autonomos-zzp',
-    icon: 'storefront',
-    title: 'Autónomos / ZZP (KvK & BTW)',
-    badge: 'Emprendedores',
-    desc: 'Alta integral en Cámara de Comercio (KvK), obtención de BTW-id, facturación e impuestos trimestrales sin complicaciones.',
-    price: 'Desde 120€',
-    category: 'empresas',
-    requirements: ['BSN', 'Nombre comercial de tu actividad', 'Pasaporte o ID europeo'],
-    duration: '48 horas',
-  },
-  {
-    id: 'residencia-fiscal',
-    icon: 'verified_user',
-    title: 'Certificado de Residencia Fiscal',
-    badge: 'Legal',
-    desc: 'Obtención del certificado oficial ante Belastingdienst para evitar la doble tributación y validar tu estatus en Europa.',
-    price: 'Desde 49€',
-    category: 'impuestos',
-    requirements: ['BSN', 'Datos del país de destino'],
-    duration: '1-2 semanas',
-  },
-  {
-    id: 'importacion-vehiculos',
-    icon: 'directions_car',
-    title: 'Importación de Vehículos (RDW & BPM)',
-    badge: 'Gestión Integral',
-    desc: 'Cambio de matrícula a placas neerlandesas, cálculo y solicitud de exención o liquidación del impuesto BPM.',
-    price: 'Desde 149€',
-    category: 'vehiculos',
-    requirements: ['Ficha técnica del vehículo', 'Permiso de circulación original', 'Certificado de empadronamiento'],
-    duration: '10-15 días',
-  },
-  {
-    id: 'kinderopvangtoeslag',
-    icon: 'child_care',
-    title: 'Kinderopvangtoeslag & Subsidios Hijos',
-    badge: 'Familias',
-    desc: 'Gestión de ayudas estatales para guardería, Kindgebonden budget y prestaciones familiares en Países Bajos.',
-    price: 'Desde 65€',
-    category: 'subsidios',
-    requirements: ['Contrato de la guardería holandesa (Kinderopvang)', 'Horas contratadas', 'Ingresos de ambos progenitores'],
-    duration: '3-4 semanas',
-  },
-  {
-    id: 'documentos-admin',
-    icon: 'folder_shared',
-    title: 'Documentos Administrativos & BSN',
-    badge: 'Llegada',
-    desc: 'Citas de empadronamiento en Gemeente, obtención de BSN, cartas oficiales y traducción de documentos legales.',
-    price: 'Desde 39€',
-    category: 'llegada',
-    requirements: ['Contrato de alquiler o autorización', 'Pasaporte original'],
-    duration: '24 horas',
-  },
-  {
-    id: 'consulta-privada',
-    icon: 'support_agent',
-    title: 'Consulta Privada 1 a 1',
-    badge: 'Videollamada / Presencial',
-    desc: 'Sesión personalizada de 30 o 60 min con un asesor especialista para resolver todas tus dudas particulares sobre Holanda.',
-    price: '49€ / sesión',
-    category: 'otros',
-    requirements: ['Tus preguntas preparadas'],
-    duration: 'Inmediato (según agenda)',
-  },
-  {
-    id: 'otros-tramites',
-    icon: 'tune',
-    title: 'Otros Trámites & Recursos Belastingdienst',
-    badge: 'Personalizado',
-    desc: 'Huurtoeslag (alquiler), recursos contra multas tributarias, revisión de cartas holandesas y trámites a medida.',
-    price: 'A consultar',
-    category: 'otros',
-    requirements: ['Copia de la carta o notificación recibida'],
-    duration: 'Según caso',
-  },
-];
+const SERVICES_DATA: ServiceItem[] = [];
 
 export default function ServiciosPage() {
   const [servicesList, setServicesList] = useState<ServiceItem[]>(SERVICES_DATA);
   const [activeCategory, setActiveCategory] = useState<string>('todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
+
+  useEffect(() => {
+    fetch(apiUrl('/services/public'))
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error('No se pudo cargar el catálogo')))
+      .then((data) => setServicesList(Array.isArray(data.services) ? data.services.map((item: any) => ({
+        id: item.id, title: item.title, category: item.category, icon: item.icon || 'receipt_long',
+        price: `Desde ${Number(item.priceFinal ?? item.basePrice).toFixed(2)}€`, badge: item.badge || 'Servicio',
+        duration: item.duration || 'Según caso', desc: item.desc || '', requirements: item.requirements || [],
+        visible: item.visibleWeb !== false,
+      })) : []))
+      .catch(() => setServicesList([]));
+  }, []);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [formError, setFormError] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
-
-  // Sincronizar con los precios modificados desde la terminal del gestor (/crm/tarifas)
-  useEffect(() => {
-    const syncPrices = () => {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('rpgestoria_service_prices');
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              const updated = SERVICES_DATA.map((base) => {
-                const found = parsed.find((p: any) => p.id === base.id);
-                if (found) {
-                  return {
-                    ...base,
-                    price: `Desde ${found.basePrice}€`,
-                    badge: found.badge || base.badge,
-                  };
-                }
-                return base;
-              });
-              setServicesList(updated);
-            }
-          } catch {}
-        }
-      }
-    };
-
-    syncPrices();
-    window.addEventListener('rpgestoria_prices_updated', syncPrices);
-    return () => window.removeEventListener('rpgestoria_prices_updated', syncPrices);
-  }, []);
 
   const filtered = servicesList.filter((s) => {
     const matchesCategory = activeCategory === 'todos' || s.category === activeCategory;
     const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           s.desc.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return (s.visible !== false) && matchesCategory && matchesSearch;
   });
 
-  const handleStartProcess = (e: React.FormEvent) => {
+  const handleStartProcess = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormSubmitted(true);
+    if (!selectedService) return;
+    setFormError(''); setFormSubmitted(false);
+    try {
+      const response = await fetch(apiUrl('/service-requests'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ service_id: selectedService.id, full_name: clientName, email: clientEmail, phone: clientPhone, source: 'web' }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo guardar la solicitud.');
+      setFormSubmitted(true);
+    } catch (error) { setFormError(error instanceof Error ? error.message : 'No se pudo guardar la solicitud.'); }
   };
 
   return (
@@ -331,7 +177,7 @@ export default function ServiciosPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-extrabold text-slate-900">{srv.price}</span>
+                      <span className="text-right"><span className="text-base font-extrabold text-slate-900 block">{srv.price}</span><span className="text-[10px] font-semibold text-emerald-600 block">IVA incluido</span></span>
                       <button
                         onClick={() => {
                           setSelectedService(srv);
@@ -394,6 +240,7 @@ export default function ServiciosPage() {
                 <button onClick={() => setSelectedService(null)} className="text-slate-400 hover:text-slate-600 text-sm">✕</button>
               </div>
 
+              {formError && <p className="text-sm text-red-600 mb-3">{formError}</p>}
               {formSubmitted ? (
                 <div className="py-8 text-center space-y-3">
                   <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">

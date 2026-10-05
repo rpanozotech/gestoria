@@ -58,319 +58,11 @@ export default function CRMClientesPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Catálogo de Servicios y Trámites
-  const [servicesCatalog, setServicesCatalog] = useState([
-    { id: '1', title: 'Declaración Fiscal M-Form', category: 'Fiscalidad / Belastingdienst', defaultFee: 180.00 },
-    { id: '2', title: 'Activación DigiD + Zorgtoeslag', category: 'Subsidios / Toeslagen', defaultFee: 85.00 },
-    { id: '3', title: 'Solicitud Subsidio Huurtoeslag (Alquiler)', category: 'Subsidios / Toeslagen', defaultFee: 95.00 },
-    { id: '4', title: 'Alta Eenmanszaak KVK y BTW-nummer', category: 'Empresas / KVK', defaultFee: 250.00 },
-    { id: '5', title: 'Recurso Bezwaarschrift Belastingdienst', category: 'Legal / Recursos', defaultFee: 120.00 },
-    { id: '6', title: 'Kindgebonden Budget (Ayuda Hijos)', category: 'Subsidios / Toeslagen', defaultFee: 80.00 },
-    { id: '7', title: 'Cambio de Cuenta Bancaria Belastingdienst', category: 'Gestión Administrativa', defaultFee: 45.00 },
-  ]);
+  // Catálogo único cargado desde PostgreSQL mediante /services.
+  const [servicesCatalog, setServicesCatalog] = useState<any[]>([]);
 
   // Lista de clientes con sus datos, trámites, presupuestos, facturas, citas y documentos
-  const [clients, setClients] = useState<any[]>(process.env.NODE_ENV === 'production' ? [] : [
-    {
-      id: '1',
-      full_name: 'Maria Popescu',
-      email: 'maria.popescu@gmail.com',
-      phone: '+31 6 81239845',
-      bsn: '982145672',
-      id_document_number: 'RO9284102',
-      city: 'Eindhoven',
-      address: 'Strijpsestraat 142',
-      iban: 'NL91INGB0001234567',
-      digid_status: 'pendiente_activar',
-      status: 'activo',
-      notes: 'Requiere activación de DigiD y solicitud retroactiva de Zorgtoeslag.',
-      dossiers: [
-        {
-          id: 'd1',
-          code: 'EXP-2026-0041',
-          title: 'Activación DigiD + Solicitud Zorgtoeslag 2026',
-          category: 'Subsidios / Toeslagen',
-          status: 'en_belastingdienst',
-          progress_percentage: 65,
-          fee: 85.00,
-          deadline: '2026-10-15',
-          description: 'Trámite de ayuda médica y código de activación ante Belastingdienst.',
-        },
-      ],
-      quotes: [
-        {
-          id: 'q1',
-          code: 'PRE-2026-0003',
-          concept: 'Gestión Solicitud Zorgtoeslag y Registro',
-          amount: 85.00,
-          tax_amount: 17.85,
-          total: 102.85,
-          status: 'enviado',
-          valid_until: '2026-11-15',
-          items: [{ description: 'Gestión Solicitud Zorgtoeslag y Registro', total: 85.00 }],
-        },
-      ],
-      invoices: [
-        {
-          id: 'i1',
-          code: 'FAC-2026-0002',
-          concept: 'Gestión Solicitud Zorgtoeslag y Registro',
-          total: 102.85,
-          status: 'emitida',
-          due_date: '2026-10-12',
-          payment_method: 'ideal',
-          items: [{ description: 'Gestión Solicitud Zorgtoeslag y Registro', total: 85.00 }],
-        },
-      ],
-      appointments: [
-        {
-          id: 'a1',
-          title: 'Seguimiento Telefónico Zorgtoeslag',
-          date: '2026-10-10',
-          time: '10:00',
-          modality: 'llamada',
-          status: 'confirmada',
-          notes: 'Llamar para verificar código de carta física.',
-        },
-      ],
-      documents: [
-        {
-          id: 'doc-1',
-          name: 'DNI_Pasaporte_MariaPopescu.pdf',
-          category: 'identificacion',
-          date: '2026-10-02',
-          size: '1.2 MB',
-          file_type: 'pdf',
-          added_by: 'gestor',
-        },
-        {
-          id: 'doc-2',
-          name: 'Carta_Belastingdienst_Activacion_DigiD.pdf',
-          category: 'fiscal_belastingdienst',
-          date: '2026-10-05',
-          size: '450 KB',
-          file_type: 'pdf',
-          added_by: 'cliente',
-        },
-        {
-          id: 'doc-3',
-          name: 'Solicitud_Oficial_Zorgtoeslag_2026.pdf',
-          category: 'subsidios',
-          date: '2026-10-08',
-          size: '320 KB',
-          file_type: 'pdf',
-          added_by: 'gestor',
-        },
-        {
-          id: 'doc-4',
-          name: 'Nota_Resumen_IA_DigiD.txt',
-          category: 'nota_ia',
-          date: '2026-10-09',
-          size: '14 KB',
-          file_type: 'text',
-          added_by: 'ia',
-          content_text: 'RESUMEN TÉCNICO IA - CLIENTE MARIA POPESCU:\nEstado DigiD: Carta enviada por Belastingdienst. Código pendiente de activación física (plazo: 21 días).\nSubsidios: Solicitud de Zorgtoeslag lista para envío en cuanto se introduzca la clave SMS.',
-        },
-      ],
-    },
-    {
-      id: '2',
-      full_name: 'Carlos Mendoza Ruiz',
-      email: 'carlos.mendoza@outlook.com',
-      phone: '+34 654 321 987',
-      bsn: '817293845',
-      id_document_number: '48920184K',
-      city: 'Amsterdam',
-      address: 'Keizersgracht 321',
-      iban: 'NL44ABNA0412345678',
-      digid_status: 'activo',
-      status: 'activo',
-      notes: 'Llegada en 2025. Declaración Modelo M (M-Form). Deducción por traslado internacional.',
-      dossiers: [
-        {
-          id: 'd2',
-          code: 'EXP-2026-0042',
-          title: 'Declaración Fiscal M-Form (Migración 2025)',
-          category: 'Fiscalidad / Belastingdienst',
-          status: 'en_proceso',
-          progress_percentage: 40,
-          fee: 180.00,
-          deadline: '2026-11-01',
-          description: 'Cálculo de deducción por traslado internacional y declaración ante Belastingdienst.',
-        },
-      ],
-      quotes: [
-        {
-          id: 'q2',
-          code: 'PRE-2026-0001',
-          concept: 'Elaboración y Presentación Fiscal M-Form',
-          amount: 220.00,
-          tax_amount: 46.20,
-          total: 266.20,
-          status: 'convertido',
-          valid_until: '2026-10-30',
-          items: [
-            { description: 'Elaboración y Presentación Fiscal M-Form Belastingdienst', total: 180.00 },
-            { description: 'Revisión documentación de ingresos en origen', total: 40.00 },
-          ],
-        },
-      ],
-      invoices: [
-        {
-          id: 'i2',
-          code: 'FAC-2026-0001',
-          concept: 'Elaboración y Presentación Fiscal M-Form',
-          total: 266.20,
-          status: 'pagada',
-          due_date: '2026-10-15',
-          payment_method: 'ideal',
-          items: [
-            { description: 'Elaboración y Presentación Fiscal M-Form Belastingdienst', total: 180.00 },
-            { description: 'Revisión documentación de ingresos en origen', total: 40.00 },
-          ],
-        },
-      ],
-      appointments: [
-        {
-          id: 'a2',
-          title: 'Revisión M-Form Carlos Mendoza',
-          date: '2026-10-10',
-          time: '11:30',
-          modality: 'online_meet',
-          status: 'confirmada',
-          notes: 'Revisar certificado de retenciones de España.',
-        },
-      ],
-      documents: [
-        {
-          id: 'doc-5',
-          name: 'Pasaporte_Espanol_CarlosMendoza.pdf',
-          category: 'identificacion',
-          date: '2026-09-20',
-          size: '980 KB',
-          file_type: 'pdf',
-          added_by: 'cliente',
-        },
-        {
-          id: 'doc-6',
-          name: 'Certificado_Retenciones_2025_Espana.pdf',
-          category: 'fiscal_belastingdienst',
-          date: '2026-10-01',
-          size: '1.4 MB',
-          file_type: 'pdf',
-          added_by: 'gestor',
-        },
-        {
-          id: 'doc-7',
-          name: 'Contrato_Laboral_Amsterdam_BV.pdf',
-          category: 'laboral_nominas',
-          date: '2026-10-03',
-          size: '2.1 MB',
-          file_type: 'pdf',
-          added_by: 'cliente',
-        },
-        {
-          id: 'doc-8',
-          name: 'Dictamen_IA_Deduccion_MForm.txt',
-          category: 'nota_ia',
-          date: '2026-10-06',
-          size: '18 KB',
-          file_type: 'text',
-          added_by: 'ia',
-          content_text: 'DICTAMEN TÉCNICO FISCAL IA:\nCliente Carlos Mendoza Ruiz (BSN 817293845).\nAplicación del régimen de migración M-Form: deducción aplicable por gastos de relocalización internacional conforme al art. 3.120 Wet inkomstenbelasting 2001.\nRecomendación: solicitar también la resolución de 30% Ruling en trámite conjunto con el empleador.',
-        },
-      ],
-    },
-    {
-      id: '3',
-      full_name: 'Lars Van Dijk',
-      email: 'lars.vandijk@techconsulting.nl',
-      phone: '+31 6 49201948',
-      bsn: '728194028',
-      id_document_number: 'NL8273619',
-      city: 'Rotterdam',
-      address: 'Coolsingel 88',
-      iban: 'NL02RABO0319284756',
-      digid_status: 'activo',
-      status: 'activo',
-      notes: 'Alta como ZZP en KVK y declaración trimestral de BTW.',
-      dossiers: [
-        {
-          id: 'd3',
-          code: 'EXP-2026-0043',
-          title: 'Alta Eenmanszaak KVK y BTW-nummer',
-          category: 'Empresas / KVK',
-          status: 'completado',
-          progress_percentage: 100,
-          fee: 250.00,
-          deadline: '2026-09-28',
-          description: 'Registro mercantil neerlandés y alta censal en Belastingdienst.',
-        },
-      ],
-      quotes: [],
-      invoices: [],
-      appointments: [],
-      documents: [
-        {
-          id: 'doc-9',
-          name: 'Uittreksel_Handelsregister_KVK.pdf',
-          category: 'contrato',
-          date: '2026-09-25',
-          size: '850 KB',
-          file_type: 'pdf',
-          added_by: 'gestor',
-        },
-        {
-          id: 'doc-10',
-          name: 'Declaracion_BTW_Q3_2026.pdf',
-          category: 'fiscal_belastingdienst',
-          date: '2026-10-02',
-          size: '420 KB',
-          file_type: 'pdf',
-          added_by: 'gestor',
-        },
-      ],
-    },
-    {
-      id: '4',
-      full_name: 'Elena Morales Castillo',
-      email: 'elena.morales@hotmail.com',
-      phone: '+34 611 223 344',
-      bsn: '639102847',
-      id_document_number: '51928374P',
-      city: 'Utrecht',
-      address: 'Oudegracht 120',
-      iban: 'NL88BUNQ2019283746',
-      digid_status: 'activo',
-      status: 'activo',
-      notes: 'Subsidio de alquiler Huurtoeslag y seguro de salud HollandZorg.',
-      dossiers: [],
-      quotes: [],
-      invoices: [],
-      appointments: [],
-      documents: [
-        {
-          id: 'doc-11',
-          name: 'Huurcontract_Utrecht_Apartment.pdf',
-          category: 'contrato',
-          date: '2026-10-04',
-          size: '1.8 MB',
-          file_type: 'pdf',
-          added_by: 'cliente',
-        },
-        {
-          id: 'doc-12',
-          name: 'Poliza_HollandZorg_2026.pdf',
-          category: 'subsidios',
-          date: '2026-10-06',
-          size: '520 KB',
-          file_type: 'pdf',
-          added_by: 'gestor',
-        },
-      ],
-    },
-  ]);
-
+  const [clients, setClients] = useState<any[]>([]);
   // Copiar al portapapeles con feedback
   const copyToClipboard = (text: string, label: string) => {
     if (!text || text === '—') return;
@@ -398,57 +90,12 @@ export default function CRMClientesPage() {
     showToast(`¡${clients.length} clientes exportados a CSV con éxito!`);
   };
 
-  // En desarrollo se conserva la lista de demostración; en producción manda PostgreSQL.
   useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      try {
-        const stored = localStorage.getItem('nexusgest_clients');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setClients((prev) => {
-              const map = new Map();
-              prev.forEach((c) => map.set(String(c.id), c));
-              parsed.forEach((c: any) => {
-                const existing = map.get(String(c.id));
-                map.set(String(c.id), {
-                  ...c,
-                  documents: c.documents && c.documents.length > 0 ? c.documents : existing?.documents || [],
-                });
-              });
-              return Array.from(map.values());
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('Error al leer clientes de localStorage:', err);
-      }
-
-    }
-
     apiFetch('/clients')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (Array.isArray(data?.clients)) {
-          setClients((prev) => {
-            const map = new Map();
-            if (process.env.NODE_ENV !== 'production') {
-              prev.forEach((c) => map.set(String(c.id), c));
-            }
-            data.clients.forEach((c: any) => {
-              const existing = map.get(String(c.id));
-              map.set(String(c.id), {
-                ...existing,
-                ...c,
-                dossiers: existing?.dossiers || [],
-                quotes: existing?.quotes || [],
-                invoices: existing?.invoices || [],
-                appointments: existing?.appointments || [],
-                documents: existing?.documents || [],
-              });
-            });
-            return Array.from(map.values());
-          });
+          setClients(data.clients.map((c: any) => ({ ...c, dossiers: [], quotes: [], invoices: [], appointments: [], service_requests: [], documents: [] })));
         }
       })
       .catch((error) => console.error('No se pudieron cargar los clientes:', error));
@@ -477,16 +124,6 @@ export default function CRMClientesPage() {
       });
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production' && clients.length > 0) {
-      try {
-        localStorage.setItem('nexusgest_clients', JSON.stringify(clients));
-        window.dispatchEvent(new CustomEvent('nexusgest_clients_updated'));
-      } catch (err) {
-        console.warn('Error al guardar clientes en localStorage:', err);
-      }
-    }
-  }, [clients]);
 
   const router = useRouter();
   const [returnOrigin, setReturnOrigin] = useState<string | null>(null);
@@ -551,10 +188,10 @@ export default function CRMClientesPage() {
 
   // 1. MODAL NUEVO TRÁMITE
   const [showAddDossierModal, setShowAddDossierModal] = useState(false);
-  const [selectedCatalogServiceId, setSelectedCatalogServiceId] = useState(servicesCatalog[0].id);
-  const [dossierTitle, setDossierTitle] = useState(servicesCatalog[0].title);
-  const [dossierCategory, setDossierCategory] = useState(servicesCatalog[0].category);
-  const [dossierFee, setDossierFee] = useState<number>(servicesCatalog[0].defaultFee);
+  const [selectedCatalogServiceId, setSelectedCatalogServiceId] = useState(servicesCatalog[0]?.id || '');
+  const [dossierTitle, setDossierTitle] = useState(servicesCatalog[0]?.title || '');
+  const [dossierCategory, setDossierCategory] = useState(servicesCatalog[0]?.category || '');
+  const [dossierFee, setDossierFee] = useState<number>(servicesCatalog[0]?.defaultFee || 0);
   const [dossierDeadline, setDossierDeadline] = useState('2026-11-15');
   const [isNewServiceMode, setIsNewServiceMode] = useState(false);
   const [saveToCatalogToo, setSaveToCatalogToo] = useState(true);
@@ -579,11 +216,23 @@ export default function CRMClientesPage() {
   const [quoteValidUntil, setQuoteValidUntil] = useState('2026-11-30');
 
   // Abrir Ficha 360° al pulsar sobre el cliente
+  const normalizeClientForFicha = (client: any) => ({
+    ...(client || {}),
+    dossiers: Array.isArray(client?.dossiers) ? client.dossiers : [],
+    quotes: Array.isArray(client?.quotes) ? client.quotes : [],
+    invoices: Array.isArray(client?.invoices) ? client.invoices : [],
+    appointments: Array.isArray(client?.appointments) ? client.appointments : [],
+    service_requests: Array.isArray(client?.service_requests) ? client.service_requests : [],
+    documents: Array.isArray(client?.documents) ? client.documents : [],
+  });
+
   const handleOpenClient = (client: any) => {
-    setSelectedClient(client);
+    // La lista y la ficha pueden devolver contadores, null u objetos parciales.
+    const safeClient = normalizeClientForFicha(client);
+    setSelectedClient(safeClient);
     setPortalAccess(null);
     setShowPortalPassword(false);
-    setEditedNotes(client.notes || '');
+    setEditedNotes(safeClient.notes || '');
     setIsEditingNotes(false);
     setActive360Tab('resumen');
 
@@ -592,7 +241,7 @@ export default function CRMClientesPage() {
       {
         id: 'init-msg',
         role: 'assistant',
-        content: `👋 ¡Hola! Soy tu **Asistente IA especializado para ${client.full_name}**.\n\nTengo acceso en tiempo real a todo su expediente:\n- **BSN Oficial:** \`${client.bsn || 'Sin registrar'}\` · **DigiD:** \`${client.digid_status}\`\n- **Expedientes activos:** ${client.dossiers?.length || 0} trámites\n- **Documentos en archivo:** ${client.documents?.length || 0} archivos\n- **Facturación:** ${client.quotes?.length || 0} presupuestos / ${client.invoices?.length || 0} facturas\n- **Citas agendadas:** ${client.appointments?.length || 0} citas\n\n¿En qué puedo ayudarte? Puedes pedirme que **emita una factura**, **genere un presupuesto**, **agende una cita**, **modifique sus datos** o **redacte y archive un documento** en su carpeta.`,
+        content: `👋 ¡Hola! Soy tu **Asistente IA especializado para ${safeClient.full_name}**.\n\nTengo acceso en tiempo real a todo su expediente:\n- **BSN Oficial:** \`${client.bsn || 'Sin registrar'}\` · **DigiD:** \`${client.digid_status}\`\n- **Expedientes activos:** ${client.dossiers?.length || 0} trámites\n- **Documentos en archivo:** ${client.documents?.length || 0} archivos\n- **Facturación:** ${client.quotes?.length || 0} presupuestos / ${client.invoices?.length || 0} facturas\n- **Citas agendadas:** ${client.appointments?.length || 0} citas\n\n¿En qué puedo ayudarte? Puedes pedirme que **emita una factura**, **genere un presupuesto**, **agende una cita**, **modifique sus datos** o **redacte y archive un documento** en su carpeta.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
@@ -605,13 +254,13 @@ export default function CRMClientesPage() {
         .then((response) => (response.ok ? response.json() : null))
         .then((data) => {
           if (!data?.client) return;
-          const completeClient = {
+          const completeClient = normalizeClientForFicha({
             ...data.client,
-            dossiers: data.dossiers || [],
-            quotes: data.quotes || [],
-            invoices: data.invoices || [],
-            appointments: data.appointments || [],
-            documents: (data.documents || []).map((doc: any) => ({
+            dossiers: Array.isArray(data.dossiers) ? data.dossiers : [],
+            quotes: Array.isArray(data.quotes) ? data.quotes : [],
+            invoices: Array.isArray(data.invoices) ? data.invoices : [],
+            appointments: Array.isArray(data.appointments) ? data.appointments : [],
+            documents: (Array.isArray(data.documents) ? data.documents : []).map((doc: any) => ({
               ...doc,
               id: String(doc.id),
               name: doc.name || doc.file_name || 'Documento',
@@ -620,7 +269,7 @@ export default function CRMClientesPage() {
               file_type: doc.file_type || (String(doc.mime_type || '').includes('pdf') ? 'pdf' : String(doc.mime_type || '').startsWith('image/') ? 'image' : 'otro'),
               added_by: doc.added_by || 'gestor',
             })),
-          };
+          });
           setSelectedClient(completeClient);
           setClients((current) => current.map((item) => item.id === completeClient.id ? { ...item, ...completeClient } : item));
         })
@@ -1154,28 +803,12 @@ export default function CRMClientesPage() {
       return;
     }
 
-    const removeLocalClient = () => {
-      const remaining = clients.filter((c) => c.id !== selectedClient.id);
-      setClients(remaining);
-      setSelectedClient(null);
-      try {
-        localStorage.setItem('nexusgest_clients', JSON.stringify(remaining));
-        window.dispatchEvent(new CustomEvent('nexusgest_clients_updated'));
-      } catch {
-        // La vista ya se ha actualizado aunque el navegador no permita guardar.
-      }
-      showToast('Cliente eliminado del directorio local.');
-    };
-
     // Los clientes de demostración/locales usan ids numéricos y no existen
     // en PostgreSQL. No se deben enviar al endpoint que espera un UUID.
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       String(selectedClient.id)
     );
-    if (!isUuid) {
-      removeLocalClient();
-      return;
-    }
+    if (!isUuid) { showToast('El cliente no tiene un identificador válido de PostgreSQL.', 'error'); return; }
 
     const ejecutarBorrado = async (confirmar: boolean) => {
       const url = confirmar ? `/clients/${selectedClient.id}?confirmar=SI` : `/clients/${selectedClient.id}`;
@@ -1205,7 +838,9 @@ export default function CRMClientesPage() {
         return;
       }
 
-      removeLocalClient();
+      setClients((current) => current.filter((c) => c.id !== selectedClient.id));
+      setSelectedClient(null);
+      showToast('Cliente eliminado correctamente.');
     };
 
     try {
@@ -1218,15 +853,18 @@ export default function CRMClientesPage() {
 // Eliminar Documento
   // El backend no expone DELETE de documentos: el registro se quita solo de
   // la vista local. Para borrarlo de verdad hay que hacerlo por consola.
-  const handleDeleteDocument = (docId: string) => {
+  const handleDeleteDocument = async (docId: string) => {
     if (!selectedClient) return;
-    if (confirm('¿Quitar este documento de la ficha?\n\nSolo desaparecerá de esta pantalla: el archivo y su registro siguen en el servidor.')) {
-      const updatedDocs = (selectedClient.documents || []).filter((d: any) => d.id !== docId);
-      const updatedClient = { ...selectedClient, documents: updatedDocs };
+    if (!confirm('¿Eliminar este documento de forma permanente?')) return;
+    try {
+      const response = await apiFetch(`/documents/${docId}`, { method: 'DELETE' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo eliminar el documento.');
+      const updatedClient = { ...selectedClient, documents: (selectedClient.documents || []).filter((d: any) => d.id !== docId) };
       setSelectedClient(updatedClient);
-      setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
-      showToast('Documento quitado de la ficha (sigue en el servidor).');
-    }
+      setClients((current) => current.map((c) => c.id === updatedClient.id ? updatedClient : c));
+      showToast('Documento eliminado correctamente.');
+    } catch (error) { showToast(error instanceof Error ? error.message : 'No se pudo eliminar el documento.', 'error'); }
   };
 
   // ASISTENTE IA: Procesar órdenes sobre el cliente (Facturas, Presupuestos, Citas, Modificaciones, Documentos)
@@ -1257,7 +895,7 @@ export default function CRMClientesPage() {
       if (lower.includes('factura') || lower.includes('facturar') || lower.includes('cobro')) {
         const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
         const fee = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 150.00;
-        const total = Math.round(fee * 1.21 * 100) / 100;
+        const total = Math.round(fee * 100) / 100;
         const year = new Date().getFullYear();
         const code = `FAC-${year}-${String((selectedClient.invoices?.length || 0) + 1).padStart(4, '0')}`;
         const concept = lower.includes('m-form')
@@ -1318,15 +956,15 @@ export default function CRMClientesPage() {
             data: newInvoice,
           };
 
-          aiReply = `✅ **¡Factura oficial emitida con éxito!**\n\nHe generado la factura **${newInvoice.code || code}** para **${selectedClient.full_name}** por un importe base de **€ ${fee.toFixed(2)}** (+ 21% BTW = **€ ${total.toFixed(2)}**).\nConcepto: *${concept}*.\nEstado: **Emitida / Pendiente de Pago (iDEAL)**. Puedes verla en la pestaña de facturación o pulsar el botón a continuación.`;
+          aiReply = `✅ **¡Factura oficial emitida con éxito!**\n\nHe generado la factura **${newInvoice.code || code}** para **${selectedClient.full_name}** por un importe base de **€ ${fee.toFixed(2)}** (IVA incluido).\nConcepto: *${concept}*.\nEstado: **Emitida / Pendiente de Pago (iDEAL)**. Puedes verla en la pestaña de facturación o pulsar el botón a continuación.`;
         }
       }
       // ACCIÓN 2: CREAR PRESUPUESTO
       else if (lower.includes('presupuesto') || lower.includes('presupuestar') || lower.includes('cotizacion')) {
         const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
         const fee = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 120.00;
-        const tax = Math.round(fee * 0.21 * 100) / 100;
-        const total = Math.round((fee + tax) * 100) / 100;
+        const total = Math.round(fee * 100) / 100;
+        const tax = Math.round((total - total / 1.21) * 100) / 100;
         const year = new Date().getFullYear();
         const code = `PRE-${year}-${String((selectedClient.quotes?.length || 0) + 1).padStart(4, '0')}`;
         const concept = lower.includes('m-form')
@@ -1383,7 +1021,7 @@ export default function CRMClientesPage() {
             data: newQuote,
           };
 
-          aiReply = `✅ **Presupuesto creado y registrado:**\n\nHe preparado el presupuesto **${newQuote.code || code}** para **${selectedClient.full_name}** por un total de **€ ${total.toFixed(2)}** (Base: € ${fee.toFixed(2)} + BTW 21%).\nVálido hasta: 30 de noviembre de 2026. Ha quedado guardado en su sección de presupuestos.`;
+          aiReply = `✅ **Presupuesto creado y registrado:**\n\nHe preparado el presupuesto **${newQuote.code || code}** para **${selectedClient.full_name}** por un total de **€ ${total.toFixed(2)}** (IVA incluido).\nVálido hasta: 30 de noviembre de 2026. Ha quedado guardado en su sección de presupuestos.`;
         }
       }
       // ACCIÓN 3: AGENDAR CITA
@@ -1572,15 +1210,16 @@ export default function CRMClientesPage() {
       .filter((s) => selectedQuoteServiceIds.includes(s.id))
       .map((s) => ({
         id: s.id,
+        service_id: s.id,
         title: s.title,
         category: s.category,
         fee: customQuoteFees[s.id] !== undefined ? customQuoteFees[s.id] : s.defaultFee,
       }));
   };
 
-  const quoteSubtotal = getSelectedQuoteItems().reduce((acc, item) => acc + item.fee, 0);
-  const quoteTax = Math.round(quoteSubtotal * 0.21 * 100) / 100;
-  const quoteTotal = Math.round((quoteSubtotal + quoteTax) * 100) / 100;
+  const quoteTotal = Math.round(getSelectedQuoteItems().reduce((acc, item) => acc + item.fee, 0) * 100) / 100;
+  const quoteSubtotal = Math.round((quoteTotal / 1.21) * 100) / 100;
+  const quoteTax = Math.round((quoteTotal - quoteSubtotal) * 100) / 100;
 
   const toggleQuoteService = (serviceId: string) => {
     let nextIds: string[];
@@ -1770,72 +1409,32 @@ export default function CRMClientesPage() {
   const handleSaveQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
-
     const items = getSelectedQuoteItems();
-    if (items.length === 0 && !quoteConcept.trim()) return;
-
-    const nextCount = (selectedClient.quotes?.length || 0) + 1;
-    const year = new Date().getFullYear();
-    const subtotal = quoteSubtotal;
-    const tax = quoteTax;
-    const total = quoteTotal;
-
-    const apiItems = items.length > 0
-      ? items.map((item) => ({ description: item.title, quantity: 1, unit_price: item.fee }))
-      : [{ description: quoteConcept.trim(), quantity: 1, unit_price: subtotal }];
-
-    let persistedQuote: any = null;
+    const total = quoteTotal || Number(customQuoteFees['manual'] || 0);
+    if (items.length === 0 && !quoteConcept.trim()) { showToast('Selecciona un servicio o indica un concepto.', 'error'); return; }
     try {
       const response = await apiFetch('/quotes', {
         method: 'POST',
         body: JSON.stringify({
           client_id: selectedClient.id,
           dossier_id: selectedClient.dossiers?.[0]?.id || null,
-          items: apiItems,
+          items: items.length > 0 ? items.map((item) => ({ service_id: item.id, description: item.title, quantity: 1, unit_price: item.fee })) : [{ description: quoteConcept.trim(), quantity: 1, unit_price: total }],
           valid_until: quoteValidUntil,
           notes: quoteConcept.trim() || null,
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        if (process.env.NODE_ENV === 'production') {
-          showToast(data?.error || 'No se pudo guardar el presupuesto en PostgreSQL.');
-          return;
-        }
-        showToast('PostgreSQL no está disponible: se conserva solo en modo local de desarrollo.');
-      } else {
-        persistedQuote = data.quote;
-      }
-    } catch {
-      if (process.env.NODE_ENV === 'production') {
-        showToast('No se pudo conectar con PostgreSQL. El presupuesto no se ha creado.');
-        return;
-      }
-      showToast('PostgreSQL no está disponible: se conserva solo en modo local de desarrollo.');
+      if (!response.ok || !data.quote?.id) throw new Error(data.error || 'No se pudo guardar el presupuesto.');
+      const persisted = data.quote;
+      const updatedClient = { ...selectedClient, quotes: [persisted, ...(selectedClient.quotes || [])] };
+      setSelectedClient(updatedClient);
+      setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+      setShowNewQuoteModal(false);
+      setActive360Tab('presupuestos');
+      showToast(`Presupuesto ${persisted.code} generado.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo guardar el presupuesto.', 'error');
     }
-
-    const newQuote = {
-      id: persistedQuote?.id || String(Date.now()),
-      code: persistedQuote?.code || `PRE-${year}-${String(nextCount).padStart(4, '0')}`,
-      concept: quoteConcept.trim() || (items.length > 0 ? items.map((i) => i.title).join(' + ') : 'Trámites y Asesoría Gestoría'),
-      amount: subtotal,
-      tax_amount: tax,
-      total: total,
-      status: persistedQuote?.status || 'enviado',
-      valid_until: persistedQuote?.valid_until || quoteValidUntil,
-      items: persistedQuote?.items || items.map((i) => ({ description: i.title, total: i.fee })),
-    };
-
-    const updatedClient = {
-      ...selectedClient,
-      quotes: [newQuote, ...(selectedClient.quotes || [])],
-    };
-
-    setSelectedClient(updatedClient);
-    setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
-    setShowNewQuoteModal(false);
-    setActive360Tab('presupuestos');
-    showToast(`Presupuesto ${newQuote.code} generado.`);
   };
 
   const handleConvertQuoteInFicha = async (quote: any) => {
@@ -2371,7 +1970,7 @@ export default function CRMClientesPage() {
                               <div className="grid grid-cols-3 gap-2 py-2 bg-surface-container-lowest rounded-lg px-3 text-xs">
                                 <div>
                                   <span className="text-[10px] text-outline block">Importe</span>
-                                  <span className="font-mono-data font-bold text-on-surface">€ {d.fee?.toFixed(2) || '0.00'}</span>
+                                  <span className="font-mono-data font-bold text-on-surface">€ {Number(d.fee || 0).toFixed(2)}</span>
                                 </div>
                                 <div>
                                   <span className="text-[10px] text-outline block">Responsable</span>
@@ -2483,10 +2082,7 @@ export default function CRMClientesPage() {
                             <span>{selectedClient.quotes[0].concept || selectedClient.quotes[0].items?.[0]?.description || 'Presupuesto'}</span>
                             <span className="font-mono-data font-semibold text-on-surface">€ {getDocTotals(selectedClient.quotes[0]).subtotal.toFixed(2)}</span>
                           </div>
-                          <div className="h-px bg-surface-container" />
-                          <div className="flex items-center justify-between text-outline text-[11px]"><span>Subtotal</span><span className="font-mono-data">€ {getDocTotals(selectedClient.quotes[0]).subtotal.toFixed(2)}</span></div>
-                          <div className="flex items-center justify-between text-outline text-[11px]"><span>IVA (21% BTW)</span><span className="font-mono-data">€ {getDocTotals(selectedClient.quotes[0]).tax.toFixed(2)}</span></div>
-                          <div className="flex items-center justify-between text-sm font-bold text-on-surface pt-1 border-t border-surface-container"><span>Total Presupuesto</span><span className="font-mono-data text-secondary">€ {getDocTotals(selectedClient.quotes[0]).total.toFixed(2)}</span></div>
+                          <div className="flex items-center justify-between text-sm font-bold text-on-surface pt-1 border-t border-surface-container"><span>Total presupuesto (IVA incluido)</span><span className="font-mono-data text-secondary">€ {getDocTotals(selectedClient.quotes[0]).total.toFixed(2)}</span></div>
                         </div>
                       ) : (
                         <div className="text-center py-6 text-outline text-xs border border-dashed border-outline-variant rounded-xl">No hay presupuestos registrados para este cliente.</div>
@@ -2684,7 +2280,7 @@ export default function CRMClientesPage() {
 
                           <div className="pt-2 border-t border-surface-container flex items-center justify-between text-xs">
                             <span className="text-outline">Tarifa:</span>
-                            <span className="font-mono-data font-bold text-on-surface">€ {parseFloat(dos.fee).toFixed(2)}</span>
+                            <span className="font-mono-data font-bold text-on-surface">€ {Number(dos.fee || 0).toFixed(2)}</span>
                           </div>
                         </div>
                       ))}
@@ -2876,7 +2472,7 @@ export default function CRMClientesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-on-surface">Presupuestos de {selectedClient.full_name}</h3>
-                      <p className="text-xs text-on-surface-variant">Generación oficial con IVA/BTW 21% y conversión en 1 clic a factura.</p>
+                      <p className="text-xs text-on-surface-variant">Generación oficial con precios finales IVA incluido y conversión en 1 clic a factura.</p>
                     </div>
                     <button
                       onClick={openQuoteModal}
@@ -2986,7 +2582,7 @@ export default function CRMClientesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-on-surface">Facturas Oficiales de {selectedClient.full_name}</h3>
-                      <p className="text-xs text-on-surface-variant">Facturación legal con pasarela iDEAL, desglose de 21% BTW y registro de cobros.</p>
+                      <p className="text-xs text-on-surface-variant">Facturación legal con pasarela iDEAL y registro de cobros.</p>
                     </div>
                   </div>
 
@@ -4177,7 +3773,7 @@ export default function CRMClientesPage() {
                 >
                   {servicesCatalog.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.title} — € {s.defaultFee.toFixed(2)} ({s.category})
+                      {s.title} — € {Number(s.defaultFee || 0).toFixed(2)} ({s.category})
                     </option>
                   ))}
                   <option value="__NEW__">+ Crear Nuevo Servicio Personalizado...</option>
@@ -4480,7 +4076,7 @@ export default function CRMClientesPage() {
                           </p>
                           <div className="flex items-center justify-between mt-1 text-[10px]">
                             <span className="text-outline truncate">{s.category}</span>
-                            <span className="font-mono-data font-bold text-on-surface">€ {s.defaultFee.toFixed(2)}</span>
+                            <span className="font-mono-data font-bold text-on-surface">€ {Number(s.defaultFee || 0).toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -4547,12 +4143,8 @@ export default function CRMClientesPage() {
 
               <div className="p-3 bg-surface-container-low rounded-xl border border-surface-container font-mono-data space-y-1.5">
                 <div className="flex justify-between text-outline">
-                  <span>Base Imponible:</span>
-                  <span>€ {quoteSubtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-outline">
-                  <span>21% BTW (IVA NL):</span>
-                  <span>€ {quoteTax.toFixed(2)}</span>
+                  <span>IVA incluido:</span>
+                  <span>Sí</span>
                 </div>
                 <div className="flex justify-between font-bold text-sm text-secondary pt-1.5 border-t border-surface-container">
                   <span>Total Presupuestado:</span>
@@ -4573,7 +4165,7 @@ export default function CRMClientesPage() {
                 type="submit"
                 className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-sm"
               >
-                Guardar Presupuesto (€ {quoteTotal.toFixed(2)})
+                Generar Presupuesto (€ {quoteTotal.toFixed(2)})
               </button>
             </div>
           </form>
@@ -4680,8 +4272,8 @@ export default function CRMClientesPage() {
                     <tr>
                       <th className="px-4 py-2.5">Descripción del Trámite / Servicio</th>
                       <th className="px-4 py-2.5 text-center">Cant.</th>
-                      <th className="px-4 py-2.5 text-right">Base (€)</th>
-                      <th className="px-4 py-2.5 text-center">BTW</th>
+                      <th className="px-4 py-2.5 text-right">Precio (€)</th>
+                      <th className="px-4 py-2.5 text-center">IVA incluido</th>
                       <th className="px-4 py-2.5 text-right">Total (€)</th>
                     </tr>
                   </thead>
@@ -4719,18 +4311,14 @@ export default function CRMClientesPage() {
                 <div className="sm:max-w-xs space-y-2 text-[11px] text-outline">
                   <p className="font-semibold text-on-surface">Información de Pago & Fiscalidad:</p>
                   <p>
-                    Tipo impositivo aplicado: 21% BTW según legislación tributaria de los Países Bajos (Belastingdienst).
+                    Los importes mostrados son precios finales con IVA incluido.
                   </p>
                 </div>
 
                 <div className="w-full sm:w-64 p-4 rounded-xl bg-surface-container-low font-mono-data text-xs space-y-2 border border-surface-container">
-                  <div className="flex justify-between text-outline">
-                    <span>Base Imponible:</span>
-                    <span>€ {getDocTotals(selectedDoc.data).subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-outline">
-                    <span>21% BTW (IVA NL):</span>
-                    <span>€ {getDocTotals(selectedDoc.data).tax.toFixed(2)}</span>
+                  <div className="flex justify-between font-bold text-sm text-secondary">
+                    <span>Total final (IVA incluido):</span>
+                    <span>€ {getDocTotals(selectedDoc.data).total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-sm text-secondary pt-2 border-t border-surface-container">
                     <span>Total:</span>

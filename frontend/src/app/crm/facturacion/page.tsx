@@ -57,68 +57,9 @@ function normalizarPresupuesto(quote: any) {
 export default function CRMFacturacionPage() {
   const [tab, setTab] = useState<'facturas' | 'presupuestos'>('facturas');
 
-  const [quotes, setQuotes] = useState<any[]>(process.env.NODE_ENV === 'production' ? [] : [
-    {
-      id: '1',
-      code: 'PRE-2026-0001',
-      client_name: 'Carlos Mendoza Ruiz',
-      client_bsn: '817293845',
-      subtotal: 220.00,
-      tax_amount: 46.20,
-      total: 266.20,
-      status: 'convertido',
-      valid_until: '2026-10-30',
-      items: [
-        { description: 'Elaboración y Presentación Fiscal M-Form Belastingdienst', total: 180.00 },
-        { description: 'Revisión documentación de ingresos en origen', total: 40.00 },
-      ],
-    },
-    {
-      id: '2',
-      code: 'PRE-2026-0002',
-      client_name: 'Elena Morales Castillo',
-      client_bsn: '639102847',
-      subtotal: 120.00,
-      tax_amount: 25.20,
-      total: 145.20,
-      status: 'enviado',
-      valid_until: '2026-11-15',
-      items: [
-        { description: 'Gestión Subsidio Alquiler (Huurtoeslag) + Notificación de Renta', total: 120.00 },
-      ],
-    },
-  ]);
+  const [quotes, setQuotes] = useState<any[]>([]);
 
-  const [invoices, setInvoices] = useState<any[]>(process.env.NODE_ENV === 'production' ? [] : [
-    {
-      id: '1',
-      code: 'FAC-2026-0001',
-      client_name: 'Carlos Mendoza Ruiz',
-      client_bsn: '817293845',
-      total: 266.20,
-      status: 'pagada',
-      payment_method: 'ideal',
-      payment_reference: 'IDL-TRX-2026-89472',
-      due_date: '2026-10-15',
-      items: [
-        { description: 'Elaboración y Presentación Fiscal M-Form Belastingdienst', total: 180.00 },
-        { description: 'Revisión documentación de ingresos en origen', total: 40.00 },
-      ],
-    },
-    {
-      id: '2',
-      code: 'FAC-2026-0002',
-      client_name: 'Maria Popescu',
-      client_bsn: '982145672',
-      total: 102.85,
-      status: 'emitida',
-      payment_method: 'ideal',
-      due_date: '2026-10-12',
-      items: [
-        { description: 'Gestión Solicitud Zorgtoeslag y Registro Belastingdienst', total: 85.00 },
-      ],
-    },
-  ]);
+  const [invoices, setInvoices] = useState<any[]>([]);
 
   // Las facturas vienen del backend. Antes esta pagina usaba un array fijo
   // escrito en el codigo, asi que los botones de eliminar no tenian contra
@@ -159,15 +100,16 @@ export default function CRMFacturacionPage() {
   }, []);
 
   // Catálogo de Servicios y Trámites
-  const [servicesCatalog] = useState([
-    { id: '1', title: 'Declaración Fiscal M-Form', category: 'Fiscalidad / Belastingdienst', defaultFee: 180.00 },
-    { id: '2', title: 'Activación DigiD + Zorgtoeslag', category: 'Subsidios / Toeslagen', defaultFee: 85.00 },
-    { id: '3', title: 'Solicitud Subsidio Huurtoeslag (Alquiler)', category: 'Subsidios / Toeslagen', defaultFee: 95.00 },
-    { id: '4', title: 'Alta Eenmanszaak KVK y BTW-nummer', category: 'Empresas / KVK', defaultFee: 250.00 },
-    { id: '5', title: 'Recurso Bezwaarschrift Belastingdienst', category: 'Legal / Recursos', defaultFee: 120.00 },
-    { id: '6', title: 'Kindgebonden Budget (Ayuda Hijos)', category: 'Subsidios / Toeslagen', defaultFee: 80.00 },
-    { id: '7', title: 'Cambio de Cuenta Bancaria Belastingdienst', category: 'Gestión Administrativa', defaultFee: 45.00 },
-  ]);
+  const [servicesCatalog, setServicesCatalog] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+
+  useEffect(() => {
+    apiFetch('/services').then((res) => res.ok ? res.json() : Promise.reject(new Error('services'))).then((data) => setServicesCatalog((data.services || []).map((service: any) => ({ id: String(service.id), title: service.title, category: service.category, defaultFee: Number(service.priceFinal ?? service.basePrice) || 0 })))).catch(() => setServicesCatalog([]));
+  }, []);
+
+  useEffect(() => {
+    apiFetch('/clients').then((res) => res.ok ? res.json() : Promise.reject(new Error('clients'))).then((data) => setClients(Array.isArray(data.clients) ? data.clients : [])).catch(() => setClients([]));
+  }, []);
 
   // Visualizador oficial de presupuestos y facturas
   const [selectedDoc, setSelectedDoc] = useState<{ type: 'quote' | 'invoice'; data: any } | null>(null);
@@ -243,12 +185,12 @@ export default function CRMFacturacionPage() {
 
   // Modal para crear nuevo presupuesto (Multi-trámite)
   const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
-  const [newQuoteClient, setNewQuoteClient] = useState('Maria Popescu');
-  const [selectedQuoteServiceIds, setSelectedQuoteServiceIds] = useState<string[]>(['1']);
+  const [newQuoteClient, setNewQuoteClient] = useState('');
+  const [selectedQuoteServiceIds, setSelectedQuoteServiceIds] = useState<string[]>([]);
   const [customQuoteFees, setCustomQuoteFees] = useState<{ [id: string]: number }>({});
-  const [quoteConcept, setQuoteConcept] = useState('Declaración Fiscal M-Form');
+  const [quoteConcept, setQuoteConcept] = useState('');
   const [isConceptManuallyEdited, setIsConceptManuallyEdited] = useState(false);
-  const [quoteValidUntil, setQuoteValidUntil] = useState('2026-11-30');
+  const [quoteValidUntil, setQuoteValidUntil] = useState('');
 
   // Helpers para presupuestos multi-trámite
   const getSelectedQuoteItems = () => {
@@ -262,9 +204,9 @@ export default function CRMFacturacionPage() {
       }));
   };
 
-  const quoteSubtotal = getSelectedQuoteItems().reduce((acc, item) => acc + item.fee, 0);
-  const quoteTax = Math.round(quoteSubtotal * 0.21 * 100) / 100;
-  const quoteTotal = Math.round((quoteSubtotal + quoteTax) * 100) / 100;
+  const quoteTotal = Math.round(getSelectedQuoteItems().reduce((acc, item) => acc + item.fee, 0) * 100) / 100;
+  const quoteSubtotal = Math.round((quoteTotal / 1.21) * 100) / 100;
+  const quoteTax = Math.round((quoteTotal - quoteSubtotal) * 100) / 100;
 
   const toggleQuoteService = (serviceId: string) => {
     let nextIds: string[];
@@ -303,7 +245,7 @@ export default function CRMFacturacionPage() {
   };
 
   const openQuoteModal = () => {
-    const initialIds = selectedQuoteServiceIds.length > 0 ? selectedQuoteServiceIds : ['1'];
+    const initialIds = selectedQuoteServiceIds.length > 0 ? selectedQuoteServiceIds : (servicesCatalog[0] ? [servicesCatalog[0].id] : []);
     setSelectedQuoteServiceIds(initialIds);
     setIsConceptManuallyEdited(false);
     const selectedTitles = servicesCatalog.filter((s) => initialIds.includes(s.id)).map((s) => s.title);
@@ -314,59 +256,14 @@ export default function CRMFacturacionPage() {
   const handleCreateQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     const items = getSelectedQuoteItems();
-    if (items.length === 0 && !quoteConcept.trim()) return;
-
-    const subtotal = quoteSubtotal;
-    const tax_amount = quoteTax;
-    const total = quoteTotal;
-
-    let newQ: any = null;
-    try {
-      const clientResponse = await apiFetch(`/clients?search=${encodeURIComponent(newQuoteClient)}`);
-      const clientData = clientResponse.ok ? await clientResponse.json() : {};
-      const client = (clientData.clients || []).find((item: any) =>
-        String(item.full_name || '').trim().toLowerCase() === newQuoteClient.trim().toLowerCase()
-      );
-      if (!client?.id) throw new Error('Selecciona un cliente real de PostgreSQL para crear el presupuesto.');
-      const response = await apiFetch('/quotes', {
-        method: 'POST',
-        body: JSON.stringify({
-          client_id: client.id,
-          items: items.length > 0
-            ? items.map((item) => ({ description: item.title, quantity: 1, unit_price: item.fee }))
-            : [{ description: quoteConcept.trim(), quantity: 1, unit_price: subtotal }],
-          valid_until: quoteValidUntil,
-          notes: quoteConcept.trim() || null,
-        }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'No se pudo crear el presupuesto.');
-      newQ = normalizarPresupuesto({ ...data.quote, client_name: client.full_name, client_bsn: client.bsn });
-    } catch (error) {
-      if (process.env.NODE_ENV === 'production') {
-        showToast(error instanceof Error ? error.message : 'No se pudo crear el presupuesto.');
-        return;
-      }
-      const count = quotes.length + 1;
-      newQ = {
-        id: String(Date.now()),
-        code: `PRE-2026-${String(count).padStart(4, '0')}`,
-        client_name: newQuoteClient,
-        client_bsn: '',
-        subtotal,
-        tax_amount,
-        total,
-        status: 'enviado',
-        valid_until: quoteValidUntil,
-        items: items.length > 0 ? items.map((i) => ({ description: i.title, total: i.fee })) : [{ description: quoteConcept, total: subtotal }],
-      };
-      showToast('Presupuesto guardado solo en modo local: PostgreSQL no responde.');
-    }
-
-    setQuotes((current) => [newQ, ...current]);
-    setShowNewQuoteModal(false);
-    setTab('presupuestos');
-    if (process.env.NODE_ENV === 'production') await cargarFacturacion();
+    const client = clients.find((item) => item.full_name === newQuoteClient);
+    if (!client?.id) { showToast('Selecciona un cliente real de PostgreSQL.'); return; }
+    if (items.length === 0 && !quoteConcept.trim()) { showToast('Selecciona un servicio o indica un concepto.'); return; }
+    const response = await apiFetch('/quotes', { method: 'POST', body: JSON.stringify({ client_id: client.id, items: items.length ? items.map((item) => ({ service_id: item.id, description: item.title, quantity: 1, unit_price: item.fee })) : [{ description: quoteConcept.trim(), quantity: 1, unit_price: quoteTotal }], valid_until: quoteValidUntil || null, notes: quoteConcept.trim() || null }) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.quote?.id) { showToast(data.error || 'No se pudo crear el presupuesto.'); return; }
+    setQuotes((current) => [normalizarPresupuesto({ ...data.quote, client_name: client.full_name, client_bsn: client.bsn }), ...current]);
+    setShowNewQuoteModal(false); setTab('presupuestos'); showToast(`Presupuesto ${data.quote.code} creado.`);
   };
 
   // Convertir presupuesto a factura correlativa
@@ -377,25 +274,7 @@ export default function CRMFacturacionPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'No se pudo convertir el presupuesto.');
       newInvoice = normalizarFactura({ ...data.invoice, client_name: quote.client_name, client_bsn: quote.client_bsn });
-    } catch (error) {
-      if (process.env.NODE_ENV === 'production') {
-        showToast(error instanceof Error ? error.message : 'No se pudo convertir el presupuesto.');
-        return;
-      }
-      const nextNum = invoices.length + 1;
-      newInvoice = {
-        id: String(Date.now()),
-        code: `FAC-2026-${String(nextNum).padStart(4, '0')}`,
-        client_name: quote.client_name,
-        client_bsn: quote.client_bsn,
-        total: quote.total,
-        status: 'emitida',
-        payment_method: 'ideal',
-        due_date: '2026-10-25',
-        items: quote.items,
-      };
-      showToast('Factura creada solo en modo local: PostgreSQL no responde.');
-    }
+    } catch (error) { showToast(error instanceof Error ? error.message : 'No se pudo convertir el presupuesto.'); return; }
 
     setInvoices((current) => [newInvoice, ...current]);
     // Actualizar estado del presupuesto a 'convertido'
@@ -499,7 +378,7 @@ export default function CRMFacturacionPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-on-surface">Presupuestos y Facturación</h1>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Numeración correlativa legal PRE-2026 y FAC-2026 · IVA 21% BTW · Pasarela iDEAL
+            Numeración correlativa legal PRE-2026 y FAC-2026 · precios finales IVA incluido · Pasarela iDEAL
           </p>
         </div>
 
@@ -841,10 +720,8 @@ export default function CRMFacturacionPage() {
                   onChange={(e) => setNewQuoteClient(e.target.value)}
                   className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface font-medium focus:border-secondary focus:outline-none"
                 >
-                  <option>Maria Popescu</option>
-                  <option>Carlos Mendoza Ruiz</option>
-                  <option>Elena Morales Castillo</option>
-                  <option>Lars Van Dijk</option>
+                  <option value="">Selecciona un cliente</option>
+                  {clients.map((client) => <option key={client.id} value={client.full_name}>{client.full_name}</option>)}
                 </select>
               </div>
 
@@ -989,16 +866,8 @@ export default function CRMFacturacionPage() {
 
               {/* Resumen Económico */}
               <div className="p-3.5 bg-surface-container-low rounded-xl font-mono-data text-xs space-y-1.5 border border-surface-container">
-                <div className="flex justify-between text-outline">
-                  <span>Base Imponible ({selectedQuoteServiceIds.length} trámites):</span>
-                  <span className="font-semibold text-on-surface">€ {quoteSubtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-outline">
-                  <span>21% BTW (IVA Neerlandés):</span>
-                  <span className="font-semibold text-on-surface">€ {quoteTax.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-sm text-secondary pt-2 border-t border-surface-container">
-                  <span>Total Presupuestado (BTW incl.):</span>
+                <div className="flex justify-between font-bold text-sm text-secondary">
+                  <span>Total presupuestado (IVA incluido):</span>
                   <span>€ {quoteTotal.toFixed(2)}</span>
                 </div>
               </div>
@@ -1167,7 +1036,7 @@ export default function CRMFacturacionPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <h3 className="font-bold text-sm text-on-surface">
-                      {selectedDoc.data.client_name || selectedDoc.data.full_name || 'Maria Popescu'}
+                      {selectedDoc.data.client_name || selectedDoc.data.full_name || 'Cliente'}
                     </h3>
                     <p className="text-xs text-on-surface-variant font-mono-data mt-0.5">
                       BSN Oficial: <strong>{selectedDoc.data.client_bsn || selectedDoc.data.bsn || '982145672'}</strong>
@@ -1227,7 +1096,7 @@ export default function CRMFacturacionPage() {
                 <div className="sm:max-w-xs space-y-2 text-[11px] text-outline">
                   <p className="font-semibold text-on-surface">Información de Pago & Fiscalidad:</p>
                   <p>
-                    Tipo impositivo aplicado: 21% BTW según legislación tributaria de los Países Bajos (Belastingdienst).
+                    Los importes mostrados son precios finales con IVA incluido.
                   </p>
                   {selectedDoc.type === 'invoice' && selectedDoc.data.status === 'pagada' && (
                     <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-800 font-mono-data text-[10px] space-y-0.5">
@@ -1238,13 +1107,9 @@ export default function CRMFacturacionPage() {
                 </div>
 
                 <div className="w-full sm:w-64 p-4 rounded-xl bg-surface-container-low font-mono-data text-xs space-y-2 border border-surface-container">
-                  <div className="flex justify-between text-outline">
-                    <span>Base Imponible:</span>
-                    <span>€ {getDocTotals(selectedDoc.data).subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-outline">
-                    <span>21% BTW (IVA NL):</span>
-                    <span>€ {getDocTotals(selectedDoc.data).tax.toFixed(2)}</span>
+                  <div className="flex justify-between font-bold text-sm text-secondary">
+                    <span>Total final (IVA incluido):</span>
+                    <span>€ {getDocTotals(selectedDoc.data).total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-sm text-secondary pt-2 border-t border-surface-container">
                     <span>Total a {selectedDoc.type === 'invoice' ? 'Pagar' : 'Presupuestar'}:</span>

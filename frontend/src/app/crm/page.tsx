@@ -19,21 +19,13 @@ function formatTodayEs(): string {
 export default function CRMDashboardPage() {
   const [stats, setStats] = useState<any>({
     kpis: {
-      active_clients: 148,
-      appointments_today: { total: 6, completed: 2, pending: 4 },
-      active_dossiers: { total: 34, belastingdienst: 8 },
-      finances: { monthly_revenue: 12450.00, pending_revenue: 3120.00, pending_invoices_count: 9 },
+      active_clients: 0,
+      appointments_today: { total: 0, completed: 0, pending: 0 },
+      active_dossiers: { total: 0, belastingdienst: 0 },
+      finances: { monthly_revenue: 0, pending_revenue: 0, pending_invoices_count: 0 },
     },
-    today_appointments: [
-      { id: '1', title: 'Revisión M-Form 2025', client_name: 'Carlos Mendoza', appointment_time: '10:00:00', modality: 'online_meet', status: 'confirmada' },
-      { id: '2', title: 'Carta DigiD Belastingdienst', client_name: 'Maria Popescu', appointment_time: '11:30:00', modality: 'presencial', status: 'confirmada' },
-      { id: '3', title: 'Consulta Huurtoeslag', client_name: 'Elena Morales', appointment_time: '16:00:00', modality: 'online_meet', status: 'pendiente' },
-    ],
-    recent_dossiers: [
-      { id: '1', code: 'EXP-2026-0041', title: 'Activación DigiD + Solicitud Zorgtoeslag', client_name: 'Maria Popescu', client_bsn: '982145672', status: 'en_belastingdienst', progress_percentage: 65, fee: '85.00', description: 'Trámite de solicitud de ayuda médica y código de activación DigiD ante la Belastingdienst.' },
-      { id: '2', code: 'EXP-2026-0042', title: 'Declaración Fiscal M-Form (Migración)', client_name: 'Carlos Mendoza Ruiz', client_bsn: '817293845', status: 'en_proceso', progress_percentage: 40, fee: '180.00', description: 'Cálculo de deducción por traslado internacional y declaración ante Belastingdienst año 2025.' },
-      { id: '3', code: 'EXP-2026-0043', title: 'Alta Eenmanszaak KVK y BTW-nummer', client_name: 'Lars Van Dijk', client_bsn: '728194028', status: 'completado', progress_percentage: 100, fee: '250.00', description: 'Registro mercantil neerlandés y obtención de BTW-nummer para actividad profesional.' },
-    ],
+    today_appointments: [],
+    recent_dossiers: [],
   });
 
   // Modal para ver detalles de expediente al hacer clic en la tabla
@@ -229,7 +221,7 @@ export default function CRMDashboardPage() {
               Asistente NexusGest AI · 3 Acciones Recomendadas
             </h4>
             <p className="text-xs text-indigo-800 mt-0.5">
-              Se detectaron 2 resoluciones de Belastingdienst pendientes de vincular al expediente de Maria Popescu y 1 presupuesto por vencer.
+              Se detectaron 2 resoluciones de Belastingdienst pendientes de vincular al expediente de Cliente seleccionado y 1 presupuesto por vencer.
             </p>
           </div>
         </div>

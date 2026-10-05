@@ -44,9 +44,10 @@ router.get('/', gestorOnly, async (req: Request, res: Response) => {
   try {
     const { date, status } = req.query;
     let sql = `
-      SELECT a.*, c.full_name as client_name, c.email as client_email, c.phone as client_phone
+      SELECT a.*, c.full_name as client_name, c.email as client_email, c.phone as client_phone, s.title as service_title
       FROM appointments a
       JOIN clients c ON a.client_id = c.id
+      LEFT JOIN service_prices s ON s.id = a.service_id
       WHERE 1=1
     `;
     const params: any[] = [];
@@ -74,7 +75,7 @@ router.get('/', gestorOnly, async (req: Request, res: Response) => {
 // POST /api/appointments - Crear o reservar cita (Web pública o CRM)
 router.post('/', requireGestorForLinkedClient, async (req: Request, res: Response) => {
   try {
-    let { client_id, full_name, email, phone, title, appointment_date, appointment_time, duration_minutes, modality, notes } = req.body || {};
+    let { client_id, service_id, source, full_name, email, phone, title, appointment_date, appointment_time, duration_minutes, modality, notes } = req.body || {};
 
     if (!appointment_date || !appointment_time || (!client_id && (!String(full_name || '').trim() || (!email && !phone)))) {
       return res.status(400).json({ error: 'Faltan campos obligatorios para agendar la cita' });
@@ -117,28 +118,47 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
         });
       }
 
+      if (service_id) {
+        const service = await client.query('SELECT id FROM service_prices WHERE id = $1 AND active = TRUE', [service_id]);
+        if (service.rows.length === 0) throw new Error('El servicio seleccionado no existe o no está activo.');
+      }
       if (!client_id) {
-        const newClient = await client.query(
-          'INSERT INTO clients (full_name, email, phone, status, notes) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [String(full_name).trim(), email || null, phone || null, 'prospecto', 'Cliente registrado mediante reserva web pública']
+        const existing = await client.query(
+          'SELECT id FROM clients WHERE ($1::text IS NOT NULL AND lower(email) = lower($1)) OR ($2::text IS NOT NULL AND phone = $2) ORDER BY created_at DESC LIMIT 1 FOR UPDATE',
+          [email || null, phone || null]
         );
-        client_id = newClient.rows[0].id;
+        if (existing.rows.length > 0) {
+          client_id = existing.rows[0].id;
+        } else {
+          const newClient = await client.query(
+            'INSERT INTO clients (full_name, email, phone, status, notes) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [String(full_name).trim(), email || null, phone || null, 'prospecto', 'Cliente registrado mediante reserva web pública']
+          );
+          client_id = newClient.rows[0].id;
+        }
+      } else {
+        const existing = await client.query('SELECT id FROM clients WHERE id = $1', [client_id]);
+        if (existing.rows.length === 0) throw new Error('El cliente seleccionado no existe.');
       }
 
       result = await client.query(
         `
-          INSERT INTO appointments (client_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes)
-          VALUES ($1, $2, $3, $4, $5, $6, 'confirmada', $7)
+          INSERT INTO appointments (client_id, service_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes, source, email, phone)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, 'pendiente', $8, $9, $10, $11)
           RETURNING *
         `,
         [
           client_id,
+          service_id || null,
           title || 'Asesoría y Trámites Gestoría',
           appointment_date,
           appointment_time,
           requestedDuration,
           modality || 'online_meet',
           notes || null,
+          source || 'web',
+          email || null,
+          phone || null,
         ]
       );
       await client.query('COMMIT');

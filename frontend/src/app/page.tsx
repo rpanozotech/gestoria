@@ -270,7 +270,7 @@ export default function PublicHomePage() {
                 if (found) {
                   return {
                     ...base,
-                    price: `Desde ${found.basePrice}€`,
+                    price: `Desde ${found.basePrice.toFixed(2)}€ (IVA incluido)`,
                     badge: found.badge || base.badge,
                   };
                 }

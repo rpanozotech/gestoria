@@ -26,7 +26,8 @@ export default function ReservarCitaPage() {
   const [bookName, setBookName] = useState('');
   const [bookEmail, setBookEmail] = useState('');
   const [bookPhone, setBookPhone] = useState('');
-  const [bookService, setBookService] = useState('Declaración de la Renta (M-Form)');
+  const [bookService, setBookService] = useState('');
+  const [services, setServices] = useState<any[]>([]);
   const [bookDate, setBookDate] = useState('2026-10-15');
   const [bookTime, setBookTime] = useState('11:00');
   const [bookModality, setBookModality] = useState<'meet' | 'phone' | 'office'>('meet');
@@ -35,6 +36,17 @@ export default function ReservarCitaPage() {
   const [busyAppointments, setBusyAppointments] = useState<BusyAppointment[]>([]);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
+
+  useEffect(() => {
+    fetch(apiUrl('/services/public'))
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error('No se pudo cargar el catálogo')))
+      .then((data) => {
+        const list = Array.isArray(data.services) ? data.services : [];
+        setServices(list);
+        if (list.length > 0) setBookService((current) => current || list[0].id);
+      })
+      .catch(() => setBookingError('No se pudo cargar el catálogo de servicios.'));
+  }, []);
 
   const toMinutes = (time: string) => {
     const [hours, minutes] = time.slice(0, 5).split(':').map(Number);
@@ -102,6 +114,10 @@ export default function ReservarCitaPage() {
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!bookService) {
+      setBookingError('Selecciona un servicio.');
+      return;
+    }
     if (!bookTime || !isSlotAvailable(bookTime)) {
       setBookingError('Ese horario ya no está disponible. Elige otra hora libre.');
       return;
@@ -109,9 +125,11 @@ export default function ReservarCitaPage() {
     setBookingError('');
     setBookLoading(true);
     const modality = bookModality === 'meet' ? 'online_meet' : bookModality === 'phone' ? 'llamada' : 'presencial';
+    const selectedService = services.find((service) => service.id === bookService);
+    const serviceTitle = selectedService?.title || bookService;
     const newAppointment = {
       id: `web-${Date.now()}`,
-      title: `Cita Web: ${bookService}`,
+      title: `Cita Web: ${serviceTitle}`,
       client_name: bookName,
       client_phone: bookPhone,
       appointment_date: bookDate,
@@ -142,7 +160,9 @@ export default function ReservarCitaPage() {
           full_name: bookName,
           email: bookEmail,
           phone: bookPhone,
-          title: `Cita Web: ${bookService}`,
+          service_id: bookService,
+          source: 'web',
+          title: `Cita Web: ${serviceTitle}`,
           appointment_date: bookDate,
           appointment_time: bookTime,
           duration_minutes: APPOINTMENT_MINUTES,
@@ -276,16 +296,12 @@ export default function ReservarCitaPage() {
                         value={bookService}
                         onChange={(e) => setBookService(e.target.value)}
                         className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
+                        required
                       >
-                        <option value="Declaración de la Renta (M-Form)">Declaración de la Renta (M-Form)</option>
-                        <option value="DigiD & Claves de Acceso">DigiD & Claves de Acceso</option>
-                        <option value="Zorgtoeslag (Subsidio de Salud)">Zorgtoeslag (Subsidio de Salud)</option>
-                        <option value="Seguro Médico Holandés">Seguro Médico Holandés</option>
-                        <option value="Formulario U1">Formulario U1</option>
-                        <option value="Prestación por Desempleo WW">Prestación por Desempleo WW</option>
-                        <option value="Autónomos / ZZP">Autónomos / ZZP</option>
-                        <option value="Consulta Privada General">Consulta Privada General</option>
-                        <option value="Importación de Vehículos">Importación de Vehículos</option>
+                        <option value="">Selecciona un servicio</option>
+                        {services.map((service) => (
+                          <option key={service.id} value={service.id}>{service.title} · €{Number(service.priceFinal ?? service.basePrice).toFixed(2)} IVA incluido</option>
+                        ))}
                       </select>
                     </div>
 

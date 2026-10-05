@@ -91,6 +91,20 @@ router.post('/text', async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /api/documents/:id - Borrado real del registro y archivo
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const found = await query('SELECT file_path, file_name FROM documents WHERE id = $1', [req.params.id]);
+    if (!found.rows.length) return res.status(404).json({ error: 'Documento no encontrado.' });
+    const uploadRoot = path.resolve(uploadDir);
+    const storedPath = path.resolve(String(found.rows[0].file_path));
+    if (storedPath !== uploadRoot && !storedPath.startsWith(`${uploadRoot}${path.sep}`)) return res.status(403).json({ error: 'Ruta de documento no permitida.' });
+    await query('DELETE FROM documents WHERE id = $1', [req.params.id]);
+    fs.rmSync(storedPath, { force: true });
+    return res.json({ message: 'Documento eliminado correctamente.', id: req.params.id });
+  } catch (error) { console.error('Error eliminando documento:', error); return res.status(500).json({ error: 'No se pudo eliminar el documento.' }); }
+});
+
 // GET /api/documents/:id/download - Ver archivo dentro del CRM
 router.get('/:id/download', async (req: Request, res: Response) => {
   try {

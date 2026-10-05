@@ -40,96 +40,7 @@ function formatLongDate(dateStr: string): string {
 
 export default function CRMAgendaPage() {
   const router = useRouter();
-  const [appointments, setAppointments] = useState<Appointment[]>(process.env.NODE_ENV === 'production' ? [] : [
-    {
-      id: '1',
-      title: 'Seguimiento Telefónico Zorgtoeslag',
-      client_name: 'Maria Popescu',
-      client_phone: '+31 6 81239845',
-      appointment_date: '2026-10-10',
-      appointment_time: '10:00:00',
-      modality: 'llamada',
-      status: 'confirmada',
-      notes: 'Llamar para verificar si ya llegó la carta física con el código de activación DigiD.',
-    },
-    {
-      id: '2',
-      title: 'Revisión M-Form Carlos Mendoza',
-      client_name: 'Carlos Mendoza Ruiz',
-      client_phone: '+34 654 321 987',
-      appointment_date: '2026-10-10',
-      appointment_time: '11:30:00',
-      modality: 'online_meet',
-      status: 'confirmada',
-      notes: 'Revisar certificado de retenciones emitido en España antes del traslado a Ámsterdam.',
-    },
-    {
-      id: '3',
-      title: 'Firma Presencial Documentación KVK',
-      client_name: 'Lars Van Dijk',
-      client_phone: '+31 6 49201948',
-      appointment_date: '2026-10-10',
-      appointment_time: '16:00:00',
-      modality: 'presencial',
-      status: 'confirmada',
-      notes: 'Firma de estatutos y verificación presencial de pasaporte en despacho.',
-    },
-    {
-      id: '4',
-      title: 'Consulta Telefónica Huurtoeslag',
-      client_name: 'Elena Morales Castillo',
-      client_phone: '+34 611 223 344',
-      appointment_date: '2026-10-12',
-      appointment_time: '09:30:00',
-      modality: 'llamada',
-      status: 'pendiente',
-      notes: 'Resolver dudas sobre el contrato de arrendamiento en Utrecht y límite de ingresos.',
-    },
-    {
-      id: '5',
-      title: 'Videollamada Liquidación BTW 3T',
-      client_name: 'Lars Van Dijk',
-      client_phone: '+31 6 49201948',
-      appointment_date: '2026-10-15',
-      appointment_time: '12:00:00',
-      modality: 'online_meet',
-      status: 'confirmada',
-      notes: 'Presentación trimestral del IVA (Omzetbelasting) y facturas deducibles.',
-    },
-    {
-      id: '6',
-      title: 'Consulta Deducción Hipoteca (Eigenwoningforfait)',
-      client_name: 'Elena Morales Castillo',
-      client_phone: '+34 611 223 344',
-      appointment_date: '2026-10-22',
-      appointment_time: '11:15:00',
-      modality: 'llamada',
-      status: 'confirmada',
-      notes: 'Análisis fiscal sobre compra de vivienda habitual en Países Bajos.',
-    },
-    {
-      id: '7',
-      title: 'Firma Presencial Modelo 30% Ruling',
-      client_name: 'Carlos Mendoza Ruiz',
-      client_phone: '+34 654 321 987',
-      appointment_date: '2026-10-27',
-      appointment_time: '15:00:00',
-      modality: 'presencial',
-      status: 'confirmada',
-      notes: 'Firma conjunta con empleador del formulario 30% Ruling ante la Belastingdienst.',
-    },
-    {
-      id: '8',
-      title: 'Verificación Certificado DigiD',
-      client_name: 'Maria Popescu',
-      client_phone: '+31 6 81239845',
-      appointment_date: '2026-10-05',
-      appointment_time: '10:00:00',
-      modality: 'llamada',
-      status: 'completada',
-      notes: 'Revisión y confirmación de activación de código por SMS.',
-    },
-  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   // Modo de visualización: Calendario Mensual (por defecto) o Lista
   const [viewMode, setViewMode] = useState<'calendario' | 'lista'>('calendario');
@@ -145,8 +56,9 @@ export default function CRMAgendaPage() {
 
   // Modales
   const [showNewAptModal, setShowNewAptModal] = useState(false);
-  const [aptClientName, setAptClientName] = useState('Maria Popescu');
-  const [aptPhone, setAptPhone] = useState('+31 6 81239845');
+  const [aptClientName, setAptClientName] = useState('');
+  const [aptPhone, setAptPhone] = useState('');
+  const [clientOptions, setClientOptions] = useState<any[]>([]);
   const [aptTitle, setAptTitle] = useState('Consulta Telefónica Gestoría');
   const [aptDate, setAptDate] = useState('2026-10-10');
   const [aptTime, setAptTime] = useState('11:00');
@@ -163,6 +75,10 @@ export default function CRMAgendaPage() {
     setToastTipo(tipo);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  useEffect(() => {
+    apiFetch('/clients').then((res) => res.ok ? res.json() : Promise.reject(new Error('clients'))).then((data) => setClientOptions(Array.isArray(data.clients) ? data.clients : [])).catch(() => setClientOptions([]));
+  }, []);
 
   // Cargar citas reales de la API backend si está disponible
   useEffect(() => {
@@ -184,80 +100,11 @@ export default function CRMAgendaPage() {
             status: a.status || 'confirmada',
             notes: a.notes || '',
           }));
-          if (process.env.NODE_ENV === 'production') {
-            setAppointments(mapped);
-          } else {
-            setAppointments((prev) => {
-              const map = new Map(prev.map((appointment) => [String(appointment.id), appointment]));
-              mapped.forEach((appointment) => map.set(String(appointment.id), appointment));
-              return Array.from(map.values());
-            });
-          }
+          setAppointments(mapped);
         }
       })
       .catch((error) => console.error('Error al cargar citas del CRM:', error));
   }, []);
-
-  // Sincronización con localStorage (citas solicitadas desde el portal del cliente)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      try {
-        const stored = localStorage.getItem('nexusgest_appointments');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setAppointments((prev) => {
-              const map = new Map();
-              prev.forEach((a) => map.set(String(a.id), a));
-              parsed.forEach((a: any) => map.set(String(a.id), a));
-              return Array.from(map.values());
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('Error al leer citas de localStorage:', err);
-      }
-    }
-  }, []);
-
-  // Actualización inmediata si una reserva se confirma desde otra pestaña o
-  // desde la página pública sin recargar manualmente el CRM.
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'production') return;
-
-    const syncUpdatedAppointments = () => {
-      try {
-        const stored = window.localStorage.getItem('nexusgest_appointments');
-        const parsed = stored ? JSON.parse(stored) : [];
-        if (!Array.isArray(parsed)) return;
-        setAppointments((prev) => {
-          const map = new Map<string, Appointment>();
-          prev.forEach((appointment) => map.set(String(appointment.id), appointment));
-          parsed.forEach((appointment: Appointment) => map.set(String(appointment.id), appointment));
-          return Array.from(map.values());
-        });
-      } catch {
-        // Mantener la agenda actual si el almacenamiento está corrupto.
-      }
-    };
-
-    window.addEventListener('storage', syncUpdatedAppointments);
-    window.addEventListener('nexusgest_appointments_updated', syncUpdatedAppointments);
-    return () => {
-      window.removeEventListener('storage', syncUpdatedAppointments);
-      window.removeEventListener('nexusgest_appointments_updated', syncUpdatedAppointments);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production' && appointments.length > 0) {
-      try {
-        localStorage.setItem('nexusgest_appointments', JSON.stringify(appointments));
-      } catch (err) {
-        console.warn('Error al guardar citas en localStorage:', err);
-      }
-    }
-  }, [appointments]);
 
   // Navegación entre meses
   const handlePrevMonth = () => {
@@ -1339,17 +1186,13 @@ export default function CRMAgendaPage() {
                   value={aptClientName}
                   onChange={(e) => {
                     setAptClientName(e.target.value);
-                    if (e.target.value === 'Carlos Mendoza Ruiz') setAptPhone('+34 654 321 987');
-                    else if (e.target.value === 'Lars Van Dijk') setAptPhone('+31 6 49201948');
-                    else if (e.target.value === 'Elena Morales Castillo') setAptPhone('+34 611 223 344');
-                    else setAptPhone('+31 6 81239845');
+                    const selected = clientOptions.find((client) => client.full_name === e.target.value);
+                    setAptPhone(selected?.phone || '');
                   }}
                   className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
                 >
-                  <option>Maria Popescu</option>
-                  <option>Carlos Mendoza Ruiz</option>
-                  <option>Lars Van Dijk</option>
-                  <option>Elena Morales Castillo</option>
+                  <option value="">Selecciona un cliente</option>
+                  {clientOptions.map((client) => <option key={client.id} value={client.full_name}>{client.full_name}</option>)}
                 </select>
               </div>
 

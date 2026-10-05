@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     } = body;
 
     const key = (apiKey || process.env.OPENAI_API_KEY || '').trim();
-    const isLocalOllama = (apiUrl || '').includes('localhost') || (apiUrl || '').includes('127.0.0.1');
+    const isLocalOllama = (apiUrl || '').includes('localhost') || (apiUrl || '').includes('127.0.0.1') || (apiUrl || '').includes('ollama:11434');
 
     // Preparar lista de mensajes
     let messages: Array<{ role: string; content: string }> = [];
@@ -98,6 +98,15 @@ export async function POST(request: Request) {
         clearTimeout(timeoutId);
         console.warn('[AI API] Excepción en llamada a IA externa:', callError.message);
       }
+    }
+
+    // Ollama debe fallar de forma explícita: no sustituir un modelo real por
+    // una plantilla que pueda parecer una respuesta generada por IA.
+    if (isLocalOllama) {
+      return NextResponse.json(
+        { success: false, error: 'No se pudo conectar con Ollama. Comprueba que el servicio esté disponible.' },
+        { status: 503 }
+      );
     }
 
     // Modo Heurístico Local / Fallback Neerlandés de Alta Precisión

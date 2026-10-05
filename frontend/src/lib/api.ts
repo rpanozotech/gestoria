@@ -37,8 +37,7 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
 
   // 401 = token ausente, invalido o expirado. La sesion ya no sirve, asi que
   // se limpia y se manda al login en vez de dejar la UI con datos a medias.
-  const isLocalDemo = process.env.NODE_ENV !== 'production' && token?.startsWith('nexusgest_local_demo');
-  if (res.status === 401 && !isLocalDemo) {
+  if (res.status === 401) {
     clearSession();
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
       window.location.href = '/login';

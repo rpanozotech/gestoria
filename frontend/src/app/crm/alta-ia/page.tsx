@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useEscapeKey } from '@/lib/a11y';
 import { useRouter } from 'next/navigation';
 import { apiFetch, apiUrl } from '@/lib/api';
@@ -162,7 +162,7 @@ export default function AltaIAEscaneerPage() {
   };
 
   // Catálogo de trámites para desplegable
-  const servicesCatalog = [
+  const [servicesCatalog, setServicesCatalog] = useState([
     { title: 'Declaración Fiscal M-Form', defaultFee: 180.0 },
     { title: 'Activación DigiD + Zorgtoeslag', defaultFee: 85.0 },
     { title: 'Solicitud Subsidio Huurtoeslag (Alquiler)', defaultFee: 95.0 },
@@ -170,7 +170,28 @@ export default function AltaIAEscaneerPage() {
     { title: 'Recurso Bezwaarschrift Belastingdienst', defaultFee: 120.0 },
     { title: 'Kindgebonden Budget (Ayuda Hijos)', defaultFee: 80.0 },
     { title: 'Cambio de Cuenta Bancaria Belastingdienst', defaultFee: 45.0 },
-  ];
+  ]);
+
+  // El alta inteligente usa el mismo catálogo persistente que Tarifas.
+  useEffect(() => {
+    apiFetch('/services')
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = await response.json();
+        if (Array.isArray(data.services) && data.services.length > 0) {
+          setServicesCatalog(data.services.map((service: any) => ({
+            title: service.title,
+            defaultFee: Number(service.basePrice) || 0,
+          })));
+        }
+      })
+      .catch(() => {
+        // Conserva el catálogo inicial si el API no está disponible.
+      });
+  }, []);
+
+  const catalogFee = (title: string, fallback: number) =>
+    servicesCatalog.find((service) => service.title === title)?.defaultFee ?? fallback;
 
   // ==========================================
   // MANEJO DE ARCHIVOS (PDFs, FOTOS, DOCUMENTOS)
@@ -424,13 +445,13 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
         let serviceFee = 0;
         if (/aangifte|inkomstenbelasting|income tax|declaraci[oó]n fiscal/i.test(ocr)) {
           serviceTitle = 'Declaración Fiscal M-Form';
-          serviceFee = 180;
+          serviceFee = catalogFee("Declaración Fiscal M-Form", 180);
         } else if (/zorgtoeslag|digid/i.test(ocr)) {
           serviceTitle = 'Activación DigiD + Zorgtoeslag';
-          serviceFee = 85;
+          serviceFee = catalogFee("Activación DigiD + Zorgtoeslag", 85);
         } else if (/huurtoeslag/i.test(ocr)) {
           serviceTitle = 'Solicitud Subsidio Huurtoeslag (Alquiler)';
-          serviceFee = 95;
+          serviceFee = catalogFee("Solicitud Subsidio Huurtoeslag (Alquiler)", 95);
         }
         const missing = [
           !phone && 'teléfono',
@@ -733,15 +754,6 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
         }
       }
 
-      // 2. Reflejar en localStorage SOLO lo que existe en la base de datos,
-      // para que la vista no muestre clientes que el backend no tiene.
-      if (typeof window !== 'undefined' && persistedClients.length > 0) {
-        const stored = localStorage.getItem('nexusgest_clients');
-        const existing = stored ? JSON.parse(stored) : [];
-        const updated = [...persistedClients, ...existing];
-        localStorage.setItem('nexusgest_clients', JSON.stringify(updated));
-      }
-
       if (failedClients.length === 0) {
         setSaveSuccessModal({
           count: persistedClients.length,
@@ -778,7 +790,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
   });
   const [manualPortalAccess, setManualPortalAccess] = useState<{ portal_username: string; portal_password: string } | null>(null);
 
-  const handleSaveSingleManual = (e: React.FormEvent) => {
+  const handleSaveSingleManual = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isValidBsn(manualClient.bsn)) {
@@ -786,45 +798,48 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       return;
     }
 
-    const portalAccess = createPortalAccess(manualClient.full_name, manualClient.email);
-    const newC = {
-      id: String(Date.now()),
-      ...manualClient,
-      ...portalAccess,
-      bsn: manualClient.bsn.replace(/\s/g, ''),
-      // No se inventan IBAN ni numero de documento: se dejan vacios para
-      // que el gestor los introduzca. Un IBAN generado al azar puede
-      // existed pero jamas ser el del cliente.
-      iban: '',
-      id_document_number: '',
-      digid_status: 'pendiente_activar',
-      status: 'activo',
-      notes: 'Alta manual directa.',
-      dossiers: [
-        {
-          id: `d_${Date.now()}`,
-          code: `EXP-2026-0099`,
+    try {
+      const clientRes = await apiFetch('/clients', {
+        method: 'POST',
+        body: JSON.stringify({
+          full_name: manualClient.full_name,
+          email: manualClient.email,
+          phone: manualClient.phone,
+          bsn: manualClient.bsn.replace(/\s/g, ''),
+          city: manualClient.city,
+          address: manualClient.address,
+          status: 'activo',
+          digid_status: 'pendiente_activar',
+          notes: 'Alta manual directa.',
+        }),
+      });
+      const clientData = await clientRes.json().catch(() => ({}));
+      if (!clientRes.ok || !clientData?.client?.id) {
+        throw new Error(clientData?.error || 'No se pudo guardar el cliente en la base de datos.');
+      }
+
+      const dossierRes = await apiFetch('/dossiers', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: clientData.client.id,
           title: manualClient.service_title,
           category: 'Gestoría',
-          status: 'en_proceso',
-          progress_percentage: 20,
           fee: manualClient.fee,
-          deadline: '2026-11-30',
-          description: `Trámite para ${manualClient.full_name}`,
-        },
-      ],
-      quotes: [],
-      invoices: [],
-      appointments: [],
-    };
+          priority: 'alta',
+        }),
+      });
+      if (!dossierRes.ok) {
+        throw new Error('El cliente se guardó, pero no se pudo crear su expediente inicial.');
+      }
 
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('nexusgest_clients');
-      const existing = stored ? JSON.parse(stored) : [];
-      localStorage.setItem('nexusgest_clients', JSON.stringify([newC, ...existing]));
+      const accessRes = await apiFetch(`/clients/${clientData.client.id}/portal-access`, { method: 'POST' });
+      const accessData = accessRes.ok ? await accessRes.json().catch(() => ({})) : {};
+      setManualPortalAccess(accessData.portal_access || null);
+      showToast('Cliente, expediente y acceso al portal guardados en la base de datos.');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo guardar el cliente.', 'error');
     }
 
-    setManualPortalAccess(portalAccess);
     showToast('Cliente creado y credenciales de portal generadas.');
   };
 
@@ -1185,12 +1200,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             </div>
 
             <div className="font-mono-data text-xs flex flex-wrap items-center gap-x-2">
-              <span className="text-outline">Base: </span>
-              <span className="font-bold text-on-surface">€ {totalFees.toFixed(2)}</span>
-              <span className="text-outline">+ 21% BTW: </span>
-              <span className="font-bold text-on-surface">€ {(totalFees * 0.21).toFixed(2)}</span>
-              <span className="text-outline">= Total con impuestos: </span>
-              <span className="font-bold text-secondary text-sm">€ {(totalFees * 1.21).toFixed(2)}</span>
+              <span className="text-outline">Total final (IVA incluido): </span>
+              <span className="font-bold text-secondary text-sm">€ {totalFees.toFixed(2)}</span>
             </div>
           </div>
 
@@ -1566,7 +1577,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             </div>
 
             <div>
-              <label className="block text-outline uppercase font-semibold mb-1">Tarifa / Honorarios (€)</label>
+              <label className="block text-outline uppercase font-semibold mb-1">Tarifa / Honorarios (€ IVA incluido)</label>
               <input
                 type="number"
                 value={manualClient.fee}

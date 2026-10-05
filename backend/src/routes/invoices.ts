@@ -1,131 +1,69 @@
 import { Router, Request, Response } from 'express';
-import { query } from '../db/index.js';
+import { query, pool } from '../db/index.js';
 
 const router = Router();
 
-// ==========================================
-// PRESUPUESTOS (QUOTES)
-// ==========================================
-
-// GET /api/quotes - Listado de presupuestos
+// Presupuestos: el precio recibido es siempre el total final IVA incluido.
 router.get('/quotes', async (req: Request, res: Response) => {
   try {
     const { client_id } = req.query;
     const params: any[] = [];
     const filter = client_id ? `WHERE q.client_id = $1` : '';
     if (client_id) params.push(client_id);
-    const sql = `
-      SELECT q.*, c.full_name as client_name, c.email as client_email, c.bsn as client_bsn
-      FROM quotes q
-      JOIN clients c ON q.client_id = c.id
-      ${filter}
-      ORDER BY q.created_at DESC
-    `;
-    const result = await query(sql, params);
+    const result = await query(`SELECT q.*, c.full_name AS client_name, c.email AS client_email, c.bsn AS client_bsn FROM quotes q JOIN clients c ON q.client_id=c.id ${filter} ORDER BY q.created_at DESC`, params);
     res.json({ quotes: result.rows });
-  } catch (error) {
-    console.error('Error listando presupuestos:', error);
-    res.status(500).json({ error: 'Error al consultar presupuestos' });
-  }
+  } catch (error) { console.error('Error listando presupuestos:', error); res.status(500).json({ error: 'Error al consultar presupuestos' }); }
 });
 
-// POST /api/quotes - Crear presupuesto correlativo PRE-2026-XXXX
 router.post('/quotes', async (req: Request, res: Response) => {
+  const { client_id, dossier_id, items, valid_until, notes } = req.body || {};
+  if (!client_id || !Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'Debe especificar el cliente y al menos una línea de concepto' });
+  const normalized = items.map((item: any) => ({ service_id: item.service_id || item.serviceId || null, description: String(item.description || item.title || 'Servicio').trim(), quantity: Number(item.quantity) || 1, unit_price: Number(item.unit_price ?? item.unitPrice ?? item.price) || 0 })).filter((item: any) => item.description && item.unit_price >= 0);
+  if (!normalized.length) return res.status(400).json({ error: 'Las líneas del presupuesto no son válidas' });
+  const total = Math.round(normalized.reduce((sum: number, item: any) => sum + item.quantity * item.unit_price, 0) * 100) / 100;
+  const subtotal = Math.round((total / 1.21) * 100) / 100;
+  const taxAmount = Math.round((total - subtotal) * 100) / 100;
+  const client = await pool.connect();
   try {
-    const { client_id, dossier_id, items, valid_until, notes } = req.body;
-
-    if (!client_id || !items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Debe especificar el cliente y al menos una línea de concepto' });
-    }
-
-    // Calcular subtotal, IVA/BTW (21%) y total
-    const subtotal = items.reduce((acc: number, item: any) => acc + (item.quantity * item.unit_price), 0);
-    const tax_rate = 21.00;
-    const tax_amount = Math.round((subtotal * (tax_rate / 100)) * 100) / 100;
-    const total = Math.round((subtotal + tax_amount) * 100) / 100;
-
-    const countRes = await query(`SELECT COUNT(*) FROM quotes`);
-    const nextNum = parseInt(countRes.rows[0].count, 10) + 1;
+    await client.query('BEGIN');
+    const validClient = await client.query('SELECT id FROM clients WHERE id=$1 FOR UPDATE', [client_id]);
+    if (!validClient.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'El cliente no existe' }); }
+    if (dossier_id) { const d = await client.query('SELECT id FROM dossiers WHERE id=$1 AND client_id=$2', [dossier_id, client_id]); if (!d.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'El expediente no pertenece al cliente' }); } }
+    for (const item of normalized) { if (item.service_id) { const service = await client.query('SELECT id FROM service_prices WHERE id=$1 AND active=TRUE', [item.service_id]); if (!service.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: `El servicio ${item.service_id} no existe o está inactivo` }); } } }
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('nexusgest_quotes_number'))");
     const year = new Date().getFullYear();
-    const code = `PRE-${year}-${String(nextNum).padStart(4, '0')}`;
-
-    const sql = `
-      INSERT INTO quotes (code, client_id, dossier_id, items, subtotal, tax_rate, tax_amount, total, status, valid_until, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'enviado', $9, $10)
-      RETURNING *;
-    `;
-
-    const result = await query(sql, [
-      code,
-      client_id,
-      dossier_id || null,
-      JSON.stringify(items),
-      subtotal,
-      tax_rate,
-      tax_amount,
-      total,
-      valid_until || null,
-      notes || null,
-    ]);
-
-    res.status(201).json({ quote: result.rows[0], message: 'Presupuesto creado con éxito' });
-  } catch (error) {
-    console.error('Error creando presupuesto:', error);
-    res.status(500).json({ error: 'Error al generar presupuesto' });
-  }
+    const count = await client.query('SELECT COUNT(*)::int AS n FROM quotes WHERE code LIKE $1', [`PRE-${year}-%`]);
+    const code = `PRE-${year}-${String(count.rows[0].n + 1).padStart(4, '0')}`;
+    const quote = await client.query(`INSERT INTO quotes (code,client_id,dossier_id,items,subtotal,tax_rate,tax_amount,total,status,valid_until,notes) VALUES ($1,$2,$3,$4,$5,21,$6,$7,'borrador',$8,$9) RETURNING *`, [code, client_id, dossier_id || null, JSON.stringify(normalized), subtotal, taxAmount, total, valid_until || null, notes || null]);
+    for (const item of normalized) await client.query('INSERT INTO quote_items (quote_id,service_id,description,quantity,unit_price,total) VALUES ($1,$2,$3,$4,$5,$6)', [quote.rows[0].id, item.service_id, item.description, item.quantity, item.unit_price, Math.round(item.quantity * item.unit_price * 100) / 100]);
+    await client.query('COMMIT');
+    res.status(201).json({ quote: quote.rows[0], message: 'Presupuesto creado con éxito' });
+  } catch (error) { await client.query('ROLLBACK').catch(() => undefined); console.error('Error creando presupuesto:', error); res.status(500).json({ error: 'Error al generar presupuesto' }); }
+  finally { client.release(); }
 });
 
-// POST /api/quotes/:id/convert - Convertir presupuesto a Factura FAC-2026-XXXX
 router.post('/quotes/:id/convert', async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
-    const { id } = req.params;
-
-    const quoteRes = await query('SELECT * FROM quotes WHERE id = $1', [id]);
-    if (quoteRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Presupuesto no encontrado' });
-    }
+    await client.query('BEGIN');
+    const quoteRes = await client.query('SELECT * FROM quotes WHERE id=$1 FOR UPDATE', [req.params.id]);
+    if (!quoteRes.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Presupuesto no encontrado' }); }
     const quote = quoteRes.rows[0];
-
-    // Generar código de factura FAC-2026-XXXX
-    const countRes = await query(`SELECT COUNT(*) FROM invoices`);
-    const nextNum = parseInt(countRes.rows[0].count, 10) + 1;
+    const existing = await client.query('SELECT * FROM invoices WHERE quote_id=$1 LIMIT 1', [quote.id]);
+    if (existing.rows.length) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Este presupuesto ya tiene una factura', invoice: existing.rows[0] }); }
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('nexusgest_invoices_number'))");
     const year = new Date().getFullYear();
-    const invoiceCode = `FAC-${year}-${String(nextNum).padStart(4, '0')}`;
-
-    const due_date = new Date();
-    due_date.setDate(due_date.getDate() + 14); // 14 días para pago
-
-    // Crear la factura
-    const invSql = `
-      INSERT INTO invoices (code, quote_id, client_id, dossier_id, items, subtotal, tax_rate, tax_amount, total, status, due_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'emitida', $10)
-      RETURNING *;
-    `;
-
-    const invResult = await query(invSql, [
-      invoiceCode,
-      quote.id,
-      quote.client_id,
-      quote.dossier_id,
-      quote.items,
-      quote.subtotal,
-      quote.tax_rate,
-      quote.tax_amount,
-      quote.total,
-      due_date.toISOString().split('T')[0],
-    ]);
-
-    // Marcar presupuesto como 'convertido'
-    await query(`UPDATE quotes SET status = 'convertido', updated_at = CURRENT_TIMESTAMP WHERE id = $1`, [id]);
-
-    res.status(201).json({
-      invoice: invResult.rows[0],
-      message: `Presupuesto ${quote.code} convertido exitosamente a Factura ${invoiceCode}`,
-    });
-  } catch (error) {
-    console.error('Error convirtiendo presupuesto a factura:', error);
-    res.status(500).json({ error: 'Error en la conversión a factura' });
-  }
+    const count = await client.query('SELECT COUNT(*)::int AS n FROM invoices WHERE code LIKE $1', [`FAC-${year}-%`]);
+    const code = `FAC-${year}-${String(count.rows[0].n + 1).padStart(4, '0')}`;
+    const due = new Date(); due.setDate(due.getDate() + 14);
+    const items = Array.isArray(quote.items) ? quote.items : (typeof quote.items === 'string' ? JSON.parse(quote.items) : []);
+    const invoice = await client.query(`INSERT INTO invoices (code,quote_id,client_id,dossier_id,items,subtotal,tax_rate,tax_amount,total,status,due_date) VALUES ($1,$2,$3,$4,$5,$6,21,$7,$8,'emitida',$9) RETURNING *`, [code, quote.id, quote.client_id, quote.dossier_id, JSON.stringify(items), quote.subtotal, quote.tax_amount, quote.total, due.toISOString().slice(0,10)]);
+    for (const item of items) await client.query('INSERT INTO invoice_items (invoice_id,service_id,description,quantity,unit_price,total) VALUES ($1,$2,$3,$4,$5,$6)', [invoice.rows[0].id, item.service_id || item.serviceId || null, item.description || 'Servicio', Number(item.quantity) || 1, Number(item.unit_price ?? item.unitPrice ?? 0), Number(item.total ?? ((Number(item.quantity)||1) * Number(item.unit_price ?? item.unitPrice ?? 0)))]);
+    await client.query("UPDATE quotes SET status='convertido',updated_at=CURRENT_TIMESTAMP WHERE id=$1", [quote.id]);
+    await client.query('COMMIT');
+    res.status(201).json({ invoice: invoice.rows[0], message: `Presupuesto ${quote.code} convertido exitosamente a Factura ${code}` });
+  } catch (error) { await client.query('ROLLBACK').catch(() => undefined); console.error('Error convirtiendo presupuesto a factura:', error); res.status(500).json({ error: 'Error en la conversión a factura' }); }
+  finally { client.release(); }
 });
 
 // ==========================================

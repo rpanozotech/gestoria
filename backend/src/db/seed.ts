@@ -14,10 +14,15 @@ import { initializeDatabase } from './init.js';
 const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
 const SEED_ADMIN_EMAIL = (process.env.SEED_ADMIN_EMAIL || 'admin@nexusgest.nl').trim().toLowerCase();
 const SEED_ADMIN_NAME = process.env.SEED_ADMIN_NAME || 'Rony P. (Gestor Principal)';
+const ALLOW_DEMO_SEED = process.env.ALLOW_DEMO_SEED === 'true';
 
 export async function seedDatabase() {
   console.log('🌱 Sembrando datos iniciales en NexusGest...');
   await initializeDatabase();
+  if (!ALLOW_DEMO_SEED) {
+    console.log('🛑 Seed demo bloqueado. Define ALLOW_DEMO_SEED=true solo en un entorno controlado.');
+    return;
+  }
 
   const client = await pool.connect();
   try {

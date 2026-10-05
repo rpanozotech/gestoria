@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { exportDocumentToDocx } from '@/lib/docxExport';
+import { apiFetch } from '@/lib/api';
 
 // Presets de proveedores de IA (sincronizados con el resto del sistema)
 const AI_PRESETS = [
@@ -51,9 +52,9 @@ const AI_PRESETS = [
     id: 'ollama',
     name: 'Ollama Local (Sin clave / Privado)',
     badge: '100% Local',
-    defaultUrl: 'http://localhost:11434/v1',
-    defaultModel: 'llama3:latest',
-    models: ['llama3:latest', 'mistral:latest', 'phi3:latest'],
+    defaultUrl: 'http://ollama:11434/v1',
+    defaultModel: 'llama3.2:1b',
+    models: ['llama3.2:1b', 'qwen2.5-coder:1.5b', 'qwen3:1.7b'],
     keyHelp: 'Ejecuta Ollama en tu equipo local con ollama run llama3',
     keyPlaceholder: 'No se requiere clave (dejar en blanco o test)',
   },
@@ -77,10 +78,10 @@ interface AIConfig {
 }
 
 const DEFAULT_CONFIG: AIConfig = {
-  provider: 'openai',
-  apiUrl: 'https://api.openai.com/v1',
+  provider: 'ollama',
+  apiUrl: 'http://ollama:11434/v1',
   apiKey: '',
-  model: 'gpt-4o-mini',
+  model: 'llama3.2:1b',
 };
 
 export default function ChatIAPage() {
@@ -102,19 +103,9 @@ export default function ChatIAPage() {
     }
   }, []);
 
-  // Estado de Clientes en el sistema (Cargados desde localStorage o base de datos)
+  // Clientes siempre cargados desde PostgreSQL.
   const [clients, setClients] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('nexusgest_clients');
-        if (stored) {
-          setClients(JSON.parse(stored));
-        }
-      } catch {}
-    }
-  }, []);
+  useEffect(() => { apiFetch('/clients').then((res) => res.ok ? res.json() : Promise.reject(new Error('clients'))).then((data) => setClients(Array.isArray(data.clients) ? data.clients : [])).catch(() => setClients([])); }, []);
 
   // Estados del Chat
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; timestamp?: string }>>([
@@ -125,11 +116,11 @@ export default function ChatIAPage() {
 Tengo **acceso en tiempo real a todo el directorio de clientes**, expedientes, documentos, presupuestos, facturas y agenda.
 
 **Acciones que puedo ejecutar de forma autónoma:**
-1. **Emitir Facturas**: *"Crea una factura de 180€ para Carlos Mendoza por M-Form"*
-2. **Generar Presupuestos**: *"Genera un presupuesto de 95€ para Maria Popescu"*
-3. **Agendar Citas**: *"Agenda una llamada para Lars Van Dijk el 18 de octubre a las 16:00"*
-4. **Archivar Documentos / Informes**: *"Redacta un dictamen fiscal para Elena Morales y archívalo en sus documentos"*
-5. **Modificar Clientes**: *"Actualiza el teléfono de Carlos Mendoza a +34 654 000 111"*
+1. **Emitir Facturas**: *"Crea una factura de 180€ para Cliente seleccionado por M-Form"*
+2. **Generar Presupuestos**: *"Genera un presupuesto de 95€ para Cliente seleccionado"*
+3. **Agendar Citas**: *"Agenda una llamada para Cliente seleccionado el 18 de octubre a las 16:00"*
+4. **Archivar Documentos / Informes**: *"Redacta un dictamen fiscal para Cliente seleccionado y archívalo en sus documentos"*
+5. **Modificar Clientes**: *"Actualiza el teléfono de Cliente seleccionado a +34 654 000 111"*
 6. **Asesoría Legal & Fiscal**: Consultas sobre *Awb, Belastingdienst, Toeslagen, KVK y CAK*.
 
 Escribe tu instrucción u orden en la barra inferior para ejecutarla.`,
@@ -156,7 +147,12 @@ Escribe tu instrucción u orden en la barra inferior para ejecutarla.`,
     try {
       const savedConfig = localStorage.getItem('nexusgest_ai_config');
       if (savedConfig) {
-        setConfig(JSON.parse(savedConfig));
+        const parsed = JSON.parse(savedConfig);
+        if (!parsed.apiKey && (parsed.provider === 'openai' || parsed.apiUrl === 'https://api.openai.com/v1')) {
+          setConfig({ provider: 'ollama', apiUrl: 'http://ollama:11434/v1', apiKey: '', model: 'llama3.2:1b' });
+        } else {
+          setConfig(parsed);
+        }
       }
     } catch {
       // ignore
@@ -224,7 +220,7 @@ Escribe tu instrucción u orden en la barra inferior para ejecutarla.`,
 
     // Procesamiento de órdenes sobre clientes (Facturas, Presupuestos, Citas, Documentos, Modificaciones)
     const lower = textToSend.toLowerCase();
-    const currentClients = clients.length > 0 ? clients : (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nexusgest_clients') || '[]') : []);
+    const currentClients = clients;
 
     const matchedClient = currentClients.find((c: any) => {
       const fn = (c.full_name || '').toLowerCase();
@@ -239,102 +235,70 @@ Escribe tu instrucción u orden en la barra inferior para ejecutarla.`,
       lower.includes('documento') || lower.includes('informe') || lower.includes('archivar') ||
       lower.includes('modificar') || lower.includes('cambiar') || lower.includes('actualizar')
     )) {
-      let replyText = '';
-      let clientToUpdate = { ...matchedClient };
+      // Todas las acciones del asistente se persisten primero en el backend.
+      // La respuesta visual solo se muestra después de una confirmación HTTP.
+      try {
+        let persistedReply = '';
+        const dossierId = Array.isArray(matchedClient.dossiers) ? matchedClient.dossiers[0]?.id : undefined;
+        if (lower.includes('factura') || lower.includes('facturar')) {
+          const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
+          const amount = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 180;
+          const quoteResponse = await apiFetch('/quotes', { method: 'POST', body: JSON.stringify({
+            client_id: matchedClient.id, dossier_id: dossierId || null,
+            items: [{ description: 'Factura emitida desde Chat IA', quantity: 1, unit_price: amount }],
+            notes: 'Creada desde Chat IA',
+          }) });
+          const quoteData = await quoteResponse.json().catch(() => ({}));
+          if (!quoteResponse.ok || !quoteData.quote?.id) throw new Error(quoteData.error || 'No se pudo crear el presupuesto previo.');
+          const invoiceResponse = await apiFetch(`/quotes/${quoteData.quote.id}/convert`, { method: 'POST' });
+          const invoiceData = await invoiceResponse.json().catch(() => ({}));
+          if (!invoiceResponse.ok) throw new Error(invoiceData.error || 'No se pudo convertir a factura.');
+          persistedReply = `✅ Factura creada y guardada para ${matchedClient.full_name}. Total final (IVA incluido): € ${Number(invoiceData.invoice?.total || amount).toFixed(2)}.`;
+        } else if (lower.includes('presupuesto') || lower.includes('presupuestar')) {
+          const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
+          const amount = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 120;
+          const response = await apiFetch('/quotes', { method: 'POST', body: JSON.stringify({
+            client_id: matchedClient.id, dossier_id: dossierId || null,
+            items: [{ description: 'Presupuesto creado desde Chat IA', quantity: 1, unit_price: amount }],
+            notes: 'Creado desde Chat IA',
+          }) });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'No se pudo crear el presupuesto.');
+          persistedReply = `✅ Presupuesto ${data.quote?.code || ''} creado y guardado para ${matchedClient.full_name}. Total final (IVA incluido): € ${Number(data.quote?.total || amount).toFixed(2)}.`;
+        } else if (lower.includes('cita') || lower.includes('llamada') || lower.includes('agendar')) {
+          const modality = lower.includes('presencial') ? 'presencial' : lower.includes('meet') || lower.includes('video') ? 'online_meet' : 'llamada';
+          const response = await apiFetch('/appointments', { method: 'POST', body: JSON.stringify({
+            client_id: matchedClient.id, service_id: null, source: 'chat-ia', full_name: matchedClient.full_name,
+            email: matchedClient.email, phone: matchedClient.phone, title: `Cita con ${matchedClient.full_name}`,
+            appointment_date: new Date().toISOString().slice(0, 10), appointment_time: '16:00', duration_minutes: 30, modality,
+            notes: 'Cita creada desde Chat IA',
+          }) });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'No se pudo crear la cita.');
+          persistedReply = `✅ Cita guardada en la agenda para ${matchedClient.full_name}.`;
+        } else if (lower.includes('documento') || lower.includes('informe') || lower.includes('archivar')) {
+          const content = `Documento creado desde Chat IA
+Cliente: ${matchedClient.full_name}
+Fecha: ${new Date().toLocaleDateString('es-ES')}
 
-      if (lower.includes('factura') || lower.includes('facturar')) {
-        const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
-        const fee = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 180.00;
-        const total = Math.round(fee * 1.21 * 100) / 100;
-        const year = new Date().getFullYear();
-        const code = `FAC-${year}-${String((clientToUpdate.invoices?.length || 0) + 1).padStart(4, '0')}`;
-        const concept = lower.includes('m-form') ? 'Declaración Fiscal M-Form Belastingdienst' : 'Servicios y Asesoría Gestoría Fiscal';
-        
-        const newInv = {
-          id: String(Date.now()),
-          code,
-          concept,
-          total,
-          status: 'emitida',
-          due_date: '2026-11-15',
-          payment_method: 'ideal',
-          items: [{ description: concept, total: fee }]
-        };
-
-        clientToUpdate.invoices = [newInv, ...(clientToUpdate.invoices || [])];
-        replyText = `✅ **¡Factura oficial emitida con éxito desde el Asistente IA!**\n\n- **Cliente:** ${matchedClient.full_name} (BSN: ${matchedClient.bsn || '—'})\n- **Nº Factura:** **${code}**\n- **Base Imponible:** € ${fee.toFixed(2)} + 21% BTW\n- **Total Oficial:** **€ ${total.toFixed(2)}**\n- **Concepto:** ${concept}\n\nLa factura ha quedado registrada en su Ficha 360° y en el módulo de Facturación con estado **Emitida (iDEAL)**.`;
-      } else if (lower.includes('presupuesto') || lower.includes('presupuestar')) {
-        const amountMatch = textToSend.match(/(\d+(?:[.,]\d+)?)\s*€?/);
-        const fee = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 120.00;
-        const tax = Math.round(fee * 0.21 * 100) / 100;
-        const total = Math.round((fee + tax) * 100) / 100;
-        const year = new Date().getFullYear();
-        const code = `PRE-${year}-${String((clientToUpdate.quotes?.length || 0) + 1).padStart(4, '0')}`;
-        const concept = lower.includes('toeslag') || lower.includes('subsidio') ? 'Tramitación Oficial de Subsidios ante Belastingdienst' : 'Presupuesto de Asesoría Fiscal y Trámites Gestoría';
-
-        const newQuote = {
-          id: String(Date.now()),
-          code,
-          concept,
-          amount: fee,
-          tax_amount: tax,
-          total,
-          status: 'enviado',
-          valid_until: '2026-11-30',
-          items: [{ description: concept, total: fee }]
-        };
-
-        clientToUpdate.quotes = [newQuote, ...(clientToUpdate.quotes || [])];
-        replyText = `✅ **¡Presupuesto generado y registrado!**\n\n- **Cliente:** ${matchedClient.full_name}\n- **Nº Presupuesto:** **${code}**\n- **Importe Total:** **€ ${total.toFixed(2)}**\n- **Concepto:** ${concept}\n\nVálido hasta el 30 de noviembre de 2026. Disponible en la Ficha 360° del cliente con opción de convertir a factura en 1 clic.`;
-      } else if (lower.includes('cita') || lower.includes('llamada') || lower.includes('agendar')) {
-        const modality = lower.includes('presencial') ? 'presencial' : lower.includes('meet') || lower.includes('video') ? 'online_meet' : 'llamada';
-        const newApt = {
-          id: String(Date.now()),
-          title: `Cita Asesoría con ${matchedClient.full_name}`,
-          date: '2026-10-18',
-          time: '16:00',
-          modality,
-          status: 'confirmada',
-          notes: `Cita agendada por Chat Asistente IA para ${matchedClient.full_name}.`
-        };
-
-        clientToUpdate.appointments = [newApt, ...(clientToUpdate.appointments || [])];
-        replyText = `✅ **¡Cita agendada correctamente!**\n\n- **Cliente:** ${matchedClient.full_name} (${matchedClient.phone})\n- **Fecha:** ${newApt.date} a las ${newApt.time}\n- **Modalidad:** **${modality === 'llamada' ? 'Llamada Telefónica' : modality === 'online_meet' ? 'Videollamada Google Meet' : 'Presencial en Despacho'}**\n\nLa cita ya aparece en la agenda del CRM y en el expediente del cliente.`;
-      } else if (lower.includes('documento') || lower.includes('informe') || lower.includes('archivar')) {
-        const docName = `Dictamen_IA_${matchedClient.full_name.split(' ')[0]}_${Date.now().toString().slice(-4)}.txt`;
-        const content = `INFORME ASISTENTE IA - NEXUSGEST ADVIES B.V.\nCliente: ${matchedClient.full_name} (BSN: ${matchedClient.bsn || 'No registrado'})\nFecha: ${new Date().toLocaleDateString('es-ES')}\n\nDictamen emitido a petición del gestor. Verificación conforme a normativa neerlandesa (Awb y Belastingdienst).`;
-        const newDoc = {
-          id: String(Date.now()),
-          name: docName,
-          category: 'nota_ia',
-          date: new Date().toISOString().slice(0, 10),
-          size: '15 KB',
-          file_type: 'text',
-          added_by: 'ia',
-          content_text: content
-        };
-
-        clientToUpdate.documents = [newDoc, ...(clientToUpdate.documents || [])];
-        replyText = `✅ **¡Documento redactado y archivado!**\n\n- **Archivo:** \`${docName}\`\n- **Destino:** Expediente Documental de **${matchedClient.full_name}**\n- **Categoría:** Dictamen / Nota IA\n\nPuedes abrirlo y descargarlo en la pestaña Documentos de su Ficha 360°.`;
-      } else {
-        const phoneMatch = textToSend.match(/(\+?\d[\d\s-]{7,}\d)/);
-        if (phoneMatch) {
-          clientToUpdate.phone = phoneMatch[1].trim();
-          replyText = `✅ **¡Teléfono actualizado!**\n\nHe modificado el teléfono de contacto de **${matchedClient.full_name}** a \`${clientToUpdate.phone}\`.`;
+Solicitud: ${textToSend}`;
+          const response = await apiFetch('/documents/text', { method: 'POST', body: JSON.stringify({
+            client_id: matchedClient.id, dossier_id: dossierId || null, category: 'nota_ia', file_name: `Nota_IA_${Date.now()}.txt`, content,
+          }) });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'No se pudo archivar el documento.');
+          persistedReply = `✅ Documento archivado en la ficha de ${matchedClient.full_name}.`;
         } else {
-          replyText = `✅ **Expediente de ${matchedClient.full_name} actualizado.** Se han sincronizado las modificaciones en el CRM.`;
+          const phoneMatch = textToSend.match(/(\+?\d[\d\s-]{7,}\d)/);
+          if (!phoneMatch) throw new Error('Indica una modificación concreta para el cliente.');
+          const response = await apiFetch(`/clients/${matchedClient.id}`, { method: 'PUT', body: JSON.stringify({ phone: phoneMatch[1].trim() }) });
+          if (!response.ok) throw new Error('No se pudo actualizar el cliente.');
+          persistedReply = `✅ Datos de ${matchedClient.full_name} actualizados en PostgreSQL.`;
         }
+        streamResponseText(persistedReply);
+      } catch (error) {
+        streamResponseText(`❌ ${error instanceof Error ? error.message : 'La acción no se pudo guardar.'}`);
       }
-
-      const updatedList = currentClients.map((c: any) => c.id === clientToUpdate.id ? clientToUpdate : c);
-      setClients(updatedList);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('nexusgest_clients', JSON.stringify(updatedList));
-      }
-
-      setTimeout(() => {
-        streamResponseText(replyText);
-      }, 300);
       return;
     }
 
@@ -465,10 +429,10 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
       categoria: 'Gestión Integral de Clientes (Acciones IA)',
       icono: 'manage_accounts',
       preguntas: [
-        'Crea una factura de 180€ para Carlos Mendoza por M-Form',
-        'Genera un presupuesto de 95€ para Maria Popescu por Zorgtoeslag',
-        'Agenda una llamada para Lars Van Dijk el 18 de octubre a las 16:00',
-        'Genera un informe fiscal para Elena Morales y archívalo en sus documentos',
+        'Crea una factura de 180€ para Cliente seleccionado por M-Form',
+        'Genera un presupuesto de 95€ para Cliente seleccionado por Zorgtoeslag',
+        'Agenda una llamada para Cliente seleccionado el 18 de octubre a las 16:00',
+        'Genera un informe fiscal para Cliente seleccionado y archívalo en sus documentos',
       ],
     },
     {

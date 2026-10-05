@@ -186,3 +186,31 @@ CREATE INDEX IF NOT EXISTS idx_invoices_code ON invoices(code);
 CREATE INDEX IF NOT EXISTS idx_quotes_code ON quotes(code);
 CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(appointment_date);
 CREATE INDEX IF NOT EXISTS idx_service_prices_active ON service_prices(active);
+
+
+-- Integración unificada CRM/web (idempotente para instalaciones nuevas y existentes)
+ALTER TABLE service_prices ADD COLUMN IF NOT EXISTS slug VARCHAR(120);
+ALTER TABLE service_prices ADD COLUMN IF NOT EXISTS requirements JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE service_prices ADD COLUMN IF NOT EXISTS visible_web BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE service_prices ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS service_id VARCHAR(80) REFERENCES service_prices(id) ON DELETE SET NULL;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS source VARCHAR(40) NOT NULL DEFAULT 'crm';
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+CREATE TABLE IF NOT EXISTS service_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    service_id VARCHAR(80) REFERENCES service_prices(id) ON DELETE SET NULL, source VARCHAR(40) NOT NULL DEFAULT 'web',
+    status VARCHAR(40) NOT NULL DEFAULT 'pendiente', notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_service_requests_client ON service_requests(client_id);
+CREATE TABLE IF NOT EXISTS quote_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), quote_id UUID NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+    service_id VARCHAR(80) REFERENCES service_prices(id) ON DELETE SET NULL, description VARCHAR(255) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL DEFAULT 1, unit_price DECIMAL(10,2) NOT NULL DEFAULT 0, total DECIMAL(10,2) NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS invoice_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), invoice_id UUID NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+    service_id VARCHAR(80) REFERENCES service_prices(id) ON DELETE SET NULL, description VARCHAR(255) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL DEFAULT 1, unit_price DECIMAL(10,2) NOT NULL DEFAULT 0, total DECIMAL(10,2) NOT NULL DEFAULT 0
+);

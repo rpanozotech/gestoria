@@ -12,6 +12,7 @@ export interface ServicePriceItem {
   category: 'impuestos' | 'subsidios' | 'llegada' | 'empresas' | 'vehiculos' | 'otros';
   basePrice: number;
   btwRate: number; // 0.21 o 0
+  priceIncludesBtw?: boolean;
   badge: string;
   duration: string;
   active: boolean;
@@ -208,30 +209,18 @@ export default function TerminalTarifasPage() {
   const [newBadge, setNewBadge] = useState('Nuevo');
   const [newDesc, setNewDesc] = useState('');
 
-  // Cargar desde PostgreSQL; localStorage solo sirve como respaldo de desarrollo.
+  // El catálogo siempre procede de PostgreSQL.
   useEffect(() => {
     apiFetch('/services')
       .then(async (response) => {
         if (!response.ok) throw new Error('No se pudo cargar el catálogo.');
         const data = await response.json();
-        if (Array.isArray(data.services) && data.services.length > 0) setServices(data.services);
+        if (Array.isArray(data.services)) setServices(data.services);
       })
-      .catch(() => {
-        if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
-          const stored = localStorage.getItem('rpgestoria_service_prices');
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored);
-              if (Array.isArray(parsed) && parsed.length > 0) setServices(parsed);
-            } catch {
-              // Conserva el catálogo inicial.
-            }
-          }
-        }
-      });
+      .catch((error) => window.alert(error instanceof Error ? error.message : 'No se pudo cargar el catálogo.'));
   }, []);
 
-  // Guardar en PostgreSQL y mantener respaldo local solo en desarrollo.
+  // Guardar exclusivamente en PostgreSQL.
   const persistServices = async (updated: ServicePriceItem[]) => {
     try {
       const response = await apiFetch('/services/bulk', {
@@ -244,15 +233,8 @@ export default function TerminalTarifasPage() {
       setSaveToast(true);
       setTimeout(() => setSaveToast(false), 3000);
     } catch (error) {
-      if (process.env.NODE_ENV === 'production') {
-        setSaveToast(false);
-        window.alert(error instanceof Error ? error.message : 'No se pudo guardar el catálogo.');
-        return;
-      }
-      setServices(updated);
-      if (typeof window !== 'undefined') localStorage.setItem('rpgestoria_service_prices', JSON.stringify(updated));
-      setSaveToast(true);
-      setTimeout(() => setSaveToast(false), 3000);
+      setSaveToast(false);
+      window.alert(error instanceof Error ? error.message : 'No se pudo guardar el catálogo.');
     }
   };
 
@@ -396,9 +378,9 @@ export default function TerminalTarifasPage() {
 
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-surface-container shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-on-surface-variant uppercase font-semibold">Ticket Medio Base</span>
+            <span className="text-[11px] text-on-surface-variant uppercase font-semibold">Ticket Medio Final</span>
             <p className="text-2xl font-black font-heading text-on-surface mt-1">{avgPrice} €</p>
-            <span className="text-[10px] text-on-surface-variant font-mono-data">IVA 21% aplicable</span>
+            <span className="text-[10px] text-emerald-600 font-semibold">IVA incluido</span>
           </div>
           <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <span className="material-symbols-outlined text-[24px]">euro</span>
@@ -484,8 +466,8 @@ export default function TerminalTarifasPage() {
                 <th className="py-3.5 px-4">Trámite & Categoría</th>
                 <th className="py-3.5 px-4">Plazo</th>
                 <th className="py-3.5 px-4">Etiqueta / Badge</th>
-                <th className="py-3.5 px-4">Precio Base (sin IVA)</th>
-                <th className="py-3.5 px-4">Total con IVA (21%)</th>
+                <th className="py-3.5 px-4">Precio final (IVA incluido)</th>
+                <th className="py-3.5 px-4">Desglose IVA 21%</th>
                 <th className="py-3.5 px-4 text-center">Estado Web</th>
                 <th className="py-3.5 px-4 text-right">Acciones</th>
               </tr>
@@ -493,7 +475,7 @@ export default function TerminalTarifasPage() {
             <tbody className="divide-y divide-surface-container text-xs">
               {filtered.map((srv) => {
                 const isEditing = editingId === srv.id;
-                const totalWithTax = (srv.basePrice * (1 + srv.btwRate)).toFixed(2);
+                const totalWithTax = srv.basePrice.toFixed(2);
 
                 return (
                   <tr
@@ -560,7 +542,7 @@ export default function TerminalTarifasPage() {
                         </div>
                       ) : (
                         <span className="font-heading font-extrabold text-sm text-on-surface">
-                          {srv.basePrice} €
+                          {srv.basePrice.toFixed(2)} €
                         </span>
                       )}
                     </td>
@@ -568,7 +550,7 @@ export default function TerminalTarifasPage() {
                     {/* TOTAL CON IVA */}
                     <td className="py-3 px-4 whitespace-nowrap">
                       <span className="font-mono-data font-bold text-xs text-on-surface-variant">
-                        € {totalWithTax}
+                        € {(srv.basePrice - srv.basePrice / (1 + srv.btwRate)).toFixed(2)} IVA
                       </span>
                     </td>
 
@@ -679,7 +661,7 @@ export default function TerminalTarifasPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-on-surface mb-1">Precio Base (€)</label>
+                  <label className="block text-xs font-bold text-on-surface mb-1">Precio final IVA incluido (€)</label>
                   <input
                     type="number"
                     required

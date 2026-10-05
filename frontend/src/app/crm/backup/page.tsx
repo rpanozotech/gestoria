@@ -74,41 +74,7 @@ export default function CRMBackupPage() {
       .finally(() => setLoadingStats(false));
   }, []);
 
-  const readLocalStats = () => {
-    try {
-      const storedClients = localStorage.getItem('nexusgest_clients');
-      const clients = storedClients ? JSON.parse(storedClients) : [];
-      let totalDossiers = 0;
-      let totalQuotes = 0;
-      let totalInvoices = 0;
-      let totalAppointments = 0;
-      let totalDocs = 0;
-
-      if (Array.isArray(clients)) {
-        clients.forEach((c: any) => {
-          totalDossiers += c.dossiers?.length || 0;
-          totalQuotes += c.quotes?.length || 0;
-          totalInvoices += c.invoices?.length || 0;
-          totalAppointments += c.appointments?.length || 0;
-          totalDocs += c.documents?.length || 0;
-        });
-      }
-
-      setStats({
-        counts: {
-          clients: Math.max(clients.length, 4),
-          dossiers: Math.max(totalDossiers, 5),
-          quotes: Math.max(totalQuotes, 4),
-          invoices: Math.max(totalInvoices, 4),
-          appointments: Math.max(totalAppointments, 8),
-          documents: Math.max(totalDocs, 14),
-        },
-        lastBackupDate: new Date().toISOString(),
-        databaseStatus: 'online_local',
-        retentionDays: 14,
-      });
-    } catch {}
-  };
+  const readLocalStats = () => setStats({ counts: { clients: 0, dossiers: 0, quotes: 0, invoices: 0, appointments: 0, documents: 0 }, databaseStatus: 'offline', lastBackupDate: null, retentionDays: 14 });
 
   // Descarga helper en cliente
   const triggerDownload = (blob: Blob, filename: string) => {
@@ -169,139 +135,22 @@ export default function CRMBackupPage() {
       console.warn('Backend export failed:', e);
     }
 
-    if (process.env.NODE_ENV === 'production') {
-      showToast('No se pudo generar la copia desde PostgreSQL. No se usará un respaldo local.');
-      setIsExportingJson(false);
-      return;
-    }
-
-    // Fallback completo desde memoria/localStorage
-    try {
-      const storedClients = localStorage.getItem('nexusgest_clients');
-      const clients = storedClients ? JSON.parse(storedClients) : [];
-
-      const fullBackup = {
-        meta: {
-          platform: 'NexusGest CRM',
-          version: '1.0.0',
-          exported_at: new Date().toISOString(),
-          description: 'Copia de seguridad de datos completa. Compatible con importación universal.',
-          total_clients: clients.length || 4,
-        },
-        clients: clients.length > 0 ? clients : [
-          {
-            id: '1',
-            full_name: 'Maria Popescu',
-            email: 'maria.popescu@gmail.com',
-            phone: '+31 6 81239845',
-            bsn: '982145672',
-            id_document_number: 'RO9284102',
-            city: 'Eindhoven',
-            address: 'Strijpsestraat 142',
-            iban: 'NL91INGB0001234567',
-            digid_status: 'pendiente_activar',
-            status: 'activo',
-            notes: 'Requiere activación de DigiD y solicitud retroactiva de Zorgtoeslag.',
-          },
-          {
-            id: '2',
-            full_name: 'Carlos Mendoza Ruiz',
-            email: 'carlos.mendoza@outlook.com',
-            phone: '+34 654 321 987',
-            bsn: '817293845',
-            id_document_number: '48920184K',
-            city: 'Amsterdam',
-            address: 'Keizersgracht 321',
-            iban: 'NL44ABNA0412345678',
-            digid_status: 'activo',
-            status: 'activo',
-            notes: 'Llegada en 2025. Declaración Modelo M (M-Form).',
-          }
-        ]
-      };
-
-      const jsonStr = JSON.stringify(fullBackup, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
-      triggerDownload(blob, filename);
-      showToast('¡Copia de seguridad completa (JSON) descargada con éxito!');
-    } catch (err) {
-      showToast('Error al empaquetar la copia de seguridad.');
-    } finally {
-      setIsExportingJson(false);
-    }
+    showToast('No se pudo generar la copia desde PostgreSQL.');
+    setIsExportingJson(false);
+    return;
   };
 
   // 2. Descargar CSV específico para migración a otros CRM
   const handleDownloadCsv = async (type: 'clients' | 'invoices' | 'quotes' | 'appointments' | 'dossiers') => {
     setExportingCsvType(type);
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const filename = `nexusgest-${type}-${dateStr}.csv`;
-
     try {
-      const res = await apiFetch(`/backup/export-csv/${type}`);
-      if (res.ok) {
-        const blob = await res.blob();
-        triggerDownload(blob, filename);
-        showToast(`Exportación CSV de ${type.toUpperCase()} completada.`);
-        setExportingCsvType(null);
-        return;
-      }
-    } catch (e) {
-      console.warn('Backend CSV export failed, generating from client data:', e);
-    }
-
-    if (process.env.NODE_ENV === 'production') {
-      showToast('No se pudo exportar desde PostgreSQL. No se generó un CSV local.');
-      setExportingCsvType(null);
-      return;
-    }
-
-    // Fallback generador de CSV en cliente
-    try {
-      let csvContent = '\uFEFF';
-      if (type === 'clients') {
-        csvContent += '"ID";"Nombre Completo";"BSN";"Email";"Telefono";"Documento";"Ciudad";"Direccion";"IBAN";"Estado DigiD";"Estado"\r\n';
-        const stored = localStorage.getItem('nexusgest_clients');
-        const list = stored ? JSON.parse(stored) : [];
-        const clList = list.length > 0 ? list : [
-          { id: '1', full_name: 'Maria Popescu', bsn: '982145672', email: 'maria.popescu@gmail.com', phone: '+31 6 81239845', id_document_number: 'RO9284102', city: 'Eindhoven', address: 'Strijpsestraat 142', iban: 'NL91INGB0001234567', digid_status: 'pendiente_activar', status: 'activo' },
-          { id: '2', full_name: 'Carlos Mendoza Ruiz', bsn: '817293845', email: 'carlos.mendoza@outlook.com', phone: '+34 654 321 987', id_document_number: '48920184K', city: 'Amsterdam', address: 'Keizersgracht 321', iban: 'NL44ABNA0412345678', digid_status: 'activo', status: 'activo' },
-          { id: '3', full_name: 'Lars Van Dijk', bsn: '728194028', email: 'lars.vandijk@techconsulting.nl', phone: '+31 6 49201948', id_document_number: 'NL8273619', city: 'Rotterdam', address: 'Coolsingel 88', iban: 'NL02RABO0319284756', digid_status: 'activo', status: 'activo' },
-          { id: '4', full_name: 'Elena Morales Castillo', bsn: '639102847', email: 'elena.morales@hotmail.com', phone: '+34 611 223 344', id_document_number: '51928374P', city: 'Utrecht', address: 'Oudegracht 120', iban: 'NL88BUNQ2019283746', digid_status: 'activo', status: 'activo' }
-        ];
-
-        clList.forEach((c: any) => {
-          csvContent += `"${c.id}";"${c.full_name}";"${c.bsn || ''}";"${c.email || ''}";"${c.phone || ''}";"${c.id_document_number || ''}";"${c.city || ''}";"${c.address || ''}";"${c.iban || ''}";"${c.digid_status || ''}";"${c.status || ''}"\r\n`;
-        });
-      } else if (type === 'invoices') {
-        csvContent += '"Numero Factura";"Cliente";"BSN";"Concepto";"Total EUR";"Estado";"Metodo Pago";"Vencimiento"\r\n';
-        csvContent += '"FAC-2026-0001";"Carlos Mendoza Ruiz";"817293845";"Declaración Fiscal M-Form Belastingdienst";"266.20";"pagada";"ideal";"2026-10-15"\r\n';
-        csvContent += '"FAC-2026-0002";"Maria Popescu";"982145672";"Gestión Solicitud Zorgtoeslag y Registro";"102.85";"emitida";"ideal";"2026-10-12"\r\n';
-      } else if (type === 'quotes') {
-        csvContent += '"Numero Presupuesto";"Cliente";"BSN";"Concepto";"Total EUR";"Estado";"Valido Hasta"\r\n';
-        csvContent += '"PRE-2026-0001";"Carlos Mendoza Ruiz";"817293845";"Elaboración y Presentación Fiscal M-Form";"266.20";"convertido";"2026-10-30"\r\n';
-        csvContent += '"PRE-2026-0002";"Elena Morales Castillo";"639102847";"Gestión Subsidio Alquiler (Huurtoeslag)";"145.20";"enviado";"2026-11-15"\r\n';
-        csvContent += '"PRE-2026-0003";"Maria Popescu";"982145672";"Gestión Solicitud Zorgtoeslag y Registro";"102.85";"enviado";"2026-11-15"\r\n';
-      } else if (type === 'appointments') {
-        csvContent += '"ID";"Titulo";"Cliente";"Telefono";"Fecha";"Hora";"Modalidad";"Estado"\r\n';
-        csvContent += '"1";"Seguimiento Telefónico Zorgtoeslag";"Maria Popescu";"+31 6 81239845";"2026-10-10";"10:00";"llamada";"confirmada"\r\n';
-        csvContent += '"2";"Revisión M-Form Carlos Mendoza";"Carlos Mendoza Ruiz";"+34 654 321 987";"2026-10-10";"11:30";"online_meet";"confirmada"\r\n';
-        csvContent += '"3";"Firma Presencial Documentación KVK";"Lars Van Dijk";"+31 6 49201948";"2026-10-10";"16:00";"presencial";"confirmada"\r\n';
-      } else if (type === 'dossiers') {
-        csvContent += '"Codigo";"Titulo Tramite";"Categoria";"Cliente";"BSN";"Estado";"Progreso";"Tarifa EUR"\r\n';
-        csvContent += '"EXP-2026-0041";"Activación DigiD + Solicitud Zorgtoeslag 2026";"Subsidios / Toeslagen";"Maria Popescu";"982145672";"en_belastingdienst";"65%";"85.00"\r\n';
-        csvContent += '"EXP-2026-0042";"Declaración Fiscal M-Form (Migración 2025)";"Fiscalidad / Belastingdienst";"Carlos Mendoza Ruiz";"817293845";"en_proceso";"40%";"180.00"\r\n';
-        csvContent += '"EXP-2026-0043";"Alta Eenmanszaak KVK y BTW-nummer";"Empresas / KVK";"Lars Van Dijk";"728194028";"completado";"100%";"250.00"\r\n';
-      }
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-      triggerDownload(blob, filename);
-      showToast(`Archivo CSV de ${type.toUpperCase()} generado y descargado.`);
-    } catch (err) {
-      showToast('Error al exportar CSV.');
-    } finally {
-      setExportingCsvType(null);
-    }
+      const response = await apiFetch(`/backup/export-csv/${type}`);
+      if (!response.ok) throw new Error('No se pudo exportar los datos desde PostgreSQL.');
+      const blob = await response.blob();
+      triggerDownload(blob, response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/i)?.[1] || `nexusgest-${type}.csv`);
+      showToast('Exportación generada desde PostgreSQL.');
+    } catch (error) { showToast(error instanceof Error ? error.message : 'No se pudo exportar.'); }
+    finally { setExportingCsvType(null); }
   };
 
   // 3. Inspeccionar la copia completa antes de ofrecer la restauración
@@ -580,7 +429,7 @@ export default function CRMBackupPage() {
                 </span>
               </div>
               <p className="text-[11px] text-outline mt-1.5 leading-relaxed">
-                Código FAC-2026, base imponible, 21% BTW neerlandés, total, cliente, BSN, estado y fechas.
+                Código FAC-2026, total final IVA incluido, cliente, BSN, estado y fechas.
               </p>
             </div>
             <button
