@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { pool, query } from '../db/index.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { diffChangedFields } from '../utils/audit.js';
 
 const router = Router();
 
@@ -192,6 +193,9 @@ router.patch('/:id', gestorOnly, async (req: Request, res: Response) => {
       });
     }
 
+    const previous = await query('SELECT client_id, status, notes FROM appointments WHERE id = $1', [id]);
+    if (previous.rows.length === 0) return res.status(404).json({ error: 'Cita no encontrada' });
+
     const sql = `
       UPDATE appointments SET
         status = COALESCE($1, status),
@@ -204,6 +208,15 @@ router.patch('/:id', gestorOnly, async (req: Request, res: Response) => {
     const result = await query(sql, [status, notes, id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Cita no encontrada' });
+    }
+
+    const changes = diffChangedFields(previous.rows[0], result.rows[0], ['status', 'notes']);
+    if (Object.keys(changes).length > 0) {
+      await query(
+        `INSERT INTO client_audit_log (client_id, actor_user_id, actor_role, action, changes)
+         VALUES ($1, $2, $3, 'appointment.updated', $4::jsonb)`,
+        [previous.rows[0].client_id, req.user?.id || null, req.user?.role || null, JSON.stringify(changes)],
+      );
     }
 
     res.json({ appointment: result.rows[0] });
