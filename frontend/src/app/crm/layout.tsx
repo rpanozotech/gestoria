@@ -88,6 +88,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     { href: '/crm/agenda', label: 'Agenda & Citas', icon: 'calendar_today' },
     { href: '/crm/documentos-ia', label: 'Asistente Documentos', icon: 'document_scanner' },
     { href: '/crm/chat-ia', label: 'Chat Asistente IA', icon: 'forum', highlight: true, badge: 'En vivo' },
+    { href: '/crm/integraciones', label: 'Integraciones y Avisos', icon: 'hub' },
     { href: '/crm/backup', label: 'Copia de Seguridad', icon: 'cloud_download' },
   ];
 
