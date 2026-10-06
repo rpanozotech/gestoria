@@ -18,20 +18,20 @@ export default function ContactoPage() {
   };
 
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="min-h-screen bg-[#F7F4EE] text-[#0B1F33] font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
 
         {/* HERO CONTACTO */}
-        <section className="pt-16 pb-14 bg-gradient-to-b from-blue-50/50 via-white to-[#F8FAFC] border-b border-slate-100">
+        <section className="pt-16 pb-14 bg-[#F7F4EE] border-b border-[#B7CBD8]">
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 border border-blue-200 text-blue-800 text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E7EEF4] border border-[#B7CBD8] text-[#0B1F33] text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">support_agent</span>
               <span>Atención Rápida & Personalizada</span>
             </div>
 
             <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Ponte en contacto con <span className="text-blue-600">RP Gestoría</span>
+              Ponte en contacto con <span className="text-[#145DA0]">RP Gestoría</span>
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">

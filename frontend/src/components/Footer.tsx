@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-950 text-slate-400 text-xs pt-16 pb-12 border-t border-slate-800 w-full">
+    <footer className="bg-[#0B1F33] text-slate-300 text-xs pt-16 pb-12 border-t border-slate-800 w-full">
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 space-y-12">
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -16,7 +16,7 @@ export default function Footer() {
                 <Image src="/logo.png" alt="RP Gestoría" width={36} height={36} className="object-cover" />
               </div>
               <span className="font-heading font-extrabold text-lg text-white">
-                RP Gestoría <span className="text-blue-500">& Asesoría</span>
+                RP Gestoría <span className="text-[#F28C28]">& Asesoría</span>
               </span>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">

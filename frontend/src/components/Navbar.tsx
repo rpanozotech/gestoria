@@ -45,7 +45,7 @@ export default function Navbar() {
                 <span className="font-heading font-extrabold text-base sm:text-lg tracking-tight text-slate-900 leading-none">
                   RP Gestoría
                 </span>
-                <span className="font-heading font-extrabold text-base sm:text-lg tracking-tight text-blue-600 leading-none">
+                <span className="font-heading font-extrabold text-base sm:text-lg tracking-tight text-[#145DA0] leading-none">
                   & Asesoría
                 </span>
               </div>
@@ -65,8 +65,8 @@ export default function Navbar() {
                   href={link.href}
                   className={`text-xs xl:text-xs font-semibold whitespace-nowrap transition-all py-2 border-b-2 ${
                     isActive
-                      ? 'text-blue-600 border-blue-600 font-bold'
-                      : 'text-slate-700 hover:text-blue-600 border-transparent hover:border-blue-200'
+                      ? 'text-[#145DA0] border-blue-600 font-bold'
+                      : 'text-slate-700 hover:text-[#145DA0] border-transparent hover:border-blue-200'
                   }`}
                 >
                   {link.label}
@@ -109,11 +109,11 @@ export default function Navbar() {
                         setLangMenuOpen(false);
                       }}
                       className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-blue-50 transition-colors ${
-                        lang === item.code ? 'font-bold text-blue-600 bg-blue-50/60' : 'text-slate-700'
+                        lang === item.code ? 'font-bold text-[#145DA0] bg-blue-50/60' : 'text-slate-700'
                       }`}
                     >
                       <span>{item.label}</span>
-                      {lang === item.code && <span className="material-symbols-outlined text-[15px] text-blue-600">check</span>}
+                      {lang === item.code && <span className="material-symbols-outlined text-[15px] text-[#145DA0]">check</span>}
                     </button>
                   ))}
                 </div>
@@ -166,8 +166,8 @@ export default function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${
                     pathname === link.href
-                      ? 'bg-blue-50 text-blue-600 font-bold'
-                      : 'text-slate-800 hover:bg-blue-50 hover:text-blue-600'
+                      ? 'bg-blue-50 text-[#145DA0] font-bold'
+                      : 'text-slate-800 hover:bg-blue-50 hover:text-[#145DA0]'
                   }`}
                 >
                   {link.label}
