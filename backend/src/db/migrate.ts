@@ -87,6 +87,17 @@ export async function migrateDatabase() {
       UNIQUE (appointment_id, kind)
     );
     CREATE INDEX IF NOT EXISTS idx_appointment_reminders_due ON appointment_reminders(status, scheduled_at);
+    CREATE TABLE IF NOT EXISTS integration_settings (
+      channel VARCHAR(20) PRIMARY KEY CHECK (channel IN ('email', 'whatsapp')),
+      provider VARCHAR(40) NOT NULL,
+      enabled BOOLEAN NOT NULL DEFAULT FALSE,
+      config JSONB NOT NULL DEFAULT '{}'::jsonb,
+      secret_ciphertext TEXT,
+      secret_iv TEXT,
+      secret_tag TEXT,
+      updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
   `);
   for (const s of DEFAULT_SERVICES) {
     await pool.query(`

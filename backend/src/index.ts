@@ -16,6 +16,7 @@ import { migrateDatabase } from './db/migrate.js';
 import serviceRequestsRouter from './routes/service-requests.js';
 import clientMessagesRouter from './routes/client-messages.js';
 import portalMessagesRouter from './routes/portal-messages.js';
+import integrationsRouter from './routes/integrations.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import { rateLimit, cabecerasSeguridad } from './middleware/rate-limit.js';
 import { query } from './db/index.js';
@@ -114,6 +115,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use('/api/ai-local', localPdfRouter);
 }
 app.use('/api/dashboard', gestorOnly, dashboardRouter);
+app.use('/api/integrations', gestorOnly, integrationsRouter);
 app.use('/api/clients', gestorOnly, clientsRouter);
 app.use('/api/client-messages', gestorOnly, clientMessagesRouter);
 app.use('/api/dossiers', gestorOnly, dossiersRouter);
