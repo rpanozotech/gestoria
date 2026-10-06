@@ -192,6 +192,8 @@ export default function PortalClientePage() {
         advisor: portalClientData.advisor || baseClient.advisor,
       }
     : baseClient;
+  const displayClientName = client.full_name || 'Cliente';
+  const displayBsn = client.bsn || 'No registrado';
   const latestInvoice = client.invoices?.[0];
   const portalInvoiceRef = latestInvoice?.code || '';
   const portalInvoiceTotal = latestInvoice?.total != null
@@ -769,11 +771,11 @@ export default function PortalClientePage() {
           {/* Avatar del Cliente */}
           <div className="flex items-center gap-2.5 border-l border-slate-800 pl-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-mono-data font-bold text-xs flex items-center justify-center shadow-md">
-              {client.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+              {displayClientName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
             </div>
             <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-bold text-white truncate max-w-[130px]">{client.full_name}</span>
-              <span className="text-[10px] font-mono-data text-slate-400">BSN: {client.bsn}</span>
+              <span className="text-xs font-bold text-white truncate max-w-[130px]">{displayClientName}</span>
+              <span className="text-[10px] font-mono-data text-slate-400">BSN: {displayBsn}</span>
             </div>
           </div>
 
@@ -805,7 +807,7 @@ export default function PortalClientePage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              ¡Hola, {client.full_name.split(' ')[0]}!
+              ¡Hola, {displayClientName.split(' ')[0]}!
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
               Tu expediente <strong>{client.dossier_title}</strong> se encuentra activo y gestionado por tu asesor personal <strong>{client.advisor}</strong> ante la Belastingdienst.
