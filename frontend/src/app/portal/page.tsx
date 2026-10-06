@@ -665,7 +665,7 @@ export default function PortalClientePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased">
+    <div className="min-h-screen bg-[#0B1F33] text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased">
       {/* Toast flotante */}
       {toastMsg && (
         <div className="fixed top-20 right-6 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 border border-emerald-400">
@@ -704,7 +704,7 @@ export default function PortalClientePage() {
           <button
             type="button"
             onClick={() => setShowBookingModal(true)}
-            className="h-8 sm:h-9 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
+            className="h-8 sm:h-9 px-3 bg-[#F28C28] hover:bg-[#C96F16] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
             title="Pedir cita con mi gestor"
           >
             <span className="material-symbols-outlined text-[16px]">add_circle</span>
