@@ -74,6 +74,19 @@ export async function migrateDatabase() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_client_messages_client_created ON client_messages(client_id, created_at ASC);
+    CREATE TABLE IF NOT EXISTS appointment_reminders (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      appointment_id UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+      client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      kind VARCHAR(40) NOT NULL CHECK (kind IN ('24h', '1h')),
+      scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'cancelled')),
+      channel VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (channel IN ('pending', 'email', 'whatsapp')),
+      sent_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (appointment_id, kind)
+    );
+    CREATE INDEX IF NOT EXISTS idx_appointment_reminders_due ON appointment_reminders(status, scheduled_at);
   `);
   for (const s of DEFAULT_SERVICES) {
     await pool.query(`

@@ -40,6 +40,29 @@ router.get('/availability', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/appointments/reminders/due - Cola local para un worker/n8n futuro.
+// Solo lee recordatorios pendientes; no envía mensajes ni cambia datos.
+router.get('/reminders/due', gestorOnly, async (req: Request, res: Response) => {
+  try {
+    const result = await query(
+      `SELECT r.id, r.appointment_id, r.client_id, r.kind, r.scheduled_at,
+              a.title, a.appointment_date, a.appointment_time, a.modality,
+              c.full_name AS client_name, c.email AS client_email, c.phone AS client_phone
+       FROM appointment_reminders r
+       JOIN appointments a ON a.id = r.appointment_id
+       JOIN clients c ON c.id = r.client_id
+       WHERE r.status = 'pending' AND r.scheduled_at <= CURRENT_TIMESTAMP
+         AND a.status NOT IN ('cancelada', 'completada')
+       ORDER BY r.scheduled_at ASC
+       LIMIT 100`,
+    );
+    res.json({ reminders: result.rows, side_effects: false });
+  } catch (error) {
+    console.error('Error consultando recordatorios:', error);
+    res.status(500).json({ error: 'No se pudo consultar la cola de recordatorios' });
+  }
+});
+
 // GET /api/appointments - Lista de citas
 router.get('/', gestorOnly, async (req: Request, res: Response) => {
   try {
@@ -161,6 +184,14 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
           email || null,
           phone || null,
         ]
+      );
+      await client.query(
+        `INSERT INTO appointment_reminders (appointment_id, client_id, kind, scheduled_at)
+         SELECT $1, $2, reminder.kind, appointment_start - reminder.offset
+         FROM (SELECT ($3::date + $4::time) AS appointment_start) AS appointment
+         CROSS JOIN (VALUES ('24h'::varchar, interval '24 hours'), ('1h'::varchar, interval '1 hour')) AS reminder(kind, offset)
+         ON CONFLICT (appointment_id, kind) DO NOTHING`,
+        [result.rows[0].id, client_id, appointment_date, appointment_time],
       );
       await client.query('COMMIT');
       transactionOpen = false;
