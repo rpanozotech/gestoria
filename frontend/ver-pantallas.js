@@ -8,9 +8,12 @@
  * Genera capturas en ./capturas/ y un resumen en consola.
  * Es una herramienta de diagnostico: no toca la aplicacion.
  */
-const { chromium } = require('playwright');
-const fs = require('fs');
-const path = require('path');
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const SALIDA = path.join(__dirname, 'capturas');

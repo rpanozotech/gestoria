@@ -14,16 +14,16 @@ import assert from 'node:assert/strict';
 import { validarEndpointIA, EndpointNoPermitido } from '../src/routes/ai-endpoint-guard.ts';
 
 test('rechaza el endpoint de metadatos de la nube (SSRF clasico)', async () => {
-  await assert.rejects(
+  assert.throws(
     () => validarEndpointIA('http://169.254.169.254/latest/meta-data/'),
     EndpointNoPermitido
   );
 });
 
 test('rechaza loopback en IPv4 e IPv6', async () => {
-  await assert.rejects(() => validarEndpointIA('http://127.0.0.1:11434/v1'), EndpointNoPermitido);
-  await assert.rejects(() => validarEndpointIA('http://localhost:11434/v1'), EndpointNoPermitido);
-  await assert.rejects(() => validarEndpointIA('http://[::1]/v1'), EndpointNoPermitido);
+  assert.throws(() => validarEndpointIA('http://127.0.0.1:11434/v1'), EndpointNoPermitido);
+  assert.throws(() => validarEndpointIA('http://localhost:11434/v1'), EndpointNoPermitido);
+  assert.throws(() => validarEndpointIA('http://[::1]/v1'), EndpointNoPermitido);
 });
 
 test('rechaza rangos privados de la red de Docker / LAN', async () => {
@@ -33,17 +33,17 @@ test('rechaza rangos privados de la red de Docker / LAN', async () => {
     'http://172.17.0.2/v1',
     'http://192.168.1.1/v1',
   ]) {
-    await assert.rejects(() => validarEndpointIA(url), EndpointNoPermitido, `deberia rechazar ${url}`);
+    assert.throws(() => validarEndpointIA(url), EndpointNoPermitido, `deberia rechazar ${url}`);
   }
 });
 
 test('rechaza protocolos no HTTP (lectura de ficheros local via fetch)', async () => {
-  await assert.rejects(() => validarEndpointIA('file:///etc/passwd'), EndpointNoPermitido);
-  await assert.rejects(() => validarEndpointIA('gopher://127.0.0.1:11211/'), EndpointNoPermitido);
+  assert.throws(() => validarEndpointIA('file:///etc/passwd'), EndpointNoPermitido);
+  assert.throws(() => validarEndpointIA('gopher://127.0.0.1:11211/'), EndpointNoPermitido);
 });
 
 test('rechaza puertos que no son de API web', async () => {
-  await assert.rejects(() => validarEndpointIA('https://api.openai.com:22/v1'), EndpointNoPermitido);
+  assert.throws(() => validarEndpointIA('https://api.openai.com:22/v1'), EndpointNoPermitido);
 });
 
 test('acepta un endpoint publico valido', async () => {
@@ -57,8 +57,8 @@ test('acepta IPs publicas literales', async () => {
 });
 
 test('rechaza URL vacia o ausente', async () => {
-  await assert.rejects(() => validarEndpointIA(''), EndpointNoPermitido);
-  await assert.rejects(() => validarEndpointIA(undefined), EndpointNoPermitido);
+  assert.throws(() => validarEndpointIA(''), EndpointNoPermitido);
+  assert.throws(() => validarEndpointIA(undefined), EndpointNoPermitido);
 });
 
 // --- Bypass por redireccion ---
@@ -75,7 +75,7 @@ test('una URL publica valida no habilita un destino interno', async () => {
   assert.equal(inicial.hostname, 'example.com');
 
   // El destino de un salto pasa por el MISMO filtro, y este lo rechaza.
-  await assert.rejects(
+  assert.throws(
     () => validarEndpointIA('http://169.254.169.254/latest/meta-data/'),
     EndpointNoPermitido
   );
@@ -105,7 +105,7 @@ test('un servidor que responde 302 hacia una IP interna es bloqueado', async () 
     // Y el destino que anuncia queda rechazado por el mismo filtro.
     const destino = respuesta.headers.get('location');
     assert.ok(destino, 'debe enviar Location');
-    await assert.rejects(() => validarEndpointIA(destino!), EndpointNoPermitido);
+    assert.throws(() => validarEndpointIA(destino!), EndpointNoPermitido);
   } finally {
     await new Promise<void>((r) => servidor.close(() => r()));
   }

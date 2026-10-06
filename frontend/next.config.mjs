@@ -9,8 +9,17 @@ const nextConfig = {
   // Solo usar 'standalone' en producción (build). En dev rompe el servidor.
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
+  async headers() {
+    return [{
+      source: '/(.*)',
+      headers: [
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+      ],
+    }];
   },
   async rewrites() {
     return {
@@ -19,6 +28,10 @@ const nextConfig = {
       // Se antepone a las route handlers /api/ai/* porque Next da prioridad a
       // el sistema de archivos sobre las rewrites.
       beforeFiles: [
+        {
+          source: '/api/backend/health',
+          destination: `${BACKEND_ORIGIN}/health`,
+        },
         {
           source: '/api/backend/:path*',
           destination: `${BACKEND_ORIGIN}/api/:path*`,
