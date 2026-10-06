@@ -764,15 +764,7 @@ export default function PortalClientePage() {
             )}
           </div>
 
-          {/* Enlace directo a CRM (Gestor) */}
-          <Link
-            href="/crm"
-            className="hidden xl:flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-colors"
-            title="Acceso al Panel CRM de la Gestoría"
-          >
-            <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
-            <span>Panel Gestor</span>
-          </Link>
+          {/* El portal de cliente no muestra accesos al CRM interno. */}
 
           {/* Avatar del Cliente */}
           <div className="flex items-center gap-2.5 border-l border-slate-800 pl-3">
