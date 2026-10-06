@@ -56,14 +56,14 @@ export default function Navbar() {
           </Link>
 
           {/* NAV LINKS DESKTOP A PÁGINAS INDEPENDIENTES */}
-          <nav aria-label="Navegación principal" className="hidden lg:flex flex-1 min-w-0 items-center justify-center gap-2 xl:gap-3">
+          <nav aria-label="Navegación principal" className="hidden lg:flex flex-1 min-w-0 items-center justify-center gap-1.5 xl:gap-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-xs xl:text-sm font-semibold whitespace-nowrap transition-all py-2 border-b-2 ${
+                  className={`text-xs xl:text-xs font-semibold whitespace-nowrap transition-all py-2 border-b-2 ${
                     isActive
                       ? 'text-blue-600 border-blue-600 font-bold'
                       : 'text-slate-700 hover:text-blue-600 border-transparent hover:border-blue-200'
@@ -123,7 +123,7 @@ export default function Navbar() {
             {/* RESERVAR CITA BUTTON -> /reservar */}
             <Link
               href="/reservar"
-              className="hidden md:inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 xl:px-3.5 text-xs xl:text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100/90 rounded-xl transition-all border border-blue-200/80 shadow-sm shrink-0"
+              className="hidden md:inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 xl:px-2.5 text-xs xl:text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100/90 rounded-xl transition-all border border-blue-200/80 shadow-sm shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">calendar_month</span>
               <span>Reservar Cita</span>
@@ -132,7 +132,7 @@ export default function Navbar() {
             {/* ÁREA CLIENTE BUTTON -> acceso al portal */}
             <Link
               href="/portal/login"
-              className="hidden sm:inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 xl:px-3.5 text-xs xl:text-sm font-bold text-white bg-slate-900 hover:bg-blue-600 rounded-xl shadow-md hover:shadow-blue-500/20 transition-all shrink-0"
+              className="hidden sm:inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 xl:px-2.5 text-xs xl:text-sm font-bold text-white bg-slate-900 hover:bg-blue-600 rounded-xl shadow-md hover:shadow-blue-500/20 transition-all shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">account_circle</span>
               <span>Área Cliente</span>
