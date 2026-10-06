@@ -131,6 +131,9 @@ export default function PortalClientePage() {
   // como respaldo para que la maqueta siga siendo navegable si no hay sesión.
   const [portalClientData, setPortalClientData] = useState<any>(null);
   const [portalLoading, setPortalLoading] = useState(true);
+  const [portalMessages, setPortalMessages] = useState<Array<{ id: string; body: string; author_name?: string; created_at: string }>>([]);
+  const [portalMessageDraft, setPortalMessageDraft] = useState('');
+  const [portalMessageSending, setPortalMessageSending] = useState(false);
   const [currentClientIndex] = useState(0);
 
   useEffect(() => {
@@ -151,6 +154,11 @@ export default function PortalClientePage() {
         if (!response.ok) throw new Error('No se pudo cargar el portal');
         const data = await response.json();
         setPortalClientData(data);
+        const messagesResponse = await fetch(apiUrl('/portal/messages'), { headers: { Authorization: `Bearer ${token}` } });
+        if (messagesResponse.ok) {
+          const messagesData = await messagesResponse.json();
+          setPortalMessages(Array.isArray(messagesData.messages) ? messagesData.messages : []);
+        }
       } catch {
         setPortalClientData(null);
       } finally {
@@ -192,8 +200,31 @@ export default function PortalClientePage() {
 
   // Tabs de navegación
   const [activeTab, setActiveTab] = useState<
-    'resumen' | 'ia' | 'toeslagen' | 'facturas' | 'documentos' | 'citas'
+    'resumen' | 'ia' | 'toeslagen' | 'facturas' | 'documentos' | 'citas' | 'mensajes'
   >('resumen');
+
+  const sendPortalMessage = async () => {
+    const body = portalMessageDraft.trim();
+    if (!body || portalMessageSending) return;
+    const token = window.localStorage.getItem('rp_portal_token');
+    if (!token) return;
+    setPortalMessageSending(true);
+    try {
+      const response = await fetch(apiUrl('/portal/messages'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ body }),
+      });
+      if (!response.ok) throw new Error('No se pudo enviar el mensaje.');
+      const data = await response.json();
+      setPortalMessages((current) => [...current, data.message]);
+      setPortalMessageDraft('');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo enviar el mensaje.');
+    } finally {
+      setPortalMessageSending(false);
+    }
+  };
 
   // Estado de Notificaciones
   const [showNotifications, setShowNotifications] = useState(false);
@@ -901,6 +932,7 @@ export default function PortalClientePage() {
             { id: 'toeslagen', icon: 'health_and_safety', label: 'Subsidios & Toeslagen Hub' },
             { id: 'facturas', icon: 'chat', label: 'Facturas & Pago WhatsApp' },
             { id: 'documentos', icon: 'folder_shared', label: 'Bóveda de Documentos' },
+            { id: 'mensajes', icon: 'forum', label: 'Mensajes con tu gestor', badge: `${portalMessages.length}` },
           ].map((t) => (
             <button
               key={t.id}
@@ -923,6 +955,33 @@ export default function PortalClientePage() {
             </button>
           ))}
         </div>
+
+        {activeTab === 'mensajes' && (
+          <section aria-labelledby="portal-messages-title" className="space-y-4">
+            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800">
+              <h2 id="portal-messages-title" className="text-xl font-extrabold text-white">Mensajes con tu gestor</h2>
+              <p className="text-xs text-slate-400 mt-1">Aquí solo aparecen mensajes compartidos contigo. Las notas internas del CRM nunca se muestran.</p>
+            </div>
+            <div className="space-y-3">
+              {portalMessages.length === 0 ? (
+                <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8 text-center text-sm text-slate-400">Todavía no hay mensajes.</div>
+              ) : portalMessages.map((message) => (
+                <article key={message.id} className="bg-slate-900 rounded-2xl border border-slate-800 p-4">
+                  <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400">
+                    <span>{message.author_name || 'Tu gestor'}</span>
+                    <time dateTime={message.created_at}>{new Date(message.created_at).toLocaleString('es-ES')}</time>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-200 whitespace-pre-wrap">{message.body}</p>
+                </article>
+              ))}
+            </div>
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4">
+              <label htmlFor="portal-message-draft" className="block text-xs font-bold text-slate-300 mb-2">Escribe a tu gestor</label>
+              <textarea id="portal-message-draft" value={portalMessageDraft} onChange={(event) => setPortalMessageDraft(event.target.value)} rows={4} maxLength={2000} className="w-full rounded-xl bg-slate-950 border border-slate-700 text-sm text-white p-3" placeholder="Escribe tu consulta..." />
+              <button type="button" onClick={sendPortalMessage} disabled={!portalMessageDraft.trim() || portalMessageSending} className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold disabled:opacity-50">{portalMessageSending ? 'Enviando…' : 'Enviar mensaje'}</button>
+            </div>
+          </section>
+        )}
 
         {/* ========================================================================= */}
         {/* TAB: MIS CITAS & SOLICITAR CITA NUEVA */}
