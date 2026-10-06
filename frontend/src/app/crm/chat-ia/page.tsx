@@ -530,7 +530,10 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Alternar visibilidad del panel de atajos */}
           <button
+            type="button"
             onClick={() => setShowTopicsSidebar(!showTopicsSidebar)}
+            aria-expanded={showTopicsSidebar}
+            aria-controls="crm-ai-topics-sidebar"
             className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-colors border shadow-xs ${
               showTopicsSidebar
                 ? 'bg-surface border-outline-variant text-on-surface hover:bg-surface-container'
@@ -556,6 +559,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
 
           {/* Exportar a Word */}
           <button
+            type="button"
             onClick={handleExportChatToWord}
             title="Exportar conversación a Microsoft Word (.docx)"
             className="h-8 px-2.5 sm:px-3 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1 sm:gap-1.5 transition-colors shadow-xs"
@@ -567,6 +571,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
 
           {/* Imprimir / PDF */}
           <button
+            type="button"
             onClick={() => window.print()}
             title="Imprimir o guardar en PDF"
             className="h-8 px-2.5 sm:px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1 sm:gap-1.5 transition-colors shadow-xs"
@@ -578,6 +583,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
 
           {/* Configurar IA */}
           <button
+            type="button"
             onClick={() => {
               setTestResult(null);
               setShowConfigModal(true);
@@ -595,14 +601,16 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
       <div className="w-full flex-1 min-h-0 flex flex-col lg:flex-row gap-4 items-stretch overflow-hidden">
         {/* PANEL LATERAL DE CONSULTAS FRECUENTES (OPCIONAL/COLAPSABLE) */}
         {showTopicsSidebar && (
-          <aside className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col max-h-56 lg:max-h-none lg:h-full bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant shadow-xs overflow-hidden no-print animate-in slide-in-from-left duration-200">
+          <aside id="crm-ai-topics-sidebar" aria-label="Consultas frecuentes de gestoría" className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col max-h-56 lg:max-h-none lg:h-full bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant shadow-xs overflow-hidden no-print animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between pb-2 border-b border-surface-container shrink-0">
               <h3 className="font-bold text-xs text-on-surface flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-secondary text-base">lightbulb</span>
                 <span>Consultas Frecuentes de Gestoría</span>
               </h3>
               <button
+                type="button"
                 onClick={() => setShowTopicsSidebar(false)}
+                aria-label="Cerrar panel de temas"
                 title="Cerrar panel de temas para ver el chat a pantalla completa"
                 className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface"
               >
@@ -655,7 +663,10 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
             <div className="flex items-center gap-2">
               {!showTopicsSidebar && (
                 <button
+                  type="button"
                   onClick={() => setShowTopicsSidebar(true)}
+                  aria-expanded={showTopicsSidebar}
+                  aria-controls="crm-ai-topics-sidebar"
                   className="p-1 hover:bg-surface-container rounded text-secondary flex items-center gap-1 text-xs font-semibold"
                   title="Mostrar panel de consultas frecuentes"
                 >
@@ -670,6 +681,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
 
             <div className="flex items-center gap-1.5">
               <button
+                type="button"
                 onClick={() => {
                   setChatMessages([
                     {
@@ -807,20 +819,22 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
       {/* MODAL: CONFIGURACIÓN DE IA (API KEY & URL)                     */}
       {/* ============================================================== */}
       {showConfigModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 no-print">
-          <div className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 no-print" role="presentation">
+          <div className="bg-surface-container-lowest max-w-2xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[92vh]" role="dialog" aria-modal="true" aria-labelledby="ai-config-dialog-title">
             <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-indigo-900/50">
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-amber-300 text-2xl">tune</span>
                 <div>
-                  <h3 className="font-bold text-base">Configuración de IA para NexusGest</h3>
+                  <h3 id="ai-config-dialog-title" className="font-bold text-base">Configuración de IA para NexusGest</h3>
                   <p className="text-[11px] text-indigo-200">
                     Añade o cambia tu API Key, Endpoint URL y modelo preferido
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowConfigModal(false)}
+                aria-label="Cerrar configuración de IA"
                 className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white/80 hover:text-white"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
