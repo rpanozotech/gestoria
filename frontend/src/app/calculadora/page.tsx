@@ -139,6 +139,7 @@ export default function CalculadoraPage() {
                         max="11"
                         value={monthsInNL}
                         onChange={(e) => setMonthsInNL(Number(e.target.value))}
+                        aria-label="Meses vividos en Holanda"
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
                     </div>
@@ -156,6 +157,7 @@ export default function CalculadoraPage() {
                            step="100"
                           value={formatAmount(grossIncome)}
                           onChange={(e) => setGrossIncome(parseAmount(e.target.value))}
+                          aria-label="Ingreso bruto percibido en Holanda"
                            className="w-16 h-8 text-center text-blue-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                           />
                           <span className="text-blue-600 font-extrabold text-[17px]">€</span>
@@ -168,6 +170,7 @@ export default function CalculadoraPage() {
                          step="100"
                         value={Math.min(Math.max(grossIncome, MIN_INCOME), MAX_INCOME)}
                         onChange={(e) => setGrossIncome(Number(e.target.value))}
+                        aria-label="Ingreso bruto percibido en Holanda, deslizador"
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
                       <p className="text-[11px] text-slate-500 mt-1">
@@ -188,6 +191,7 @@ export default function CalculadoraPage() {
                           step="100"
                           value={formatAmount(withheldTax)}
                           onChange={(e) => setWithheldTax(parseAmount(e.target.value))}
+                          aria-label="Impuestos retenidos en nómina"
                            className="w-16 h-8 text-center text-blue-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                           />
                           <span className="text-blue-600 font-extrabold text-[17px]">€</span>
@@ -200,6 +204,7 @@ export default function CalculadoraPage() {
                         step="100"
                         value={Math.min(Math.max(withheldTax, MIN_INCOME), MAX_INCOME)}
                         onChange={(e) => setWithheldTax(Number(e.target.value))}
+                        aria-label="Impuestos retenidos en nómina, deslizador"
                         className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
                       <p className="text-[11px] text-slate-500 mt-1">
@@ -273,6 +278,7 @@ export default function CalculadoraPage() {
                            step="100"
                           value={formatAmount(toeslagIncome)}
                           onChange={(e) => setToeslagIncome(parseAmount(e.target.value))}
+                          aria-label="Ingreso anual bruto estimado"
                            className="w-16 h-8 text-center text-indigo-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                           />
                            <span className="text-indigo-600 font-extrabold text-[17px]">€ / año</span>
@@ -285,6 +291,7 @@ export default function CalculadoraPage() {
                          step="100"
                         value={Math.min(Math.max(toeslagIncome, MIN_INCOME), MAX_INCOME)}
                         onChange={(e) => setToeslagIncome(Number(e.target.value))}
+                        aria-label="Ingreso anual bruto estimado, deslizador"
                         className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
                       <p className="text-[11px] text-slate-500 mt-1">
@@ -304,6 +311,7 @@ export default function CalculadoraPage() {
                           step="25"
                           value={formatAmount(monthlyRent)}
                           onChange={(e) => setMonthlyRent(parseAmount(e.target.value))}
+                          aria-label="Alquiler mensual de la vivienda"
                            className="w-16 h-8 text-center text-indigo-600 font-extrabold text-sm border border-slate-300 bg-white rounded-lg px-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                           />
                            <span className="text-indigo-600 font-extrabold text-[17px]">€ / mes</span>
@@ -316,6 +324,7 @@ export default function CalculadoraPage() {
                         step="25"
                         value={Math.min(Math.max(monthlyRent, 0), 1400)}
                         onChange={(e) => setMonthlyRent(Number(e.target.value))}
+                        aria-label="Alquiler mensual de la vivienda, deslizador"
                         className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
                       />
                       <p className="text-[11px] text-slate-500 mt-1">

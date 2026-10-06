@@ -289,10 +289,11 @@ export default function ReservarCitaPage() {
                   {/* PASO 2: SERVICIO & FECHA */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      <label htmlFor="booking-service" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         2. Motivo o Trámite
                       </label>
                       <select
+                        id="booking-service"
                         value={bookService}
                         onChange={(e) => setBookService(e.target.value)}
                         className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
@@ -306,10 +307,11 @@ export default function ReservarCitaPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      <label htmlFor="booking-date" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         3. Fecha
                       </label>
                       <input
+                        id="booking-date"
                         type="date"
                         value={bookDate}
                         onChange={(e) => setBookDate(e.target.value)}
@@ -319,10 +321,11 @@ export default function ReservarCitaPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      <label htmlFor="booking-time" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         4. Hora
                       </label>
                       <select
+                        id="booking-time"
                         value={bookTime}
                         onChange={(e) => setBookTime(e.target.value)}
                         disabled={availabilityLoading || availableSlots.length === 0}
