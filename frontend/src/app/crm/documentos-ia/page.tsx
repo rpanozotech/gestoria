@@ -1088,12 +1088,15 @@ ${
         <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Botón para Alternar Barra Lateral del Chat */}
           <button
+            type="button"
             onClick={() => {
               setIsChatSidebarOpen(!isChatSidebarOpen);
               if (!isChatSidebarOpen) {
                 setTimeout(() => scrollToBottom(true), 100);
               }
             }}
+            aria-expanded={isChatSidebarOpen}
+            aria-controls="crm-ai-chat-sidebar"
             className={`h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-lg text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-all shadow-xs border ${
               isChatSidebarOpen
                 ? 'bg-secondary/10 border-secondary/30 text-secondary hover:bg-secondary/20'
@@ -1109,6 +1112,7 @@ ${
 
           {/* Botón para Crear Plantilla */}
           <button
+            type="button"
             onClick={handleOpenCreateTemplate}
             className="h-8 sm:h-9 px-2.5 sm:px-3.5 bg-secondary hover:bg-blue-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1 sm:gap-1.5 shadow-sm transition-all"
           >
@@ -1119,6 +1123,7 @@ ${
 
           {/* Botón de Configurar IA */}
           <button
+            type="button"
             onClick={() => {
               setTestResult(null);
               setShowConfigModal(true);
@@ -1135,7 +1140,9 @@ ${
       {/* Selector de Modo Principal (Generador / Analizador) */}
       <div className="flex border-b border-surface-container gap-1 no-print">
         <button
+          type="button"
           onClick={() => setActiveView('generador')}
+          aria-pressed={activeView === 'generador'}
             className={`pb-2 px-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-colors ${
             activeView === 'generador'
               ? 'border-secondary text-secondary'
@@ -1147,7 +1154,9 @@ ${
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveView('analizador')}
+          aria-pressed={activeView === 'analizador'}
             className={`pb-2 px-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-colors ${
             activeView === 'analizador'
               ? 'border-secondary text-secondary'
@@ -1748,7 +1757,7 @@ ${
         {/* BARRA LATERAL: CHAT ASISTENTE LEGAL CON AUTO-SCROLL EN VIVO   */}
         {/* ============================================================== */}
         {isChatSidebarOpen && (
-          <aside className="w-full xl:w-[410px] 2xl:w-[450px] shrink-0 sticky top-3 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant shadow-sm flex flex-col h-[600px] xl:h-[calc(100dvh-264px)] xl:min-h-[620px] no-print animate-in slide-in-from-right duration-200">
+          <aside id="crm-ai-chat-sidebar" aria-label="Chat Asistente Legal" className="w-full xl:w-[410px] 2xl:w-[450px] shrink-0 sticky top-3 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant shadow-sm flex flex-col h-[600px] xl:h-[calc(100dvh-264px)] xl:min-h-[620px] no-print animate-in slide-in-from-right duration-200">
             {/* Header de la Barra Lateral */}
             <div className="flex items-center justify-between pb-3 border-b border-surface-container">
               <div className="flex items-center gap-2">
