@@ -5,26 +5,25 @@
 
 @layer base {
   :root {
-    /* Paleta distintiva NexusGest — fiscal neerlandés, institucional */
-    --delft: #003366;
-    --concrete: #4A4A4A;
-    --oranje-subdued: #FF8C00;
-    --dutch-green: #6B8E23;
-    --amber-fosco: #D97706;
-    --surface-deep: #F8F9FF;
+    --delft: #0B1F33;
+    --concrete: #45464D;
+    --oranje-subdued: #F28C28;
+    --dutch-green: #167A5B;
+    --amber-fosco: #C96F16;
+    --surface-deep: #F7F4EE;
 
     /* Shared semantic design tokens: public web, CRM and portal. */
-    --color-bg: #F8F9FF;
+    --color-bg: #F7F4EE;
     --color-surface: #FFFFFF;
-    --color-surface-muted: #EFF4FF;
-    --color-text: #0B1C30;
+    --color-surface-muted: #E7EEF4;
+    --color-text: #0B1F33;
     --color-text-muted: #45464D;
-    --color-border: #C6C6CD;
-    --color-primary: #2167D5;
-    --color-primary-strong: #003366;
+    --color-border: #B7CBD8;
+    --color-primary: #145DA0;
+    --color-primary-strong: #0B1F33;
     --color-on-primary: #FFFFFF;
-    --color-accent: #149A9A;
-    --color-success: #1F7A46;
+    --color-accent: #F28C28;
+    --color-success: #167A5B;
     --color-warning: #9A5B00;
     --color-danger: #BA1A1A;
     --focus-ring: #2167D5;

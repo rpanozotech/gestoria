@@ -312,14 +312,14 @@ export default function PublicHomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#F7F4EE] text-[#0B1F33] font-sans antialiased selection:bg-[#F28C28] selection:text-white">
       
       <Navbar />
 
       {/* ========================================================================= */}
       {/* 2. HERO SECTION                                                           */}
       {/* ========================================================================= */}
-      <section id="inicio" className="relative pt-12 pb-20 overflow-hidden bg-gradient-to-b from-blue-50/40 via-white to-[#F8FAFC]">
+      <section id="inicio" className="relative pt-12 pb-20 overflow-hidden bg-[#F7F4EE]">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -327,13 +327,13 @@ export default function PublicHomePage() {
             {/* LEFT COLUMN: HERO HEADLINE & CTAS */}
             <div className="lg:col-span-6 space-y-8 text-center lg:text-left">
               
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 border border-blue-200/80 text-blue-800 text-xs font-semibold shadow-sm">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E7EEF4] border border-[#B7CBD8] text-[#0B1F33] text-xs font-semibold shadow-sm">
                 <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
                 <span>Especialistas en recién llegados & expatriados en Países Bajos</span>
               </div>
 
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-[54px] font-extrabold text-slate-900 tracking-tight leading-[1.15]">
-                ¿Acabas de llegar a <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Holanda</span>?
+                ¿Acabas de llegar a <span className="text-[#145DA0]">Holanda</span>?
               </h1>
 
               <p className="text-lg sm:text-xl text-slate-600 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
@@ -360,7 +360,7 @@ export default function PublicHomePage() {
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
                 <Link
                   href="/servicios"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all transform hover:-translate-y-0.5"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-bold text-white bg-[#145DA0] hover:bg-[#0B1F33] rounded-xl shadow-lg shadow-[#145DA0]/25 hover:shadow-[#145DA0]/40 transition-all transform hover:-translate-y-0.5"
                 >
                   <span>Empezar mi trámite</span>
                   <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
