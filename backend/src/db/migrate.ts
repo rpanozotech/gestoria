@@ -65,6 +65,15 @@ export async function migrateDatabase() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_client_audit_client_created ON client_audit_log(client_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS client_messages (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      author_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      visibility VARCHAR(20) NOT NULL DEFAULT 'internal' CHECK (visibility IN ('internal', 'client')),
+      body TEXT NOT NULL CHECK (length(trim(body)) > 0),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_client_messages_client_created ON client_messages(client_id, created_at ASC);
   `);
   for (const s of DEFAULT_SERVICES) {
     await pool.query(`

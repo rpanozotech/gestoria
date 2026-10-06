@@ -14,6 +14,8 @@ import portalRouter from './routes/portal.js';
 import servicesRouter, { publicServicesRouter } from './routes/services.js';
 import { migrateDatabase } from './db/migrate.js';
 import serviceRequestsRouter from './routes/service-requests.js';
+import clientMessagesRouter from './routes/client-messages.js';
+import portalMessagesRouter from './routes/portal-messages.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import { rateLimit, cabecerasSeguridad } from './middleware/rate-limit.js';
 import { query } from './db/index.js';
@@ -99,6 +101,7 @@ app.use('/api/portal', rateLimit({ nombre: 'portal', max: 200, ventanaMs: 5 * 60
 app.use('/api/auth', authRouter);
 app.use('/api/service-requests', serviceRequestsRouter);
 app.use('/api/portal', portalRouter);
+app.use('/api/portal/messages', requireAuth, requireRole('cliente'), portalMessagesRouter);
 
 // --- Rutas internas (solo gestor/admin) ---
 // Todo lo demas expone datos fiscales y bancarios del cliente (BSN, IBAN).
@@ -112,6 +115,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 app.use('/api/dashboard', gestorOnly, dashboardRouter);
 app.use('/api/clients', gestorOnly, clientsRouter);
+app.use('/api/client-messages', gestorOnly, clientMessagesRouter);
 app.use('/api/dossiers', gestorOnly, dossiersRouter);
 app.use('/api/ai', gestorOnly, aiRouter);
 app.use('/api/documents', gestorOnly, documentsRouter);
