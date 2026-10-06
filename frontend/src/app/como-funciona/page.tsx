@@ -8,21 +8,21 @@ import Footer from '@/components/Footer';
 
 export default function ComoFuncionaPage() {
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="min-h-screen bg-[#F7F4EE] text-[#0B1F33] font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
 
         {/* HERO CÓMO FUNCIONA */}
-        <section className="pt-16 pb-14 bg-gradient-to-b from-blue-50/50 via-white to-[#F8FAFC] border-b border-slate-100">
+        <section className="pt-16 pb-14 bg-[#F7F4EE] border-b border-[#B7CBD8]">
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center">
             
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 border border-blue-200 text-blue-800 text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E7EEF4] border border-[#B7CBD8] text-[#0B1F33] text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">timeline</span>
               <span>Proceso 100% Digital & Cercano</span>
             </div>
 
             <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Cómo funciona <span className="text-blue-600">RP Gestoría & Asesoría</span>
+              Cómo funciona <span className="text-[#145DA0]">RP Gestoría & Asesoría</span>
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-8">
@@ -54,9 +54,9 @@ export default function ComoFuncionaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               
               {/* PASO 1 */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-8 border border-[#B7CBD8] shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-[#145DA0] text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
                     01
                   </div>
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-3">
@@ -73,9 +73,9 @@ export default function ComoFuncionaPage() {
               </div>
 
               {/* PASO 2 */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-8 border border-[#B7CBD8] shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-[#145DA0] text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
                     02
                   </div>
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-3">
@@ -92,9 +92,9 @@ export default function ComoFuncionaPage() {
               </div>
 
               {/* PASO 3 */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-8 border border-[#B7CBD8] shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-[#145DA0] text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
                     03
                   </div>
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-3">
@@ -111,9 +111,9 @@ export default function ComoFuncionaPage() {
               </div>
 
               {/* PASO 4 */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-8 border border-[#B7CBD8] shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-[#145DA0] text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
                     04
                   </div>
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-3">
