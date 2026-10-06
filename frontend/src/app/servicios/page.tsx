@@ -64,21 +64,21 @@ export default function ServiciosPage() {
   };
 
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="min-h-screen bg-[#F7F4EE] text-[#0B1F33] font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
 
         {/* HERO SERVICIOS */}
-        <section className="pt-16 pb-14 bg-gradient-to-b from-blue-50/50 via-white to-[#F8FAFC] border-b border-slate-100">
+        <section className="pt-16 pb-14 bg-[#F7F4EE] border-b border-[#B7CBD8]">
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center">
             
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 border border-blue-200 text-blue-800 text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E7EEF4] border border-[#B7CBD8] text-[#0B1F33] text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">verified</span>
               <span>Catálogo Oficial de Servicios & Trámites</span>
             </div>
 
             <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Todos los trámites en Holanda, <span className="text-blue-600">explicados y sin estrés</span>
+              Todos los trámites en Holanda, <span className="text-[#145DA0]">explicados y sin estrés</span>
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-8">
@@ -118,10 +118,12 @@ export default function ServiciosPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveCategory(tab.id)}
+                  aria-pressed={activeCategory === tab.id}
+                  type="button"
                   className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all ${
                     activeCategory === tab.id
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80'
+                      ? 'bg-[#145DA0] text-white shadow-md shadow-[#145DA0]/20'
+                      : 'bg-white text-[#0B1F33] hover:bg-[#E7EEF4] border border-[#B7CBD8]'
                   }`}
                 >
                   {tab.label}
@@ -134,7 +136,7 @@ export default function ServiciosPage() {
               {filtered.map((srv) => (
                 <div
                   key={srv.id}
-                  className="bg-white rounded-2xl p-7 border border-slate-200/80 hover:border-blue-300 shadow-sm hover:shadow-xl transition-all duration-200 flex flex-col justify-between group"
+                  className="bg-white rounded-2xl p-7 border border-[#B7CBD8] hover:border-[#145DA0] shadow-sm hover:shadow-xl transition-all duration-200 flex flex-col justify-between group"
                 >
                   <div>
                     {/* ENCABEZADO */}
@@ -183,7 +185,7 @@ export default function ServiciosPage() {
                           setSelectedService(srv);
                           setFormSubmitted(false);
                         }}
-                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-blue-600 transition-colors shadow-sm"
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#0B1F33] hover:bg-[#145DA0] transition-colors shadow-sm"
                       >
                         Empezar
                       </button>
