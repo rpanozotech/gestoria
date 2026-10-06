@@ -245,7 +245,7 @@ export default function CRMDashboardPage() {
                 <p className="text-xs text-on-surface-variant mt-0.5">Haz clic en cualquier fila para ver el detalle del expediente</p>
               </div>
               <Link href="/crm/clientes" className="text-xs font-semibold text-secondary hover:underline">
-                Ver todos (34)
+                Ver todos
               </Link>
             </div>
 
@@ -253,12 +253,12 @@ export default function CRMDashboardPage() {
               <table className="w-full text-left text-xs">
                 <thead className="bg-surface-container-low text-[--concrete] font-semibold border-b border-[--concrete]/20">
                   <tr>
-                    <th className="px-5 py-3 text-left">Código</th>
-                    <th className="px-5 py-3 text-left">Cliente / BSN</th>
-                    <th className="px-5 py-3 text-left">Trámite</th>
-                    <th className="px-5 py-3 text-left">Estado</th>
-                    <th className="px-5 py-3 text-left">Progreso</th>
-                    <th className="px-5 py-3 text-right">Tarifa</th>
+                    <th scope="col" className="px-5 py-3 text-left">Código</th>
+                    <th scope="col" className="px-5 py-3 text-left">Cliente / BSN</th>
+                    <th scope="col" className="px-5 py-3 text-left">Trámite</th>
+                    <th scope="col" className="px-5 py-3 text-left">Estado</th>
+                    <th scope="col" className="px-5 py-3 text-left">Progreso</th>
+                    <th scope="col" className="px-5 py-3 text-right">Tarifa</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-container">
@@ -381,14 +381,19 @@ export default function CRMDashboardPage() {
 
       {/* MODAL DETALLES DEL EXPEDIENTE (Al hacer clic en la tabla) */}
       {selectedDossier && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest max-w-lg w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" role="presentation">
+          <div
+            className="bg-surface-container-lowest max-w-lg w-full rounded-2xl border border-outline-variant shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dossier-dialog-title"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-surface-container">
               <div>
                 <span className="font-mono-data font-bold text-secondary text-xs">{selectedDossier.code}</span>
-                <h3 className="font-bold text-base text-on-surface">{selectedDossier.title}</h3>
+                <h3 id="dossier-dialog-title" className="font-bold text-base text-on-surface">{selectedDossier.title}</h3>
               </div>
-              <button onClick={() => setSelectedDossier(null)} className="text-outline hover:text-on-surface">
+              <button type="button" aria-label="Cerrar detalle del expediente" onClick={() => setSelectedDossier(null)} className="text-outline hover:text-on-surface">
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
@@ -427,6 +432,7 @@ export default function CRMDashboardPage() {
                 <span>Facturar Trámite</span>
               </Link>
               <button
+                type="button"
                 onClick={() => setSelectedDossier(null)}
                 className="h-8 px-4 bg-primary text-white text-xs font-semibold rounded hover:bg-slate-800"
               >
