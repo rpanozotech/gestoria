@@ -146,6 +146,9 @@ export default function CRMClientesPage() {
   const [historyFilter, setHistoryFilter] = useState<'todos' | 'ia' | 'gestor' | 'sistema'>('todos');
   const [clientAudit, setClientAudit] = useState<any[]>([]);
   const [clientMessages, setClientMessages] = useState<any[]>([]);
+  const [clientMessageDraft, setClientMessageDraft] = useState('');
+  const [clientMessageVisibility, setClientMessageVisibility] = useState<'internal' | 'client'>('internal');
+  const [clientMessageSending, setClientMessageSending] = useState(false);
 
   // Estados de edición de notas
   const [isEditingNotes, setIsEditingNotes] = useState(false);
@@ -229,6 +232,26 @@ export default function CRMClientesPage() {
     service_requests: Array.isArray(client?.service_requests) ? client.service_requests : [],
     documents: Array.isArray(client?.documents) ? client.documents : [],
   });
+
+  const sendClientMessage = async () => {
+    if (!selectedClient?.id || !clientMessageDraft.trim() || clientMessageSending) return;
+    setClientMessageSending(true);
+    try {
+      const response = await apiFetch(`/client-messages/${selectedClient.id}`, {
+        method: 'POST',
+        body: JSON.stringify({ body: clientMessageDraft.trim(), visibility: clientMessageVisibility }),
+      });
+      if (!response.ok) throw new Error('No se pudo guardar el mensaje.');
+      const data = await response.json();
+      setClientMessages((current) => [...current, data.message]);
+      setClientMessageDraft('');
+      showToast(clientMessageVisibility === 'client' ? 'Mensaje compartido con el cliente' : 'Nota interna guardada');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo guardar el mensaje.', 'error');
+    } finally {
+      setClientMessageSending(false);
+    }
+  };
 
   const handleOpenClient = (client: any) => {
     // La lista y la ficha pueden devolver contadores, null u objetos parciales.
@@ -3177,6 +3200,17 @@ export default function CRMClientesPage() {
                             <p className="text-xs text-on-surface mt-1 whitespace-pre-wrap">{message.body}</p>
                           </article>
                         ))}
+                      </div>
+                      <div className="mt-3 space-y-2 border-t border-outline-variant pt-3">
+                        <label htmlFor="crm-client-message-draft" className="text-[11px] font-bold text-on-surface">Nuevo mensaje o nota</label>
+                        <textarea id="crm-client-message-draft" value={clientMessageDraft} onChange={(event) => setClientMessageDraft(event.target.value)} rows={3} maxLength={2000} className="w-full rounded-lg border border-outline-variant bg-surface p-2 text-xs text-on-surface" placeholder="Escribe una nota o mensaje..." />
+                        <div className="flex items-center gap-2">
+                          <select aria-label="Visibilidad del mensaje" value={clientMessageVisibility} onChange={(event) => setClientMessageVisibility(event.target.value as 'internal' | 'client')} className="rounded-lg border border-outline-variant bg-surface p-2 text-xs text-on-surface">
+                            <option value="internal">Solo CRM (interno)</option>
+                            <option value="client">Compartir con cliente</option>
+                          </select>
+                          <button type="button" onClick={sendClientMessage} disabled={!clientMessageDraft.trim() || clientMessageSending} className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{clientMessageSending ? 'Guardando…' : 'Guardar'}</button>
+                        </div>
                       </div>
                     </section>
                     <section className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4" aria-labelledby="crm-client-audit-title">
