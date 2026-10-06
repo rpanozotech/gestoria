@@ -346,6 +346,7 @@ export default function TerminalTarifasPage() {
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
+            type="button"
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-secondary text-white rounded-lg text-xs font-bold hover:bg-secondary/90 transition-all flex items-center gap-1.5 shadow-sm"
           >
@@ -354,6 +355,7 @@ export default function TerminalTarifasPage() {
           </button>
           
           <button
+            type="button"
             onClick={handleResetDefaults}
             className="px-3 py-2 bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg text-xs font-semibold hover:bg-surface-container-high transition-all"
             title="Restablecer valores originales"
@@ -443,7 +445,9 @@ export default function TerminalTarifasPage() {
           ].map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setActiveCategory(tab.id)}
+              aria-pressed={activeCategory === tab.id}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 activeCategory === tab.id
                   ? 'bg-secondary text-white font-bold shadow-sm'
@@ -462,14 +466,14 @@ export default function TerminalTarifasPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-container-low border-b border-surface-container text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
-                <th className="py-3.5 px-4">Código / Icono</th>
-                <th className="py-3.5 px-4">Trámite & Categoría</th>
-                <th className="py-3.5 px-4">Plazo</th>
-                <th className="py-3.5 px-4">Etiqueta / Badge</th>
-                <th className="py-3.5 px-4">Precio final (IVA incluido)</th>
-                <th className="py-3.5 px-4">Desglose IVA 21%</th>
-                <th className="py-3.5 px-4 text-center">Estado Web</th>
-                <th className="py-3.5 px-4 text-right">Acciones</th>
+                <th scope="col" className="py-3.5 px-4">Código / Icono</th>
+                <th scope="col" className="py-3.5 px-4">Trámite & Categoría</th>
+                <th scope="col" className="py-3.5 px-4">Plazo</th>
+                <th scope="col" className="py-3.5 px-4">Etiqueta / Badge</th>
+                <th scope="col" className="py-3.5 px-4">Precio final (IVA incluido)</th>
+                <th scope="col" className="py-3.5 px-4">Desglose IVA 21%</th>
+                <th scope="col" className="py-3.5 px-4 text-center">Estado Web</th>
+                <th scope="col" className="py-3.5 px-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container text-xs">
@@ -557,7 +561,9 @@ export default function TerminalTarifasPage() {
                     {/* ESTADO ACTIVO/INACTIVO */}
                     <td className="py-3 px-4 text-center whitespace-nowrap">
                       <button
+                        type="button"
                         onClick={() => handleToggleActive(srv.id)}
+                        aria-pressed={srv.active}
                         className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${
                           srv.active
                             ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
@@ -574,6 +580,7 @@ export default function TerminalTarifasPage() {
                       {isEditing ? (
                         <div className="flex items-center justify-end gap-1.5">
                           <button
+                            type="button"
                             onClick={() => handleSaveEdit(srv.id)}
                             className="px-2.5 py-1 bg-emerald-600 text-white rounded-md text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1"
                           >
@@ -581,6 +588,7 @@ export default function TerminalTarifasPage() {
                             <span>Guardar</span>
                           </button>
                           <button
+                            type="button"
                             onClick={() => setEditingId(null)}
                             className="px-2 py-1 bg-surface-container text-on-surface rounded-md text-xs font-semibold"
                           >
@@ -589,6 +597,7 @@ export default function TerminalTarifasPage() {
                         </div>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => handleStartEdit(srv)}
                           className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold text-xs flex items-center gap-1.5 ml-auto transition-colors"
                         >
@@ -607,14 +616,14 @@ export default function TerminalTarifasPage() {
 
       {/* MODAL CREAR NUEVO TRÁMITE */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-surface-container animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" role="presentation">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-surface-container animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="new-service-dialog-title">
             <div className="flex items-center justify-between pb-3 border-b border-surface-container">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-secondary text-[22px]">add_circle</span>
-                <h3 className="font-heading font-extrabold text-lg text-on-surface">Añadir Nuevo Trámite o Servicio</h3>
+                <h3 id="new-service-dialog-title" className="font-heading font-extrabold text-lg text-on-surface">Añadir Nuevo Trámite o Servicio</h3>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="text-on-surface-variant hover:text-on-surface text-sm">✕</button>
+              <button type="button" aria-label="Cerrar nuevo trámite" onClick={() => setShowAddModal(false)} className="text-on-surface-variant hover:text-on-surface text-sm">✕</button>
             </div>
 
             <form onSubmit={handleCreateNewService} className="space-y-4 pt-4">
