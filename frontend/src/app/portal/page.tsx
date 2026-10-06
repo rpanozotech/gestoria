@@ -792,6 +792,7 @@ export default function PortalClientePage() {
           {/* Quick Action Buttons en el Banner */}
           <div className="flex flex-wrap items-center gap-3 relative z-10 shrink-0">
             <button
+              type="button"
               onClick={() => setShowBookingModal(true)}
               className="h-10 sm:h-11 px-4 sm:px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2 transition-all transform hover:-translate-y-0.5"
             >
@@ -799,6 +800,7 @@ export default function PortalClientePage() {
               <span>Solicitar Cita con Asesor</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('ia')}
               className="h-10 sm:h-11 px-4 border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-xl transition-colors flex items-center gap-2"
             >
@@ -874,6 +876,7 @@ export default function PortalClientePage() {
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
               <button
+                type="button"
                 onClick={() => setShowBookingModal(true)}
                 className="text-blue-400 hover:underline font-semibold flex items-center gap-1"
               >
@@ -1048,6 +1051,7 @@ export default function PortalClientePage() {
                       <div className="flex items-center gap-2 shrink-0">
                         {apt.modality === 'online_meet' && apt.status !== 'completada' && (
                           <button
+                            type="button"
                             onClick={() => window.open('https://meet.google.com', '_blank')}
                             className="h-9 px-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
                           >
@@ -1058,6 +1062,7 @@ export default function PortalClientePage() {
 
                         {apt.modality === 'llamada' && apt.status !== 'completada' && (
                           <button
+                            type="button"
                             onClick={() => showToast(`Tu asesor ${apt.advisor || 'Rony P.'} te llamará al ${apt.client_phone} en la hora indicada.`)}
                             className="h-9 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
                           >
@@ -1085,6 +1090,7 @@ export default function PortalClientePage() {
                     Puedes agendar una sesión individual con tu gestor Rony P. para revisar tu declaración, tus subsidios o cualquier carta de la Belastingdienst.
                   </p>
                   <button
+                    type="button"
                     onClick={() => setShowBookingModal(true)}
                     className="mt-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
                   >
@@ -1172,6 +1178,7 @@ export default function PortalClientePage() {
                       Recibirás una carta física por correo en tu buzón de <strong>{client.address}, {client.city}</strong>. Cuando la recibas, hazle una foto y súbela en la pestaña &quot;Bóveda de Documentos&quot; para que activemos tu clave en 1 hora.
                     </p>
                     <button
+                      type="button"
                       onClick={() => setActiveTab('documentos')}
                       className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-lg transition-colors inline-flex items-center gap-1 shadow-2xs"
                     >
@@ -1240,6 +1247,7 @@ export default function PortalClientePage() {
 
                 <div className="space-y-2">
                   <button
+                    type="button"
                     onClick={() => setShowBookingModal(true)}
                     className="w-full h-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all"
                   >
@@ -1248,6 +1256,7 @@ export default function PortalClientePage() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setActiveTab('ia')}
                     className="w-full h-10 border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5"
                   >
@@ -1287,6 +1296,7 @@ export default function PortalClientePage() {
 
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => setShowBookingModal(true)}
                   className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold flex items-center gap-1 transition-colors shadow-2xs"
                 >
@@ -1294,6 +1304,7 @@ export default function PortalClientePage() {
                   <span>Pedir Cita</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setChatMessages(chatMessages.slice(0, 1))}
                   className="h-8 px-2.5 rounded-lg border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition-colors"
                   title="Reiniciar conversación"
@@ -1334,6 +1345,7 @@ export default function PortalClientePage() {
                     {/* Botón de acción contextual sugerido */}
                     {msg.suggestedAction && (
                       <button
+                        type="button"
                         onClick={() => {
                           if (msg.suggestedAction?.action === 'open_booking') {
                             setShowBookingModal(true);
@@ -1472,6 +1484,7 @@ export default function PortalClientePage() {
                   <span className="text-[10px] text-slate-400 uppercase font-mono-data">Estimación mensual:</span>
                   <div className="text-2xl font-extrabold font-mono-data text-emerald-400 mt-0.5">Hasta € 450,00 / mes</div>
                   <button
+                    type="button"
                     onClick={() => {
                       setHuurtoeslagRequested(true);
                       showToast('Solicitud de Huurtoeslag enviada al gestor Rony P. para su tramitación.');
@@ -1504,6 +1517,7 @@ export default function PortalClientePage() {
                   <span className="text-[10px] text-slate-400 uppercase font-mono-data">Estimación mensual:</span>
                   <div className="text-2xl font-extrabold font-mono-data text-purple-400 mt-0.5">Hasta € 115,00 / hijo</div>
                   <button
+                    type="button"
                     onClick={() => {
                       setActiveTab('ia');
                       handleSendChatMessage('¿Cumplo los requisitos para el Kindgebonden Budget de hijos?');
@@ -1667,6 +1681,7 @@ export default function PortalClientePage() {
                         {doc.status}
                       </span>
                       <button
+                        type="button"
                         onClick={() => setPreviewDoc(doc)}
                         className="h-8 px-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-colors flex items-center gap-1"
                       >
@@ -1699,6 +1714,8 @@ export default function PortalClientePage() {
                 </div>
               </div>
               <button
+                type="button"
+                aria-label="Cerrar solicitud de cita"
                 onClick={() => setShowBookingModal(false)}
                 className="text-slate-400 hover:text-white"
               >
@@ -1857,6 +1874,8 @@ export default function PortalClientePage() {
                 <h4 className="font-bold text-sm text-white truncate max-w-xs">{previewDoc.name}</h4>
               </div>
               <button
+                type="button"
+                aria-label="Cerrar vista previa del documento"
                 onClick={() => setPreviewDoc(null)}
                 className="text-slate-400 hover:text-white"
               >
@@ -1889,6 +1908,7 @@ export default function PortalClientePage() {
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
+                type="button"
                 onClick={() => handleDownloadDocument(previewDoc)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
               >
@@ -1896,6 +1916,7 @@ export default function PortalClientePage() {
                 <span>Descargar Archivo</span>
               </button>
               <button
+                type="button"
                 onClick={() => setPreviewDoc(null)}
                 className="px-4 py-2 border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl transition-colors"
               >
