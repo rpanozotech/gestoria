@@ -11,7 +11,8 @@
     "test": "node --test --experimental-strip-types test/*.test.ts",
     "db:init": "node dist/db/init.js",
     "db:seed": "node dist/db/seed.js",
-    "db:create-user": "node dist/db/create-user.js"
+    "db:create-user": "node dist/db/create-user.js",
+    "reminders:dry-run": "node dist/jobs/reminders.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
