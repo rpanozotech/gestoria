@@ -102,7 +102,18 @@ router.post('/documents', (req: Request, res: Response, next) => {
        RETURNING id, file_name, file_size, mime_type, category, ocr_status, is_verified, uploaded_by, created_at`,
       [clientId, file.originalname, file.path, file.size, file.mimetype, req.user?.id]
     );
-    return res.status(201).json({ document: result.rows[0] });
+    const document = result.rows[0];
+    await query(
+      `INSERT INTO client_audit_log (client_id, actor_user_id, actor_role, action, changes)
+       VALUES ($1, $2, $3, 'document.uploaded', $4::jsonb)`,
+      [clientId, req.user?.id || null, req.user?.role || null, JSON.stringify({
+        document_id: document.id,
+        file_name: document.file_name,
+        category: document.category,
+        mime_type: document.mime_type,
+      })]
+    );
+    return res.status(201).json({ document });
   } catch (error) {
     await unlink(file.path).catch(() => undefined);
     console.error('Error guardando documento del portal:', error);
