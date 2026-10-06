@@ -217,9 +217,9 @@ export default function CRMDashboardPage() {
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-600 text-[22px]">smart_toy</span>
           <div>
-            <h4 className="text-xs font-bold text-indigo-950 tracking-normal">
+            <h2 className="text-xs font-bold text-indigo-950 tracking-normal">
               Asistente NexusGest AI · 3 Acciones Recomendadas
-            </h4>
+            </h2>
             <p className="text-xs text-indigo-800 mt-0.5">
               Se detectaron 2 resoluciones de Belastingdienst pendientes de vincular al expediente de Cliente seleccionado y 1 presupuesto por vencer.
             </p>
