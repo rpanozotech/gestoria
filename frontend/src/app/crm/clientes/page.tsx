@@ -1789,6 +1789,7 @@ export default function CRMClientesPage() {
               <button
                 type="button"
                 onClick={handleDeleteClient}
+                aria-label="Eliminar cliente"
                 className="h-8 sm:h-9 w-8 sm:w-9 border border-outline-variant text-outline rounded-md shadow-xs hover:text-error hover:bg-red-50 hover:border-red-200 transition-colors flex items-center justify-center"
                 title="Eliminar cliente (bloqueado si tiene facturas pagadas)"
               >
@@ -1797,7 +1798,10 @@ export default function CRMClientesPage() {
 
               {/* Botón Maximizar / Pantalla completa */}
               <button
+                type="button"
                 onClick={() => setIsMaximized(!isMaximized)}
+                aria-label={isMaximized ? 'Restaurar vista lateral' : 'Ver ficha a pantalla completa'}
+                aria-pressed={isMaximized}
                 className="h-8 sm:h-9 w-8 sm:w-9 rounded-md border border-outline-variant hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
                 title={isMaximized ? "Restaurar vista lateral" : "Pantalla completa"}
               >
@@ -1812,7 +1816,9 @@ export default function CRMClientesPage() {
           <div className="bg-surface-container-low px-4 sm:px-6 lg:px-8 border-b border-surface-container flex gap-1 sm:gap-2 text-xs font-semibold shrink-0 overflow-x-auto whitespace-nowrap no-scrollbar">
             {/* 1. Resumen */}
             <button
+              type="button"
               onClick={() => setActive360Tab('resumen')}
+              aria-pressed={active360Tab === 'resumen'}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'resumen' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
@@ -1823,7 +1829,9 @@ export default function CRMClientesPage() {
 
             {/* 2. Datos Personales & BSN */}
             <button
+              type="button"
               onClick={() => setActive360Tab('personales')}
+              aria-pressed={active360Tab === 'personales'}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'personales' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
@@ -1834,7 +1842,9 @@ export default function CRMClientesPage() {
 
             {/* 3. Servicios / Trámites */}
             <button
+              type="button"
               onClick={() => setActive360Tab('servicios')}
+              aria-pressed={active360Tab === 'servicios'}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'servicios' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
@@ -1845,7 +1855,9 @@ export default function CRMClientesPage() {
 
             {/* 4. Documentos */}
             <button
+              type="button"
               onClick={() => setActive360Tab('documentos')}
+              aria-pressed={active360Tab === 'documentos'}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'documentos' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
@@ -1856,7 +1868,9 @@ export default function CRMClientesPage() {
 
             {/* 5. Presupuestos */}
             <button
+              type="button"
               onClick={() => setActive360Tab('presupuestos')}
+              aria-pressed={active360Tab === 'presupuestos'}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'presupuestos' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
               }`}
