@@ -144,6 +144,8 @@ export default function CRMClientesPage() {
   const [newTaskInput, setNewTaskInput] = useState('');
   const [taskFilter, setTaskFilter] = useState<'todas' | 'pendientes' | 'completadas'>('todas');
   const [historyFilter, setHistoryFilter] = useState<'todos' | 'ia' | 'gestor' | 'sistema'>('todos');
+  const [clientAudit, setClientAudit] = useState<any[]>([]);
+  const [clientMessages, setClientMessages] = useState<any[]>([]);
 
   // Estados de edición de notas
   const [isEditingNotes, setIsEditingNotes] = useState(false);
@@ -274,6 +276,13 @@ export default function CRMClientesPage() {
           });
           setSelectedClient(completeClient);
           setClients((current) => current.map((item) => item.id === completeClient.id ? { ...item, ...completeClient } : item));
+          Promise.all([
+            apiFetch(`/clients/${client.id}/audit`).then((response) => response.ok ? response.json() : { audit: [] }),
+            apiFetch(`/client-messages/${client.id}`).then((response) => response.ok ? response.json() : { messages: [] }),
+          ]).then(([auditData, messageData]) => {
+            setClientAudit(Array.isArray(auditData.audit) ? auditData.audit : []);
+            setClientMessages(Array.isArray(messageData.messages) ? messageData.messages : []);
+          });
         })
         .catch(() => showToast('No se pudo cargar la ficha completa desde PostgreSQL.'));
     }
@@ -3155,6 +3164,33 @@ export default function CRMClientesPage() {
                         Gestor Manual
                       </button>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <section className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4" aria-labelledby="crm-client-messages-title">
+                      <h4 id="crm-client-messages-title" className="font-bold text-sm text-on-surface">Mensajes con el cliente</h4>
+                      <p className="text-[11px] text-outline mt-1">Los mensajes visibles en el portal están marcados como compartidos. Las notas internas nunca se envían al cliente.</p>
+                      <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                        {clientMessages.length === 0 ? <p className="text-xs text-outline py-4">No hay mensajes compartidos.</p> : clientMessages.map((message) => (
+                          <article key={message.id} className="rounded-lg border border-outline-variant bg-surface p-3">
+                            <div className="flex justify-between gap-2 text-[10px] text-outline"><span>{message.author_name || 'Gestor'}</span><time dateTime={message.created_at}>{new Date(message.created_at).toLocaleString('es-ES')}</time></div>
+                            <p className="text-xs text-on-surface mt-1 whitespace-pre-wrap">{message.body}</p>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                    <section className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4" aria-labelledby="crm-client-audit-title">
+                      <h4 id="crm-client-audit-title" className="font-bold text-sm text-on-surface">Cambios de ficha sincronizados por BSN</h4>
+                      <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                        {clientAudit.length === 0 ? <p className="text-xs text-outline py-4">No hay cambios registrados todavía.</p> : clientAudit.map((entry) => (
+                          <article key={entry.id} className="rounded-lg border border-outline-variant bg-surface p-3">
+                            <div className="flex justify-between gap-2 text-[10px] text-outline"><span>{entry.actor_name || entry.actor_role || 'Sistema'}</span><time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString('es-ES')}</time></div>
+                            <p className="text-xs text-on-surface mt-1">{entry.action === 'client.updated' ? 'Ficha de cliente actualizada' : entry.action}</p>
+                            <p className="text-[10px] text-outline mt-1">{Object.keys(entry.changes || {}).join(', ') || 'Sin detalle'}</p>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
                   </div>
 
                   {/* Timeline Principal */}
