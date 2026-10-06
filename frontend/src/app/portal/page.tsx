@@ -669,6 +669,7 @@ export default function PortalClientePage() {
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Botón destacado rápido para solicitar cita */}
           <button
+            type="button"
             onClick={() => setShowBookingModal(true)}
             className="h-8 sm:h-9 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
             title="Pedir cita con mi gestor"
@@ -702,7 +703,7 @@ export default function PortalClientePage() {
               <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 text-xs space-y-3 z-50 animate-in fade-in">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                   <h5 className="font-bold text-white text-xs">Avisos de tu Expediente</h5>
-                  <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-white">✕</button>
+                  <button type="button" aria-label="Cerrar notificaciones" onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-white">✕</button>
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {notificationsList.map((notif) => (
@@ -942,6 +943,7 @@ export default function PortalClientePage() {
 
               {/* Botón principal Solicitar Cita */}
               <button
+                type="button"
                 onClick={() => setShowBookingModal(true)}
                 className="h-11 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0 transform hover:-translate-y-0.5"
               >
@@ -1557,6 +1559,7 @@ export default function PortalClientePage() {
                 </div>
 
                 {latestInvoice.status !== 'pagada' && <button
+                  type="button"
                   onClick={() => {
                     const mensaje = encodeURIComponent(
                       `Hola, quiero pagar la factura ${portalInvoiceRef} de mi gestoría (importe ${portalInvoiceTotal} EUR). ¿Me confirmas las coordenadas para hacer el pago?`
