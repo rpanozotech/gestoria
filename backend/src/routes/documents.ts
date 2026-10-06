@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { query } from '../db/index.js';
+import { esTipoDocumentoPermitido } from '../utils/upload.js';
 
 const router = Router();
 
@@ -22,6 +23,9 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: 15 * 1024 * 1024 }, // 15 MB
+  fileFilter: (_req, file, callback) => {
+    callback(null, esTipoDocumentoPermitido(file));
+  },
 });
 
 // POST /api/documents/upload - Subir documento

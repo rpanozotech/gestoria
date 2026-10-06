@@ -146,6 +146,8 @@ export default function CRMClientesPage() {
   const [historyFilter, setHistoryFilter] = useState<'todos' | 'ia' | 'gestor' | 'sistema'>('todos');
   const [clientAudit, setClientAudit] = useState<any[]>([]);
   const [clientMessages, setClientMessages] = useState<any[]>([]);
+  const [clientActivityLoading, setClientActivityLoading] = useState(false);
+  const clientActivityRequestRef = useRef(0);
   const [clientMessageDraft, setClientMessageDraft] = useState('');
   const [clientMessageVisibility, setClientMessageVisibility] = useState<'internal' | 'client'>('internal');
   const [clientMessageSending, setClientMessageSending] = useState(false);
@@ -233,6 +235,32 @@ export default function CRMClientesPage() {
     documents: Array.isArray(client?.documents) ? client.documents : [],
   });
 
+  const loadClientActivity = async (clientId: string) => {
+    const requestId = ++clientActivityRequestRef.current;
+    setClientActivityLoading(true);
+    try {
+      const [auditResponse, messagesResponse] = await Promise.all([
+        apiFetch(`/clients/${clientId}/audit`),
+        apiFetch(`/client-messages/${clientId}`),
+      ]);
+      const [auditData, messageData] = await Promise.all([
+        auditResponse.ok ? auditResponse.json() : Promise.resolve({ audit: [] }),
+        messagesResponse.ok ? messagesResponse.json() : Promise.resolve({ messages: [] }),
+      ]);
+      if (requestId !== clientActivityRequestRef.current) return;
+      setClientAudit(Array.isArray(auditData.audit) ? auditData.audit : []);
+      setClientMessages(Array.isArray(messageData.messages) ? messageData.messages : []);
+    } catch {
+      if (requestId === clientActivityRequestRef.current) {
+        setClientAudit([]);
+        setClientMessages([]);
+        showToast('No se pudo cargar la actividad de esta ficha.', 'error');
+      }
+    } finally {
+      if (requestId === clientActivityRequestRef.current) setClientActivityLoading(false);
+    }
+  };
+
   const sendClientMessage = async () => {
     if (!selectedClient?.id || !clientMessageDraft.trim() || clientMessageSending) return;
     setClientMessageSending(true);
@@ -245,6 +273,7 @@ export default function CRMClientesPage() {
       const data = await response.json();
       setClientMessages((current) => [...current, data.message]);
       setClientMessageDraft('');
+      await loadClientActivity(String(selectedClient.id));
       showToast(clientMessageVisibility === 'client' ? 'Mensaje compartido con el cliente' : 'Nota interna guardada');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'No se pudo guardar el mensaje.', 'error');
@@ -261,6 +290,10 @@ export default function CRMClientesPage() {
     setShowPortalPassword(false);
     setEditedNotes(safeClient.notes || '');
     setIsEditingNotes(false);
+    setClientAudit([]);
+    setClientMessages([]);
+    setClientMessageDraft('');
+    setClientActivityLoading(false);
     setActive360Tab('resumen');
 
     // Inicializar chat IA del cliente si está vacío
@@ -299,13 +332,7 @@ export default function CRMClientesPage() {
           });
           setSelectedClient(completeClient);
           setClients((current) => current.map((item) => item.id === completeClient.id ? { ...item, ...completeClient } : item));
-          Promise.all([
-            apiFetch(`/clients/${client.id}/audit`).then((response) => response.ok ? response.json() : { audit: [] }),
-            apiFetch(`/client-messages/${client.id}`).then((response) => response.ok ? response.json() : { messages: [] }),
-          ]).then(([auditData, messageData]) => {
-            setClientAudit(Array.isArray(auditData.audit) ? auditData.audit : []);
-            setClientMessages(Array.isArray(messageData.messages) ? messageData.messages : []);
-          });
+          loadClientActivity(String(client.id));
         })
         .catch(() => showToast('No se pudo cargar la ficha completa desde PostgreSQL.'));
     }
@@ -3193,8 +3220,8 @@ export default function CRMClientesPage() {
                     <section className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4" aria-labelledby="crm-client-messages-title">
                       <h4 id="crm-client-messages-title" className="font-bold text-sm text-on-surface">Mensajes con el cliente</h4>
                       <p className="text-[11px] text-outline mt-1">Los mensajes visibles en el portal están marcados como compartidos. Las notas internas nunca se envían al cliente.</p>
-                      <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
-                        {clientMessages.length === 0 ? <p className="text-xs text-outline py-4">No hay mensajes compartidos.</p> : clientMessages.map((message) => (
+                      <div className="mt-3 space-y-2 max-h-64 overflow-y-auto" aria-busy={clientActivityLoading}>
+                        {clientActivityLoading ? <p className="text-xs text-outline py-4" role="status">Cargando actividad sincronizada…</p> : clientMessages.length === 0 ? <p className="text-xs text-outline py-4">No hay mensajes compartidos.</p> : clientMessages.map((message) => (
                           <article key={message.id} className="rounded-lg border border-outline-variant bg-surface p-3">
                             <div className="flex justify-between gap-2 text-[10px] text-outline"><span>{message.author_name || 'Gestor'}</span><time dateTime={message.created_at}>{new Date(message.created_at).toLocaleString('es-ES')}</time></div>
                             <p className="text-xs text-on-surface mt-1 whitespace-pre-wrap">{message.body}</p>

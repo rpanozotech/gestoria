@@ -6,6 +6,7 @@ import path from 'node:path';
 import multer from 'multer';
 import { query } from '../db/index.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { esTipoDocumentoPermitido } from '../utils/upload.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('cliente'));
@@ -23,7 +24,7 @@ const portalUpload = multer({
   }),
   limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (_req, file, callback) => {
-    callback(null, ['application/pdf', 'image/jpeg', 'image/png'].includes(file.mimetype));
+    callback(null, esTipoDocumentoPermitido(file));
   },
 });
 
