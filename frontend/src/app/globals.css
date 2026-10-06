@@ -1,8 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../../tailwind.config.mjs";
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -13,14 +12,45 @@
     --dutch-green: #6B8E23;
     --amber-fosco: #D97706;
     --surface-deep: #F8F9FF;
+
+    /* Shared semantic design tokens: public web, CRM and portal. */
+    --color-bg: #F8F9FF;
+    --color-surface: #FFFFFF;
+    --color-surface-muted: #EFF4FF;
+    --color-text: #0B1C30;
+    --color-text-muted: #45464D;
+    --color-border: #C6C6CD;
+    --color-primary: #2167D5;
+    --color-primary-strong: #003366;
+    --color-on-primary: #FFFFFF;
+    --color-accent: #149A9A;
+    --color-success: #1F7A46;
+    --color-warning: #9A5B00;
+    --color-danger: #BA1A1A;
+    --focus-ring: #2167D5;
+    --touch-target: 2.75rem;
   }
   html, body {
     margin: 0;
     padding: 0;
-    background-color: #f8f9ff;
-    color: #0b1c30;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-dmsans, 'Inter'), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
+  }
+
+  :where(button, a, input, select, textarea, summary):focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   /*
