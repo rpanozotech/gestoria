@@ -289,6 +289,7 @@ export default function CRMBackupPage() {
 
         {/* Botón Principal Destacado */}
         <button
+          type="button"
           onClick={handleCreateFullBackup}
           disabled={isCreatingFullBackup}
           className="h-10 px-5 bg-secondary hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 shrink-0 disabled:opacity-50"
@@ -407,6 +408,7 @@ export default function CRMBackupPage() {
               </p>
             </div>
             <button
+              type="button"
               onClick={() => handleDownloadCsv('clients')}
               disabled={exportingCsvType === 'clients'}
               className="h-8 px-3 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded-lg text-xs font-semibold text-on-surface flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
@@ -433,6 +435,7 @@ export default function CRMBackupPage() {
               </p>
             </div>
             <button
+              type="button"
               onClick={() => handleDownloadCsv('invoices')}
               disabled={exportingCsvType === 'invoices'}
               className="h-8 px-3 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded-lg text-xs font-semibold text-on-surface flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
@@ -459,6 +462,7 @@ export default function CRMBackupPage() {
               </p>
             </div>
             <button
+              type="button"
               onClick={() => handleDownloadCsv('quotes')}
               disabled={exportingCsvType === 'quotes'}
               className="h-8 px-3 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded-lg text-xs font-semibold text-on-surface flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
@@ -485,6 +489,7 @@ export default function CRMBackupPage() {
               </p>
             </div>
             <button
+              type="button"
               onClick={() => handleDownloadCsv('appointments')}
               disabled={exportingCsvType === 'appointments'}
               className="h-8 px-3 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded-lg text-xs font-semibold text-on-surface flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
@@ -511,6 +516,7 @@ export default function CRMBackupPage() {
               </p>
             </div>
             <button
+              type="button"
               onClick={() => handleDownloadCsv('dossiers')}
               disabled={exportingCsvType === 'dossiers'}
               className="h-8 px-3 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded-lg text-xs font-semibold text-on-surface flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
@@ -537,6 +543,7 @@ export default function CRMBackupPage() {
               </p>
             </div>
             <button
+              type="button"
               onClick={handleDownloadFullBackup}
               disabled={isExportingJson}
               className="h-8 px-3 bg-secondary hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs disabled:opacity-50"
@@ -626,6 +633,7 @@ export default function CRMBackupPage() {
 
           <div className="pt-4 border-t border-surface-container flex justify-end">
             <button
+              type="button"
               onClick={handleExecuteRestore}
               disabled={!importPreview || !hasDownloadedCurrentBackup || isImporting || isInspectingBackup}
               className="h-9 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-sm"
