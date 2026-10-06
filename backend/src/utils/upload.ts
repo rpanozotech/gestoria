@@ -10,3 +10,8 @@ export function esTipoDocumentoPermitido(file: { mimetype: string; originalname:
   const nombre = file.originalname.trim().toLowerCase();
   return extensiones.some((extension) => nombre.endsWith(extension));
 }
+
+export function nombreSeguroDocumento(originalname: string): string {
+  const basename = originalname.split(/[\\/]/).pop() || 'documento';
+  return basename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-180) || 'documento';
+}

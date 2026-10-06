@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { query } from '../db/index.js';
-import { esTipoDocumentoPermitido } from '../utils/upload.js';
+import { esTipoDocumentoPermitido, nombreSeguroDocumento } from '../utils/upload.js';
 
 const router = Router();
 
@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
+    cb(null, `${uniqueSuffix}-${nombreSeguroDocumento(file.originalname)}`);
   },
 });
 
