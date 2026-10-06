@@ -877,10 +877,12 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {/* Tabs */}
       <div className="flex border-b border-surface-container gap-2 overflow-x-auto whitespace-nowrap scrollbar-none">
         <button
+          type="button"
           onClick={() => {
             setActiveTab('ia_multi');
             setIsReviewMode(false);
           }}
+          aria-pressed={activeTab === 'ia_multi'}
           className={`pb-3 px-3 sm:px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 ${
             activeTab === 'ia_multi'
               ? 'border-secondary text-secondary'
@@ -893,7 +895,9 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('manual')}
+          aria-pressed={activeTab === 'manual'}
           className={`pb-3 px-3 sm:px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 ${
             activeTab === 'manual'
               ? 'border-secondary text-secondary'
@@ -1021,6 +1025,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
                         <button
                           type="button"
+                          aria-label={`Eliminar archivo ${file.name}`}
                           onClick={() => handleRemoveFile(file.id)}
                           className="text-outline hover:text-red-500 p-1"
                         >
@@ -1647,6 +1652,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             <span className="leading-relaxed">{aviso.texto}</span>
             <button
               type="button"
+              aria-label="Cerrar aviso"
               onClick={() => setAviso(null)}
               className="material-symbols-outlined text-sm shrink-0 opacity-60 hover:opacity-100"
             >
