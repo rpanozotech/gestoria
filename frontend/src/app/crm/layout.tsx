@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -110,6 +112,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     <div className="h-screen h-[100dvh] w-full bg-surface flex overflow-hidden">
       {/* Sidebar fijo a la izquierda en desktop, desplegable como cajón en tablet/móvil */}
       <aside
+        id="crm-sidebar"
+        aria-label="Navegación principal del CRM"
         className={`fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-surface-container-high z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
@@ -130,8 +134,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
+                aria-label="Cerrar menú de navegación"
                 className="lg:hidden p-1 rounded-md text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
-                title="Cerrar menú"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -145,7 +149,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Navigation links */}
-          <nav className="flex flex-col gap-1 px-3">
+          <nav aria-label="Navegación principal" className="flex flex-col gap-1 px-3">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -227,8 +231,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="crm-sidebar"
+              aria-label="Abrir menú de navegación"
               className="lg:hidden p-2 -ml-1 rounded-lg text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center shrink-0"
-              title="Abrir menú de navegación"
             >
               <span className="material-symbols-outlined text-[24px]">menu</span>
             </button>
@@ -264,8 +270,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                   setShowNotifications(!showNotifications);
                   setShowUserMenu(false);
                 }}
+                aria-label="Notificaciones"
+                aria-expanded={showNotifications}
+                aria-haspopup="menu"
                 className="h-9 w-9 flex items-center justify-center rounded-md text-on-surface-variant hover:bg-surface-container relative transition-colors"
-                title="Notificaciones"
               >
                 <span className="material-symbols-outlined text-[20px]">notifications</span>
                 {unreadCount > 0 && (
@@ -335,6 +343,9 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                   setShowUserMenu(!showUserMenu);
                   setShowNotifications(false);
                 }}
+                aria-label={`Menú de usuario de ${user?.full_name || 'Gestor'}`}
+                aria-expanded={showUserMenu}
+                aria-haspopup="menu"
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
                 <div className="w-8 h-8 rounded-full bg-primary-container text-white font-mono-data font-bold text-xs flex items-center justify-center shadow-sm">
@@ -435,7 +446,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-outline"
               />
-              <button onClick={() => setShowSearchModal(false)} className="text-outline hover:text-on-surface">
+              <button type="button" aria-label="Cerrar búsqueda" onClick={() => setShowSearchModal(false)} className="min-h-11 min-w-11 text-outline hover:text-on-surface">
                 <span className="material-symbols-outlined text-base">close</span>
               </button>
             </div>

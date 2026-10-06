@@ -56,7 +56,7 @@ export default function Navbar() {
           </Link>
 
           {/* NAV LINKS DESKTOP A PÁGINAS INDEPENDIENTES */}
-          <nav className="hidden lg:flex flex-1 min-w-0 items-center justify-center gap-2 xl:gap-3">
+          <nav aria-label="Navegación principal" className="hidden lg:flex flex-1 min-w-0 items-center justify-center gap-2 xl:gap-3">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -82,6 +82,8 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setLangMenuOpen(!langMenuOpen)}
+                aria-expanded={langMenuOpen}
+                aria-controls="language-menu"
                 className="h-9 sm:h-10 px-2 sm:px-2.5 flex items-center gap-1 rounded-xl border border-slate-200/90 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
                 aria-label="Seleccionar idioma"
               >
@@ -91,7 +93,7 @@ export default function Navbar() {
               </button>
 
               {langMenuOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div id="language-menu" role="menu" className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                   {[
                     { code: 'ES', label: 'Español 🇪🇸' },
                     { code: 'EN', label: 'English 🇬🇧' },
@@ -139,8 +141,10 @@ export default function Navbar() {
             {/* BOTÓN HAMBURGUESA MOBILE */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="public-mobile-menu"
               className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors"
-              aria-label="Abrir menú de navegación"
+              aria-label={mobileMenuOpen ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'}
             >
               <span className="material-symbols-outlined text-[22px]">
                 {mobileMenuOpen ? 'close' : 'menu'}
@@ -153,7 +157,7 @@ export default function Navbar() {
 
         {/* MENÚ MÓVIL DESPLEGABLE */}
         {mobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-slate-100 bg-white/95 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-150">
+          <div id="public-mobile-menu" role="navigation" aria-label="Navegación móvil" className="lg:hidden py-4 border-t border-slate-100 bg-white/95 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-150">
             <div className="flex flex-col space-y-2 pb-3">
               {navLinks.map((link) => (
                 <Link
