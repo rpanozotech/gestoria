@@ -900,7 +900,9 @@ export default function PortalClientePage() {
           ].map((t) => (
             <button
               key={t.id}
+              type="button"
               onClick={() => setActiveTab(t.id as any)}
+              aria-pressed={activeTab === t.id}
               className={`py-3 px-3.5 sm:px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                 activeTab === t.id
                   ? 'border-blue-500 text-blue-400 bg-blue-500/10'
@@ -953,7 +955,9 @@ export default function PortalClientePage() {
               {(['todas', 'proximas', 'completadas'] as const).map((filter) => (
                 <button
                   key={filter}
+                  type="button"
                   onClick={() => setAptFilter(filter)}
+                  aria-pressed={aptFilter === filter}
                   className={`px-3.5 py-1.5 rounded-lg font-bold capitalize transition-colors ${
                     aptFilter === filter
                       ? 'bg-blue-600 text-white shadow-xs'
