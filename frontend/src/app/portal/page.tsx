@@ -446,17 +446,17 @@ export default function PortalClientePage() {
       id: String(appointment.id),
       appointment_date: String(appointment.appointment_date).slice(0, 10),
       appointment_time: String(appointment.appointment_time).slice(0, 8),
-      client_name: appointment.client_name || client.full_name,
+      client_name: appointment.client_name || displayClientName,
       client_phone: appointment.client_phone || client.phone,
       status: appointment.status || 'pendiente',
       advisor: client.advisor || 'Tu gestor',
     })));
-  }, [portalClientData, client.full_name, client.phone, client.advisor]);
+  }, [portalClientData, displayClientName, client.phone, client.advisor]);
 
   // Citas pertenecientes al cliente actualmente seleccionado
   const clientAppointments = allAppointments.filter((a) => {
     const cleanApt = (a.client_name || '').trim().toLowerCase();
-    const cleanClient = client.full_name.trim().toLowerCase();
+    const cleanClient = displayClientName.trim().toLowerCase();
     return cleanApt === cleanClient || cleanApt.includes(cleanClient) || cleanClient.includes(cleanApt);
   });
 
@@ -500,7 +500,7 @@ export default function PortalClientePage() {
         id: String(data.appointment.id),
         appointment_date: String(data.appointment.appointment_date).slice(0, 10),
         appointment_time: String(data.appointment.appointment_time).slice(0, 8),
-        client_name: client.full_name,
+        client_name: displayClientName,
         client_phone: client.phone,
         advisor: client.advisor || 'Tu gestor',
       };
@@ -543,7 +543,7 @@ export default function PortalClientePage() {
     {
       id: 'm1',
       sender: 'ia',
-      text: `👋 ¡Hola ${client.full_name.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest 24/7**.\n\nTengo acceso a tu expediente activo **${client.dossier_code}** y puedo responder cualquier duda sobre tu **devolución de impuestos**, el cobro de tu **Zorgtoeslag**, agendar una **cita con tu gestor** o descifrar las cartas de la **Belastingdienst**.\n\n¿En qué puedo ayudarte?`,
+      text: `👋 ¡Hola ${displayClientName.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest 24/7**.\n\nTengo acceso a tu expediente activo **${client.dossier_code}** y puedo responder cualquier duda sobre tu **devolución de impuestos**, el cobro de tu **Zorgtoeslag**, agendar una **cita con tu gestor** o descifrar las cartas de la **Belastingdienst**.\n\n¿En qué puedo ayudarte?`,
       time: '10:00',
     },
   ]);
@@ -564,7 +564,7 @@ export default function PortalClientePage() {
       {
         id: `m-init-${client.id}`,
         sender: 'ia',
-        text: `👋 ¡Hola ${client.full_name.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest**.\n\nTengo en pantalla tu expediente **${client.dossier_code}** (*${client.dossier_title}*). Tu saldo estimado a devolver es de **€ ${formatThousands(client.refund_amount)}** y tu próximo subsidio mensual es de **€ ${formatThousands(client.monthly_zorg)}/mes**.\n\n¿En qué te puedo asesorar?`,
+        text: `👋 ¡Hola ${displayClientName.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest**.\n\nTengo en pantalla tu expediente **${client.dossier_code}** (*${client.dossier_title}*). Tu saldo estimado a devolver es de **€ ${formatThousands(client.refund_amount)}** y tu próximo subsidio mensual es de **€ ${formatThousands(client.monthly_zorg)}/mes**.\n\n¿En qué te puedo asesorar?`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
@@ -881,7 +881,7 @@ export default function PortalClientePage() {
               </span>
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
-              <span className="text-slate-400 font-mono-data">BSN: {client.bsn}</span>
+              <span className="text-slate-400 font-mono-data">BSN: {displayBsn}</span>
               <button onClick={() => setActiveTab('documentos')} className="text-purple-400 hover:underline font-semibold">
                 Subir código
               </button>
@@ -1603,7 +1603,7 @@ export default function PortalClientePage() {
                     </span>
                   </div>
                   <h3 className="text-lg font-bold text-white mt-1.5">{client.dossier_title}</h3>
-                  <p className="text-xs text-slate-400">Cliente: {client.full_name} · BSN: {client.bsn}</p>
+                  <p className="text-xs text-slate-400">Cliente: {displayClientName} · BSN: {displayBsn}</p>
                 </div>
 
                 <div className="text-left sm:text-right">
