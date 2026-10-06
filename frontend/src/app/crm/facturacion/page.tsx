@@ -450,13 +450,13 @@ export default function CRMFacturacionPage() {
             <table className="w-full text-left text-xs">
               <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
                 <tr>
-                  <th className="px-5 py-3">Nº Factura</th>
-                  <th className="px-5 py-3">Cliente / BSN</th>
-                  <th className="px-5 py-3">Concepto Principal</th>
-                  <th className="px-5 py-3">Estado de Pago</th>
-                  <th className="px-5 py-3">Vencimiento</th>
-                  <th className="px-5 py-3 text-right">Total (Inc. BTW)</th>
-                  <th className="px-5 py-3 text-right">Acción</th>
+                  <th scope="col" className="px-5 py-3">Nº Factura</th>
+                  <th scope="col" className="px-5 py-3">Cliente / BSN</th>
+                  <th scope="col" className="px-5 py-3">Concepto Principal</th>
+                  <th scope="col" className="px-5 py-3">Estado de Pago</th>
+                  <th scope="col" className="px-5 py-3">Vencimiento</th>
+                  <th scope="col" className="px-5 py-3 text-right">Total (Inc. BTW)</th>
+                  <th scope="col" className="px-5 py-3 text-right">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container">
@@ -573,13 +573,13 @@ export default function CRMFacturacionPage() {
             <table className="w-full text-left text-xs">
               <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
                 <tr>
-                  <th className="px-5 py-3">Nº Presupuesto</th>
-                  <th className="px-5 py-3">Cliente</th>
-                  <th className="px-5 py-3">Detalle</th>
-                  <th className="px-5 py-3">Estado</th>
-                  <th className="px-5 py-3">Válido Hasta</th>
-                  <th className="px-5 py-3 text-right">Importe Total</th>
-                  <th className="px-5 py-3 text-right">Acción</th>
+                  <th scope="col" className="px-5 py-3">Nº Presupuesto</th>
+                  <th scope="col" className="px-5 py-3">Cliente</th>
+                  <th scope="col" className="px-5 py-3">Detalle</th>
+                  <th scope="col" className="px-5 py-3">Estado</th>
+                  <th scope="col" className="px-5 py-3">Válido Hasta</th>
+                  <th scope="col" className="px-5 py-3 text-right">Importe Total</th>
+                  <th scope="col" className="px-5 py-3 text-right">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container">
@@ -705,6 +705,7 @@ export default function CRMFacturacionPage() {
               <button
                 type="button"
                 onClick={() => setShowNewQuoteModal(false)}
+                aria-label="Cerrar nuevo presupuesto"
                 className="text-outline hover:text-on-surface p-1 rounded-md hover:bg-surface-container"
               >
                 <span className="material-symbols-outlined text-base">close</span>
@@ -955,6 +956,7 @@ export default function CRMFacturacionPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedDoc(null)}
+                  aria-label="Cerrar documento"
                   className="text-outline hover:text-on-surface p-1 sm:p-1.5 rounded-lg hover:bg-surface"
                 >
                   <span className="material-symbols-outlined text-base sm:text-lg">close</span>
@@ -1055,11 +1057,11 @@ export default function CRMFacturacionPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container">
                     <tr>
-                      <th className="px-4 py-2.5">Descripción del Trámite / Servicio</th>
-                      <th className="px-4 py-2.5 text-center">Cant.</th>
-                      <th className="px-4 py-2.5 text-right">Base (€)</th>
-                      <th className="px-4 py-2.5 text-center">BTW</th>
-                      <th className="px-4 py-2.5 text-right">Total (€)</th>
+                      <th scope="col" className="px-4 py-2.5">Descripción del Trámite / Servicio</th>
+                      <th scope="col" className="px-4 py-2.5 text-center">Cant.</th>
+                      <th scope="col" className="px-4 py-2.5 text-right">Base (€)</th>
+                      <th scope="col" className="px-4 py-2.5 text-center">BTW</th>
+                      <th scope="col" className="px-4 py-2.5 text-right">Total (€)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-container">

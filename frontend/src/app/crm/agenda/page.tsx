@@ -469,7 +469,9 @@ export default function CRMAgendaPage() {
           {/* Navegador de mes */}
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={handlePrevMonth}
+              aria-label="Mes anterior"
               className="h-7 w-7 rounded-md border border-outline-variant hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors"
               title="Mes anterior"
             >
@@ -479,14 +481,18 @@ export default function CRMAgendaPage() {
               {MONTH_NAMES[calendarMonth]} {calendarYear}
             </span>
             <button
+              type="button"
               onClick={handleNextMonth}
+              aria-label="Mes siguiente"
               className="h-7 w-7 rounded-md border border-outline-variant hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors"
               title="Mes siguiente"
             >
               <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
             <button
+              type="button"
               onClick={handleGoToDefaultOct2026}
+              aria-label="Volver al mes actual"
               className="h-7 px-2 border border-outline-variant hover:bg-surface-container text-[11px] font-semibold rounded-md text-on-surface flex items-center gap-1 ml-0.5"
               title="Volver a mes actual"
             >
@@ -521,7 +527,9 @@ export default function CRMAgendaPage() {
           {/* Selector de modo: Mensual / Lista */}
           <div className="flex items-center p-0.5 bg-surface-container rounded-md border border-outline-variant text-xs">
             <button
+              type="button"
               onClick={() => setViewMode('calendario')}
+              aria-pressed={viewMode === 'calendario'}
               className={`p-1 px-2 rounded font-semibold text-[11px] flex items-center gap-1 transition-all ${
                 viewMode === 'calendario'
                   ? 'bg-surface-container-lowest text-secondary shadow-xs'
@@ -532,7 +540,9 @@ export default function CRMAgendaPage() {
               <span className="hidden sm:inline">Mensual</span>
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('lista')}
+              aria-pressed={viewMode === 'lista'}
               className={`p-1 px-2 rounded font-semibold text-[11px] flex items-center gap-1 transition-all ${
                 viewMode === 'lista'
                   ? 'bg-surface-container-lowest text-secondary shadow-xs'
@@ -621,12 +631,26 @@ export default function CRMAgendaPage() {
                 return (
                   <div
                     key={cell.dateStr}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${formatLongDate(cell.dateStr)}${hasApts ? `, ${dayApts.length} cita(s)` : ', sin citas'}`}
                     onClick={() => {
                       setSelectedDate(cell.dateStr);
                       const [y, m] = cell.dateStr.split('-').map(Number);
                       if (y !== calendarYear || m - 1 !== calendarMonth) {
                         setCalendarYear(y);
                         setCalendarMonth(m - 1);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setSelectedDate(cell.dateStr);
+                        const [y, m] = cell.dateStr.split('-').map(Number);
+                        if (y !== calendarYear || m - 1 !== calendarMonth) {
+                          setCalendarYear(y);
+                          setCalendarMonth(m - 1);
+                        }
                       }
                     }}
                     className={`h-full min-h-0 p-1 sm:p-1.5 flex flex-col justify-between cursor-pointer select-none transition-all relative overflow-hidden ${
@@ -1111,6 +1135,7 @@ export default function CRMAgendaPage() {
               <button
                 type="button"
                 onClick={() => setShowNewAptModal(false)}
+                aria-label="Cerrar nueva cita"
                 className="text-outline hover:text-on-surface"
               >
                 <span className="material-symbols-outlined text-base">close</span>
