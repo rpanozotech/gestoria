@@ -55,6 +55,16 @@ export async function migrateDatabase() {
       unit_price DECIMAL(10,2) NOT NULL DEFAULT 0,
       total DECIMAL(10,2) NOT NULL DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS client_audit_log (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      actor_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      actor_role VARCHAR(50),
+      action VARCHAR(80) NOT NULL,
+      changes JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_client_audit_client_created ON client_audit_log(client_id, created_at DESC);
   `);
   for (const s of DEFAULT_SERVICES) {
     await pool.query(`

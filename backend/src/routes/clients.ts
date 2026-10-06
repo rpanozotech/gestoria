@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { query } from '../db/index.js';
+import { diffChangedFields } from '../utils/audit.js';
 
 const router = Router();
 
@@ -285,6 +286,12 @@ router.put('/:id', async (req: Request, res: Response) => {
       notes,
     } = req.body;
 
+    const previousResult = await query(
+      'SELECT full_name, email, phone, bsn, id_document_number, nationality, address, city, postal_code, iban, digid_status, status, notes FROM clients WHERE id = $1',
+      [id],
+    );
+    if (previousResult.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
+
     const sql = `
       UPDATE clients SET
         full_name = COALESCE($1, full_name),
@@ -326,10 +333,40 @@ router.put('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Cliente no encontrado' });
     }
 
+    const auditFields = ['full_name', 'email', 'phone', 'bsn', 'id_document_number', 'nationality', 'address', 'city', 'postal_code', 'iban', 'digid_status', 'status', 'notes'] as const;
+    const changes = diffChangedFields(previousResult.rows[0], result.rows[0], auditFields);
+    if (Object.keys(changes).length > 0) {
+      await query(
+        `INSERT INTO client_audit_log (client_id, actor_user_id, actor_role, action, changes)
+         VALUES ($1, $2, $3, 'client.updated', $4::jsonb)`,
+        [id, req.user?.id || null, req.user?.role || null, JSON.stringify(changes)],
+      );
+    }
+
     res.json({ client: result.rows[0], message: 'Cliente actualizado correctamente' });
   } catch (error) {
     console.error('Error al actualizar cliente:', error);
     res.status(500).json({ error: 'Error al actualizar datos' });
+  }
+});
+
+// GET /api/clients/:id/audit - Historial de cambios de la ficha
+router.get('/:id/audit', async (req: Request, res: Response) => {
+  try {
+    const result = await query(
+      `SELECT a.id, a.action, a.changes, a.actor_role, a.created_at,
+              u.full_name AS actor_name
+       FROM client_audit_log a
+       LEFT JOIN users u ON u.id = a.actor_user_id
+       WHERE a.client_id = $1
+       ORDER BY a.created_at DESC
+       LIMIT 200`,
+      [req.params.id],
+    );
+    res.json({ audit: result.rows });
+  } catch (error) {
+    console.error('Error al cargar historial del cliente:', error);
+    res.status(500).json({ error: 'No se pudo cargar el historial' });
   }
 });
 
