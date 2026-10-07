@@ -725,7 +725,7 @@ export default function PortalClientePage() {
             >
               <span className="material-symbols-outlined text-[19px]">notifications</span>
               {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white text-[9px] font-bold flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F28C28] text-white text-[9px] font-bold flex items-center justify-center animate-pulse">
                   {unreadNotifications}
                 </span>
               )}
@@ -745,7 +745,7 @@ export default function PortalClientePage() {
                       className={`p-2.5 rounded-xl border space-y-1 ${
                         notif.type === 'success'
                           ? 'bg-emerald-500/10 border-emerald-500/20'
-                          : 'bg-blue-500/10 border-blue-500/20'
+                          : 'bg-[#F28C28]/10 border-blue-500/20'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -795,11 +795,11 @@ export default function PortalClientePage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 space-y-6">
         {/* BANNER FINTECH DE BIENVENIDA */}
         <div className="bg-gradient-to-r from-blue-900/60 via-indigo-950/70 to-slate-900 border border-slate-800 p-6 sm:p-7 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-0"></div>
+          <div className="absolute top-0 right-0 w-80 h-80 bg-[#F28C28]/10 rounded-full blur-3xl pointer-events-none -z-0"></div>
 
           <div className="space-y-2 relative z-10">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.8 rounded-full bg-blue-500/20 text-blue-300 font-mono-data text-[10px] font-bold border border-blue-400/30">
+              <span className="px-2.5 py-0.8 rounded-full bg-[#F28C28]/20 text-blue-300 font-mono-data text-[10px] font-bold border border-blue-400/30">
                 {client.dossier_code}
               </span>
               <span className="text-xs font-mono-data text-slate-400">
@@ -920,13 +920,10 @@ export default function PortalClientePage() {
         {/* ========================================================================= */}
         <div className="flex border-b border-slate-800 gap-1 overflow-x-auto text-xs font-bold no-scrollbar">
           {[
-            { id: 'resumen', icon: 'assignment', label: 'Mi Expediente & Estado' },
-            { id: 'citas', icon: 'event', label: 'Mis Citas & Solicitar', badge: `${clientAppointments.length}` },
-            { id: 'ia', icon: 'smart_toy', label: 'Asistente IA 24/7' },
-            { id: 'toeslagen', icon: 'health_and_safety', label: 'Subsidios & Toeslagen Hub' },
-            { id: 'facturas', icon: 'chat', label: 'Facturas & Pago WhatsApp' },
-            { id: 'documentos', icon: 'folder_shared', label: 'Bóveda de Documentos' },
-            { id: 'mensajes', icon: 'forum', label: 'Mensajes con tu gestor', badge: `${portalMessages.length}` },
+            { id: 'resumen', icon: 'home', label: 'Inicio' },
+            { id: 'citas', icon: 'event', label: 'Citas', badge: `${clientAppointments.length}` },
+            { id: 'documentos', icon: 'folder_shared', label: 'Documentos' },
+            { id: 'mensajes', icon: 'forum', label: 'Mensajes', badge: `${portalMessages.length}` },
           ].map((t) => (
             <button
               key={t.id}
@@ -935,14 +932,14 @@ export default function PortalClientePage() {
               aria-pressed={activeTab === t.id}
               className={`py-3 px-3.5 sm:px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                 activeTab === t.id
-                  ? 'border-blue-500 text-blue-400 bg-blue-500/10'
+                  ? 'border-[#F28C28] text-[#F28C28] bg-[#F28C28]/10'
                   : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
               <span className="material-symbols-outlined text-[18px]">{t.icon}</span>
               <span>{t.label}</span>
               {t.badge && (
-                <span className="px-1.5 py-0.2 bg-blue-500 text-white text-[9px] font-extrabold rounded-full">
+                <span className="px-1.5 py-0.2 bg-[#F28C28] text-white text-[9px] font-extrabold rounded-full">
                   {t.badge}
                 </span>
               )}
@@ -986,7 +983,7 @@ export default function PortalClientePage() {
             <div className="bg-[#0B1F33] p-6 rounded-3xl border border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-data text-xs font-bold">
+                  <span className="px-2.5 py-0.5 rounded bg-[#F28C28]/20 text-blue-300 font-mono-data text-xs font-bold">
                     AGENDA DEL CLIENTE
                   </span>
                   <span className="text-xs text-slate-400">Asesor: <strong>{client.advisor}</strong></span>
@@ -1167,7 +1164,7 @@ export default function PortalClientePage() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-sm text-white">Progreso de Tramitación: {client.dossier_code}</h3>
-                    <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-data text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded bg-[#F28C28]/20 text-blue-300 font-mono-data text-[10px] font-bold">
                       {client.dossier_progress}% completado
                     </span>
                   </div>
@@ -1217,10 +1214,10 @@ export default function PortalClientePage() {
 
                 {/* Hito 3 */}
                 <div className="flex items-start gap-3.5">
-                  <div className="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 animate-pulse shadow-md">
+                  <div className="w-7 h-7 rounded-full bg-[#F28C28] text-white flex items-center justify-center shrink-0 animate-pulse shadow-md">
                     <span className="material-symbols-outlined text-[16px]">hourglass_top</span>
                   </div>
-                  <div className="bg-blue-500/10 p-3.5 rounded-xl border border-blue-500/30 flex-1 space-y-1.5">
+                  <div className="bg-[#F28C28]/10 p-3.5 rounded-xl border border-blue-500/30 flex-1 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <h5 className="font-bold text-xs sm:text-sm text-blue-300">
                         3. Espera de carta física postal con código DigiD
@@ -1405,7 +1402,7 @@ export default function PortalClientePage() {
                           }
                           setActiveTab(msg.suggestedAction!.tab);
                         }}
-                        className="px-3.5 py-1.5 rounded-lg bg-blue-500/20 hover:bg-[#C96F16]/30 text-blue-300 border border-blue-400/30 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                        className="px-3.5 py-1.5 rounded-lg bg-[#F28C28]/20 hover:bg-[#C96F16]/30 text-blue-300 border border-blue-400/30 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
                       >
                         <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
                         <span>{msg.suggestedAction.label}</span>
@@ -1489,10 +1486,10 @@ export default function PortalClientePage() {
               {/* Tarjeta 1: Zorgtoeslag */}
               <div className="bg-[#0B1F33] p-6 rounded-2xl border border-blue-500/50 shadow-lg space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#F28C28]/20 text-blue-400 flex items-center justify-center">
                     <span className="material-symbols-outlined text-2xl">medical_services</span>
                   </div>
-                  <span className="px-2.5 py-1 bg-blue-500/20 text-blue-300 text-[10px] font-bold rounded-full border border-blue-400/30">
+                  <span className="px-2.5 py-1 bg-[#F28C28]/20 text-blue-300 text-[10px] font-bold rounded-full border border-blue-400/30">
                     EN TRÁMITE OFICIAL
                   </span>
                 </div>
@@ -1595,7 +1592,7 @@ export default function PortalClientePage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-data text-xs font-bold">
+                    <span className="px-2.5 py-0.5 rounded bg-[#F28C28]/20 text-blue-300 font-mono-data text-xs font-bold">
                       FACTURA {portalInvoiceRef}
                     </span>
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">
@@ -1613,7 +1610,7 @@ export default function PortalClientePage() {
               </div>
 
               <div className="space-y-5">
-                <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <div className="flex items-start gap-3 p-4 bg-[#F28C28]/10 border border-blue-500/20 rounded-xl">
                   <span className="material-symbols-outlined text-blue-400 text-lg shrink-0 mt-0.5">info</span>
                   <p className="text-xs text-slate-300 leading-relaxed">
                     El pago se coordina directamente con tu gestor por WhatsApp. Al pulsar el
@@ -1662,7 +1659,7 @@ export default function PortalClientePage() {
           <div className="space-y-6">
             {/* Zona de subida */}
             <div className="bg-[#0B1F33] p-8 rounded-3xl border-2 border-dashed border-slate-700 text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mx-auto border border-blue-500/20">
+              <div className="w-14 h-14 rounded-2xl bg-[#F28C28]/10 text-blue-400 flex items-center justify-center mx-auto border border-blue-500/20">
                 <span className="material-symbols-outlined text-3xl">document_scanner</span>
               </div>
               <div className="max-w-md mx-auto">
@@ -1681,7 +1678,7 @@ export default function PortalClientePage() {
               />
 
               {isScanningFile ? (
-                <div className="p-4 bg-blue-500/10 text-blue-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 max-w-md mx-auto">
+                <div className="p-4 bg-[#F28C28]/10 text-blue-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 max-w-md mx-auto">
                   <span className="material-symbols-outlined animate-spin text-lg">sync</span>
                   <span>Guardando documento...</span>
                 </div>
@@ -1714,7 +1711,7 @@ export default function PortalClientePage() {
                     className="p-3.5 bg-slate-800/60 rounded-xl border border-slate-700/60 flex items-center justify-between gap-4 hover:border-slate-600 transition-colors"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-[#F28C28]/20 text-blue-400 flex items-center justify-center shrink-0">
                         <span className="material-symbols-outlined text-[20px]">description</span>
                       </div>
                       <div className="min-w-0">
@@ -1813,7 +1810,7 @@ export default function PortalClientePage() {
                       onClick={() => setBookingModality(m.id as any)}
                       className={`p-2.5 rounded-xl border font-bold flex flex-col items-center justify-center gap-1 transition-all ${
                         bookingModality === m.id
-                          ? 'border-blue-500 bg-blue-500/20 text-blue-300 shadow-sm'
+                          ? 'border-blue-500 bg-[#F28C28]/20 text-blue-300 shadow-sm'
                           : 'border-slate-800 bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
                       }`}
                     >
