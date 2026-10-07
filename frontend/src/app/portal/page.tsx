@@ -648,14 +648,14 @@ export default function PortalClientePage() {
   if (!portalClientData) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
-        <section className="max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center shadow-xl">
+        <section className="max-w-md rounded-2xl border border-slate-800 bg-[#0B1F33] p-8 text-center shadow-xl">
           <span className="material-symbols-outlined text-4xl text-amber-400">lock</span>
           <h1 className="mt-4 text-xl font-bold">Sesión de cliente no disponible</h1>
           <p className="mt-2 text-sm text-slate-300">Vuelve a iniciar sesión para acceder a tu expediente.</p>
           <button
             type="button"
             onClick={() => router.replace('/portal/login')}
-            className="mt-6 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold hover:bg-blue-500"
+            className="mt-6 rounded-lg bg-[#F28C28] px-4 py-2 text-sm font-bold hover:bg-[#C96F16]"
           >
             Ir al acceso del portal
           </button>
@@ -665,7 +665,7 @@ export default function PortalClientePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B1F33] text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased">
+    <div className="min-h-screen bg-[#0B1F33] text-slate-100 flex flex-col selection:bg-[#F28C28] selection:text-white font-sans antialiased">
       {/* Toast flotante */}
       {toastMsg && (
         <div className="fixed top-20 right-6 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 border border-emerald-400">
@@ -720,7 +720,7 @@ export default function PortalClientePage() {
                 setShowNotifications(!showNotifications);
                 setUnreadNotifications(0);
               }}
-              className="w-9 h-9 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition-colors relative"
+              className="w-9 h-9 rounded-lg border border-slate-800 bg-[#0B1F33] hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition-colors relative"
               title="Notificaciones oficiales"
             >
               <span className="material-symbols-outlined text-[19px]">notifications</span>
@@ -733,7 +733,7 @@ export default function PortalClientePage() {
 
             {/* Popover de Notificaciones */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 text-xs space-y-3 z-50 animate-in fade-in">
+              <div className="absolute right-0 mt-2 w-80 bg-[#0B1F33] border border-slate-800 rounded-2xl shadow-2xl p-4 text-xs space-y-3 z-50 animate-in fade-in">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                   <h5 className="font-bold text-white text-xs">Avisos de tu Expediente</h5>
                   <button type="button" aria-label="Cerrar notificaciones" onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-white">✕</button>
@@ -827,7 +827,7 @@ export default function PortalClientePage() {
             <button
               type="button"
               onClick={() => setActiveTab('ia')}
-              className="h-10 sm:h-11 px-4 border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-xl transition-colors flex items-center gap-2"
+              className="h-10 sm:h-11 px-4 border border-slate-700 bg-[#0B1F33]/80 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-xl transition-colors flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[18px] text-blue-400">smart_toy</span>
               <span>Consultar Asistente IA</span>
@@ -840,7 +840,7 @@ export default function PortalClientePage() {
         {/* ========================================================================= */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Devolución M-Form */}
-          <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
+          <div className="bg-[#0B1F33]/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Devolución Estimada</span>
               <span className="material-symbols-outlined text-blue-400 text-lg">account_balance</span>
@@ -855,7 +855,7 @@ export default function PortalClientePage() {
           </div>
 
           {/* Card 2: Subsidios Mensuales Toeslagen */}
-          <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
+          <div className="bg-[#0B1F33]/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Subsidio Mensual Activo</span>
               <span className="material-symbols-outlined text-emerald-400 text-lg">health_and_safety</span>
@@ -870,7 +870,7 @@ export default function PortalClientePage() {
           </div>
 
           {/* Card 3: DigiD y BSN */}
-          <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
+          <div className="bg-[#0B1F33]/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Identidad DigiD</span>
               <span className="material-symbols-outlined text-purple-400 text-lg">fingerprint</span>
@@ -889,7 +889,7 @@ export default function PortalClientePage() {
           </div>
 
           {/* Card 4: Próxima Cita & Acción Rápida */}
-          <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
+          <div className="bg-[#0B1F33]/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Próxima Asesoría</span>
               <span className="material-symbols-outlined text-amber-400 text-lg">calendar_month</span>
@@ -952,15 +952,15 @@ export default function PortalClientePage() {
 
         {activeTab === 'mensajes' && (
           <section aria-labelledby="portal-messages-title" className="space-y-4">
-            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800">
+            <div className="bg-[#0B1F33] p-6 rounded-3xl border border-slate-800">
               <h2 id="portal-messages-title" className="text-xl font-extrabold text-white">Mensajes con tu gestor</h2>
               <p className="text-xs text-slate-400 mt-1">Aquí solo aparecen mensajes compartidos contigo. Las notas internas del CRM nunca se muestran.</p>
             </div>
             <div className="space-y-3">
               {portalMessages.length === 0 ? (
-                <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8 text-center text-sm text-slate-400">Todavía no hay mensajes.</div>
+                <div className="bg-[#0B1F33] rounded-2xl border border-slate-800 p-8 text-center text-sm text-slate-400">Todavía no hay mensajes.</div>
               ) : portalMessages.map((message) => (
-                <article key={message.id} className="bg-slate-900 rounded-2xl border border-slate-800 p-4">
+                <article key={message.id} className="bg-[#0B1F33] rounded-2xl border border-slate-800 p-4">
                   <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400">
                     <span>{message.author_name || 'Tu gestor'}</span>
                     <time dateTime={message.created_at}>{new Date(message.created_at).toLocaleString('es-ES')}</time>
@@ -969,10 +969,10 @@ export default function PortalClientePage() {
                 </article>
               ))}
             </div>
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4">
+            <div className="bg-[#0B1F33] rounded-2xl border border-slate-800 p-4">
               <label htmlFor="portal-message-draft" className="block text-xs font-bold text-slate-300 mb-2">Escribe a tu gestor</label>
               <textarea id="portal-message-draft" value={portalMessageDraft} onChange={(event) => setPortalMessageDraft(event.target.value)} rows={4} maxLength={2000} className="w-full rounded-xl bg-slate-950 border border-slate-700 text-sm text-white p-3" placeholder="Escribe tu consulta..." />
-              <button type="button" onClick={sendPortalMessage} disabled={!portalMessageDraft.trim() || portalMessageSending} className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold disabled:opacity-50">{portalMessageSending ? 'Enviando…' : 'Enviar mensaje'}</button>
+              <button type="button" onClick={sendPortalMessage} disabled={!portalMessageDraft.trim() || portalMessageSending} className="mt-3 px-4 py-2 rounded-xl bg-[#F28C28] text-white text-xs font-bold disabled:opacity-50">{portalMessageSending ? 'Enviando…' : 'Enviar mensaje'}</button>
             </div>
           </section>
         )}
@@ -983,7 +983,7 @@ export default function PortalClientePage() {
         {activeTab === 'citas' && (
           <div className="space-y-6">
             {/* Header de la sección de citas */}
-            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-[#0B1F33] p-6 rounded-3xl border border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-data text-xs font-bold">
@@ -1018,8 +1018,8 @@ export default function PortalClientePage() {
                   aria-pressed={aptFilter === filter}
                   className={`px-3.5 py-1.5 rounded-lg font-bold capitalize transition-colors ${
                     aptFilter === filter
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                      ? 'bg-[#F28C28] text-white shadow-xs'
+                      : 'bg-[#0B1F33] text-slate-400 hover:text-white border border-slate-800'
                   }`}
                 >
                   {filter === 'todas' ? 'Todas las Citas' : filter === 'proximas' ? 'Próximas Sesiones' : 'Completadas'}
@@ -1040,8 +1040,8 @@ export default function PortalClientePage() {
                     key={apt.id}
                     className={`p-5 rounded-2xl border transition-all space-y-3 ${
                       apt.status === 'completada'
-                        ? 'bg-slate-900/60 border-slate-800 opacity-75'
-                        : 'bg-slate-900 border-slate-800 hover:border-slate-700 shadow-md'
+                        ? 'bg-[#0B1F33]/60 border-slate-800 opacity-75'
+                        : 'bg-[#0B1F33] border-slate-800 hover:border-slate-700 shadow-md'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1049,7 +1049,7 @@ export default function PortalClientePage() {
                         <div
                           className={`p-3 rounded-xl text-center min-w-[75px] shrink-0 font-mono-data ${
                             apt.modality === 'online_meet'
-                              ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                              ? 'bg-[#F28C28]/20 text-blue-300 border border-blue-500/30'
                               : apt.modality === 'llamada'
                               ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30'
                               : 'bg-slate-800 text-slate-300 border border-slate-700'
@@ -1106,7 +1106,7 @@ export default function PortalClientePage() {
                           <button
                             type="button"
                             onClick={() => window.open('https://meet.google.com', '_blank')}
-                            className="h-9 px-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+                            className="h-9 px-3.5 bg-[#F28C28] hover:bg-[#C96F16] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
                           >
                             <span className="material-symbols-outlined text-[16px]">video_call</span>
                             <span>Unirse a Google Meet</span>
@@ -1136,7 +1136,7 @@ export default function PortalClientePage() {
                 ))}
 
               {clientAppointments.length === 0 && (
-                <div className="p-12 text-center bg-slate-900 rounded-3xl border border-dashed border-slate-800 space-y-3">
+                <div className="p-12 text-center bg-[#0B1F33] rounded-3xl border border-dashed border-slate-800 space-y-3">
                   <span className="material-symbols-outlined text-4xl text-slate-600">event_busy</span>
                   <h4 className="font-bold text-white text-base">No tienes citas registradas actualmente</h4>
                   <p className="text-xs text-slate-400 max-w-sm mx-auto">
@@ -1145,7 +1145,7 @@ export default function PortalClientePage() {
                   <button
                     type="button"
                     onClick={() => setShowBookingModal(true)}
-                    className="mt-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
+                    className="mt-2 px-5 py-2.5 bg-[#F28C28] hover:bg-[#C96F16] text-white rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2"
                   >
                     <span className="material-symbols-outlined text-[18px]">calendar_month</span>
                     <span>Solicitar mi Primera Cita</span>
@@ -1161,7 +1161,7 @@ export default function PortalClientePage() {
         {/* ========================================================================= */}
         {activeTab === 'resumen' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-8 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm space-y-6">
+            <div className="lg:col-span-8 bg-[#0B1F33] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-6">
               {/* Barra de progreso visual */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -1233,7 +1233,7 @@ export default function PortalClientePage() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('documentos')}
-                      className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-lg transition-colors inline-flex items-center gap-1 shadow-2xs"
+                      className="px-3 py-1 bg-[#F28C28] hover:bg-[#C96F16] text-white text-[11px] font-bold rounded-lg transition-colors inline-flex items-center gap-1 shadow-2xs"
                     >
                       <span className="material-symbols-outlined text-[14px]">upload</span>
                       <span>Subir Carta Ahora</span>
@@ -1263,7 +1263,7 @@ export default function PortalClientePage() {
 
             {/* Columna Derecha: Tarjeta de tu Asesor Personal */}
             <div className="lg:col-span-4 space-y-6">
-              <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4">
+              <div className="bg-[#0B1F33] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-sm text-white">Tu Asesor Personal Asignado</h3>
                   <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
@@ -1326,7 +1326,7 @@ export default function PortalClientePage() {
         {/* TAB 2: ASISTENTE IA 24/7 PARA EL CLIENTE */}
         {/* ========================================================================= */}
         {activeTab === 'ia' && (
-          <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-xl overflow-hidden flex flex-col h-[650px]">
+          <div className="bg-[#0B1F33] rounded-3xl border border-slate-800 shadow-xl overflow-hidden flex flex-col h-[650px]">
             {/* Header del Chat */}
             <div className="p-4 sm:px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -1351,7 +1351,7 @@ export default function PortalClientePage() {
                 <button
                   type="button"
                   onClick={() => setShowBookingModal(true)}
-                  className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold flex items-center gap-1 transition-colors shadow-2xs"
+                  className="h-8 px-3 rounded-lg bg-[#F28C28] hover:bg-[#C96F16] text-white text-[11px] font-bold flex items-center gap-1 transition-colors shadow-2xs"
                 >
                   <span className="material-symbols-outlined text-[14px]">calendar_month</span>
                   <span>Pedir Cita</span>
@@ -1378,7 +1378,7 @@ export default function PortalClientePage() {
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
                       msg.sender === 'user'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-[#F28C28] text-white'
                         : 'bg-gradient-to-tr from-indigo-600 to-blue-500 text-white shadow-sm'
                     }`}
                   >
@@ -1388,7 +1388,7 @@ export default function PortalClientePage() {
                     <div
                       className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
                         msg.sender === 'user'
-                          ? 'bg-blue-600 text-white rounded-tr-none'
+                          ? 'bg-[#F28C28] text-white rounded-tr-none'
                           : 'bg-slate-800/90 text-slate-200 border border-slate-700/80 rounded-tl-none shadow-sm'
                       }`}
                     >
@@ -1405,7 +1405,7 @@ export default function PortalClientePage() {
                           }
                           setActiveTab(msg.suggestedAction!.tab);
                         }}
-                        className="px-3.5 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-400/30 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                        className="px-3.5 py-1.5 rounded-lg bg-blue-500/20 hover:bg-[#C96F16]/30 text-blue-300 border border-blue-400/30 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
                       >
                         <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
                         <span>{msg.suggestedAction.label}</span>
@@ -1465,12 +1465,12 @@ export default function PortalClientePage() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Pregúntale a tu Asistente IA sobre tus subsidios, impuestos o pide una cita..."
-                  className="flex-1 h-11 px-4 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  className="flex-1 h-11 px-4 rounded-xl bg-[#0B1F33] border border-slate-800 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors"
                 />
                 <button
                   type="submit"
                   disabled={!chatInput.trim()}
-                  className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-md"
+                  className="h-11 px-5 rounded-xl bg-[#F28C28] hover:bg-[#C96F16] disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-md"
                 >
                   <span>Enviar</span>
                   <span className="material-symbols-outlined text-[16px]">send</span>
@@ -1487,7 +1487,7 @@ export default function PortalClientePage() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Tarjeta 1: Zorgtoeslag */}
-              <div className="bg-slate-900 p-6 rounded-2xl border border-blue-500/50 shadow-lg space-y-4">
+              <div className="bg-[#0B1F33] p-6 rounded-2xl border border-blue-500/50 shadow-lg space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
                     <span className="material-symbols-outlined text-2xl">medical_services</span>
@@ -1512,7 +1512,7 @@ export default function PortalClientePage() {
               </div>
 
               {/* Tarjeta 2: Huurtoeslag */}
-              <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4 hover:border-slate-700 transition-colors">
+              <div className="bg-[#0B1F33] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4 hover:border-slate-700 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                     <span className="material-symbols-outlined text-2xl">home</span>
@@ -1551,7 +1551,7 @@ export default function PortalClientePage() {
               </div>
 
               {/* Tarjeta 3: Kindgebonden */}
-              <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4 hover:border-slate-700 transition-colors">
+              <div className="bg-[#0B1F33] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4 hover:border-slate-700 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
                     <span className="material-symbols-outlined text-2xl">child_care</span>
@@ -1591,7 +1591,7 @@ export default function PortalClientePage() {
         {activeTab === 'facturas' && (
           <div className="max-w-3xl mx-auto space-y-6">
             {latestInvoice ? (
-            <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl space-y-6">
+            <div className="bg-[#0B1F33] p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
                 <div>
                   <div className="flex items-center gap-2">
@@ -1646,7 +1646,7 @@ export default function PortalClientePage() {
               </div>
             </div>
             ) : (
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
+              <div className="rounded-2xl border border-slate-800 bg-[#0B1F33] p-8 text-center">
                 <span className="material-symbols-outlined text-3xl text-slate-500">receipt_long</span>
                 <h3 className="mt-3 text-sm font-bold text-white">No tienes facturas registradas</h3>
                 <p className="mt-1 text-xs text-slate-400">Cuando tu gestor cree una factura en el CRM, aparecerá aquí.</p>
@@ -1661,7 +1661,7 @@ export default function PortalClientePage() {
         {activeTab === 'documentos' && (
           <div className="space-y-6">
             {/* Zona de subida */}
-            <div className="bg-slate-900 p-8 rounded-3xl border-2 border-dashed border-slate-700 text-center space-y-4">
+            <div className="bg-[#0B1F33] p-8 rounded-3xl border-2 border-dashed border-slate-700 text-center space-y-4">
               <div className="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mx-auto border border-blue-500/20">
                 <span className="material-symbols-outlined text-3xl">document_scanner</span>
               </div>
@@ -1700,7 +1700,7 @@ export default function PortalClientePage() {
             </div>
 
             {/* Listado de documentos en la bóveda */}
-            <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 space-y-4">
+            <div className="bg-[#0B1F33] rounded-3xl border border-slate-800 p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-sm text-white">Documentos Disponibles en tu Expediente</h3>
                 <span className="text-xs font-mono-data text-slate-400">{documentList.length} archivos</span>
@@ -1755,10 +1755,10 @@ export default function PortalClientePage() {
       {/* ========================================================================= */}
       {showBookingModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl animate-in fade-in">
+          <div className="bg-[#0B1F33] border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl animate-in fade-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#F28C28] text-white flex items-center justify-center">
                   <span className="material-symbols-outlined text-[20px]">calendar_month</span>
                 </div>
                 <div>
@@ -1920,7 +1920,7 @@ export default function PortalClientePage() {
       {/* ========================================================================= */}
       {previewDoc && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in fade-in">
+          <div className="bg-[#0B1F33] border border-slate-700 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in fade-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-blue-400 text-xl">description</span>
@@ -1963,7 +1963,7 @@ export default function PortalClientePage() {
               <button
                 type="button"
                 onClick={() => handleDownloadDocument(previewDoc)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
+                className="px-4 py-2 bg-[#F28C28] hover:bg-[#C96F16] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
               >
                 <span className="material-symbols-outlined text-[16px]">download</span>
                 <span>Descargar Archivo</span>
