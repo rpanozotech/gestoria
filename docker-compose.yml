@@ -56,7 +56,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set in Coolify}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in Coolify}
       # Origenes permitidos por CORS, separados por comas.
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://rp-gestoria.tech,https://www.rp-gestoria.tech}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://rp-gestoria.tech,https://www.rp-gestoria.tech,https://app.rp-gestoria.tech,https://portal.rp-gestoria.tech}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       UPLOAD_DIR: /app/uploads
@@ -112,6 +112,24 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: nexusgest_network
+      traefik.http.routers.nexusgest-web.entrypoints: websecure
+      traefik.http.routers.nexusgest-web.rule: "Host(`rp-gestoria.tech`) || Host(`www.rp-gestoria.tech`)"
+      traefik.http.routers.nexusgest-web.tls.certresolver: letsencrypt
+      traefik.http.services.nexusgest-web.loadbalancer.server.port: "3000"
+      # Superficies separadas: crear primero los registros DNS correspondientes.
+      traefik.http.routers.nexusgest-app.entrypoints: websecure
+      traefik.http.routers.nexusgest-app.rule: "Host(`app.rp-gestoria.tech`) && (PathPrefix(`/login`) || PathPrefix(`/crm`) || PathPrefix(`/api/backend`) || PathPrefix(`/api/ai`) || PathPrefix(`/_next`) || PathPrefix(`/logo.png`) || PathPrefix(`/favicon`) || PathPrefix(`/photo-`) || PathPrefix(`/Imagen`) || PathPrefix(`/promo-video`) || PathPrefix(`/Crear_vídeo`))"
+      traefik.http.routers.nexusgest-app.tls.certresolver: letsencrypt
+      traefik.http.routers.nexusgest-app.tls.domains[0].main: app.rp-gestoria.tech
+      traefik.http.routers.nexusgest-app.service: nexusgest-web
+      traefik.http.routers.nexusgest-portal.entrypoints: websecure
+      traefik.http.routers.nexusgest-portal.rule: "Host(`portal.rp-gestoria.tech`) && (PathPrefix(`/portal`) || PathPrefix(`/api/backend`) || PathPrefix(`/_next`) || PathPrefix(`/logo.png`) || PathPrefix(`/favicon`) || PathPrefix(`/photo-`) || PathPrefix(`/Imagen`) || PathPrefix(`/promo-video`) || PathPrefix(`/Crear_vídeo`))"
+      traefik.http.routers.nexusgest-portal.tls.certresolver: letsencrypt
+      traefik.http.routers.nexusgest-portal.tls.domains[0].main: portal.rp-gestoria.tech
+      traefik.http.routers.nexusgest-portal.service: nexusgest-web
     networks:
       - nexusgest_network
 

@@ -21,7 +21,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Desactivar telemetría de Next.js para builds más rápidos y limpios
+ARG API_INTERNAL_URL
+ARG SURFACE=public
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV SURFACE=${SURFACE}
 ENV API_INTERNAL_URL=${API_INTERNAL_URL}
 RUN npm run build
 

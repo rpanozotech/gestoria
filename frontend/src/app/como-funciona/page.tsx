@@ -3,30 +3,33 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 export default function ComoFuncionaPage() {
+  const { lang } = useLanguage();
+  const english = lang === 'EN';
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-[#F7F4EE] text-[#0B1F33] font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
 
         {/* HERO CÓMO FUNCIONA */}
-        <section className="pt-16 pb-14 bg-[#F7F4EE] border-b border-[#B7CBD8]">
+        <section className="pt-16 pb-14 bg-bg border-b border-border">
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center">
             
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E7EEF4] border border-[#B7CBD8] text-[#0B1F33] text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-muted border border-border text-text text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">timeline</span>
-              <span>Proceso 100% Digital & Cercano</span>
+              {english ? 'A 100% digital and personal process' : 'Proceso 100% Digital & Cercano'}
             </div>
 
             <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Cómo funciona <span className="text-[#145DA0]">RP Gestoría & Asesoría</span>
+              {english ? 'How RP Asesoría works' : 'Cómo funciona RP Asesoría'}
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-8">
-              Gestionamos tu documentación ante la administración holandesa en 4 sencillos pasos. Sin citas presenciales interminables ni cartas en neerlandés.
+              {english ? 'We manage your documents with Dutch authorities in four simple steps. No endless in-person appointments or letters in Dutch.' : 'Gestionamos tu documentación ante la administración holandesa en 4 sencillos pasos. Sin citas presenciales interminables ni cartas en neerlandés.'}
             </p>
 
             <div className="flex justify-center gap-4">
@@ -34,13 +37,13 @@ export default function ComoFuncionaPage() {
                 href="/reservar"
                 className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/20 transition-all"
               >
-                Reservar consulta inicial
+                {english ? 'Book an initial consultation' : 'Reservar consulta inicial'}
               </Link>
               <Link
                 href="/servicios"
                 className="px-6 py-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-sm font-bold shadow-sm transition-all"
               >
-                Ver servicios disponibles
+                {english ? 'View available services' : 'Ver servicios disponibles'}
               </Link>
             </div>
 
@@ -54,9 +57,9 @@ export default function ComoFuncionaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               
               {/* PASO 1 */}
-              <div className="bg-white rounded-3xl p-8 border border-[#B7CBD8] shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-8 border border-border shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-[#145DA0] text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-primary text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
                     01
                   </div>
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-3">
@@ -73,9 +76,9 @@ export default function ComoFuncionaPage() {
               </div>
 
               {/* PASO 2 */}
-              <div className="bg-white rounded-3xl p-8 border border-[#B7CBD8] shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-8 border border-border shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-[#145DA0] text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-primary text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
                     02
                   </div>
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-3">
@@ -92,9 +95,9 @@ export default function ComoFuncionaPage() {
               </div>
 
               {/* PASO 3 */}
-              <div className="bg-white rounded-3xl p-8 border border-[#B7CBD8] shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-8 border border-border shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-[#145DA0] text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-primary text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
                     03
                   </div>
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-3">
@@ -111,9 +114,9 @@ export default function ComoFuncionaPage() {
               </div>
 
               {/* PASO 4 */}
-              <div className="bg-white rounded-3xl p-8 border border-[#B7CBD8] shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-8 border border-border shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-[#145DA0] text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-primary text-white font-heading font-black text-xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
                     04
                   </div>
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-3">
@@ -135,13 +138,13 @@ export default function ComoFuncionaPage() {
             <div className="mt-16 bg-white rounded-3xl p-8 sm:p-12 border border-slate-200/90 shadow-lg grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-7 space-y-4">
                 <span className="text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-full">
-                  Portal Seguro Mijn RP Gestoría
+                  Portal Seguro Mijn RP Asesoría
                 </span>
                 <h3 className="font-heading font-extrabold text-2xl sm:text-3xl text-slate-900">
                   Todo tu expediente accesible desde tu móvil
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Con tu usuario podrás ver la barra de progreso de tu M-Form o Zorgtoeslag, descargar facturas, pagar con iDEAL de tu banco holandés y consultar dudas con nuestro asistente IA las 24 horas del día.
+                  Con tu usuario podrás ver la barra de progreso de tu M-Form o Zorgtoeslag, descargar facturas, pagar con tu gestor por WhatsApp y consultar dudas con nuestro asistente IA las 24 horas del día.
                 </p>
                 <div className="pt-2">
                   <Link

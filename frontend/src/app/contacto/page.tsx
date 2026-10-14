@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 export default function ContactoPage() {
+  const { lang } = useLanguage();
+  const english = lang === 'EN';
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,24 +21,24 @@ export default function ContactoPage() {
   };
 
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-[#F7F4EE] text-[#0B1F33] font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
 
         {/* HERO CONTACTO */}
-        <section className="pt-16 pb-14 bg-[#F7F4EE] border-b border-[#B7CBD8]">
+        <section className="pt-16 pb-14 bg-bg border-b border-border">
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E7EEF4] border border-[#B7CBD8] text-[#0B1F33] text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-muted border border-border text-text text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">support_agent</span>
-              <span>Atención Rápida & Personalizada</span>
+              {english ? 'Fast & Personalised Support' : 'Atención Rápida & Personalizada'}
             </div>
 
             <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Ponte en contacto con <span className="text-[#145DA0]">RP Gestoría</span>
+              {english ? 'Get in touch with' : 'Ponte en contacto con'} <span className="text-[#145DA0]">RP Asesoría</span>
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
-              Respondemos tus dudas en menos de 2 horas laborables. Escríbenos o abre un chat de WhatsApp con nuestro equipo.
+              {english ? 'We answer your questions within two business hours. Write to us or open a WhatsApp chat with our team.' : 'Respondemos tus dudas en menos de 2 horas laborables. Escríbenos o abre un chat de WhatsApp con nuestro equipo.'}
             </p>
           </div>
         </section>
@@ -59,7 +62,7 @@ export default function ContactoPage() {
 
                 <div className="space-y-4">
                   <a
-                    href="https://wa.me/31685291402?text=Hola%20RP%20Gestoria,%20tengo%20una%20consulta"
+                    href="https://wa.me/31686458008?text=Hola%20RP%20Gestoria,%20tengo%20una%20consulta"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all group"
@@ -69,7 +72,7 @@ export default function ContactoPage() {
                     </div>
                     <div>
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">WhatsApp Oficial</span>
-                      <span className="text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">+31 6 8529 1402</span>
+                      <span className="text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">+31 6 8645 8008</span>
                       <span className="text-xs text-emerald-600 font-semibold block mt-0.5">● Respuesta inmediata</span>
                     </div>
                   </a>
@@ -80,7 +83,7 @@ export default function ContactoPage() {
                     </div>
                     <div>
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Correo Electrónico</span>
-                      <span className="text-base font-bold text-slate-900">info@rpgestoria.nl</span>
+                      <a href="mailto:infodocumentosrp@gmail.com" className="text-base font-bold text-slate-900 hover:text-primary">infodocumentosrp@gmail.com</a>
                       <span className="text-xs text-slate-500 block mt-0.5">Gestión de expedientes y documentación</span>
                     </div>
                   </div>
@@ -92,7 +95,7 @@ export default function ContactoPage() {
                     <div>
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Horario de Atención</span>
                       <span className="text-base font-bold text-slate-900">Lunes a Viernes: 09:00 – 19:00</span>
-                      <span className="text-xs text-slate-500 block mt-0.5">Soporte online y videollamadas con tu gestor</span>
+                      <span className="text-xs text-slate-500 block mt-0.5">Soporte online y acompañamiento administrativo</span>
                     </div>
                   </div>
                 </div>
@@ -100,10 +103,10 @@ export default function ContactoPage() {
                 <div className="p-5 bg-blue-50 rounded-2xl border border-blue-200/70 text-xs text-slate-700 space-y-1.5">
                   <p className="font-bold text-blue-900 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[18px] text-blue-600">verified</span>
-                    <span>Atención 100% Digital & Directa</span>
+              {english ? 'Digital & Direct Support' : 'Atención 100% Digital & Directa'}
                   </p>
                   <p className="text-slate-600">
-                    Gestionamos todos tus trámites ante Belastingdienst, UWV y Gemeente de forma remota sin que tengas que desplazarte.
+                    Ofrecemos información y acompañamiento administrativo ante dudas y trámites habituales en Países Bajos. No prestamos asesoramiento jurídico ni representación legal.
                   </p>
                 </div>
               </div>

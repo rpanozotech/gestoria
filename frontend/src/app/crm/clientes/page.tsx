@@ -137,7 +137,7 @@ export default function CRMClientesPage() {
   const [isGeneratingPortalAccess, setIsGeneratingPortalAccess] = useState(false);
   const [showPortalPassword, setShowPortalPassword] = useState(false);
   const [active360Tab, setActive360Tab] = useState<
-    'resumen' | 'personales' | 'servicios' | 'documentos' | 'presupuestos' | 'facturas' | 'citas' | 'tareas' | 'historial' | 'ia'
+    'resumen' | 'personales' | 'servicios' | 'documentos' | 'presupuestos' | 'facturas' | 'citas' | 'mensajes' | 'tareas' | 'historial' | 'ia'
   >('resumen');
 
   // Estados de Tareas e Historial
@@ -466,7 +466,7 @@ export default function CRMClientesPage() {
     const message = [
       `Hola ${selectedClient.full_name},`,
       '',
-      'Ya tienes acceso a tu Portal Cliente de RP Gestoría:',
+      'Ya tienes acceso a tu Portal Cliente de RP Asesoría:',
       'Enlace: https://rp-gestoria.tech/portal/login',
       `Usuario: ${portalAccess.username}`,
       `Contraseña inicial: ${portalAccess.password}`,
@@ -1017,7 +1017,7 @@ export default function CRMClientesPage() {
             data: newInvoice,
           };
 
-          aiReply = `✅ **¡Factura oficial emitida con éxito!**\n\nHe generado la factura **${newInvoice.code || code}** para **${selectedClient.full_name}** por un importe base de **€ ${fee.toFixed(2)}** (IVA incluido).\nConcepto: *${concept}*.\nEstado: **Emitida / Pendiente de Pago (iDEAL)**. Puedes verla en la pestaña de facturación o pulsar el botón a continuación.`;
+          aiReply = `✅ **¡Factura oficial emitida con éxito!**\n\nHe generado la factura **${newInvoice.code || code}** para **${selectedClient.full_name}** por un importe base de **€ ${fee.toFixed(2)}** (IVA incluido).\nConcepto: *${concept}*.\nEstado: **Emitida / Pendiente de Pago (Pago coordinado por WhatsApp)**. Puedes verla en la pestaña de facturación o pulsar el botón a continuación.`;
         }
       }
       // ACCIÓN 2: CREAR PRESUPUESTO
@@ -1909,7 +1909,7 @@ export default function CRMClientesPage() {
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">business_center</span>
-              <span>Servicios ({selectedClient.dossiers?.length || 0})</span>
+              <span>Expedientes ({selectedClient.dossiers?.length || 0})</span>
             </button>
 
             {/* 4. Documentos */}
@@ -1960,7 +1960,20 @@ export default function CRMClientesPage() {
               <span>Citas ({selectedClient.appointments?.length || 0})</span>
             </button>
 
-            {/* 8. Notas & Tareas */}
+            {/* 8. Mensajes */}
+            <button
+              type="button"
+              onClick={() => setActive360Tab('mensajes')}
+              aria-pressed={active360Tab === 'mensajes'}
+              className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                active360Tab === 'mensajes' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">chat</span>
+              <span>Mensajes ({clientMessages.length})</span>
+            </button>
+
+            {/* 9. Notas & Tareas */}
             <button
               onClick={() => setActive360Tab('tareas')}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
@@ -2657,7 +2670,7 @@ export default function CRMClientesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-on-surface">Facturas Oficiales de {selectedClient.full_name}</h3>
-                      <p className="text-xs text-on-surface-variant">Facturación legal con pasarela iDEAL y registro de cobros.</p>
+                      <p className="text-xs text-on-surface-variant">Facturación legal con pasarela Pago coordinado por WhatsApp y registro de cobros.</p>
                     </div>
                   </div>
 
@@ -2701,7 +2714,7 @@ export default function CRMClientesPage() {
                                   inv.status === 'pagada' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                                 }`}
                               >
-                                {inv.status === 'pagada' ? 'PAGADA (iDEAL)' : 'EMITIDA / PENDIENTE'}
+                                {inv.status === 'pagada' ? 'PAGADA (Pago coordinado por WhatsApp)' : 'EMITIDA / PENDIENTE'}
                               </span>
                             </div>
 
@@ -2995,6 +3008,39 @@ export default function CRMClientesPage() {
             )}
 
             {/* TAB 8: NOTAS & TAREAS DEL CLIENTE */}
+            {active360Tab === 'mensajes' && (
+              <section className="space-y-5 w-full" aria-labelledby="client-messages-tab-title">
+                <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <div>
+                      <h3 id="client-messages-tab-title" className="font-bold text-sm text-on-surface">Mensajes del cliente</h3>
+                      <p className="text-xs text-on-surface-variant mt-1">Distingue siempre entre notas internas y mensajes visibles en el Portal.</p>
+                    </div>
+                    <span className="text-xs text-outline">{clientMessages.length} mensajes</span>
+                  </div>
+                  <div className="space-y-2 max-h-80 overflow-y-auto" aria-busy={clientActivityLoading}>
+                    {clientActivityLoading ? <p className="text-xs text-outline py-6 text-center" role="status">Cargando mensajes…</p> : clientMessages.length === 0 ? <p className="text-xs text-outline py-6 text-center">No hay mensajes compartidos todavía.</p> : clientMessages.map((message) => (
+                      <article key={message.id} className="rounded-lg border border-outline-variant bg-surface p-3">
+                        <div className="flex justify-between gap-2 text-[10px] text-outline"><span>{message.author_name || 'Gestor'}</span><time dateTime={message.created_at}>{new Date(message.created_at).toLocaleString('es-ES')}</time></div>
+                        <p className="text-xs text-on-surface mt-1 whitespace-pre-wrap">{message.body}</p>
+                      </article>
+                    ))}
+                  </div>
+                  <div className="mt-4 border-t border-outline-variant pt-4 space-y-2">
+                    <label htmlFor="crm-client-message-tab-draft" className="text-[11px] font-bold text-on-surface">Nuevo mensaje o nota</label>
+                    <textarea id="crm-client-message-tab-draft" value={clientMessageDraft} onChange={(event) => setClientMessageDraft(event.target.value)} rows={4} maxLength={2000} className="w-full rounded-lg border border-outline-variant bg-surface p-3 text-xs text-on-surface" placeholder="Escribe el contenido..." />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select aria-label="Visibilidad del mensaje" value={clientMessageVisibility} onChange={(event) => setClientMessageVisibility(event.target.value as 'internal' | 'client')} className="rounded-lg border border-outline-variant bg-surface p-2 text-xs text-on-surface">
+                        <option value="internal">Solo CRM (interno)</option>
+                        <option value="client">Compartir con cliente</option>
+                      </select>
+                      <button type="button" onClick={sendClientMessage} disabled={!clientMessageDraft.trim() || clientMessageSending} className="rounded-lg bg-secondary px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{clientMessageSending ? 'Guardando…' : 'Guardar mensaje'}</button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
             {active360Tab === 'tareas' && (
               <div className="space-y-6 w-full">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

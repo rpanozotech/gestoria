@@ -12,11 +12,14 @@ import documentsRouter from './routes/documents.js';
 import backupRouter from './routes/backup.js';
 import portalRouter from './routes/portal.js';
 import servicesRouter, { publicServicesRouter } from './routes/services.js';
+import withdrawalsRouter from './routes/withdrawals.js';
 import { migrateDatabase } from './db/migrate.js';
 import serviceRequestsRouter from './routes/service-requests.js';
 import clientMessagesRouter from './routes/client-messages.js';
 import portalMessagesRouter from './routes/portal-messages.js';
 import integrationsRouter from './routes/integrations.js';
+import advisorProfileRouter from './routes/advisor-profile.js';
+import { publicContentRouter, contentAdminRouter } from './routes/content.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import { rateLimit, cabecerasSeguridad } from './middleware/rate-limit.js';
 import { query } from './db/index.js';
@@ -100,9 +103,15 @@ app.use('/api/appointments', (req, res, next) =>
 app.use('/api/portal', rateLimit({ nombre: 'portal', max: 200, ventanaMs: 5 * 60 * 1000 }));
 
 app.use('/api/auth', authRouter);
+app.use('/api/withdrawals', rateLimit({ nombre: 'desistimientos', max: 5, ventanaMs: 60 * 60 * 1000 }));
+app.use('/api/withdrawals', withdrawalsRouter);
 app.use('/api/service-requests', serviceRequestsRouter);
 app.use('/api/portal', portalRouter);
 app.use('/api/portal/messages', requireAuth, requireRole('cliente'), portalMessagesRouter);
+app.get('/api/portal/advisor-profile', requireAuth, requireRole('cliente'), async (_req, res) => {
+  const result = await query('SELECT * FROM portal_advisor_profile WHERE id = 1');
+  res.json({ profile: result.rows[0] || null });
+});
 
 // --- Rutas internas (solo gestor/admin) ---
 // Todo lo demas expone datos fiscales y bancarios del cliente (BSN, IBAN).
@@ -116,6 +125,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 app.use('/api/dashboard', gestorOnly, dashboardRouter);
 app.use('/api/integrations', gestorOnly, integrationsRouter);
+app.use('/api/advisor-profile', gestorOnly, advisorProfileRouter);
 app.use('/api/clients', gestorOnly, clientsRouter);
 app.use('/api/client-messages', gestorOnly, clientMessagesRouter);
 app.use('/api/dossiers', gestorOnly, dossiersRouter);
@@ -124,6 +134,8 @@ app.use('/api/documents', gestorOnly, documentsRouter);
 app.use('/api/backup', gestorOnly, backupRouter);
 app.use('/api/appointments', appointmentsRouter);
 app.use('/api/services/public', publicServicesRouter);
+app.use('/api/public-content', publicContentRouter);
+app.use('/api/content-admin', contentAdminRouter);
 app.use('/api/services', gestorOnly, servicesRouter);
 // invoicesRouter se monta al final a proposito: este montage en '/api' captura
 // TODAS las subrutas de /api, asi que si fuera antes aplicaria el guard a

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../db/index.js';
+import { tokenFromRequest } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -15,6 +16,12 @@ const jwtSecret = (): string => {
   }
   return secret;
 };
+const secureCookie = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+const setSessionCookie = (name: string, token: string) => name + '=' + encodeURIComponent(token) + '; Path=/; Max-Age=604800; HttpOnly; SameSite=Strict' + secureCookie;
+const clearSessionCookies = () => [
+  'nexusgest_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict' + secureCookie,
+  'nexusgest_portal_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict' + secureCookie,
+];
 
 // Iniciar Sesión (Gestor o Cliente)
 router.post('/login', async (req: Request, res: Response) => {
@@ -47,6 +54,7 @@ router.post('/login', async (req: Request, res: Response) => {
       { expiresIn: '7d' }
     );
 
+    res.setHeader('Set-Cookie', setSessionCookie('nexusgest_token', token));
     res.json({
       token,
       user: {
@@ -90,6 +98,7 @@ router.post('/portal-login', async (req: Request, res: Response) => {
       jwtSecret(),
       { expiresIn: '7d' }
     );
+    res.setHeader('Set-Cookie', setSessionCookie('nexusgest_portal_token', token));
     res.json({
       token,
       user: { id: user.id, client_id: user.client_id, email: user.email, full_name: user.full_name, role: 'cliente' },
@@ -102,15 +111,11 @@ router.post('/portal-login', async (req: Request, res: Response) => {
 
 // Obtener perfil actual
 router.get('/me', async (req: Request, res: Response) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No autorizado' });
-  }
-
-  const token = authHeader.split(' ')[1];
+  const token = tokenFromRequest(req);
+  if (!token) return res.status(401).json({ error: 'No autorizado' });
   try {
     const decoded = jwt.verify(token, jwtSecret()) as any;
-    const result = await query('SELECT id, email, full_name, role, phone, avatar_url FROM users WHERE id = $1', [decoded.id]);
+    const result = await query('SELECT id, email, full_name, role, phone, avatar_url FROM users WHERE id = $1 AND is_active = true', [decoded.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -118,6 +123,11 @@ router.get('/me', async (req: Request, res: Response) => {
   } catch (error) {
     res.status(401).json({ error: 'Token inválido o expirado' });
   }
+});
+
+router.post('/logout', (_req: Request, res: Response) => {
+  res.setHeader('Set-Cookie', clearSessionCookies());
+  res.json({ ok: true });
 });
 
 export default router;

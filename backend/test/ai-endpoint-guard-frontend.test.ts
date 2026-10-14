@@ -83,3 +83,16 @@ test('rechaza vacio y malformed', () => {
   assert.throws(() => validarEndpointIA(undefined), EndpointNoPermitido);
   assert.throws(() => validarEndpointIA('no-es-una-url'), EndpointNoPermitido);
 });
+
+test('rechaza hosts publicos arbitrarios en el puerto de Ollama', () => {
+  for (const url of [
+    'http://attacker.example:11434/v1',
+    'https://public-host.example:11434/v1',
+  ]) {
+    assert.throws(
+      () => validarEndpointIA(url, { permitirHostsLocales: true }),
+      EndpointNoPermitido,
+      `deberia rechazar \${url}`,
+    );
+  }
+});

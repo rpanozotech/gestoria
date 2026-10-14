@@ -1,0 +1,61 @@
+services:
+  public_web:
+    image: nexusgest-frontend:public-20261014
+    container_name: nexusgest_public_web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_INTERNAL_URL: http://backend:5000
+      NEXT_PUBLIC_API_BASE: /api/backend
+      SURFACE: public
+    networks: [nexusgest_network]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: nexusgest_network
+      traefik.http.routers.nexusgest-web.entrypoints: websecure
+      traefik.http.routers.nexusgest-web.rule: "Host(`rp-gestoria.tech`) || Host(`www.rp-gestoria.tech`)"
+      traefik.http.routers.nexusgest-web.tls.certresolver: letsencrypt
+      traefik.http.routers.nexusgest-web.service: nexusgest-public
+      traefik.http.services.nexusgest-public.loadbalancer.server.port: "3000"
+  crm:
+    image: nexusgest-frontend:crm-20261014
+    container_name: nexusgest_crm
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_INTERNAL_URL: http://backend:5000
+      NEXT_PUBLIC_API_BASE: /api/backend
+      SURFACE: crm
+    networks: [nexusgest_network]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: nexusgest_network
+      traefik.http.routers.nexusgest-app.entrypoints: websecure
+      traefik.http.routers.nexusgest-app.rule: "Host(`app.rp-gestoria.tech`)"
+      traefik.http.routers.nexusgest-app.tls.certresolver: letsencrypt
+      traefik.http.routers.nexusgest-app.service: nexusgest-crm
+      traefik.http.services.nexusgest-crm.loadbalancer.server.port: "3000"
+  portal:
+    image: nexusgest-frontend:portal-20261014
+    container_name: nexusgest_portal
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_INTERNAL_URL: http://backend:5000
+      NEXT_PUBLIC_API_BASE: /api/backend
+      SURFACE: portal
+    networks: [nexusgest_network]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: nexusgest_network
+      traefik.http.routers.nexusgest-portal.entrypoints: websecure
+      traefik.http.routers.nexusgest-portal.rule: "Host(`portal.rp-gestoria.tech`)"
+      traefik.http.routers.nexusgest-portal.tls.certresolver: letsencrypt
+      traefik.http.routers.nexusgest-portal.service: nexusgest-portal
+      traefik.http.services.nexusgest-portal.loadbalancer.server.port: "3000"
+networks:
+  nexusgest_network:
+    external: true

@@ -44,12 +44,11 @@ export function getStoredUser(): SessionUser | null {
 }
 
 export function saveSession(token: string, user: SessionUser): void {
+  void token;
   try {
-    window.localStorage.setItem(TOKEN_KEY, token);
+    window.localStorage.removeItem(TOKEN_KEY);
     window.localStorage.setItem(USER_KEY, JSON.stringify(user));
   } catch {}
-  document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax`;
-  document.cookie = `${USER_KEY}=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`;
 }
 
 export function clearSession(): void {
@@ -57,6 +56,5 @@ export function clearSession(): void {
     window.localStorage.removeItem(TOKEN_KEY);
     window.localStorage.removeItem(USER_KEY);
   } catch {}
-  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax`;
-  document.cookie = `${USER_KEY}=; path=/; max-age=0; SameSite=Lax`;
+
 }

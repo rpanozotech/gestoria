@@ -40,7 +40,7 @@ export default function SobreNosotrosPage() {
               <div className="lg:col-span-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="relative h-64 rounded-3xl overflow-hidden shadow-lg border-2 border-white">
-                    <Image src="/photo-6.png" alt="Equipo RP Gestoría" fill className="object-cover" />
+                    <Image src="/photo-6.png" alt="Equipo RP Asesoría" fill className="object-cover" />
                   </div>
                   <div className="relative h-64 rounded-3xl overflow-hidden shadow-lg border-2 border-white">
                     <Image src="/photo-8.png" alt="Reunión asesoría" fill className="object-cover" />
@@ -67,7 +67,7 @@ export default function SobreNosotrosPage() {
                 </p>
 
                 <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                  En <strong>RP Gestoría & Asesoría</strong> transformamos ese proceso en una experiencia digital fluida, transparente y 100% en tu lengua materna. Sin trajes excesivamente formales ni lenguaje ininteligible: hablamos de persona a persona.
+                  En <strong>RP Asesoría</strong> transformamos ese proceso en una experiencia digital fluida, transparente y 100% en tu lengua materna. Sin trajes excesivamente formales ni lenguaje ininteligible: hablamos de persona a persona.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">

@@ -99,7 +99,8 @@ router.get('/', gestorOnly, async (req: Request, res: Response) => {
 // POST /api/appointments - Crear o reservar cita (Web pública o CRM)
 router.post('/', requireGestorForLinkedClient, async (req: Request, res: Response) => {
   try {
-    let { client_id, service_id, source, full_name, email, phone, title, appointment_date, appointment_time, duration_minutes, modality, notes } = req.body || {};
+    let { client_id, service_id, source, full_name, email, phone, title, appointment_date, appointment_time, duration_minutes, modality, notes, legal_consent, legal_terms_version } = req.body || {};
+    if (!client_id && legal_consent !== true) return res.status(400).json({ error: 'Debes aceptar la política de privacidad y las condiciones generales.' });
 
     if (!appointment_date || !appointment_time || (!client_id && (!String(full_name || '').trim() || (!email && !phone)))) {
       return res.status(400).json({ error: 'Faltan campos obligatorios para agendar la cita' });
@@ -167,8 +168,8 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
 
       result = await client.query(
         `
-          INSERT INTO appointments (client_id, service_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes, source, email, phone)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, 'pendiente', $8, $9, $10, $11)
+          INSERT INTO appointments (client_id, service_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes, source, email, phone, legal_consent, legal_consent_at, legal_terms_version)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, 'pendiente', $8, $9, $10, $11, $12, CASE WHEN $12 THEN CURRENT_TIMESTAMP ELSE NULL END, $13)
           RETURNING *
         `,
         [
@@ -183,6 +184,8 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
           source || 'web',
           email || null,
           phone || null,
+          legal_consent === true,
+          legal_terms_version || '2026-10-07',
         ]
       );
       await client.query(

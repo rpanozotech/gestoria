@@ -17,9 +17,9 @@ function LoginForm() {
 
   // Si ya hay sesion, no mostrar el login
   useEffect(() => {
-    if (getToken()) {
-      router.replace('/crm');
-    }
+    fetch('/api/backend/auth/me').then((res) => {
+      if (res.ok) router.replace('/crm');
+    }).catch(() => {});
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,10 +55,10 @@ function LoginForm() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
             <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-900 border border-slate-700 flex items-center justify-center">
-              <img src="/logo.png" alt="RP Gestoría" className="w-full h-full object-cover" />
+              <img src="/logo.png" alt="RP Asesoría" className="w-full h-full object-cover" />
             </div>
             <span className="font-headline-sm text-lg font-bold text-on-surface tracking-tight">
-              RP Gestoría
+              RP Asesoría
             </span>
           </Link>
           <h1 className="font-headline-md text-2xl font-bold text-on-surface">Acceso al CRM</h1>

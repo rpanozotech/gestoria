@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { apiUrl } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -23,6 +24,8 @@ type BusyAppointment = {
 };
 
 export default function ReservarCitaPage() {
+  const { lang } = useLanguage();
+  const english = lang === 'EN';
   const [bookName, setBookName] = useState('');
   const [bookEmail, setBookEmail] = useState('');
   const [bookPhone, setBookPhone] = useState('');
@@ -36,6 +39,7 @@ export default function ReservarCitaPage() {
   const [busyAppointments, setBusyAppointments] = useState<BusyAppointment[]>([]);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
+  const [legalConsent, setLegalConsent] = useState(false);
 
   useEffect(() => {
     fetch(apiUrl('/services/public'))
@@ -114,6 +118,10 @@ export default function ReservarCitaPage() {
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!legalConsent) {
+      setBookingError('Debes aceptar la política de privacidad y las condiciones generales.');
+      return;
+    }
     if (!bookService) {
       setBookingError('Selecciona un servicio.');
       return;
@@ -167,6 +175,8 @@ export default function ReservarCitaPage() {
           appointment_time: bookTime,
           duration_minutes: APPOINTMENT_MINUTES,
           modality,
+          legal_consent: true,
+          legal_terms_version: '2026-10-07',
         }),
       });
       if (!response.ok) {
@@ -194,24 +204,24 @@ export default function ReservarCitaPage() {
   };
 
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-[#F7F4EE] text-[#0B1F33] font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
 
         {/* HERO RESERVAR CITA */}
-        <section className="pt-16 pb-14 bg-[#F7F4EE] border-b border-[#B7CBD8]">
+        <section className="pt-16 pb-14 bg-bg border-b border-border">
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E7EEF4] border border-[#B7CBD8] text-[#0B1F33] text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-muted border border-border text-text text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-              <span>Agenda Online & Confirmación Inmediata</span>
+              {english ? 'Online booking request' : 'Solicitud de cita online'}
             </div>
 
             <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Reserva tu cita con <span className="text-[#145DA0]">RP Gestoría</span>
+              {english ? 'Book your appointment with' : 'Reserva tu cita con'} <span className="text-[#145DA0]">RP Asesoría</span>
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
-              Elige el formato que prefieras (videollamada Google Meet, llamada telefónica o en persona) y selecciona tu horario ideal.
+              {english ? 'Choose your preferred format (Google Meet video call, phone call or in person) and select your ideal time.' : 'Elige el formato que prefieras (videollamada Google Meet, llamada telefónica o en persona) y selecciona tu horario ideal.'}
             </p>
           </div>
         </section>
@@ -227,10 +237,10 @@ export default function ReservarCitaPage() {
                     <span className="material-symbols-outlined text-[36px]">check_circle</span>
                   </div>
                   <h3 className="font-heading font-extrabold text-2xl sm:text-3xl text-slate-900">
-                    ¡Cita programada con éxito!
+                    {english ? 'Appointment booked successfully!' : '¡Cita programada con éxito!'}
                   </h3>
                   <p className="text-slate-600 max-w-md mx-auto text-sm leading-relaxed">
-                    Tu reserva quedó registrada. Nos pondremos en contacto contigo para confirmar los detalles de la cita.
+                    {english ? 'Your booking has been registered. We will contact you to confirm the appointment details.' : 'Tu reserva quedó registrada. Nos pondremos en contacto contigo para confirmar los detalles de la cita.'}
                   </p>
                   <div className="pt-4 flex justify-center gap-3">
                     <button
@@ -391,9 +401,14 @@ export default function ReservarCitaPage() {
                     </p>
                   )}
 
+                  <label className="flex items-start gap-2 text-xs text-slate-600">
+                    <input type="checkbox" checked={legalConsent} onChange={(e) => setLegalConsent(e.target.checked)} className="mt-0.5" />
+                    <span>Acepto la <a href="/privacidad" target="_blank" className="text-primary underline">Política de privacidad</a> y las <a href="/condiciones" target="_blank" className="text-primary underline">Condiciones generales</a>. Solicito que el servicio pueda comenzar durante el plazo legal de desistimiento cuando corresponda.</span>
+                  </label>
+
                   <button
                     type="submit"
-                    disabled={bookLoading || availabilityLoading || availableSlots.length === 0}
+                    disabled={bookLoading || availabilityLoading || availableSlots.length === 0 || !legalConsent}
                     className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-heading font-extrabold text-base tracking-wide shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2"
                   >
                     {bookLoading ? (

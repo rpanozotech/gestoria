@@ -65,7 +65,7 @@ router.put('/bulk', async (req: Request, res: Response) => {
           badge=EXCLUDED.badge, duration=EXCLUDED.duration, active=EXCLUDED.active,
           visible_web=EXCLUDED.visible_web, sort_order=EXCLUDED.sort_order,
           description=EXCLUDED.description, requirements=EXCLUDED.requirements, updated_at=CURRENT_TIMESTAMP`,
-        [id, code, String(service.slug || id), service.icon || 'receipt_long', title, service.category || 'otros', Number(service.priceFinal ?? service.basePrice) || 0,
+        [id, code, String(service.slug || id), service.icon || 'receipt_long', title, service.category || 'otros', Number(service.basePrice ?? service.priceFinal) || 0,
           Number(service.btwRate) || 0.21, service.badge || 'Servicio', service.duration || 'Según caso', service.active !== false,
           service.visibleWeb !== false, Number(service.sortOrder) || 0, service.desc || service.description || null,
           JSON.stringify(Array.isArray(service.requirements) ? service.requirements : [])]

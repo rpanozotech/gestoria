@@ -4,10 +4,11 @@ import { pool } from '../db/index.js';
 const router = Router();
 
 router.post('/', async (req: Request, res: Response) => {
-  const { service_id, full_name, email, phone, notes, source = 'web' } = req.body || {};
+  const { service_id, full_name, email, phone, notes, source = 'web', legal_consent, legal_terms_version } = req.body || {};
   if (!service_id || !String(full_name || '').trim() || !email || !phone) {
     return res.status(400).json({ error: 'Servicio, nombre, email y teléfono son obligatorios.' });
   }
+  if (legal_consent !== true) return res.status(400).json({ error: 'Debes aceptar la política de privacidad y las condiciones generales.' });
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -35,8 +36,8 @@ router.post('/', async (req: Request, res: Response) => {
       clientId = created.rows[0].id;
     }
     const request = await client.query(
-      `INSERT INTO service_requests (client_id, service_id, source, status, notes) VALUES ($1,$2,$3,'pendiente',$4) RETURNING *`,
-      [clientId, service_id, source, notes || null]
+      `INSERT INTO service_requests (client_id, service_id, source, status, notes, legal_consent, legal_consent_at, legal_terms_version) VALUES ($1,$2,$3,'pendiente',$4,$5,CURRENT_TIMESTAMP,$6) RETURNING *`,
+      [clientId, service_id, source, notes || null, true, legal_terms_version || '2026-10-07']
     );
     // Numeracion correlativa EXP del expediente.
 //

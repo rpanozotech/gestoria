@@ -33,15 +33,24 @@ const jwtSecret = (): string => {
   return secret;
 };
 
+
+export const tokenFromRequest = (req: Request): string | null => {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) return authHeader.slice(7).trim() || null;
+  const cookieHeader = req.headers.cookie || '';
+  const cookieName = req.baseUrl.includes('/portal') ? 'nexusgest_portal_token' : 'nexusgest_token';
+  const entry = cookieHeader.split(';').map((part) => part.trim()).find((part) => part.startsWith(cookieName + '='));
+  if (!entry) return null;
+  try { return decodeURIComponent(entry.slice(cookieName.length + 1)); } catch { return null; }
+};
+
 /** Exige un JWT valido. Adjunta req.user. */
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No autorizado' });
-  }
+  const token = tokenFromRequest(req);
+  if (!token) return res.status(401).json({ error: 'No autorizado' });
 
   try {
-    const decoded = jwt.verify(authHeader.split(' ')[1], jwtSecret()) as any;
+    const decoded = jwt.verify(token, jwtSecret()) as any;
     req.user = {
       id: decoded.id,
       email: decoded.email,

@@ -13,7 +13,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const baseUrl = (process.env.PORTAL_TEST_BASE_URL || 'https://rp-gestoria.tech/api/backend').replace(/\/$/, '');
+// El portal autenticado vive en su propia superficie; la web pública no enruta /api/backend.
+const baseUrl = (process.env.PORTAL_TEST_BASE_URL || 'https://portal.rp-gestoria.tech/api/backend').replace(new RegExp('/$'), '');
 const token = process.env.PORTAL_TEST_TOKEN;
 const foreignDocumentId = process.env.PORTAL_TEST_FOREIGN_DOCUMENT_ID;
 const integration = Boolean(token && foreignDocumentId);

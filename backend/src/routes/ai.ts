@@ -264,7 +264,9 @@ router.post('/parse-client', async (req: Request, res: Response) => {
         service_title: service,
         fee: feeMatch ? parseFloat(feeMatch[1].replace(',', '.')) : 75.00,
         notes: `Información extraída automáticamente por IA: "${text}"`,
-        confidence: 0.94,
+        confidence: 0,
+            isFallback: true,
+            isLiveAI: false,
       };
     };
 
@@ -413,7 +415,9 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
           fee: feeMatch ? parseFloat(feeMatch[1].replace(',', '.')) : null,
           notes: `Extraído automáticamente de notas: "${block.substring(0, 80)}..."`,
           source: `Nota de texto #${idx + 1}`,
-          confidence: 0.94,
+          confidence: 0,
+            isFallback: true,
+            isLiveAI: false,
           selected: true,
         });
       });
@@ -477,22 +481,22 @@ router.post('/ocr-doc', async (req: Request, res: Response) => {
   try {
     const { document_type, simulated_text } = req.body;
 
-    const mockAnalysis = {
-      detected_entity: 'Belastingdienst (Administración Tributaria de los Países Bajos)',
-      document_category: document_type || 'Aanslag Inkomstenbelasting / Carta Oficial',
-      bsn: '982145672',
-      letter_date: '2026-02-18',
-      reference_number: 'BLS-2026-99214A',
-      key_amounts: {
-        to_pay_or_refund: '€ 452,00 a devolver (Te ontvangen)',
-        due_date: '2026-04-01'
-      },
-      summary_es: 'Resolución de liquidación provisional de impuestos. El cliente tiene un saldo favorable a su favor que será transferido a su cuenta bancaria registrada.',
-      action_recommended: 'Confirmar IBAN del cliente y archivar en expediente EXP-2026-0042.',
-      confidence: 0.97,
+    const analysis = {
+      detected_entity: null,
+      document_category: document_type || null,
+      bsn: null,
+      letter_date: null,
+      reference_number: null,
+      key_amounts: null,
+      summary_es: 'No se ha ejecutado un análisis OCR real. Revisa el documento manualmente.',
+      action_recommended: 'No tomes decisiones fiscales con este resultado sin validación humana.',
+      confidence: 0,
+      isFallback: true,
+      isLiveAI: false,
+      warning: 'Resultado no verificado: el motor OCR/IA no está conectado.',
     };
 
-    res.json({ success: true, analysis: mockAnalysis });
+    res.json({ success: true, analysis });
   } catch (error) {
     res.status(500).json({ error: 'Error al escanear documento' });
   }
@@ -525,11 +529,11 @@ Postbus 2500
 
 Datum: ${today}
 Betreft: Verzoek tot herziening / Bezwaarschrift
-Burgerservicenummer (BSN): ${bsn || '982145672'}
+Burgerservicenummer (BSN): ${bsn || 'No especificado'}
 
 Geachte heer/mevrouw,
 
-Namens mijn cliënt(e), ${client_name || 'Maria Popescu'}, woonachtig te ${address || 'Eindhoven'}, wend ik mij tot u met betrekking tot het bovengenoemde dossier.
+Namens mijn cliënt(e), ${client_name || 'la persona interesada'}, woonachtig te ${address || 'Países Bajos'}, wend ik mij tot u met betrekking tot het bovengenoemde dossier.
 
 Bij dezen verzoeken wij u vriendelijk doch dringend om de toegekende beschikking te heroverwegen op basis van de bijgevoegde bewijsstukken. 
 
@@ -539,8 +543,8 @@ Wij verzoeken u de ontvangst van dit schrijven schriftelijk te bevestigen. Mocht
 
 Met vriendelijke groet,
 
-NexusGest Advies & Gestoría
-Rony P. - Senior Consultant`;
+[Nombre y datos de la gestoría configurados en el expediente]
+[Nombre del gestor autorizado]`;
     };
 
     const letterText = await callOpenAIOrFallback(systemPrompt, userPrompt, fallback, { apiKey, apiUrl, model });

@@ -33,8 +33,6 @@ export default function PortalLoginPage() {
         if (!response.ok || !data.token || !data.user?.client_id) {
           throw new Error(data.error || 'Usuario o contraseña incorrectos.');
         }
-        window.localStorage.setItem('rp_portal_token', data.token);
-        window.localStorage.setItem('rp_portal_session_user', JSON.stringify(data.user));
         router.replace('/portal');
       })
       .catch((loginError) => {
@@ -52,17 +50,17 @@ export default function PortalLoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-3 mb-7 group">
             <span className="w-12 h-12 rounded-2xl overflow-hidden border border-slate-700 bg-white shadow-lg group-hover:scale-105 transition-transform">
-              <img src="/logo.png" alt="RP Gestoría" className="w-full h-full object-cover" />
+              <img src="/logo.png" alt="RP Asesoría" className="w-full h-full object-cover" />
             </span>
             <span className="text-left">
-              <span className="block font-heading text-lg font-extrabold tracking-tight">Mijn RP Gestoría</span>
-              <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-400 font-bold">Portal seguro del cliente</span>
+              <span className="block font-heading text-lg font-extrabold tracking-tight">Mijn RP Asesoría</span>
+              <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-400 font-bold">Portal de seguimiento administrativo</span>
             </span>
           </Link>
           <p className="text-blue-300 text-xs font-bold uppercase tracking-[0.2em]">Área Cliente</p>
           <h1 className="mt-3 text-3xl sm:text-4xl font-heading font-extrabold tracking-tight">Bienvenido de nuevo</h1>
           <p className="mt-3 text-sm text-slate-400">Introduce tus credenciales para continuar.</p>
-          <p className="mt-2 text-xs text-slate-500">Tu gestor te proporcionará el usuario y la contraseña por WhatsApp.</p>
+          <p className="mt-2 text-xs text-slate-500">Tu gestor te proporcionará el usuario y la contraseña por WhatsApp.</p><p className="mt-3 text-[11px] leading-relaxed text-slate-500">Este Portal organiza documentos y comunicaciones. No sustituye asesoramiento jurídico o fiscal ni decisiones oficiales.</p>
         </div>
 
         <section className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur">

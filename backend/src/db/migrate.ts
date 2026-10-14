@@ -14,9 +14,12 @@ const DEFAULT_SERVICES = [
   ['documentos-admin','SRV-ADMIN','folder_shared','Documentos Administrativos & BSN','llegada',39,'Llegada','24 horas','Citas Gemeente, BSN y traducción.', ['Contrato alquiler','Pasaporte'], 110],
   ['consulta-privada','SRV-CONSULTA','support_agent','Consulta Privada 1 a 1','otros',49,'Videollamada / Presencial','Inmediato','Sesión personalizada con asesor.', ['Preguntas preparadas'], 120],
   ['otros-tramites','SRV-OTROS','tune','Otros Trámites & Recursos Belastingdienst','otros',75,'Personalizado','Según caso','Recursos, cartas y trámites a medida.', ['Carta o notificación'], 130],
+  ['pack-aterrizaje','PACK-ATERRIZAJE','flight_land','Pack “Aterrizaje en Holanda” (All-in-One)','otros',119,'Pack recomendado','Según caso','Incluye asesoría de BSN, alta en seguro médico, activación de DigiD y solicitud de Zorgtoeslag.', ['BSN','Pasaporte/DNI','Póliza o datos de seguro'], 140],
 ] as const;
 
 export async function migrateDatabase() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS public_content (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), page_key VARCHAR(80) NOT NULL, locale VARCHAR(2) NOT NULL DEFAULT 'ES', version INTEGER NOT NULL, status VARCHAR(20) NOT NULL DEFAULT 'draft', blocks JSONB NOT NULL DEFAULT '[]'::jsonb, seo_title VARCHAR(160) NOT NULL DEFAULT '', seo_description VARCHAR(320) NOT NULL DEFAULT '', updated_by UUID REFERENCES users(id) ON DELETE SET NULL, published_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(page_key, locale, version), CHECK (locale IN ('ES','EN','NL')), CHECK (status IN ('draft','published')))`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_public_content_lookup ON public_content(page_key, locale, status, version DESC)');
   await pool.query(`
     ALTER TABLE service_prices ADD COLUMN IF NOT EXISTS slug VARCHAR(120);
     ALTER TABLE service_prices ADD COLUMN IF NOT EXISTS requirements JSONB NOT NULL DEFAULT '[]'::jsonb;
@@ -26,6 +29,9 @@ export async function migrateDatabase() {
     ALTER TABLE appointments ADD COLUMN IF NOT EXISTS source VARCHAR(40) NOT NULL DEFAULT 'crm';
     ALTER TABLE appointments ADD COLUMN IF NOT EXISTS email VARCHAR(255);
     ALTER TABLE appointments ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+    ALTER TABLE appointments ADD COLUMN IF NOT EXISTS legal_consent BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE appointments ADD COLUMN IF NOT EXISTS legal_consent_at TIMESTAMP WITH TIME ZONE;
+    ALTER TABLE appointments ADD COLUMN IF NOT EXISTS legal_terms_version VARCHAR(40);
     CREATE TABLE IF NOT EXISTS service_requests (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -33,10 +39,18 @@ export async function migrateDatabase() {
       source VARCHAR(40) NOT NULL DEFAULT 'web',
       status VARCHAR(40) NOT NULL DEFAULT 'pendiente',
       notes TEXT,
+      legal_consent BOOLEAN NOT NULL DEFAULT FALSE,
+      legal_consent_at TIMESTAMP WITH TIME ZONE,
+      legal_terms_version VARCHAR(40),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_service_requests_client ON service_requests(client_id);
+    CREATE TABLE IF NOT EXISTS withdrawal_requests (
+      id SERIAL PRIMARY KEY, name VARCHAR(200) NOT NULL, email VARCHAR(320) NOT NULL,
+      service VARCHAR(200), contracted_at DATE, message TEXT NOT NULL,
+      status VARCHAR(40) NOT NULL DEFAULT 'pendiente', created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS quote_items (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       quote_id UUID NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
@@ -98,6 +112,24 @@ export async function migrateDatabase() {
       updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS portal_advisor_profile (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      full_name VARCHAR(120) NOT NULL DEFAULT 'Tu gestor',
+      title VARCHAR(120) NOT NULL DEFAULT 'Asesoría RP Gestoría',
+      organization VARCHAR(160) NOT NULL DEFAULT 'RP Gestoría & Asesoría',
+      phone VARCHAR(50) NOT NULL DEFAULT '',
+      email VARCHAR(255) NOT NULL DEFAULT '',
+      hours VARCHAR(160) NOT NULL DEFAULT 'Lunes a viernes, 09:00–17:00',
+      online BOOLEAN NOT NULL DEFAULT TRUE,
+      avatar_url VARCHAR(500) NOT NULL DEFAULT '',
+      bio VARCHAR(600) NOT NULL DEFAULT 'Estoy aquí para ayudarte con tus trámites en Holanda.',
+      booking_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      chat_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO portal_advisor_profile (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
   `);
   for (const s of DEFAULT_SERVICES) {
     await pool.query(`

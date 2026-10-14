@@ -29,20 +29,32 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   // El backend tambien protege sus rutas (401), pero sin esto se renderiza
   // la pantalla y luego cada fetch falla.
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-      return;
-    }
-    setUser(getStoredUser());
-    setChecking(false);
+    let active = true;
+    apiFetch('/auth/me')
+      .then(async (res) => {
+        if (!res.ok) {
+          clearSession();
+          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          return;
+        }
+        const data = await res.json();
+        if (active) {
+          setUser(data.user || getStoredUser());
+          setChecking(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          clearSession();
+          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+        }
+      });
+    return () => { active = false; };
   }, [pathname, router]);
 
   // Contador de clientes del menu. Se recarga al cambiar de ruta para que
   // un alta o una desactivacion se reflejen sin recargar la pagina.
   useEffect(() => {
-    if (!getToken()) return;
-
     apiFetch('/clients/count')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -89,6 +101,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     { href: '/crm/documentos-ia', label: 'Asistente Documentos', icon: 'document_scanner' },
     { href: '/crm/chat-ia', label: 'Chat Asistente IA', icon: 'forum', highlight: true, badge: 'En vivo' },
     { href: '/crm/integraciones', label: 'Integraciones y Avisos', icon: 'hub' },
+    { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
     { href: '/crm/backup', label: 'Copia de Seguridad', icon: 'cloud_download' },
   ];
 
@@ -121,12 +134,12 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Brand header */}
-          <div className="h-16 px-6 flex items-center justify-between border-b border-surface-container">
+          <div className="brand-header h-16 px-6 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-slate-700 flex items-center justify-center shadow-sm">
-                <img src="/logo.png" alt="RP Gestoría" className="w-full h-full object-cover" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-primary-dark border border-slate-700 flex items-center justify-center shadow-sm">
+                <img src="/logo.png" alt="RP Asesoría" className="w-full h-full object-cover" />
               </div>
-              <span className="font-headline-sm text-base font-bold text-on-surface tracking-tight">RP Gestoría</span>
+              <span className="font-headline-sm text-base font-bold text-on-surface tracking-tight">RP Asesoría</span>
             </Link>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-mono-data text-[10px] font-semibold rounded border border-blue-200">
@@ -188,7 +201,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
         {/* Footer Sidebar: System Status */}
         <div className="p-4 bg-surface-container-low border-t border-surface-container-high flex flex-col gap-3">
-          <div className="p-3 bg-surface-container-lowest rounded-lg border border-surface-container text-xs space-y-1.5 shadow-sm">
+          <div className="brand-card p-3 text-xs space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-outline">Servidor Coolify</span>
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -410,8 +423,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                     <button
                       onClick={() => {
                         setShowUserMenu(false);
-                        clearSession();
-                        router.replace('/login');
+                        void fetch('/api/backend/auth/logout', { method: 'POST' }).finally(() => {
+                          clearSession();
+                          router.replace('/login');
+                        });
                       }}
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-error hover:bg-red-50 transition-colors text-left"
                     >

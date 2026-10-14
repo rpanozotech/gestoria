@@ -1,6 +1,6 @@
-import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import CookieSettingsLink from '@/components/CookieSettingsLink';
 
 export default function Footer() {
   return (
@@ -13,17 +13,17 @@ export default function Footer() {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl overflow-hidden bg-slate-900 border border-slate-700">
-                <Image src="/logo.png" alt="RP Gestoría" width={36} height={36} className="object-cover" />
+                <Image src="/logo.png" alt="RP Asesoría" width={36} height={36} className="object-cover" />
               </div>
               <span className="font-heading font-extrabold text-lg text-white">
-                RP Gestoría <span className="text-[#F28C28]">& Asesoría</span>
+                RP Asesoría
               </span>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              “Tus trámites en Holanda, mucho más fáciles.” Asesoría fiscal, laboral y de extranjería para expatriados, jóvenes y profesionales en Países Bajos.
+              Información y acompañamiento administrativo para personas extranjeras en Países Bajos. No somos una autoridad pública ni ofrecemos representación legal.
             </p>
             <div className="pt-2 text-[11px] text-slate-500">
-              <p>Servicios de gestoría y asesoría para toda Holanda (Países Bajos)</p>
+              <p>Información y acompañamiento administrativo en Países Bajos</p>
             </div>
           </div>
 
@@ -68,11 +68,14 @@ export default function Footer() {
         </div>
 
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
-          <p>© {new Date().getFullYear()} RP Gestoría & Asesoría B.V. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} RP Asesoría Todos los derechos reservados.</p>
           <div className="flex items-center gap-6">
-            <span className="hover:text-slate-300 cursor-pointer">Aviso Legal</span>
-            <span className="hover:text-slate-300 cursor-pointer">Política de Privacidad</span>
-            <span className="hover:text-slate-300 cursor-pointer">Términos y Condiciones</span>
+            <Link href="/privacidad" className="hover:text-slate-300">Privacidad</Link>
+            <Link href="/cookies" className="hover:text-slate-300">Cookies</Link>
+            <Link href="/condiciones" className="hover:text-slate-300">Condiciones generales</Link>
+            <Link href="/desistimiento" className="hover:text-slate-300">Desistimiento</Link>
+            <Link href="/contacto" className="hover:text-slate-300">Contacto</Link>
+            <CookieSettingsLink />
           </div>
         </div>
 

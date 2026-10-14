@@ -41,9 +41,112 @@ export default function CRMDashboardPage() {
       .catch(() => {});
   }, []);
 
+  const [workFilter, setWorkFilter] = useState('todas');
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+
+  const workTasks = [
+    ...stats.today_appointments.map((apt: any) => ({
+      id: `appointment-${apt.id}`,
+      priority: 'alta',
+      client: apt.client_name || 'Cliente pendiente',
+      type: apt.title || 'Cita',
+      due: apt.appointment_time ? `Hoy · ${apt.appointment_time.slice(0, 5)}` : 'Hoy',
+      status: apt.status || 'pendiente',
+      owner: 'Equipo gestor',
+      updated: 'Actualizado hoy',
+      href: '/crm/agenda',
+    })),
+    ...stats.recent_dossiers.map((dossier: any) => ({
+      id: `dossier-${dossier.id}`,
+      priority: dossier.status === 'en_belastingdienst' ? 'normal' : 'alta',
+      client: dossier.client_name || 'Cliente pendiente',
+      type: dossier.title || 'Expediente',
+      due: dossier.status === 'completado' ? 'Completado' : 'En seguimiento',
+      status: dossier.status === 'completado' ? 'completada' : 'en espera',
+      owner: 'Equipo gestor',
+      updated: 'Última actividad registrada',
+      href: '/crm/clientes',
+      dossier,
+    })),
+  ];
+
+  const visibleTasks = workTasks.filter((task: any) => {
+    if (workFilter === 'todas') return true;
+    if (workFilter === 'urgentes') return task.priority === 'urgente' || task.priority === 'alta';
+    if (workFilter === 'completadas') return task.status === 'completada';
+    if (workFilter === 'en-espera') return task.status === 'en espera';
+    return true;
+  });
+
+  const priorityStyles: Record<string, string> = {
+    urgente: 'bg-red-100 text-red-800 border-red-200',
+    alta: 'bg-amber-100 text-amber-800 border-amber-200',
+    normal: 'bg-surface-container text-on-surface-variant border-outline-variant',
+    baja: 'bg-slate-100 text-slate-700 border-slate-200',
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header & Quick Action Strip */}
+      <section aria-labelledby="work-title" className="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-surface-container flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold text-secondary">GESTIÓN DIARIA</p>
+            <h2 id="work-title" className="text-xl font-bold text-on-surface">Mi trabajo de hoy</h2>
+            <p className="text-xs text-on-surface-variant mt-1">Prioriza citas, expedientes y seguimientos sin salir de esta vista.</p>
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtros de trabajo">
+            {[
+              ['todas', 'Todas'],
+              ['urgentes', 'Urgentes'],
+              ['en-espera', 'En espera'],
+              ['completadas', 'Completadas'],
+            ].map(([value, label]) => (
+              <button key={value} type="button" aria-pressed={workFilter === value} onClick={() => setWorkFilter(value)} className={`px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${workFilter === value ? 'bg-secondary text-white border-secondary' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-secondary'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-container-low text-[11px] text-on-surface-variant">
+                <tr>
+                  <th scope="col" className="px-5 py-3">Prioridad</th>
+                  <th scope="col" className="px-5 py-3">Cliente / expediente</th>
+                  <th scope="col" className="px-5 py-3">Tarea</th>
+                  <th scope="col" className="px-5 py-3">Fecha límite</th>
+                  <th scope="col" className="px-5 py-3">Estado</th>
+                  <th scope="col" className="px-5 py-3">Responsable</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-container">
+                {visibleTasks.map((task: any) => (
+                  <tr key={task.id} tabIndex={0} onClick={() => setSelectedTask(task)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedTask(task); } }} className="cursor-pointer hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary">
+                    <td className="px-5 py-3"><span className={`inline-flex px-2 py-1 rounded border text-[10px] font-bold ${priorityStyles[task.priority] || priorityStyles.normal}`}>{task.priority}</span></td>
+                    <td className="px-5 py-3"><strong className="text-on-surface">{task.client}</strong><span className="block text-[10px] text-outline">{task.dossier?.code || 'Sin expediente visible'}</span></td>
+                    <td className="px-5 py-3 text-on-surface">{task.type}</td>
+                    <td className="px-5 py-3 text-on-surface-variant">{task.due}</td>
+                    <td className="px-5 py-3"><span className="inline-flex items-center gap-1 text-[10px] font-semibold text-on-surface-variant"><span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>{task.status}</span></td>
+                    <td className="px-5 py-3 text-on-surface-variant">{task.owner}<span className="block text-[10px] text-outline">{task.updated}</span></td>
+                  </tr>
+                ))}
+                {visibleTasks.length === 0 && <tr><td colSpan={6} className="px-5 py-10 text-center text-sm text-on-surface-variant">No hay tareas en este filtro.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+          <aside className="border-t xl:border-t-0 xl:border-l border-surface-container p-5 bg-surface-container-low" aria-live="polite">
+            {selectedTask ? (
+              <div className="space-y-4">
+                <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-semibold text-secondary">DETALLE SELECCIONADO</p><h3 className="font-bold text-on-surface mt-1">{selectedTask.type}</h3></div><button type="button" aria-label="Cerrar detalle" onClick={() => setSelectedTask(null)} className="text-on-surface-variant hover:text-on-surface">✕</button></div>
+                <dl className="space-y-2 text-xs"><div><dt className="text-outline">Cliente</dt><dd className="font-semibold text-on-surface">{selectedTask.client}</dd></div><div><dt className="text-outline">Fecha límite</dt><dd className="text-on-surface">{selectedTask.due}</dd></div><div><dt className="text-outline">Responsable</dt><dd className="text-on-surface">{selectedTask.owner}</dd></div><div><dt className="text-outline">Estado</dt><dd className="text-on-surface">{selectedTask.status}</dd></div></dl>
+                <div className="flex flex-col gap-2"><Link href={selectedTask.href} className="h-9 rounded-md bg-secondary text-white text-xs font-semibold flex items-center justify-center">Abrir ficha completa</Link><button type="button" onClick={() => setSelectedTask(null)} className="h-9 rounded-md border border-outline-variant text-on-surface text-xs font-semibold">Cerrar detalle</button></div>
+              </div>
+            ) : <div className="min-h-[180px] flex flex-col justify-center"><span className="material-symbols-outlined text-3xl text-secondary">touch_app</span><h3 className="font-bold text-on-surface mt-3">Selecciona una tarea</h3><p className="text-xs text-on-surface-variant mt-1">El detalle aparecerá aquí sin abandonar la lista.</p></div>}
+          </aside>
+        </div>
+      </section>
+
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -191,13 +294,13 @@ export default function CRMDashboardPage() {
           </div>
         </Link>
 
-        {/* KPI 6: Pasarela iDEAL */}
+        {/* KPI 6: Pagos por WhatsApp */}
         <Link
           href="/crm/facturacion"
           className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
         >
           <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-[11px] font-semibold tracking-normal text-outline group-hover:text-secondary">Pasarela iDEAL</span>
+            <span className="text-[11px] font-semibold tracking-normal text-outline group-hover:text-secondary">Pagos por WhatsApp</span>
             <span className="material-symbols-outlined text-[18px] text-secondary">credit_card</span>
           </div>
           <div className="mt-3">

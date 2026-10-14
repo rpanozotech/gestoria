@@ -113,10 +113,12 @@ export function validarEndpointIA(
 
   const host = url.hostname.toLowerCase();
 
-  if (permitirHostsLocales) {
-    // Preset de Ollama: se acepta solo si el puerto es el suyo. Sigue sin
-    // abrir nada mas, porque el resto de hosts siguen filtrados.
-    if (puerto === 11434) return url;
+  if (permitirHostsLocales && puerto === 11434) {
+    const hostsOllamaPermitidos = new Set(['ollama', 'host.docker.internal', 'localhost', '127.0.0.1']);
+    if (!hostsOllamaPermitidos.has(host)) {
+      throw new EndpointNoPermitido('El endpoint Ollama debe usar un host local permitido.');
+    }
+    return url;
   }
 
   if (esHostBloqueado(host)) {

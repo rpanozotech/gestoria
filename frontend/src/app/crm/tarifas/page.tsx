@@ -198,6 +198,9 @@ export default function TerminalTarifasPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tempPrice, setTempPrice] = useState<number>(0);
   const [tempBadge, setTempBadge] = useState<string>('');
+  const [tempTitle, setTempTitle] = useState<string>('');
+  const [tempDesc, setTempDesc] = useState<string>('');
+  const [tempDuration, setTempDuration] = useState<string>('');
   const [saveToast, setSaveToast] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -242,6 +245,9 @@ export default function TerminalTarifasPage() {
     setEditingId(srv.id);
     setTempPrice(srv.basePrice);
     setTempBadge(srv.badge);
+    setTempTitle(srv.title);
+    setTempDesc(srv.desc);
+    setTempDuration(srv.duration);
   };
 
   const handleSaveEdit = async (id: string) => {
@@ -251,6 +257,9 @@ export default function TerminalTarifasPage() {
           ...s,
           basePrice: Number(tempPrice),
           badge: tempBadge,
+          title: tempTitle.trim() || s.title,
+          desc: tempDesc.trim(),
+          duration: tempDuration.trim() || s.duration,
         };
       }
       return s;
@@ -291,7 +300,7 @@ export default function TerminalTarifasPage() {
       badge: newBadge,
       duration: '24-48h',
       active: true,
-      desc: newDesc || 'Trámite especializado gestionado por el equipo de RP Gestoría.',
+      desc: newDesc || 'Trámite especializado gestionado por el equipo de RP Asesoría.',
     };
     await persistServices([...services, newSrv]);
     setShowAddModal(false);
@@ -471,7 +480,6 @@ export default function TerminalTarifasPage() {
                 <th scope="col" className="py-3.5 px-4">Plazo</th>
                 <th scope="col" className="py-3.5 px-4">Etiqueta / Badge</th>
                 <th scope="col" className="py-3.5 px-4">Precio final (IVA incluido)</th>
-                <th scope="col" className="py-3.5 px-4">Desglose IVA 21%</th>
                 <th scope="col" className="py-3.5 px-4 text-center">Estado Web</th>
                 <th scope="col" className="py-3.5 px-4 text-right">Acciones</th>
               </tr>
@@ -479,7 +487,6 @@ export default function TerminalTarifasPage() {
             <tbody className="divide-y divide-surface-container text-xs">
               {filtered.map((srv) => {
                 const isEditing = editingId === srv.id;
-                const totalWithTax = srv.basePrice.toFixed(2);
 
                 return (
                   <tr
@@ -503,16 +510,20 @@ export default function TerminalTarifasPage() {
                     {/* NOMBRE & CATEGORÍA */}
                     <td className="py-3 px-4">
                       <div>
-                        <p className="font-bold text-on-surface text-sm">{srv.title}</p>
-                        <p className="text-[11px] text-on-surface-variant line-clamp-1">{srv.desc}</p>
+                        {isEditing ? (
+                          <div className="space-y-1.5 min-w-[220px]">
+                            <input type="text" value={tempTitle} onChange={(e) => setTempTitle(e.target.value)} aria-label="Nombre del servicio" className="w-full px-2 py-1 bg-surface-container-high rounded border border-secondary text-xs font-bold outline-none" />
+                            <textarea value={tempDesc} onChange={(e) => setTempDesc(e.target.value)} aria-label="Descripción del servicio" rows={2} className="w-full px-2 py-1 bg-surface-container-high rounded border border-surface-container text-[11px] outline-none" />
+                          </div>
+                        ) : (
+                          <><p className="font-bold text-on-surface text-sm">{srv.title}</p><p className="text-[11px] text-on-surface-variant line-clamp-1">{srv.desc}</p></>
+                        )}
                       </div>
                     </td>
 
                     {/* PLAZO */}
                     <td className="py-3 px-4 whitespace-nowrap text-on-surface-variant">
-                      <span className="px-2 py-0.5 bg-surface-container rounded text-[11px] font-medium">
-                        {srv.duration}
-                      </span>
+                      {isEditing ? <input type="text" value={tempDuration} onChange={(e) => setTempDuration(e.target.value)} aria-label="Duración del servicio" className="w-28 px-2 py-1 bg-surface-container-high rounded border border-surface-container text-[11px] outline-none" /> : <span className="px-2 py-0.5 bg-surface-container rounded text-[11px] font-medium">{srv.duration}</span>}
                     </td>
 
                     {/* BADGE / ETIQUETA */}
@@ -549,13 +560,6 @@ export default function TerminalTarifasPage() {
                           {srv.basePrice.toFixed(2)} €
                         </span>
                       )}
-                    </td>
-
-                    {/* TOTAL CON IVA */}
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="font-mono-data font-bold text-xs text-on-surface-variant">
-                        € {(srv.basePrice - srv.basePrice / (1 + srv.btwRate)).toFixed(2)} IVA
-                      </span>
                     </td>
 
                     {/* ESTADO ACTIVO/INACTIVO */}
@@ -602,7 +606,7 @@ export default function TerminalTarifasPage() {
                           className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold text-xs flex items-center gap-1.5 ml-auto transition-colors"
                         >
                           <span className="material-symbols-outlined text-[15px] text-secondary">edit</span>
-                          <span>Editar Precio</span>
+                          <span>Editar Servicio</span>
                         </button>
                       )}
                     </td>

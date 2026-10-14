@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -29,7 +30,7 @@ const FAQ_ITEMS = [
   {
     category: 'Autónomos ZZP',
     q: '¿Qué necesito para darme de alta como autónomo (ZZP) en Países Bajos?',
-    a: 'Necesitas tu número BSN, un documento de identidad en vigor (pasaporte o DNI europeo) y acudir a la cita con la Cámara de Comercio (KvK). En RP Gestoría preparamos toda tu inscripción, gestionamos tu número de IVA (BTW-id) y nos ocupamos de tus declaraciones trimestrales.',
+    a: 'Necesitas tu número BSN, un documento de identidad en vigor (pasaporte o DNI europeo) y acudir a la cita con la Cámara de Comercio (KvK). En RP Asesoría preparamos toda tu inscripción, gestionamos tu número de IVA (BTW-id) y nos ocupamos de tus declaraciones trimestrales.',
   },
   {
     category: 'Paro & UWV',
@@ -38,12 +39,23 @@ const FAQ_ITEMS = [
   },
 ];
 
+const FAQ_ITEMS_EN = [
+  { category: 'Tax & M-Form', q: 'What is the M-Form and why is it often refundable?', a: 'The M-Form is the tax return for the year in which you change your tax residence to the Netherlands. We review your situation and prepare the filing; the final decision belongs to the Dutch Tax Administration.' },
+  { category: 'DigiD & Identity', q: 'How does DigiD work and how long does activation take?', a: 'DigiD is your official digital key for Dutch government services. We guide you through the application and activation process.' },
+  { category: 'Benefits', q: 'Can I apply for Zorgtoeslag retroactively?', a: 'Possibly, if you meet the income and insurance requirements. Eligibility and the final amount are decided by the competent authority.' },
+  { category: 'Health insurance', q: 'Do I need Dutch health insurance if I already have a European Health Insurance Card?', a: 'If you work or usually live in the Netherlands, Dutch rules may require basic health insurance. We help you understand the administrative steps.' },
+  { category: 'Self-employed ZZP', q: 'What do I need to register as self-employed in the Netherlands?', a: 'Usually a BSN and valid identity document are needed. We explain the registration process and the required documents.' },
+  { category: 'Unemployment & UWV', q: 'What is the U1 form and when should I request it?', a: 'The U1 certificate proves insurance periods for unemployment purposes within the EU. We can help request and prepare the documentation.' },
+];
+
 export default function FaqPage() {
+  const { lang } = useLanguage();
+  const english = lang === 'EN';
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [search, setSearch] = useState('');
 
-  const filtered = FAQ_ITEMS.filter((item) => 
-    item.q.toLowerCase().includes(search.toLowerCase()) || 
+  const filtered = (english ? FAQ_ITEMS_EN : FAQ_ITEMS).filter((item) =>
+    item.q.toLowerCase().includes(search.toLowerCase()) ||
     item.a.toLowerCase().includes(search.toLowerCase()) ||
     item.category.toLowerCase().includes(search.toLowerCase())
   );
@@ -58,22 +70,22 @@ export default function FaqPage() {
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 border border-blue-200 text-blue-800 text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">help</span>
-              <span>Centro de Ayuda & Respuestas</span>
+              {english ? 'Help Centre & Answers' : 'Centro de Ayuda & Respuestas'}
             </div>
 
             <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Preguntas Frecuentes sobre <span className="text-blue-600">Trámites en Holanda</span>
+              {english ? <>Frequently Asked Questions about <span className="text-blue-600">Dutch paperwork</span></> : <>Preguntas Frecuentes sobre <span className="text-blue-600">Trámites en Holanda</span></>}
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-8">
-              Respuestas claras y directas a las dudas más habituales sobre impuestos, sanidad, DigiD y ayudas en Países Bajos.
+              {english ? 'Clear, direct answers to common questions about taxes, healthcare, DigiD and benefits in the Netherlands.' : 'Respuestas claras y directas a las dudas más habituales sobre impuestos, sanidad, DigiD y ayudas en Países Bajos.'}
             </p>
 
             <div className="max-w-xl mx-auto relative">
               <span className="material-symbols-outlined absolute left-4 top-3.5 text-slate-400 text-[22px]">search</span>
               <input
                 type="text"
-                placeholder="Buscar duda (ej. M-Form, Zorgtoeslag, seguro, plazos...)"
+                placeholder={english ? 'Search a question (e.g. M-Form, Zorgtoeslag, insurance...)' : 'Buscar duda (ej. M-Form, Zorgtoeslag, seguro, plazos...)'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white rounded-2xl border border-slate-200 text-sm shadow-sm focus:ring-2 focus:ring-blue-600 outline-none"

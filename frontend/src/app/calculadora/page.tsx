@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { formatThousands } from '@/lib/format';
@@ -20,6 +21,8 @@ const formatAmount = formatThousands;
 const parseAmount = (value: string) => Number(value.replace(/\D/g, '')) || 0;
 
 export default function CalculadoraPage() {
+  const { lang } = useLanguage();
+  const english = lang === 'EN';
   // 1. Calculadora M-Form
   const [monthsInNL, setMonthsInNL] = useState<number>(8);
   const [grossIncome, setGrossIncome] = useState<number>(27000);
@@ -67,19 +70,19 @@ export default function CalculadoraPage() {
           <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12 text-center">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/70 border border-blue-200 text-blue-800 text-xs font-semibold mb-4">
               <span className="material-symbols-outlined text-[16px]">calculate</span>
-              <span>Simuladores Fiscales Oficiales 2026</span>
+              {english ? 'Indicative Tax Simulators 2026' : 'Simuladores fiscales orientativos 2026'}
             </div>
 
             <h1 className="font-heading text-3xl sm:text-5xl lg:text-[52px] leading-tight font-extrabold text-slate-900 tracking-tight mb-4">
-              Calcula tu devolución y <span className="text-blue-600">subsidios en Holanda</span>
+              {english ? <>Calculate your refund and <span className="text-blue-600">benefits in the Netherlands</span></> : <>Calcula tu devolución y <span className="text-blue-600">subsidios en Holanda</span></>}
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-4 leading-relaxed">
-              Descubre en menos de 1 minuto cuánto dinero puedes reclamar legalmente ante la Belastingdienst.
+              {english ? 'Get an indicative estimate in less than one minute. It is not a tax ruling or a guaranteed result.' : 'Obtén una estimación orientativa en menos de 1 minuto. No es una resolución fiscal ni garantiza un resultado.'}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] sm:text-xs font-semibold text-slate-500">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200"><span className="material-symbols-outlined text-[15px] text-emerald-600">verified</span>Estimación orientativa</span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200"><span className="material-symbols-outlined text-[15px] text-blue-600">lock</span>Sin guardar tus datos</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200"><span className="material-symbols-outlined text-[15px] text-emerald-600">verified</span>{english ? 'Indicative estimate' : 'Estimación orientativa'}</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200"><span className="material-symbols-outlined text-[15px] text-blue-600">lock</span>{english ? 'Your data is not stored' : 'Sin guardar tus datos'}</span>
             </div>
           </div>
         </section>

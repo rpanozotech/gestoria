@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   // elige el llamante, con el Authorization de OPENAI_API_KEY del servidor, y
   // devuelve el cuerpo de la respuesta: sin esta comprobacion es SSRF con
   // lectura de respuesta y robo de la clave, abierto a cualquiera.
-  const noAutorizado = exigeSesionGestor(request);
+  const noAutorizado = await exigeSesionGestor(request);
   if (noAutorizado) return noAutorizado;
 
   try {

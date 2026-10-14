@@ -5,7 +5,7 @@ import { exigeSesionGestor } from '@/lib/server-auth';
 export async function POST(request: Request) {
   // Sin sesion no se ejecuta nada: este endpoint gasta OPENAI_API_KEY del
   // servidor y hace fetch a una URL que elige el llamante.
-  const noAutorizado = exigeSesionGestor(request);
+  const noAutorizado = await exigeSesionGestor(request);
   if (noAutorizado) return noAutorizado;
 
   try {
@@ -151,42 +151,16 @@ In afwachting van uw schriftelijke ontvangstbevestiging en nadere beslissing,
 
 Hoogachtend,
 
-NexusGest Advies & Gestoría B.V.
-Afdeling Fiscale & Juridische Zaken
-KvK: 89123847 · Eindhoven
-info@nexusgest.nl | www.nexusgest.nl`;
+[Nombre y datos de la gestoría configurados en el expediente]
+[Datos de contacto verificados]`;
     } else if (lastUserMsg.toLowerCase().includes('machtiging') || lastUserMsg.toLowerCase().includes('digid') || lastUserMsg.toLowerCase().includes('autorizacion')) {
-      fallbackText = `VOLMACHT EN VERKLARING VAN VERTEGENWOORDIGING
-(Machtiging DigiD & Fiscale Zaken)
-
-Datum van afgifte: ${today}
-Plaats: Eindhoven, Nederland
-
-1. VOLMACHTGEVER (Cliënt):
-Naam: Cliënt NexusGest
-BSN: 982145672
-Woonplaats: Eindhoven
-
-2. GEVOLMACHTIGDE (Gestoría / Belastingadviseur):
-NexusGest Advies B.V.
-KvK-nummer: 89123847
-Vertegenwoordigd door: Rony P.
-
-3. OMVANG VAN DE VOLMACHT:
-Ondergetekende verleent hierbij volledige volmacht aan NexusGest B.V. om hem/haar te vertegenwoordigen bij de Belastingdienst, Toeslagen, SVB, CAK en UWV. Deze machtiging omvat:
-a) Het opvragen en inzien van fiscale gegevens en aanslagen.
-b) Het indienen van belastingaangiften (M-Form, P-Form, C-Form) en verzoeken om voorlopige teruggaaf.
-c) Het indienen van bezwaar- en beroepschriften conform Awb.
-d) Het beheren van DigiD Machtigingen namens volmachtgever.
-
-Handtekening volmachtgever:                        Handtekening gemachtigde:
-_______________________                            _______________________`;
+      fallbackText = 'PLANTILLA DE AUTORIZACIÓN — BORRADOR NO VÁLIDO COMO DOCUMENTO OFICIAL\n\nEsta salida no contiene datos verificados del cliente ni del gestor. Completa los datos desde el expediente autorizado y revisa el alcance de la representación antes de firmar o presentar el documento.\n\nNo se ha generado ningún BSN, número de empresa, dirección ni autorización real.';
     } else {
       fallbackText = `NexusGest Legal & Document Assistant (Modo Asesor Holandés)
 Datum: ${today}
 
 RESUMEN Y ANÁLISIS DE LA CONSULTA:
-Hemos analizado la información aportada conforme a la normativa legal y administrativa de los Países Bajos (Algemene wet bestuursrecht - Awb / Belastingdienst).
+Esta es una plantilla heurística no verificada; no sustituye un análisis legal ni una revisión profesional.
 
 PUNTOS CLAVE:
 1. Procedimiento aplicable: Gestión administrativa y representación fiscal ante organismos oficiales neerlandeses.

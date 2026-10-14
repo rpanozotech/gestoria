@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { LanguageProvider } from '@/context/LanguageContext';
+import CookieBanner from '@/components/CookieBanner';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'RP Gestoría & Asesoría | Tus trámites en Holanda, mucho más fáciles',
-  description: 'Gestoría integral y asesoría para jóvenes, expatriados y profesionales en Países Bajos. Declaración de la renta M-Form, DigiD, Zorgtoeslag, ZZP y más en tu idioma.',
+  title: 'RP Asesoría | Información y acompañamiento administrativo en Países Bajos',
+  description: 'Información y acompañamiento administrativo para personas extranjeras en Países Bajos. Orientación práctica sobre cartas, formularios y trámites en tu idioma.',
   icons: {
     icon: '/logo.png',
   },
@@ -24,6 +25,7 @@ export default function RootLayout({
       </head>
       <body className="bg-surface text-on-surface antialiased font-sans">
         <LanguageProvider>{children}</LanguageProvider>
+        <CookieBanner />
       </body>
     </html>
   );

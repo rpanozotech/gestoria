@@ -10,6 +10,12 @@ import { activableConTeclado } from '@/lib/a11y';
 // como string ("266.20"), no como numero. La tabla hace toFixed(2), que
 // fallaria en un string. `items` es una columna JSONB y llega como texto,
 // no como array. Sin esto, cargar datos reales rompe la pantalla.
+function formatInvoiceDate(value: unknown) {
+  if (!value) return 'Pendiente';
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
 function normalizarFactura(inv: any) {
   let items: any[] = [];
   if (Array.isArray(inv.items)) {
@@ -378,7 +384,7 @@ export default function CRMFacturacionPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-on-surface">Presupuestos y Facturación</h1>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Numeración correlativa legal PRE-2026 y FAC-2026 · precios finales IVA incluido · Pasarela iDEAL
+            Numeración correlativa legal PRE-2026 y FAC-2026 · precios finales IVA incluido · Pago coordinado por WhatsApp
           </p>
         </div>
 
@@ -504,7 +510,7 @@ export default function CRMFacturacionPage() {
                       )}
                     </td>
                     <td className="px-5 py-3.5 font-mono-data text-outline">
-                      {inv.due_date}
+                      {formatInvoiceDate(inv.due_date)}
                     </td>
                     <td className="px-5 py-3.5 text-right font-mono-data font-bold text-sm text-on-surface">
                       € {inv.total.toFixed(2)}
@@ -546,11 +552,7 @@ export default function CRMFacturacionPage() {
                               ? 'text-outline hover:text-amber-700 hover:bg-amber-50'
                               : 'text-outline hover:text-error hover:bg-red-50'
                           }`}
-                          title={
-                            inv.status === 'pagada'
-                              ? 'Las facturas pagadas no se borran: marcar como cancelada'
-                              : 'Eliminar factura'
-                          }
+                          aria-label={inv.status === 'pagada' ? `Marcar factura ${inv.code} como cancelada` : `Eliminar factura ${inv.code}`}
                         >
                           <span className="material-symbols-outlined text-[15px]">
                             {inv.status === 'pagada' ? 'event_busy' : 'delete'}
@@ -1000,7 +1002,7 @@ export default function CRMFacturacionPage() {
                   </div>
                   <div className="text-[11px] text-outline font-mono-data">
                     {selectedDoc.type === 'invoice' ? 'Fecha de vencimiento: ' : 'Válido hasta: '}
-                    <strong>{selectedDoc.data.due_date || selectedDoc.data.valid_until || '2026-11-30'}</strong>
+                    <strong>{formatInvoiceDate(selectedDoc.data.due_date || selectedDoc.data.valid_until)}</strong>
                   </div>
                   <div className="pt-1">
                     {selectedDoc.type === 'invoice' ? (
