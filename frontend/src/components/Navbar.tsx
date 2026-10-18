@@ -101,7 +101,7 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
               aria-controls="public-mobile-menu"
-              className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors"
+              className="lg:hidden h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors"
               aria-label={mobileMenuOpen ? t('close_menu') : t('open_menu')}
             >
               <span className="material-symbols-outlined text-[22px]">
@@ -122,7 +122,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                  className={`min-h-11 px-3 py-3 text-sm font-semibold rounded-xl transition-colors ${
                     pathname === link.href
                       ? 'bg-blue-50 text-[#145DA0] font-bold'
                       : 'text-slate-800 hover:bg-blue-50 hover:text-[#145DA0]'
