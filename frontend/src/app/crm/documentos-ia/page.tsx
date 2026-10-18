@@ -1192,7 +1192,7 @@ ${
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <button
+                    <button type="button"
                       onClick={handleOpenCreateTemplate}
                       className="px-2 py-1 bg-surface hover:bg-surface-container border border-outline-variant text-secondary text-[11px] font-semibold rounded flex items-center gap-1"
                     >
@@ -1201,14 +1201,14 @@ ${
                     </button>
                     {activeTemplateObj.isCustom && (
                       <>
-                        <button
+                        <button type="button"
                           onClick={handleOpenEditTemplate}
                           title="Editar esta plantilla personalizada"
                           className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface"
                         >
                           <span className="material-symbols-outlined text-[15px]">edit</span>
                         </button>
-                        <button
+                        <button type="button"
                           onClick={() => handleDeleteCustomTemplate(activeTemplateObj.id)}
                           title="Eliminar plantilla"
                           className="p-1 hover:bg-rose-50 rounded text-rose-600"
@@ -1346,7 +1346,7 @@ ${
                 </div>
 
                 {/* Botón de Generar */}
-                <button
+                <button type="button"
                   onClick={() => handleGenerate()}
                   disabled={isGenerating}
                   className="w-full h-10 mt-auto bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
@@ -1373,7 +1373,7 @@ ${
 
                     {/* BOTONES PRINCIPALES: WORD (.DOCX), PDF E IMPRIMIR */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <button
+                      <button type="button"
                         onClick={handleExportWord}
                         disabled={isExportingDocx}
                         title="Descargar documento en formato Word (.docx)"
@@ -1383,7 +1383,7 @@ ${
                         <span>{isExportingDocx ? 'Exportando...' : 'Word (.docx)'}</span>
                       </button>
 
-                      <button
+                      <button type="button"
                         onClick={handlePrintDocument}
                         title="Imprimir documento o guardar como PDF oficial"
                         className="h-8 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold flex items-center gap-1 transition-all shadow-xs"
@@ -1392,7 +1392,7 @@ ${
                         <span>Imprimir / PDF</span>
                       </button>
 
-                      <button
+                      <button type="button"
                         onClick={handleCopy}
                         title="Copiar texto al portapapeles"
                         className="h-8 px-2 rounded-lg border border-outline-variant hover:bg-surface text-[11px] font-semibold text-on-surface flex items-center gap-1"
@@ -1411,7 +1411,7 @@ ${
                       <span className="material-symbols-outlined text-[13px] text-amber-500">auto_fix_high</span>
                       <span>Refinar:</span>
                     </span>
-                    <button
+                    <button type="button"
                       onClick={() =>
                         handleGenerate('Haz el texto más riguroso y formal citando artículos de la ley Awb.')
                       }
@@ -1420,7 +1420,7 @@ ${
                     >
                       + Ley Awb
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() =>
                         handleGenerate(
                           'Añade un párrafo solicitando expresamente la suspensión del cobro (uitstel van betaling).'
@@ -1431,7 +1431,7 @@ ${
                     >
                       + Suspensión Cobro
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() =>
                         handleGenerate('Traduce todo el escrito al español manteniendo el formato formal.')
                       }
@@ -1662,7 +1662,7 @@ ${
                   />
                 </div>
 
-                <button
+                <button type="button"
                   onClick={handleAnalyzeDoc}
                   disabled={isAnalyzing || !docToAnalyze.trim()}
                   className="w-full h-10 mt-auto bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
@@ -1733,7 +1733,7 @@ ${
                         <p className="text-on-surface leading-relaxed text-[11px]">{analysisResult.recommendedAction}</p>
                       </div>
 
-                      <button
+                      <button type="button"
                         onClick={handleApplyAnalysisToLetter}
                         className="w-full h-9 bg-secondary hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm text-xs"
                       >
@@ -1775,7 +1775,7 @@ ${
 
               <div className="flex items-center gap-1">
                 {/* Botón de limpiar chat */}
-                <button
+                <button type="button"
                   onClick={() => {
                     setChatMessages([
                       {
@@ -1791,7 +1791,7 @@ ${
                 </button>
 
                 {/* Botón de cerrar / ocultar barra lateral */}
-                <button
+                <button type="button"
                   onClick={() => setIsChatSidebarOpen(false)}
                   title="Ocultar barra lateral"
                   className="p-1 hover:bg-surface-container rounded text-outline hover:text-on-surface transition-colors"
@@ -1809,7 +1809,7 @@ ${
                 'Exención seguro CAK',
                 'Traducir al holandés',
               ].map((shortcut, i) => (
-                <button
+                <button type="button"
                   key={i}
                   onClick={() => handleSendChatMessage(shortcut)}
                   disabled={isChatSending || isStreaming}
@@ -1847,7 +1847,7 @@ ${
                   {/* Acciones directas sobre respuestas del asistente */}
                   {msg.role === 'assistant' && msg.content && (
                     <div className="flex items-center gap-1.5 text-[10px] text-outline ml-1">
-                      <button
+                      <button type="button"
                         onClick={() => {
                           navigator.clipboard.writeText(msg.content);
                           showToast('Texto copiado al portapapeles');
@@ -1858,7 +1858,7 @@ ${
                         <span>Copiar</span>
                       </button>
                       <span>·</span>
-                      <button
+                      <button type="button"
                         onClick={() => handleInsertChatIntoDoc(msg.content)}
                         className="hover:text-secondary font-semibold text-secondary flex items-center gap-0.5"
                       >
@@ -2115,7 +2115,7 @@ ${
                     </button>
                   </div>
 
-                  <button
+                  <button type="button"
                     onClick={handleAnalyzeDoc}
                     disabled={isAnalyzing || !docToAnalyze.trim()}
                     className="h-11 px-8 bg-primary text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50 ml-auto"
@@ -2190,7 +2190,7 @@ ${
                         <p className="text-on-surface leading-relaxed text-xs font-medium">{analysisResult.recommendedAction}</p>
                       </div>
 
-                      <button
+                      <button type="button"
                         onClick={() => {
                           setIsAnalyzerMaximized(false);
                           handleApplyAnalysisToLetter();
@@ -2232,7 +2232,7 @@ ${
                   </p>
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={() => setShowTemplateModal(false)}
                 className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white/80 hover:text-white"
               >
@@ -2422,7 +2422,7 @@ ${
                   </p>
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={() => setShowConfigModal(false)}
                 className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white/80 hover:text-white"
               >

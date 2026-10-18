@@ -743,7 +743,7 @@ Responde de forma estructurada, profesional, directa y lista para usar. Puedes p
                     {msg.role === 'assistant' && msg.content && (
                       <>
                         <span>·</span>
-                        <button
+                        <button type="button"
                           onClick={() => {
                             navigator.clipboard.writeText(msg.content);
                             showToast('Respuesta copiada al portapapeles');

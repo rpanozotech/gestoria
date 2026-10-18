@@ -6,7 +6,7 @@ import path from 'node:path';
 import multer from 'multer';
 import { query } from '../db/index.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
-import { esTipoDocumentoPermitido } from '../utils/upload.js';
+import { esTipoDocumentoPermitido, firmaDocumentoValida } from '../utils/upload.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('cliente'));
@@ -96,6 +96,10 @@ router.post('/documents', (req: Request, res: Response, next) => {
   if (!file) return res.status(400).json({ error: 'Selecciona un PDF o una imagen JPG/PNG.' });
 
   try {
+    if (!(await firmaDocumentoValida(file.path, file.mimetype))) {
+      await unlink(file.path).catch(() => undefined);
+      return res.status(400).json({ error: 'La firma del archivo no coincide con su tipo declarado.' });
+    }
     const result = await query(
       `INSERT INTO documents (client_id, file_name, file_path, file_size, mime_type, category, ocr_status, uploaded_by)
        VALUES ($1, $2, $3, $4, $5, 'Documento del cliente', 'no_requerido', $6)

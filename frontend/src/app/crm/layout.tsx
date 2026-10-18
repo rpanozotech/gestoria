@@ -112,6 +112,15 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     { title: 'Tarifas Oficiales', category: 'Tarifas', href: '/crm/tarifas' },
   ].filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
+  // El CRM tiene metadatos propios: no debe heredar el título de la web pública.
+  useEffect(() => {
+    document.title = 'RP Asesoría | CRM';
+    const description = document.querySelector('meta[name="description"]') || document.createElement('meta');
+    description.setAttribute('name', 'description');
+    description.setAttribute('content', 'CRM interno de RP Asesoría para gestionar clientes, expedientes, citas y documentos.');
+    if (!description.parentElement) document.head.appendChild(description);
+  }, []);
+
   // Mientras se verifica la sesion no se renderiza el CRM: si no, se ve
   // un frame con la UI y los datos hardcodeados antes de redirigir.
   if (checking) {
@@ -253,7 +262,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               <span className="material-symbols-outlined text-[24px]">menu</span>
             </button>
 
-            <button
+            <button type="button"
               onClick={() => setShowSearchModal(true)}
               className="w-full h-9 px-3 bg-surface-container-lowest border border-outline-variant text-outline text-xs rounded-md flex items-center justify-between hover:border-secondary hover:text-on-surface transition-colors shadow-sm"
             >
@@ -279,7 +288,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
             {/* Notifications Button & Dropdown */}
             <div className="relative border-x border-surface-container px-2">
-              <button
+              <button type="button"
                 onClick={() => {
                   setShowNotifications(!showNotifications);
                   setShowUserMenu(false);
@@ -352,7 +361,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
             {/* User Profile Avatar & Dropdown */}
             <div className="relative">
-              <button
+              <button type="button"
                 onClick={() => {
                   setShowUserMenu(!showUserMenu);
                   setShowNotifications(false);
@@ -420,7 +429,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                     <span>Ir a la Web Pública</span>
                   </Link>
                   <div className="pt-1 border-t border-surface-container">
-                    <button
+                    <button type="button"
                       onClick={() => {
                         setShowUserMenu(false);
                         void fetch('/api/backend/auth/logout', { method: 'POST' }).finally(() => {

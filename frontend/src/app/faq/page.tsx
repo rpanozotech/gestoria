@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PublishedContent from '@/components/PublishedContent';
 
 const FAQ_ITEMS = [
   {
@@ -64,6 +65,7 @@ export default function FaqPage() {
     <div role="main" id="main-content" className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
+        <PublishedContent pageKey="faq" />
 
         {/* HERO FAQ */}
         <section className="pt-16 pb-14 bg-gradient-to-b from-blue-50/50 via-white to-[#F8FAFC] border-b border-slate-100">

@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { query } from '../db/index.js';
-import { esTipoDocumentoPermitido, nombreSeguroDocumento } from '../utils/upload.js';
+import { esTipoDocumentoPermitido, nombreSeguroDocumento, firmaDocumentoValida } from '../utils/upload.js';
 
 const router = Router();
 
@@ -40,6 +40,10 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       return res.status(400).json({ error: 'Se requiere el archivo y el ID del cliente' });
     }
     storedFilePath = path.resolve(file.path);
+    if (!(await firmaDocumentoValida(storedFilePath, file.mimetype))) {
+      fs.rmSync(storedFilePath, { force: true });
+      return res.status(400).json({ error: 'La firma del archivo no coincide con su tipo declarado.' });
+    }
 
     const sql = `
       INSERT INTO documents (client_id, dossier_id, file_name, file_path, file_size, mime_type, category, ocr_status)

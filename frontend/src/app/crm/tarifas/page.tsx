@@ -405,19 +405,19 @@ export default function TerminalTarifasPage() {
             <span className="text-[10px] text-on-surface-variant">Aplica a todos los servicios</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <button
+            <button type="button"
               onClick={() => handleApplyBulkDiscount(10)}
               className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition-colors text-center"
             >
               +10% Temporada Renta
             </button>
-            <button
+            <button type="button"
               onClick={() => handleApplyBulkDiscount(-10)}
               className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold transition-colors text-center"
             >
               -10% Promo Expat
             </button>
-            <button
+            <button type="button"
               onClick={() => handleApplyBulkDiscount(-15)}
               className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-colors text-center"
             >

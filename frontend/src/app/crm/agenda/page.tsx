@@ -588,7 +588,7 @@ export default function CRMAgendaPage() {
           </Link>
 
           {/* Botón Nueva Cita */}
-          <button
+          <button type="button"
             onClick={() => handleOpenNewForDate(selectedDate)}
             className="h-7 px-3 bg-secondary text-white text-xs font-semibold rounded-md shadow-xs hover:bg-blue-700 transition-colors flex items-center gap-1 shrink-0"
           >
@@ -1073,7 +1073,7 @@ export default function CRMAgendaPage() {
                       </button>
 
                       {apt.modality === 'llamada' && (
-                        <button
+                        <button type="button"
                           onClick={() => setCallModal({ client: apt.client_name, phone: apt.client_phone })}
                           className="flex items-center gap-1 px-2 py-0.8 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold rounded text-[10px] transition-colors"
                         >
@@ -1083,7 +1083,7 @@ export default function CRMAgendaPage() {
                       )}
 
                       {apt.modality === 'online_meet' && (
-                        <button
+                        <button type="button"
                           onClick={() => setMeetModal(`meet.google.com/nxg-${apt.id}-asesoria`)}
                           className="flex items-center gap-1 px-2 py-0.8 bg-blue-50 hover:bg-blue-100 text-blue-800 font-semibold rounded text-[10px] transition-colors"
                         >
@@ -1100,7 +1100,7 @@ export default function CRMAgendaPage() {
                       )}
                     </div>
 
-                    <button
+                    <button type="button"
                       onClick={() => handleToggleComplete(apt.id)}
                       className={`h-6 px-2 rounded text-[10px] font-semibold transition-colors flex items-center gap-1 ${
                         apt.status === 'completada'
@@ -1299,7 +1299,7 @@ export default function CRMAgendaPage() {
             </div>
 
             <div className="pt-2 flex justify-center gap-2">
-              <button
+              <button type="button"
                 onClick={() => setCallModal(null)}
                 className="h-8 px-3 border border-outline-variant hover:bg-surface-container text-xs font-semibold rounded"
               >
@@ -1327,13 +1327,13 @@ export default function CRMAgendaPage() {
               Enlace generado: <span className="font-mono-data font-bold text-secondary-fixed block mt-1">{meetModal}</span>
             </p>
             <div className="pt-2 flex justify-center gap-2">
-              <button
+              <button type="button"
                 onClick={() => setMeetModal(null)}
                 className="h-8 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded"
               >
                 Cerrar
               </button>
-              <button
+              <button type="button"
                 onClick={() => {
                   navigator.clipboard.writeText(`https://${meetModal}`);
                   showToast('¡Enlace de Google Meet copiado al portapapeles!');

@@ -1635,7 +1635,7 @@ export default function CRMClientesPage() {
 
       {/* Filter Tabs */}
       <div className="flex border-b border-surface-container gap-2 text-xs font-semibold">
-        <button
+        <button type="button"
           onClick={() => setFilterStatus('todos')}
           className={`pb-2.5 px-3 border-b-2 transition-all ${
             filterStatus === 'todos' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
@@ -1643,7 +1643,7 @@ export default function CRMClientesPage() {
         >
           Todos ({clients.length})
         </button>
-        <button
+        <button type="button"
           onClick={() => setFilterStatus('con_digid')}
           className={`pb-2.5 px-3 border-b-2 transition-all ${
             filterStatus === 'con_digid' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
@@ -1651,7 +1651,7 @@ export default function CRMClientesPage() {
         >
           DigiD Activo
         </button>
-        <button
+        <button type="button"
           onClick={() => setFilterStatus('pendientes')}
           className={`pb-2.5 px-3 border-b-2 transition-all ${
             filterStatus === 'pendientes' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
@@ -1939,7 +1939,7 @@ export default function CRMClientesPage() {
             </button>
 
             {/* 6. Facturas */}
-            <button
+            <button type="button"
               onClick={() => setActive360Tab('facturas')}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'facturas' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
@@ -1950,7 +1950,7 @@ export default function CRMClientesPage() {
             </button>
 
             {/* 7. Citas */}
-            <button
+            <button type="button"
               onClick={() => setActive360Tab('citas')}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'citas' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
@@ -1974,7 +1974,7 @@ export default function CRMClientesPage() {
             </button>
 
             {/* 9. Notas & Tareas */}
-            <button
+            <button type="button"
               onClick={() => setActive360Tab('tareas')}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'tareas' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
@@ -1985,7 +1985,7 @@ export default function CRMClientesPage() {
             </button>
 
             {/* 9. Historial & Actividad IA */}
-            <button
+            <button type="button"
               onClick={() => setActive360Tab('historial')}
               className={`py-3 px-2.5 sm:px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'historial' ? 'border-secondary text-secondary bg-white/40' : 'border-transparent text-outline hover:text-on-surface'
@@ -1996,7 +1996,7 @@ export default function CRMClientesPage() {
             </button>
 
             {/* 10. Asistente IA (Gestión Total) */}
-            <button
+            <button type="button"
               onClick={() => setActive360Tab('ia')}
               className={`py-3 px-3 border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 active360Tab === 'ia'
@@ -2031,7 +2031,7 @@ export default function CRMClientesPage() {
                           <span className="material-symbols-outlined text-secondary text-2xl">business_center</span>
                           <h3 className="font-bold text-sm text-on-surface">Servicios Activos ({selectedClient.dossiers?.length || 0})</h3>
                         </div>
-                        <button
+                        <button type="button"
                           onClick={() => setActive360Tab('servicios')}
                           className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
                         >
@@ -2075,7 +2075,7 @@ export default function CRMClientesPage() {
                                   <span className="material-symbols-outlined text-[15px] text-emerald-600">check_circle</span>
                                   <span>Formulario DigiD / Trámite telemático enviado</span>
                                 </span>
-                                <button
+                                <button type="button"
                                   onClick={() => setActive360Tab('servicios')}
                                   className="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container text-on-surface text-[11px] font-semibold rounded"
                                 >
@@ -2121,7 +2121,7 @@ export default function CRMClientesPage() {
                                   </span>
                                 </div>
                               </div>
-                              <button
+                              <button type="button"
                                 onClick={() => setActive360Tab('documentos')}
                                 className="w-full py-1 bg-surface-container hover:bg-surface-container-high rounded text-[11px] font-semibold text-on-surface"
                               >
@@ -2137,7 +2137,7 @@ export default function CRMClientesPage() {
                       </div>
 
                       <div className="pt-1 flex justify-end">
-                        <button
+                        <button type="button"
                           onClick={() => setActive360Tab('documentos')}
                           className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
                         >
@@ -2177,7 +2177,7 @@ export default function CRMClientesPage() {
                       )}
 
                       {selectedClient.quotes && selectedClient.quotes.length > 0 && selectedClient.quotes[0].status !== 'convertido' ? (
-                        <button
+                        <button type="button"
                           onClick={() => handleConvertQuoteInFicha(selectedClient.quotes[0])}
                           className="w-full h-9 bg-secondary hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
                         >
@@ -2185,7 +2185,7 @@ export default function CRMClientesPage() {
                           <span>Convertir en Factura Oficial (1 Clic)</span>
                         </button>
                       ) : (
-                        <button
+                        <button type="button"
                           onClick={() => setActive360Tab('presupuestos')}
                           className="w-full h-9 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                         >
@@ -2230,7 +2230,7 @@ export default function CRMClientesPage() {
                           <span className="material-symbols-outlined text-[15px]">call</span>
                           <span>Llamar Ahora</span>
                         </a>
-                        <button
+                        <button type="button"
                           onClick={() => setActive360Tab('citas')}
                           className="h-8 px-3 border border-outline-variant hover:bg-surface-container rounded-lg text-xs font-semibold text-on-surface"
                           title="Gestionar citas"
@@ -2265,7 +2265,7 @@ export default function CRMClientesPage() {
                         ))}
                       </div>
 
-                      <button
+                      <button type="button"
                         onClick={() => setActive360Tab('historial')}
                         className="w-full text-center text-xs font-semibold text-secondary hover:underline pt-1 block"
                       >
@@ -2284,7 +2284,7 @@ export default function CRMClientesPage() {
                 <div className="p-4 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold uppercase text-outline">Notas Internas del Gestor:</span>
-                    <button
+                    <button type="button"
                       onClick={() => setIsEditingNotes(!isEditingNotes)}
                       className="text-secondary font-semibold text-xs hover:underline flex items-center gap-1"
                     >
@@ -2301,7 +2301,7 @@ export default function CRMClientesPage() {
                         onChange={(e) => setEditedNotes(e.target.value)}
                         className="w-full p-3 border border-outline-variant rounded-md bg-surface text-xs focus:border-secondary focus:outline-none"
                       />
-                      <button
+                      <button type="button"
                         onClick={handleSaveNotes}
                         className="h-8 px-4 bg-secondary text-white rounded text-xs font-semibold hover:bg-blue-700"
                       >
@@ -2320,7 +2320,7 @@ export default function CRMClientesPage() {
                       <h3 className="font-bold text-sm text-on-surface">Expedientes y Servicios Activos</h3>
                       <p className="text-xs text-on-surface-variant">Gestión de trámites ante Belastingdienst, KVK y Toeslagen.</p>
                     </div>
-                    <button
+                    <button type="button"
                       onClick={() => {
                         const first = servicesCatalog[0];
                         setSelectedCatalogServiceId(first.id);
@@ -2562,7 +2562,7 @@ export default function CRMClientesPage() {
                       <h3 className="font-bold text-sm text-on-surface">Presupuestos de {selectedClient.full_name}</h3>
                       <p className="text-xs text-on-surface-variant">Generación oficial con precios finales IVA incluido y conversión en 1 clic a factura.</p>
                     </div>
-                    <button
+                    <button type="button"
                       onClick={openQuoteModal}
                       className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center gap-1 shadow-xs"
                     >
@@ -2760,7 +2760,7 @@ export default function CRMClientesPage() {
                       <h3 className="font-bold text-sm text-on-surface">Citas y Llamadas con {selectedClient.full_name}</h3>
                       <p className="text-xs text-on-surface-variant">Llamada telefónica por defecto, o videollamada / reunión presencial.</p>
                     </div>
-                    <button
+                    <button type="button"
                       onClick={() => {
                         setAptModality('llamada');
                         setAptTitle(`Consulta Telefónica con ${selectedClient.full_name}`);
@@ -3052,7 +3052,7 @@ export default function CRMClientesPage() {
                           <span className="material-symbols-outlined text-secondary text-[18px]">edit_note</span>
                           <span>Notas Internas del Gestor</span>
                         </h3>
-                        <button
+                        <button type="button"
                           onClick={() => setIsEditingNotes(!isEditingNotes)}
                           className="text-secondary font-semibold text-xs hover:underline flex items-center gap-1"
                         >
@@ -3070,7 +3070,7 @@ export default function CRMClientesPage() {
                             placeholder="Escribe anotaciones confidenciales sobre este cliente, acuerdos con Belastingdienst, etc..."
                             className="w-full p-3.5 border border-outline-variant rounded-xl bg-surface text-xs focus:border-secondary focus:outline-none leading-relaxed"
                           />
-                          <button
+                          <button type="button"
                             onClick={handleSaveNotes}
                             className="h-9 px-4 bg-secondary text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors shadow-xs"
                           >
@@ -3110,7 +3110,7 @@ export default function CRMClientesPage() {
 
                         {/* Filtros de tareas */}
                         <div className="flex items-center gap-1 bg-surface-container p-1 rounded-lg text-xs">
-                          <button
+                          <button type="button"
                             onClick={() => setTaskFilter('todas')}
                             className={`px-2.5 py-1 rounded font-semibold transition-colors ${
                               taskFilter === 'todas' ? 'bg-surface text-on-surface shadow-2xs' : 'text-outline hover:text-on-surface'
@@ -3118,7 +3118,7 @@ export default function CRMClientesPage() {
                           >
                             Todas ({getClientTasks(selectedClient).length})
                           </button>
-                          <button
+                          <button type="button"
                             onClick={() => setTaskFilter('pendientes')}
                             className={`px-2.5 py-1 rounded font-semibold transition-colors ${
                               taskFilter === 'pendientes' ? 'bg-secondary text-white shadow-2xs' : 'text-outline hover:text-on-surface'
@@ -3126,7 +3126,7 @@ export default function CRMClientesPage() {
                           >
                             Pendientes ({getClientTasks(selectedClient).filter((t: any) => !t.completed).length})
                           </button>
-                          <button
+                          <button type="button"
                             onClick={() => setTaskFilter('completadas')}
                             className={`px-2.5 py-1 rounded font-semibold transition-colors ${
                               taskFilter === 'completadas' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-outline hover:text-on-surface'
@@ -3235,7 +3235,7 @@ export default function CRMClientesPage() {
 
                     {/* Filtros de historial */}
                     <div className="flex items-center gap-1 bg-surface-container p-1 rounded-lg text-xs">
-                      <button
+                      <button type="button"
                         onClick={() => setHistoryFilter('todos')}
                         className={`px-3 py-1 rounded font-semibold transition-colors ${
                           historyFilter === 'todos' ? 'bg-surface text-on-surface shadow-2xs' : 'text-outline hover:text-on-surface'
@@ -3243,7 +3243,7 @@ export default function CRMClientesPage() {
                       >
                         Todos
                       </button>
-                      <button
+                      <button type="button"
                         onClick={() => setHistoryFilter('ia')}
                         className={`px-3 py-1 rounded font-semibold transition-colors ${
                           historyFilter === 'ia' ? 'bg-secondary text-white shadow-2xs' : 'text-outline hover:text-on-surface'
@@ -3251,7 +3251,7 @@ export default function CRMClientesPage() {
                       >
                         Automatizaciones IA
                       </button>
-                      <button
+                      <button type="button"
                         onClick={() => setHistoryFilter('gestor')}
                         className={`px-3 py-1 rounded font-semibold transition-colors ${
                           historyFilter === 'gestor' ? 'bg-secondary text-white shadow-2xs' : 'text-outline hover:text-on-surface'
@@ -3843,7 +3843,7 @@ export default function CRMClientesPage() {
                   </span>
                 </div>
               </div>
-              <button onClick={closeDocumentPreview} className="text-outline hover:text-on-surface">
+              <button type="button" onClick={closeDocumentPreview} className="text-outline hover:text-on-surface" aria-label="Cerrar">
                 <span className="material-symbols-outlined text-base">close</span>
               </button>
             </div>

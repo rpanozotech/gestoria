@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PublishedContent from '@/components/PublishedContent';
 import { apiUrl } from '@/lib/api';
 
 interface ServiceItem {
@@ -74,6 +75,7 @@ export default function ServiciosPage() {
     <div role="main" id="main-content" className="min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
+        <PublishedContent pageKey="servicios" />
 
         {/* HERO SERVICIOS */}
         <section className="pt-16 pb-14 bg-bg border-b border-border">

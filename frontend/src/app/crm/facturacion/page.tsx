@@ -408,7 +408,7 @@ export default function CRMFacturacionPage() {
             <span className="hidden sm:inline">Backup</span>
           </Link>
 
-          <button
+          <button type="button"
             onClick={openQuoteModal}
             className="h-9 px-4 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
@@ -420,7 +420,7 @@ export default function CRMFacturacionPage() {
 
       {/* Tabs */}
       <div className="flex border-b border-surface-container gap-4">
-        <button
+        <button type="button"
           onClick={() => setTab('facturas')}
           className={`pb-3 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
             tab === 'facturas' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
@@ -429,7 +429,7 @@ export default function CRMFacturacionPage() {
           <span className="material-symbols-outlined text-[16px]">receipt_long</span>
           <span>Facturas Oficiales ({invoices.length})</span>
         </button>
-        <button
+        <button type="button"
           onClick={() => setTab('presupuestos')}
           className={`pb-3 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
             tab === 'presupuestos' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
