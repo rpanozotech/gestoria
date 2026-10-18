@@ -29,6 +29,11 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   // El backend tambien protege sus rutas (401), pero sin esto se renderiza
   // la pantalla y luego cada fetch falla.
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true') {
+      setUser({ id: 'demo-user', email: 'demo@example.test', full_name: 'Usuario de prueba', role: 'gestor' });
+      setChecking(false);
+      return;
+    }
     let active = true;
     apiFetch('/auth/me')
       .then(async (res) => {

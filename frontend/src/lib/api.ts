@@ -1,4 +1,5 @@
 import { getToken, clearSession } from './session';
+import { previewApiResponse } from './preview-api';
 
 /**
  * URL base del API para llamadas hechas desde el navegador.
@@ -23,6 +24,7 @@ export const apiUrl = (path: string): string => `${API_BASE}${path}`;
  * Las rutas publicas (reserva de cita) pueden seguir usando fetch normal.
  */
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  if (process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true') return previewApiResponse(path, init);
   const token = getToken();
   const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData;
 
