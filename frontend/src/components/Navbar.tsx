@@ -5,13 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePathname } from 'next/navigation';
-import type { Language } from '@/lib/i18n';
-
-
 export default function Navbar() {
   const pathname = usePathname();
-  const { lang, setLang, t } = useLanguage();
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const { lang, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = lang === 'EN' ? [
@@ -79,45 +75,6 @@ export default function Navbar() {
 
           {/* ACCIONES Y BOTONES DE LA DERECHA */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-
-            {/* SELECTOR DE IDIOMA */}
-            <div className="relative">
-              <button
-                onClick={() => setLangMenuOpen(!langMenuOpen)}
-                aria-expanded={langMenuOpen}
-                aria-controls="language-menu"
-                className="h-9 sm:h-10 px-2 sm:px-2.5 flex items-center gap-1 rounded-xl border border-slate-200/90 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
-                aria-label={t('language_select')}
-              >
-                <span className="material-symbols-outlined text-[17px] text-slate-500">language</span>
-                <span>{lang}</span>
-                <span className="material-symbols-outlined text-[15px] text-slate-400">expand_more</span>
-              </button>
-
-              {langMenuOpen && (
-                <div id="language-menu" role="menu" className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  {[
-                    { code: 'ES', label: 'Español 🇪🇸' },
-                    { code: 'EN', label: 'English 🇬🇧' },
-                    { code: 'NL', label: 'Nederlands 🇳🇱' },
-                  ].map((item) => (
-                    <button
-                      key={item.code}
-                      onClick={() => {
-                        setLang(item.code as Language);
-                        setLangMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-blue-50 transition-colors ${
-                        lang === item.code ? 'font-bold text-[#145DA0] bg-blue-50/60' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      {lang === item.code && <span className="material-symbols-outlined text-[15px] text-[#145DA0]">check</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {/* RESERVAR CITA BUTTON -> /reservar */}
             <Link
