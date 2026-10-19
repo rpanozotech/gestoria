@@ -11,7 +11,14 @@ const tabs: Tab[] = ['Resumen', 'Expedientes', 'Facturación', 'Deudas y pagos',
 function Status({ value }: { value: string }) { const style = value === 'activo' || value === 'Pagada' || value === 'Completada' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : value === 'Archivado' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-amber-50 text-amber-800 border-amber-200'; return <span className={`rounded border px-2 py-1 text-[10px] font-bold ${style}`}>{value}</span>; }
 export default function ClienteFichaPage() {
   const params = useParams<{ id: string }>(); const [client, setClient] = useState<any>(null); const [tab, setTab] = useState<Tab>('Resumen'); const preview = process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true';
-  useEffect(() => { if (preview) { setClient(demoClient); return; } apiFetch(`/clients/${params.id}`).then((res) => res.ok ? res.json() : null).then((data) => data?.client && setClient({ ...data.client, dossiers: data.dossiers || [], invoices: data.invoices || [], debts: [], documents: data.documents?.length || 0, appointments: data.appointments?.length || 0 })).catch(() => undefined); }, [params.id, preview]);
+  useEffect(() => {
+    if (preview) { setClient(demoClient); return; }
+    Promise.all([apiFetch(`/clients/${params.id}`), apiFetch('/finance/debts')]).then(async ([clientResponse, debtsResponse]) => {
+      const data = clientResponse.ok ? await clientResponse.json() : null;
+      const debtsData = debtsResponse.ok ? await debtsResponse.json() : { debts: [] };
+      if (data?.client) setClient({ ...data.client, dossiers: data.dossiers || [], invoices: data.invoices || [], debts: (debtsData.debts || []).filter((debt: any) => debt.client_id === params.id), documents: data.documents?.length || 0, appointments: data.appointments?.length || 0 });
+    }).catch(() => undefined);
+  }, [params.id, preview]);
   const initials = useMemo(() => (client?.full_name || 'CL').split(' ').map((x: string) => x[0]).slice(0, 2).join('').toUpperCase(), [client]);
   if (!client) return <div className="flex min-h-64 items-center justify-center text-sm text-on-surface-variant">Cargando ficha del cliente…</div>;
   const billed = (client.invoices || []).reduce((sum: number, item: any) => sum + Number(item.amount || item.total || 0), 0); const debt = (client.debts || []).reduce((sum: number, item: any) => sum + Number(item.pending || 0), 0);
