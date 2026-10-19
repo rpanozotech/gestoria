@@ -20,6 +20,7 @@ import portalMessagesRouter from './routes/portal-messages.js';
 import integrationsRouter from './routes/integrations.js';
 import pushRouter from './routes/push.js';
 import financeRouter from './routes/finance.js';
+import portalFinanceRouter from './routes/portal-finance.js';
 import advisorProfileRouter from './routes/advisor-profile.js';
 import { publicContentRouter, contentAdminRouter } from './routes/content.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
@@ -110,6 +111,7 @@ app.use('/api/withdrawals', withdrawalsRouter);
 app.use('/api/service-requests', serviceRequestsRouter);
 app.use('/api/portal', portalRouter);
 app.use('/api/portal/messages', requireAuth, requireRole('cliente'), portalMessagesRouter);
+app.use('/api/portal/finance', requireAuth, requireRole('cliente'), portalFinanceRouter);
 app.get('/api/portal/advisor-profile', requireAuth, requireRole('cliente'), async (_req, res) => {
   const result = await query('SELECT * FROM portal_advisor_profile WHERE id = 1');
   res.json({ profile: result.rows[0] || null });
