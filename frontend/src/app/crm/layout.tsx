@@ -85,6 +85,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('crm-client-count-updated', refreshClientCount);
   }, [pathname]);
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+  }, []);
+
   // Cerrar menú móvil al navegar
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -123,6 +127,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
       { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
       { href: '/crm/backup', label: 'Copias de seguridad', icon: 'cloud_download' },
+      { href: '/crm/preferencias-avisos', label: 'Preferencias de avisos', icon: 'notifications' },
       { href: '/crm/tecnico', label: 'Estado técnico', icon: 'dns' },
     ] },
   ];
