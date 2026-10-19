@@ -26,6 +26,7 @@ interface ExtractedClient {
   fee: number;
   notes: string;
   source: string;
+  extractionMethod?: 'OCR' | 'Extractor alternativo' | 'Texto pegado' | 'IA';
   confidence: number;
   selected: boolean;
   sourceFileIds?: string[];
@@ -82,6 +83,7 @@ interface UploadedFileItem {
   previewUrl?: string;
   textContent?: string;
   ocrConfidence?: number;
+  ocrMethod?: 'OCR' | 'Extractor alternativo';
   ocrError?: string;
   dataUrl?: string;
 }
@@ -89,6 +91,7 @@ interface UploadedFileItem {
 interface LocalOcrResult {
   text: string;
   confidence: number;
+  method: 'OCR' | 'Extractor alternativo';
 }
 
 async function extractLocalOcr(file: File): Promise<LocalOcrResult> {
@@ -137,6 +140,7 @@ async function extractLocalOcr(file: File): Promise<LocalOcrResult> {
       return {
         text: pages.join('\n').trim(),
         confidence: confidenceCount ? confidenceTotal / confidenceCount : 0,
+        method: confidenceCount ? 'OCR' : 'Extractor alternativo',
       };
     }
 
@@ -144,6 +148,7 @@ async function extractLocalOcr(file: File): Promise<LocalOcrResult> {
     return {
       text: result.data.text.trim(),
       confidence: Number(result.data.confidence) || 0,
+      method: 'OCR',
     };
   } finally {
     await worker.terminate();
@@ -286,13 +291,13 @@ export default function AltaIAEscaneerPage() {
           const result = await extractLocalOcr(file);
           const itemId = newItems[index].id;
           setUploadedFiles((prev) => prev.map((item) => (item.id === itemId
-            ? { ...item, textContent: result.text, ocrConfidence: result.confidence, ocrError: result.confidence <= 0 ? 'OCR sin confianza: no se ha extraído texto fiable.' : undefined }
+            ? { ...item, textContent: result.text, ocrConfidence: result.confidence, ocrMethod: result.method, ocrError: result.text.trim() ? undefined : 'No hemos podido leer el documento. Revisa la imagen o introduce los datos manualmente.' }
             : item)));
         } catch (error) {
           console.warn('OCR local no disponible para', file.name, error);
           const itemId = newItems[index].id;
           setUploadedFiles((prev) => prev.map((item) => (item.id === itemId
-            ? { ...item, textContent: '', ocrConfidence: 0, ocrError: 'No se pudo cargar el worker/modelo OCR.' }
+            ? { ...item, textContent: '', ocrConfidence: 0, ocrMethod: 'OCR', ocrError: 'No hemos podido leer el documento. Revisa la imagen o introduce los datos manualmente.' }
             : item)));
         }
       })
@@ -432,6 +437,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             fee: typeof c.fee === 'number' ? c.fee : 0,
             notes: c.notes || 'Datos extraídos mediante Inteligencia Artificial.',
             source: c.source || 'Análisis IA',
+            extractionMethod: c.extractionMethod || 'IA',
             // Si la API no manda confianza, se asume la MAS BAJA posible.
             // Un dato ausente no es un dato fiable: mostrar 95 % inventa
             // una garantia que nadie ha medido.
@@ -522,7 +528,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 ? `Texto leído localmente del archivo "${file.name}". ${detectedExtra ? `${detectedExtra}. ` : ''}No aparecen estos datos en el documento: ${missing}. Revisa antes de guardar.`
                 : `Texto leído localmente del archivo "${file.name}". ${detectedExtra ? `${detectedExtra}. ` : ''}Revisa todos los campos antes de guardar.`
               : `No se encontró texto legible en "${file.name}". Puede ser un PDF escaneado; revisa que la imagen sea nítida o introduce los datos manualmente.`,
-          source: `Archivo: ${file.name} (extracción local)`,
+          source: `Archivo: ${file.name} (${file.ocrMethod || 'Extractor alternativo'})`,
+          extractionMethod: file.ocrMethod || 'Extractor alternativo',
           confidence: Math.max(0, Math.min(1, (file.ocrConfidence || 0) / 100)),
           selected: true,
           sourceFileIds: [file.id],
@@ -1109,8 +1116,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                           <div className="min-w-0">
                             <p className="font-semibold text-on-surface truncate text-xs">{file.name}</p>
                             <p className="text-[10px] text-outline font-mono-data">
-                              {(file.size / 1024).toFixed(0)} KB · OCR local
+                              {(file.size / 1024).toFixed(0)} KB · Método: {file.ocrMethod || 'pendiente'} · Confianza: {typeof file.ocrConfidence === 'number' ? `${file.ocrConfidence.toFixed(0)}%` : 'no disponible'}
                             </p>
+                            {file.ocrError && (
+                              <p className="text-[10px] text-red-700 bg-red-50 rounded px-1.5 py-1 mt-1" role="alert">{file.ocrError}</p>
+                            )}
                           </div>
                         </div>
 
@@ -1374,7 +1384,9 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
                 {/* Campos Editables */}
                 <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
-                  <strong>Revisión necesaria:</strong> los campos vacíos muestran <em>No detectado</em>. Confirma o corrige los datos antes de crear la ficha.
+                  <strong>Revisión necesaria:</strong> los campos vacíos muestran <em>No detectado</em>. Confirma o corrige los datos antes de crear la ficha. La confianza es un indicador, no un bloqueo automático.
+                  {client.confidence < 0.8 && <span className="block mt-1 font-semibold">Advertencia: revisa manualmente el texto y los datos detectados antes de confirmar.</span>}
+                  <span className="block mt-1">Campos pendientes: {[!client.full_name && 'nombre', !client.email && 'correo', !client.phone && 'teléfono', !client.city && 'ciudad', !client.address && 'dirección', !client.bsn && 'BSN', !client.service_title && 'trámite'].filter(Boolean).join(', ') || 'ninguno'}</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-4 text-xs">
                   <div>
