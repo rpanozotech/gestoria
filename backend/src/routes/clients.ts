@@ -16,23 +16,23 @@ const router = Router();
 // numero, no las fichas completas con sus JOIN a dossiers e invoices.
 router.get('/count', async (req: Request, res: Response) => {
   try {
-    const result = await query(
-      `SELECT status, COUNT(*)::int AS n
-       FROM clients
-       GROUP BY status
-       ORDER BY status;`
-    );
-
-    const porEstado = result.rows.reduce((acc: Record<string, number>, r: any) => {
-      acc[r.status] = r.n;
-      return acc;
-    }, {});
-
+    const result = await query(`
+      SELECT
+        COUNT(DISTINCT id)::int AS total,
+        COUNT(DISTINCT id) FILTER (WHERE status = 'activo')::int AS activos,
+        COUNT(DISTINCT id) FILTER (WHERE status IN ('inactivo', 'archivado'))::int AS archivados,
+        COUNT(DISTINCT id) FILTER (WHERE created_at >= date_trunc('month', CURRENT_DATE))::int AS nuevos_este_mes,
+        COUNT(DISTINCT id) FILTER (WHERE status <> 'eliminado' AND (NULLIF(trim(full_name), '') IS NULL OR NULLIF(trim(email), '') IS NULL OR NULLIF(trim(phone), '') IS NULL))::int AS pendientes
+      FROM clients
+      WHERE status <> 'eliminado'
+    `);
+    const row = result.rows[0] || {};
     res.json({
-      total: result.rows.reduce((sum: number, r: any) => sum + r.n, 0),
-      activos: porEstado['activo'] || 0,
-      prospectos: porEstado['prospecto'] || 0,
-      inactivos: porEstado['inactivo'] || 0,
+      total: Number(row.total || 0),
+      activos: Number(row.activos || 0),
+      archivados: Number(row.archivados || 0),
+      nuevos_este_mes: Number(row.nuevos_este_mes || 0),
+      pendientes: Number(row.pendientes || 0),
     });
   } catch (error) {
     console.error('Error al contar clientes:', error);

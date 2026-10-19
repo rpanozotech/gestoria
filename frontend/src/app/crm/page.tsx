@@ -23,9 +23,11 @@ export default function CRMDashboardPage() {
   const [selected, setSelected] = useState<Debt | null>(null);
   const [notice, setNotice] = useState('');
   const [filter, setFilter] = useState('todas');
+  const [clientStats, setClientStats] = useState({ total: 0, activos: 0, archivados: 0, nuevos_este_mes: 0, pendientes: 0 });
 
   useEffect(() => {
     apiFetch('/dashboard/stats').then((res) => res.ok ? res.json() : null).then(setStats).catch(() => undefined);
+    apiFetch('/clients/count').then((res) => res.ok ? res.json() : null).then((data) => data && setClientStats(data)).catch(() => undefined);
   }, []);
 
   const preview = process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true';
@@ -40,6 +42,7 @@ export default function CRMDashboardPage() {
   const pendingInvoices = stats?.kpis?.finances?.pending_revenue ?? billing.reduce((total, row) => total + row.pending, 0);
   const billed = stats?.kpis?.finances?.monthly_revenue ?? billing.reduce((total, row) => total + row.billed, 0);
   const collected = billed - pendingInvoices;
+  const dashboardClientStats = stats?.kpis?.client_stats || { active: clientStats.activos, new_this_month: clientStats.nuevos_este_mes, incomplete: clientStats.pendientes };
 
   const showPreviewNotice = (message: string) => {
     setNotice(message);
@@ -53,6 +56,8 @@ export default function CRMDashboardPage() {
         <div><p className="text-[11px] font-semibold tracking-[0.14em] text-secondary">CENTRO DE GESTIÓN</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-on-surface">Centro de gestión</h1><p className="mt-1 text-sm text-on-surface-variant">Una vista clara de tu trabajo, tu facturación y las deudas pendientes.</p></div>
         <span className="inline-flex w-fit items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Datos de prueba</span>
       </header>
+
+      <section aria-labelledby="clients-summary-title" className="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm"><div className="flex items-start justify-between gap-4"><div><p className="text-[11px] font-semibold text-secondary">CLIENTES</p><h2 id="clients-summary-title" className="mt-1 text-lg font-bold text-on-surface">Clientes activos</h2><p className="mt-1 text-sm text-on-surface-variant">{dashboardClientStats.active} clientes activos</p></div><span className="material-symbols-outlined text-2xl text-secondary">group</span></div><div className="mt-4 grid grid-cols-3 gap-3 text-xs"><div><p className="text-on-surface-variant">Nuevos este mes</p><p className="mt-1 text-lg font-bold text-on-surface">{dashboardClientStats.new_this_month}</p></div><div><p className="text-on-surface-variant">Pendientes</p><p className="mt-1 text-lg font-bold text-amber-700">{dashboardClientStats.incomplete}</p></div><Link href="/crm/clientes" className="self-end text-right font-semibold text-secondary hover:underline">Ver clientes</Link></div></section>
 
       <section aria-label="Resumen financiero" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         {[['Tareas pendientes', String(tasks.length), 'task_alt', 'text-secondary'], ['Facturado este mes', money(billed), 'receipt_long', 'text-secondary'], ['Cobrado', money(collected), 'payments', 'text-emerald-600'], ['Pendiente de cobro', money(pendingInvoices), 'schedule', 'text-amber-600'], ['Deuda pendiente', money(pendingDebt), 'account_balance', 'text-rose-600']].map(([label, value, icon, color]) => <article key={label} className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4 shadow-sm"><div className="flex items-start justify-between gap-2"><p className="text-[11px] font-semibold text-on-surface-variant">{label}</p><span className={`material-symbols-outlined text-[19px] ${color}`}>{icon}</span></div><p className="mt-4 text-xl font-bold font-mono-data text-on-surface">{value}</p></article>)}

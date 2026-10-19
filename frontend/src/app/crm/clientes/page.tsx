@@ -65,6 +65,7 @@ export default function CRMClientesPage() {
 
   // Lista de clientes con sus datos, trámites, presupuestos, facturas, citas y documentos
   const [clients, setClients] = useState<any[]>([]);
+  const [clientStats, setClientStats] = useState({ total: 0, activos: 0, archivados: 0, nuevos_este_mes: 0, pendientes: 0 });
   // Copiar al portapapeles con feedback
   const copyToClipboard = (text: string, label: string) => {
     if (!text || text === '—') return;
@@ -93,11 +94,13 @@ export default function CRMClientesPage() {
   };
 
   useEffect(() => {
+    apiFetch('/clients/count').then((res) => res.ok ? res.json() : null).then((data) => data && setClientStats(data)).catch(() => undefined);
     apiFetch('/clients')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (Array.isArray(data?.clients)) {
           setClients(data.clients.map((c: any) => ({ ...c, dossiers: [], quotes: [], invoices: [], appointments: [], service_requests: [], documents: [] })));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
         }
       })
       .catch((error) => console.error('No se pudieron cargar los clientes:', error));
@@ -332,6 +335,7 @@ export default function CRMClientesPage() {
           });
           setSelectedClient(completeClient);
           setClients((current) => current.map((item) => item.id === completeClient.id ? { ...item, ...completeClient } : item));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
           loadClientActivity(String(client.id));
         })
         .catch(() => showToast('No se pudo cargar la ficha completa desde PostgreSQL.'));
@@ -503,6 +507,7 @@ export default function CRMClientesPage() {
 
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     setShowEditClientModal(false);
     showToast(`¡Datos de ${updatedClient.full_name} actualizados con éxito!`);
   };
@@ -527,6 +532,7 @@ export default function CRMClientesPage() {
     const updatedClient = { ...selectedClient, notes: editedNotes };
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     setIsEditingNotes(false);
     showToast('Notas del cliente guardadas');
   };
@@ -598,6 +604,7 @@ export default function CRMClientesPage() {
     const updatedClient = { ...selectedClient, tasks: updatedTasks };
     setSelectedClient(updatedClient);
     setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
   };
 
   // Añadir nueva tarea en Ficha 360°
@@ -616,6 +623,7 @@ export default function CRMClientesPage() {
     const updatedClient = { ...selectedClient, tasks: updatedTasks };
     setSelectedClient(updatedClient);
     setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     setNewTaskInput('');
     showToast('Nueva tarea añadida a la Ficha 360°');
   };
@@ -628,6 +636,7 @@ export default function CRMClientesPage() {
     const updatedClient = { ...selectedClient, tasks: updatedTasks };
     setSelectedClient(updatedClient);
     setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     showToast('Tarea eliminada');
   };
 
@@ -695,6 +704,7 @@ export default function CRMClientesPage() {
 
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     setShowUploadDocModal(false);
     setUploadDocName('');
     setUploadTextNote('');
@@ -752,6 +762,7 @@ export default function CRMClientesPage() {
 
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     setShowNewTextDocModal(false);
     setTextDocTitle('');
     setTextDocContent('');
@@ -819,6 +830,7 @@ export default function CRMClientesPage() {
 
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     showToast(`Documento generado por IA: "${title}".`);
   };
 
@@ -845,6 +857,7 @@ export default function CRMClientesPage() {
       const updated = { ...selectedClient, status: 'inactivo' };
       setSelectedClient(updated);
       setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
       showToast('Cliente desactivado. Su historial se conserva.');
     } catch {
       showToast('Error de conexión al desactivar.', 'error');
@@ -900,6 +913,7 @@ export default function CRMClientesPage() {
       }
 
       setClients((current) => current.filter((c) => c.id !== selectedClient.id));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
       setSelectedClient(null);
       showToast('Cliente eliminado correctamente.');
     };
@@ -924,6 +938,7 @@ export default function CRMClientesPage() {
       const updatedClient = { ...selectedClient, documents: (selectedClient.documents || []).filter((d: any) => d.id !== docId) };
       setSelectedClient(updatedClient);
       setClients((current) => current.map((c) => c.id === updatedClient.id ? updatedClient : c));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
       showToast('Documento eliminado correctamente.');
     } catch (error) { showToast(error instanceof Error ? error.message : 'No se pudo eliminar el documento.', 'error'); }
   };
@@ -1010,6 +1025,7 @@ export default function CRMClientesPage() {
           };
           setSelectedClient(updated);
           setClients((current) => current.map((c) => (c.id === updated.id ? updated : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
 
           executedAction = {
             type: 'invoice_created',
@@ -1075,6 +1091,7 @@ export default function CRMClientesPage() {
           };
           setSelectedClient(updated);
           setClients((current) => current.map((c) => (c.id === updated.id ? updated : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
 
           executedAction = {
             type: 'quote_created',
@@ -1128,6 +1145,7 @@ export default function CRMClientesPage() {
           };
           setSelectedClient(updated);
           setClients((current) => current.map((c) => (c.id === updated.id ? updated : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
 
           executedAction = {
             type: 'appointment_created',
@@ -1183,6 +1201,7 @@ export default function CRMClientesPage() {
           };
           setSelectedClient(updated);
           setClients((current) => current.map((c) => (c.id === updated.id ? updated : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
 
           executedAction = {
             type: 'document_created',
@@ -1206,6 +1225,7 @@ export default function CRMClientesPage() {
 
         setSelectedClient(updated);
         setClients(clients.map((c) => (c.id === updated.id ? updated : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
 
         executedAction = {
           type: 'data_updated',
@@ -1404,6 +1424,7 @@ export default function CRMClientesPage() {
 
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     setShowAddDossierModal(false);
     showToast(`Trámite ${newDossier.code} asignado.`);
   };
@@ -1462,6 +1483,7 @@ export default function CRMClientesPage() {
 
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     setShowNewAptModal(false);
     setActive360Tab('citas');
     showToast('Cita agendada.');
@@ -1490,6 +1512,7 @@ export default function CRMClientesPage() {
       const updatedClient = { ...selectedClient, quotes: [persisted, ...(selectedClient.quotes || [])] };
       setSelectedClient(updatedClient);
       setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
       setShowNewQuoteModal(false);
       setActive360Tab('presupuestos');
       showToast(`Presupuesto ${persisted.code} generado.`);
@@ -1537,6 +1560,7 @@ export default function CRMClientesPage() {
 
     setSelectedClient(updatedClient);
     setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
     showToast(`Presupuesto convertido a Factura ${newInvoice.code}`);
   };
 
@@ -1637,6 +1661,8 @@ export default function CRMClientesPage() {
           </Link>
         </div>
       </div>
+
+      <section aria-label="Resumen de clientes" className="grid grid-cols-2 gap-3 md:grid-cols-4"><article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4"><p className="text-xs text-on-surface-variant">Total de clientes</p><p className="mt-1 text-2xl font-bold text-on-surface">{clientStats.total}</p></article><article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4"><p className="text-xs text-on-surface-variant">Clientes activos</p><p className="mt-1 text-2xl font-bold text-emerald-700">{clientStats.activos}</p></article><article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4"><p className="text-xs text-on-surface-variant">Clientes archivados</p><p className="mt-1 text-2xl font-bold text-on-surface">{clientStats.archivados}</p></article><article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4"><p className="text-xs text-on-surface-variant">Nuevos este mes</p><p className="mt-1 text-2xl font-bold text-secondary">{clientStats.nuevos_este_mes}</p></article></section>
 
       {/* Filter Tabs */}
       <div className="flex border-b border-surface-container gap-2 text-xs font-semibold">

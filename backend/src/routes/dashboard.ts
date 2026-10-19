@@ -9,7 +9,13 @@ router.get('/stats', async (req: Request, res: Response) => {
     const today = new Date().toISOString().split('T')[0];
 
     // 1. Clientes activos
-    const clientsCount = await query(`SELECT COUNT(*) FROM clients WHERE status = 'activo'`);
+    const clientsCount = await query(`
+      SELECT
+        COUNT(DISTINCT id) FILTER (WHERE status = 'activo')::int AS activos,
+        COUNT(DISTINCT id) FILTER (WHERE status <> 'eliminado' AND created_at >= date_trunc('month', CURRENT_DATE))::int AS nuevos_este_mes,
+        COUNT(DISTINCT id) FILTER (WHERE status <> 'eliminado' AND (NULLIF(trim(full_name), '') IS NULL OR NULLIF(trim(email), '') IS NULL OR NULLIF(trim(phone), '') IS NULL))::int AS pendientes
+      FROM clients
+      WHERE status <> 'eliminado'`);
 
     // 2. Citas de hoy
     const appointmentsToday = await query(
@@ -57,7 +63,12 @@ router.get('/stats', async (req: Request, res: Response) => {
 
     res.json({
       kpis: {
-        active_clients: parseInt(clientsCount.rows[0].count, 10),
+        active_clients: Number(clientsCount.rows[0].activos || 0),
+        client_stats: {
+          active: Number(clientsCount.rows[0].activos || 0),
+          new_this_month: Number(clientsCount.rows[0].nuevos_este_mes || 0),
+          incomplete: Number(clientsCount.rows[0].pendientes || 0),
+        },
         appointments_today: {
           total: parseInt(appointmentsToday.rows[0].total, 10),
           completed: parseInt(appointmentsToday.rows[0].completed, 10),

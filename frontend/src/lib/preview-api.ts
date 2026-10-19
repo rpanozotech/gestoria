@@ -18,8 +18,8 @@ function json(data: unknown, status = 200): Response {
 export async function previewApiResponse(path: string, init: RequestInit = {}): Promise<Response> {
   const method = init.method || 'GET';
   if (path === '/auth/me') return json({ user: getStoredUser() || { id: 'demo-user', email: 'demo@example.test', full_name: 'Usuario de prueba', role: 'gestor' } });
-  if (path === '/clients/count') return json({ activos: 1 });
-  if (path === '/dashboard/stats') return json({ kpis: { active_clients: 1, appointments_today: { total: 2, completed: 1, pending: 1 }, active_dossiers: { total: 3, belastingdienst: 1 }, finances: { monthly_revenue: 1200, pending_revenue: 169, pending_invoices_count: 1 } }, today_appointments: [{ id: 'demo-appointment-1', client_name: demoClient.full_name, title: 'Revisión de documentación', appointment_time: '10:30:00', status: 'pendiente' }], recent_dossiers: [{ id: 'demo-dossier-1', client_name: demoClient.full_name, title: 'Solicitud de toeslagen', code: 'EXP-DEMO-001', status: 'pendiente_documentos' }] });
+  if (path === '/clients/count') return json({ total: 1, activos: 1, archivados: 0, nuevos_este_mes: 1, pendientes: 1 });
+  if (path === '/dashboard/stats') return json({ kpis: { active_clients: 1, appointments_today: { total: 2, completed: 1, pending: 1 }, active_dossiers: { total: 3, belastingdienst: 1 }, finances: { monthly_revenue: 1200, pending_revenue: 169, pending_invoices_count: 1 }, client_stats: { active: 1, new_this_month: 1, incomplete: 1 } }, today_appointments: [{ id: 'demo-appointment-1', client_name: demoClient.full_name, title: 'Revisión de documentación', appointment_time: '10:30:00', status: 'pendiente' }], recent_dossiers: [{ id: 'demo-dossier-1', client_name: demoClient.full_name, title: 'Solicitud de toeslagen', code: 'EXP-DEMO-001', status: 'pendiente_documentos' }] });
   if (path === '/clients') return json({ clients: [demoClient] });
   if (path === '/services') return json({ services: demoServices });
   if (path === '/invoices') return json({ invoices: demoInvoices });
