@@ -179,6 +179,16 @@ CREATE TABLE IF NOT EXISTS service_prices (
 -- Índices de alto rendimiento
 CREATE INDEX IF NOT EXISTS idx_clients_bsn ON clients(bsn);
 CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
+
+CREATE TABLE IF NOT EXISTS ai_import_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    source_text TEXT NOT NULL,
+    result_json JSONB NOT NULL,
+    confirmed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    confirmed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    client_ids JSONB NOT NULL DEFAULT '[]'::jsonb
+);
+CREATE INDEX IF NOT EXISTS idx_ai_import_history_confirmed_at ON ai_import_history(confirmed_at DESC);
 CREATE INDEX IF NOT EXISTS idx_dossiers_client ON dossiers(client_id);
 CREATE INDEX IF NOT EXISTS idx_dossiers_status ON dossiers(status);
 CREATE INDEX IF NOT EXISTS idx_invoices_client ON invoices(client_id);

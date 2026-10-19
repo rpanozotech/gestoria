@@ -18,6 +18,7 @@ const DEFAULT_SERVICES = [
 ] as const;
 
 export async function migrateDatabase() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS ai_import_history (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), source_text TEXT NOT NULL, result_json JSONB NOT NULL, confirmed_by UUID REFERENCES users(id) ON DELETE SET NULL, confirmed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, client_ids JSONB NOT NULL DEFAULT '[]'::jsonb); CREATE INDEX IF NOT EXISTS idx_ai_import_history_confirmed_at ON ai_import_history(confirmed_at DESC)`);
   await pool.query(`CREATE TABLE IF NOT EXISTS public_content (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), page_key VARCHAR(80) NOT NULL, locale VARCHAR(2) NOT NULL DEFAULT 'ES', version INTEGER NOT NULL, status VARCHAR(20) NOT NULL DEFAULT 'draft', blocks JSONB NOT NULL DEFAULT '[]'::jsonb, seo_title VARCHAR(160) NOT NULL DEFAULT '', seo_description VARCHAR(320) NOT NULL DEFAULT '', updated_by UUID REFERENCES users(id) ON DELETE SET NULL, published_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(page_key, locale, version), CHECK (locale IN ('ES','EN','NL')), CHECK (status IN ('draft','published')))`);
   await pool.query('CREATE INDEX IF NOT EXISTS idx_public_content_lookup ON public_content(page_key, locale, status, version DESC)');
   await pool.query(`

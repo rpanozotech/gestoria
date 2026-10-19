@@ -5,6 +5,24 @@ import { validarEndpointIA, EndpointNoPermitido } from './ai-endpoint-guard.js';
 
 const router = Router();
 
+// Historial independiente de importaciones IA: conserva evidencia de revisión
+// sin mezclarla con las notas operativas del cliente.
+router.post('/history', async (req: Request, res: Response) => {
+  const sourceText = typeof req.body?.source_text === 'string' ? req.body.source_text.trim() : '';
+  const result = req.body?.result;
+  const clientIds = Array.isArray(req.body?.client_ids) ? req.body.client_ids : [];
+  if (!sourceText || !result || clientIds.length === 0) {
+    return res.status(400).json({ error: 'source_text, result y client_ids son obligatorios' });
+  }
+  const saved = await query(
+    `INSERT INTO ai_import_history (source_text, result_json, confirmed_by, client_ids)
+     VALUES ($1, $2::jsonb, $3, $4::jsonb)
+     RETURNING id, confirmed_by, confirmed_at`,
+    [sourceText, JSON.stringify(result), req.user?.id || null, JSON.stringify(clientIds)]
+  );
+  return res.status(201).json({ history: saved.rows[0] });
+});
+
 // Extractor local de PDF: no llama a IA ni necesita autenticacion de gestor.
 // Se usa solo para leer el texto de un documento en el propio servidor local.
 export const localPdfRouter = Router();
