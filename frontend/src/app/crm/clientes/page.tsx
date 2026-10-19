@@ -2256,11 +2256,11 @@ export default function CRMClientesPage() {
 
                       <div className="flex items-center gap-2">
                         <a
-                          href={`tel:${selectedClient.phone}`}
+                          href={selectedClient.phone ? `tel:${selectedClient.phone}` : undefined}
                           className="flex-1 h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
                         >
                           <span className="material-symbols-outlined text-[15px]">call</span>
-                          <span>Llamar Ahora</span>
+                          <span>{selectedClient.phone ? 'Llamar Ahora' : 'Teléfono no configurado'}</span>
                         </a>
                         <button type="button"
                           onClick={() => setActive360Tab('citas')}
@@ -2819,7 +2819,7 @@ export default function CRMClientesPage() {
                           <div className="flex items-center gap-2 pt-1 text-xs">
                             {a.modality === 'llamada' ? (
                               <a
-                                href={`tel:${selectedClient.phone}`}
+                                href={selectedClient.phone ? `tel:${selectedClient.phone}` : undefined}
                                 className="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-1 rounded"
                               >
                                 <span className="material-symbols-outlined text-[14px]">call</span>
@@ -2912,7 +2912,7 @@ export default function CRMClientesPage() {
                     {selectedClient.phone && (
                       <div className="flex items-center gap-1">
                         <a
-                          href={`tel:${selectedClient.phone}`}
+                          href={selectedClient.phone ? `tel:${selectedClient.phone}` : undefined}
                           className="p-1.5 rounded-lg border border-outline-variant hover:bg-emerald-50 text-emerald-700 transition-colors"
                           title="Llamar"
                         >

@@ -298,7 +298,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-2 sm:gap-4 relative shrink-0">
             <Link
-              href="/crm/alta-ia"
+              href="/crm/clientes/alta-ia"
               className="h-9 px-3 sm:px-3.5 bg-primary text-on-primary rounded-md text-xs font-semibold flex items-center gap-1.5 sm:gap-2 hover:bg-slate-800 transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
