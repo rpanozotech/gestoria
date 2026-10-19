@@ -7,6 +7,7 @@ import { useEscapeKey } from '@/lib/a11y';
 import { useRouter } from 'next/navigation';
 import { apiFetch, apiUrl } from '@/lib/api';
 import { createPortalAccess } from '@/lib/portal';
+import { reviewOcrResult } from '@/lib/ocr-review';
 
 interface ExtractedClient {
   id: string;
@@ -289,9 +290,15 @@ export default function AltaIAEscaneerPage() {
         }
         try {
           const result = await extractLocalOcr(file);
+          const review = reviewOcrResult({
+            text: result.text,
+            confidence: result.confidence,
+            method: result.method,
+            fileName: file.name,
+          });
           const itemId = newItems[index].id;
           setUploadedFiles((prev) => prev.map((item) => (item.id === itemId
-            ? { ...item, textContent: result.text, ocrConfidence: result.confidence, ocrMethod: result.method, ocrError: result.text.trim() ? undefined : 'No hemos podido leer el documento. Revisa la imagen o introduce los datos manualmente.' }
+            ? { ...item, textContent: review.extractedText, ocrConfidence: review.confidence, ocrMethod: review.method, ocrError: review.message }
             : item)));
         } catch (error) {
           console.warn('OCR local no disponible para', file.name, error);
