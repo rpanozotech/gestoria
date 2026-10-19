@@ -975,9 +975,8 @@ export default function CRMFacturacionPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const email = selectedDoc.data.email || 'el cliente';
-                    setEmailSentToast(`Documento ${selectedDoc.data.code} enviado por correo electrónico a ${email}`);
-                    setTimeout(() => setEmailSentToast(null), 4000);
+                    setEmailSentToast('Envío de email no está configurado. Configura Email transaccional antes de enviar documentos.');
+                    setTimeout(() => setEmailSentToast(null), 5000);
                   }}
                   className="h-7 sm:h-8 px-2 sm:px-3 bg-secondary text-white hover:bg-blue-700 rounded-lg text-[11px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-colors shadow-xs"
                 >

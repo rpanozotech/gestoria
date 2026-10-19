@@ -37,6 +37,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  useEffect(() => {
+    document.title = 'RP Asesoría | CRM';
+  }, []);
+
   // Guard de sesion: sin token valido no se entra al CRM.
   // El backend tambien protege sus rutas (401), pero sin esto se renderiza
   // la pantalla y luego cada fetch falla.

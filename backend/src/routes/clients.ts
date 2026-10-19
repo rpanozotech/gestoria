@@ -140,6 +140,31 @@ router.post('/:id/portal-access', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/clients/import - Importación CSV validada, sin datos de demostración.
+router.post('/import', async (req: Request, res: Response) => {
+  try {
+    const csv = typeof req.body?.csv === 'string' ? req.body.csv : '';
+    if (!csv.trim()) return res.status(400).json({ error: 'El archivo CSV está vacío' });
+    const rows = csv.trim().split(/\r?\n/).map((line: string) => {
+      const values: string[] = []; const re = /(?:^|,)\s*(?:"((?:[^"]|"")*)"|([^,]*))/g; let match: RegExpExecArray | null;
+      while ((match = re.exec(line))) values.push((match[1] ?? match[2] ?? '').replace(/""/g, '"').trim());
+      return values;
+    });
+    const headers = rows.shift()!.map((h: string) => h.toLowerCase().replace(/^ï»¿/, '').trim());
+    const required = ['full_name'];
+    if (!required.every((h) => headers.includes(h))) return res.status(400).json({ error: 'El CSV debe incluir la columna full_name' });
+    const created: unknown[] = []; const skipped: { row: number; reason: string }[] = [];
+    for (const [index, values] of rows.entries()) {
+      const data = Object.fromEntries(headers.map((header: string, i: number) => [header, values[i] || '']));
+      if (!data.full_name) { skipped.push({ row: index + 2, reason: 'full_name vacío' }); continue; }
+      if (data.email) { const existing = await query('SELECT id FROM clients WHERE lower(email) = lower($1) AND status <> $2 LIMIT 1', [data.email, 'eliminado']); if (existing.rows.length) { skipped.push({ row: index + 2, reason: 'email ya registrado' }); continue; } }
+      const result = await query(`INSERT INTO clients (full_name,email,phone,bsn,address,city,postal_code,country,iban,status,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'activo',$10) RETURNING id,full_name,email`, [data.full_name, data.email || null, data.phone || null, data.bsn || null, data.address || null, data.city || null, data.postal_code || null, data.country || 'Países Bajos', data.iban || null, data.notes || null]);
+      created.push(result.rows[0]);
+    }
+    res.status(201).json({ created, skipped });
+  } catch (error) { console.error('Error importando clientes:', error); res.status(500).json({ error: 'No se pudo importar el CSV' }); }
+});
+
 // GET /api/clients/:id - Ficha 360° completa
 router.get('/:id', async (req: Request, res: Response) => {
   try {

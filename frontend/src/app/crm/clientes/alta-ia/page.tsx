@@ -1033,14 +1033,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                   </div>
                 </div>
 
-                <button
+                {process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true' && <button
                   type="button"
                   onClick={handleLoadSampleFiles}
                   className="text-[11px] text-secondary hover:underline font-semibold flex items-center gap-1"
                 >
                   <span className="material-symbols-outlined text-[13px]">folder_zip</span>
                   <span>+ Cargar archivos demo</span>
-                </button>
+                </button>}
               </div>
 
               {/* Zona Drag & Drop */}
