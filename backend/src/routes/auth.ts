@@ -17,7 +17,7 @@ const jwtSecret = (): string => {
   return secret;
 };
 const secureCookie = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-const setSessionCookie = (name: string, token: string) => name + '=' + encodeURIComponent(token) + '; Path=/; Max-Age=604800; HttpOnly; SameSite=Strict' + secureCookie;
+const setSessionCookie = (name: string, token: string, maxAge = 604800) => name + '=' + encodeURIComponent(token) + '; Path=/; Max-Age=' + maxAge + '; HttpOnly; SameSite=Strict' + secureCookie;
 const clearSessionCookies = () => [
   'nexusgest_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict' + secureCookie,
   'nexusgest_portal_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict' + secureCookie,
@@ -106,6 +106,45 @@ router.post('/portal-login', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error en /portal-login:', error);
     res.status(500).json({ error: 'Error interno al autenticar el portal' });
+  }
+});
+
+// Sesión temporal exclusiva de QA staging.
+// Desactivada por defecto y no disponible si QA_SESSION_ENABLED no es true.
+const usedQaGrants = new Set<string>();
+router.post('/qa-session', async (req: Request, res: Response) => {
+  try {
+    if (process.env.QA_SESSION_ENABLED !== 'true') return res.status(404).json({ error: 'No encontrado' });
+    const grant = String(req.body?.grant || '');
+    const role = String(req.body?.role || '');
+    const origin = String(req.body?.origin || req.headers.origin || '');
+    const expectedGrant = process.env.QA_SESSION_GRANT || '';
+    const expectedOrigin = role === 'crm' ? process.env.QA_CRM_ORIGIN : process.env.QA_PORTAL_ORIGIN;
+    if (!grant || !expectedGrant || grant !== expectedGrant || usedQaGrants.has(`${grant}:${role}`) || !expectedOrigin || origin !== expectedOrigin) {
+      return res.status(403).json({ error: 'Sesión QA no autorizada' });
+    }
+    const emailByRole: Record<string, string | undefined> = {
+      crm: process.env.QA_CRM_USER_EMAIL,
+      'client-a': process.env.QA_CLIENT_A_EMAIL,
+      'client-b': process.env.QA_CLIENT_B_EMAIL,
+    };
+    const email = emailByRole[role]?.toLowerCase().trim();
+    if (!email || (role !== 'crm' && !['client-a', 'client-b'].includes(role))) return res.status(400).json({ error: 'Rol QA inválido' });
+    const result = role === 'crm'
+      ? await query(`SELECT * FROM users WHERE lower(email) = $1 AND is_active = true AND role IN ('admin', 'gestor') LIMIT 1`, [email])
+      : await query(`SELECT u.*, c.id AS client_id FROM users u JOIN clients c ON c.user_id = u.id WHERE lower(u.email) = $1 AND u.role = 'cliente' AND u.is_active = true LIMIT 1`, [email]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Usuario QA no encontrado' });
+    const user = result.rows[0];
+    const payload = role === 'crm'
+      ? { id: user.id, email: user.email, full_name: user.full_name, role: user.role }
+      : { id: user.id, email: user.email, full_name: user.full_name, role: 'cliente', client_id: user.client_id };
+    const token = jwt.sign(payload, jwtSecret(), { expiresIn: '20m' });
+    usedQaGrants.add(`${grant}:${role}`);
+    res.setHeader('Set-Cookie', setSessionCookie(role === 'crm' ? 'nexusgest_token' : 'nexusgest_portal_token', token, 1200));
+    return res.json({ ok: true, role, expiresIn: 1200 });
+  } catch (error) {
+    console.error('Error en /qa-session:', error);
+    return res.status(500).json({ error: 'Error interno de sesión QA' });
   }
 });
 
