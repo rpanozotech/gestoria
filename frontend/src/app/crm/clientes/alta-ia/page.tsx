@@ -81,12 +81,26 @@ interface UploadedFileItem {
   type: string;
   previewUrl?: string;
   textContent?: string;
+  ocrConfidence?: number;
+  ocrError?: string;
   dataUrl?: string;
 }
 
-async function extractLocalOcr(file: File): Promise<string> {
+interface LocalOcrResult {
+  text: string;
+  confidence: number;
+}
+
+async function extractLocalOcr(file: File): Promise<LocalOcrResult> {
   const { createWorker } = await import('tesseract.js');
-  const worker = await createWorker(['nld', 'eng', 'spa']);
+  const worker = await createWorker(['nld', 'eng', 'spa'], 1, {
+    workerPath: '/ocr-assets/worker.min.js',
+    corePath: '/ocr-assets/tesseract-core-lstm.wasm.js',
+    langPath: '/ocr-assets',
+    gzip: true,
+  });
+  let confidenceTotal = 0;
+  let confidenceCount = 0;
 
   try {
     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
@@ -116,13 +130,21 @@ async function extractLocalOcr(file: File): Promise<string> {
         await page.render({ canvasContext: context, viewport }).promise;
         const result = await worker.recognize(canvas);
         pages.push(result.data.text);
+        confidenceTotal += Number(result.data.confidence) || 0;
+        confidenceCount += 1;
       }
 
-      return pages.join('\n');
+      return {
+        text: pages.join('\n').trim(),
+        confidence: confidenceCount ? confidenceTotal / confidenceCount : 0,
+      };
     }
 
     const result = await worker.recognize(file);
-    return result.data.text;
+    return {
+      text: result.data.text.trim(),
+      confidence: Number(result.data.confidence) || 0,
+    };
   } finally {
     await worker.terminate();
   }
@@ -261,13 +283,17 @@ export default function AltaIAEscaneerPage() {
           return;
         }
         try {
-          const text = await extractLocalOcr(file);
+          const result = await extractLocalOcr(file);
           const itemId = newItems[index].id;
-          setUploadedFiles((prev) =>
-            prev.map((item) => (item.id === itemId ? { ...item, textContent: text } : item))
-          );
+          setUploadedFiles((prev) => prev.map((item) => (item.id === itemId
+            ? { ...item, textContent: result.text, ocrConfidence: result.confidence, ocrError: result.confidence <= 0 ? 'OCR sin confianza: no se ha extraído texto fiable.' : undefined }
+            : item)));
         } catch (error) {
           console.warn('OCR local no disponible para', file.name, error);
+          const itemId = newItems[index].id;
+          setUploadedFiles((prev) => prev.map((item) => (item.id === itemId
+            ? { ...item, textContent: '', ocrConfidence: 0, ocrError: 'No se pudo cargar el worker/modelo OCR.' }
+            : item)));
         }
       })
     ).finally(() => setOcrPending(false));
@@ -437,9 +463,9 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     // 1. Extraer desde archivos si hay
     if (sourceFiles.length > 0) {
       sourceFiles.forEach((file, idx) => {
-        let name = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
-        name = name.replace(/(dni|pasaporte|carta|nomina|contrato|belastingdienst|jaaropgaaf|doc|pdf|jpg|png)/gi, '').trim();
         const ocr = file.textContent || '';
+        if (!ocr.trim()) return;
+        let name = 'Cliente detectado por OCR';
         const readLine = (pattern: RegExp) => ocr.match(pattern)?.[1]?.trim() || '';
         const bsn = ocr.match(/\b\d{9}\b/)?.[0] || '';
         const email = ocr.match(/[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}/)?.[0] || '';
@@ -497,7 +523,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 : `Texto leído localmente del archivo "${file.name}". ${detectedExtra ? `${detectedExtra}. ` : ''}Revisa todos los campos antes de guardar.`
               : `No se encontró texto legible en "${file.name}". Puede ser un PDF escaneado; revisa que la imagen sea nítida o introduce los datos manualmente.`,
           source: `Archivo: ${file.name} (extracción local)`,
-          confidence: ocr ? 0.55 : 0,
+          confidence: Math.max(0, Math.min(1, (file.ocrConfidence || 0) / 100)),
           selected: true,
           sourceFileIds: [file.id],
         });
