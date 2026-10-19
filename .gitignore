@@ -9,6 +9,9 @@ out/
 dist/
 *.tsbuildinfo
 
+# Staging snapshots and preview archives (never part of source/build contexts)
+.staging/
+
 # Uploads locales de desarrollo (el volumen de Docker lo suple en prod)
 backend/uploads/
 

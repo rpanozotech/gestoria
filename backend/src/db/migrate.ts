@@ -167,6 +167,35 @@ export async function migrateDatabase() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     INSERT INTO portal_advisor_profile (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+    CREATE TABLE IF NOT EXISTS company_document_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      logo_url TEXT NOT NULL DEFAULT '', commercial_name VARCHAR(180) NOT NULL DEFAULT 'RP Asesoría',
+      legal_name VARCHAR(180) NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '',
+      address VARCHAR(255) NOT NULL DEFAULT '', city VARCHAR(120) NOT NULL DEFAULT '', country VARCHAR(120) NOT NULL DEFAULT 'Países Bajos',
+      kvk VARCHAR(40) NOT NULL DEFAULT '', vat_id VARCHAR(60) NOT NULL DEFAULT '', iban VARCHAR(60) NOT NULL DEFAULT '',
+      email VARCHAR(255) NOT NULL DEFAULT '', phone VARCHAR(50) NOT NULL DEFAULT '', footer_text TEXT NOT NULL DEFAULT '',
+      default_language VARCHAR(5) NOT NULL DEFAULT 'es', quote_prefix VARCHAR(20) NOT NULL DEFAULT 'PRE', invoice_prefix VARCHAR(20) NOT NULL DEFAULT 'FAC',
+      number_format VARCHAR(40) NOT NULL DEFAULT '{prefix}-{year}-{number}', updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO company_document_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+    CREATE TABLE IF NOT EXISTS quote_versions (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), quote_id UUID NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+      version INTEGER NOT NULL, snapshot JSONB NOT NULL, changes JSONB NOT NULL DEFAULT '{}'::jsonb,
+      reason TEXT, edited_by UUID REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (quote_id, version)
+    );
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS internal_notes TEXT;
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS manual_price BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2) NOT NULL DEFAULT 0;
+    ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) NOT NULL DEFAULT 21;
+    ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS tax_amount DECIMAL(10,2) NOT NULL DEFAULT 0;
+    ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2) NOT NULL DEFAULT 0;
+    ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS manual_price BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) NOT NULL DEFAULT 21;
+    ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS tax_amount DECIMAL(10,2) NOT NULL DEFAULT 0;
+    ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS manual_price BOOLEAN NOT NULL DEFAULT FALSE;
 
   `);
   for (const s of DEFAULT_SERVICES) {

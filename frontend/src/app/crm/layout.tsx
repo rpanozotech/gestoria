@@ -125,6 +125,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     ] },
     { label: 'CONFIGURACIÓN', items: [
       { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
+      { href: '/crm/ajustes-datos-empresa', label: 'Datos de empresa y documentos', icon: 'business' },
       { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
       { href: '/crm/backup', label: 'Copias de seguridad', icon: 'cloud_download' },
       { href: '/crm/preferencias-avisos', label: 'Preferencias de avisos', icon: 'notifications' },

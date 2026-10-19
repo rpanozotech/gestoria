@@ -108,6 +108,7 @@ export default function CRMFacturacionPage() {
   // Catálogo de Servicios y Trámites
   const [servicesCatalog, setServicesCatalog] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [companySettings, setCompanySettings] = useState<any>({ commercial_name: 'RP Asesoría', legal_name: '', description: '', address: '', city: '', country: 'Países Bajos', kvk: '', vat_id: '', iban: '', email: '', phone: '', footer_text: '' });
 
   useEffect(() => {
     apiFetch('/services').then((res) => res.ok ? res.json() : Promise.reject(new Error('services'))).then((data) => setServicesCatalog((data.services || []).map((service: any) => ({ id: String(service.id), title: service.title, category: service.category, defaultFee: Number(service.priceFinal ?? service.basePrice) || 0 })))).catch(() => setServicesCatalog([]));
@@ -117,8 +118,24 @@ export default function CRMFacturacionPage() {
     apiFetch('/clients').then((res) => res.ok ? res.json() : Promise.reject(new Error('clients'))).then((data) => setClients(Array.isArray(data.clients) ? data.clients : [])).catch(() => setClients([]));
   }, []);
 
+  useEffect(() => {
+    apiFetch('/company-settings').then((res) => res.ok ? res.json() : Promise.reject(new Error('company-settings'))).then((data) => setCompanySettings((current) => ({ ...current, ...(data.settings || {}) }))).catch(() => undefined);
+  }, []);
+
   // Visualizador oficial de presupuestos y facturas
   const [selectedDoc, setSelectedDoc] = useState<{ type: 'quote' | 'invoice'; data: any } | null>(null);
+  const [editingQuote, setEditingQuote] = useState<any | null>(null);
+  const [editReason, setEditReason] = useState('');
+  const openQuoteEditor = (quote: any) => setEditingQuote({ ...normalizarPresupuesto(quote), items: (quote.items || []).map((item: any) => ({ ...item, quantity: Number(item.quantity || 1), unit_price: Number(item.unit_price ?? item.unitPrice ?? item.total ?? 0), total: Number(item.total ?? 0) })) });
+  const saveQuoteEdit = async () => {
+    if (!editingQuote?.items?.length || editingQuote.items.some((item: any) => Number(item.quantity) <= 0 || Number(item.unit_price) <= 0)) { showToast('Cada línea debe tener cantidad y precio final mayor que cero.'); return; }
+    const mode = ['enviado','pendiente','aceptado','convertido','pagado'].includes(editingQuote.status) ? 'revision' : undefined;
+    const response = await apiFetch(`/quotes/${editingQuote.id}`, { method: 'PUT', body: JSON.stringify({ client_id: editingQuote.client_id, items: editingQuote.items.map((item: any) => ({ ...item, total: Number(item.quantity) * Number(item.unit_price), manual_price: true })), valid_until: editingQuote.valid_until || null, notes: editingQuote.notes || null, internal_notes: editingQuote.internal_notes || null, reason: editReason || null, mode }) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) { showToast(data.error || 'No se pudo guardar el presupuesto.'); return; }
+    const updated = normalizarPresupuesto({ ...data.quote, client_name: editingQuote.client_name, client_bsn: editingQuote.client_bsn });
+    setQuotes(current => current.map(q => q.id === updated.id ? updated : q)); setSelectedDoc({ type: 'quote', data: updated }); setEditingQuote(null); setEditReason(''); showToast(data.message || 'Presupuesto actualizado.');
+  };
   const [emailSentToast, setEmailSentToast] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -175,10 +192,12 @@ export default function CRMFacturacionPage() {
   const getDocItems = (doc: any) => {
     if (!doc) return [];
     if (doc.items && Array.isArray(doc.items) && doc.items.length > 0) {
-      return doc.items.map((it: any) => ({
-        description: it.description || it.title || doc.concept || 'Servicio Gestoría',
-        total: parseFloat(it.total || it.fee || 0),
-      }));
+      return doc.items.map((it: any) => {
+        const quantity = Number(it.quantity || 1);
+        const unitPrice = Number(it.unit_price ?? it.unitPrice ?? it.price ?? it.fee ?? 0);
+        const total = Number(it.total ?? (quantity * unitPrice));
+        return { description: it.description || it.title || doc.concept || 'Servicio Gestoría', quantity, unit_price: unitPrice, total: Math.round(total * 100) / 100, tax_rate: Number(it.tax_rate ?? doc.tax_rate ?? 21), tax_amount: Number(it.tax_amount ?? (total - total / (1 + Number(it.tax_rate ?? doc.tax_rate ?? 21) / 100))) };
+      });
     }
     const { subtotal } = getDocTotals(doc);
     return [
@@ -195,6 +214,7 @@ export default function CRMFacturacionPage() {
   const [selectedQuoteServiceIds, setSelectedQuoteServiceIds] = useState<string[]>([]);
   const [customQuoteFees, setCustomQuoteFees] = useState<{ [id: string]: number }>({});
   const [quoteConcept, setQuoteConcept] = useState('');
+  const [manualQuoteAmount, setManualQuoteAmount] = useState(0);
   const [isConceptManuallyEdited, setIsConceptManuallyEdited] = useState(false);
   const [quoteValidUntil, setQuoteValidUntil] = useState('');
 
@@ -210,7 +230,7 @@ export default function CRMFacturacionPage() {
       }));
   };
 
-  const quoteTotal = Math.round(getSelectedQuoteItems().reduce((acc, item) => acc + item.fee, 0) * 100) / 100;
+  const quoteTotal = Math.round((getSelectedQuoteItems().length ? getSelectedQuoteItems().reduce((acc, item) => acc + item.fee, 0) : manualQuoteAmount) * 100) / 100;
   const quoteSubtotal = Math.round((quoteTotal / 1.21) * 100) / 100;
   const quoteTax = Math.round((quoteTotal - quoteSubtotal) * 100) / 100;
 
@@ -265,7 +285,7 @@ export default function CRMFacturacionPage() {
     const client = clients.find((item) => item.full_name === newQuoteClient);
     if (!client?.id) { showToast('Selecciona un cliente real de PostgreSQL.'); return; }
     if (items.length === 0 && !quoteConcept.trim()) { showToast('Selecciona un servicio o indica un concepto.'); return; }
-    const response = await apiFetch('/quotes', { method: 'POST', body: JSON.stringify({ client_id: client.id, items: items.length ? items.map((item) => ({ service_id: item.id, description: item.title, quantity: 1, unit_price: item.fee })) : [{ description: quoteConcept.trim(), quantity: 1, unit_price: quoteTotal }], valid_until: quoteValidUntil || null, notes: quoteConcept.trim() || null }) });
+    const response = await apiFetch('/quotes', { method: 'POST', body: JSON.stringify({ client_id: client.id, items: items.length ? items.map((item) => ({ service_id: item.id, description: item.title, quantity: 1, unit_price: item.fee, manual_price: customQuoteFees[item.id] !== undefined })) : [{ description: quoteConcept.trim(), quantity: 1, unit_price: quoteTotal, manual_price: true }], valid_until: quoteValidUntil || null, notes: quoteConcept.trim() || null }) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.quote?.id) { showToast(data.error || 'No se pudo crear el presupuesto.'); return; }
     setQuotes((current) => [normalizarPresupuesto({ ...data.quote, client_name: client.full_name, client_bsn: client.bsn }), ...current]);
@@ -865,6 +885,7 @@ export default function CRMFacturacionPage() {
                 <p className="text-[10px] text-outline mt-0.5">
                   Este concepto aparecerá en el desglose oficial del presupuesto y en la factura fiscal correlativa.
                 </p>
+                {selectedQuoteServiceIds.length === 0 && <label className="mt-2 block text-xs font-semibold">Precio final del concepto manual (IVA incluido)<input type="number" min="0.01" step="0.01" value={manualQuoteAmount || ''} onChange={(e) => setManualQuoteAmount(Number(e.target.value) || 0)} className="mt-1 h-9 w-full rounded border border-outline-variant px-2" /></label>}
               </div>
 
               {/* Resumen Económico */}
@@ -897,7 +918,7 @@ export default function CRMFacturacionPage() {
               </button>
               <button
                 type="submit"
-                disabled={selectedQuoteServiceIds.length === 0 && !quoteConcept.trim()}
+                disabled={(selectedQuoteServiceIds.length === 0 && !quoteConcept.trim()) || quoteTotal <= 0}
                 className="h-9 px-5 bg-secondary text-white rounded-lg text-xs font-semibold hover:bg-blue-700 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-[16px]">check</span>
@@ -909,6 +930,15 @@ export default function CRMFacturacionPage() {
       )}
 
       {/* MODAL VISUALIZADOR OFICIAL DE FACTURA O PRESUPUESTO */}
+      {editingQuote && (
+        <div className="fixed inset-0 z-[140] bg-black/60 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-surface-container-lowest p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-surface-container pb-3"><div><h2 className="text-lg font-bold">{['enviado','pendiente','aceptado','convertido','pagado'].includes(editingQuote.status) ? 'Crear revisión de presupuesto' : 'Editar presupuesto'}</h2><p className="text-xs text-on-surface-variant">Los precios son finales e incluyen IVA.</p></div><button type="button" onClick={() => setEditingQuote(null)} aria-label="Cerrar editor" className="p-2"><span className="material-symbols-outlined">close</span></button></div>
+            <div className="mt-4 space-y-3">{editingQuote.items.map((item: any, index: number) => <div key={index} className="grid gap-2 rounded-lg border border-outline-variant p-3 sm:grid-cols-[1fr_90px_120px_32px]"><input value={item.description} onChange={e=>setEditingQuote((q:any)=>({...q,items:q.items.map((x:any,i:number)=>i===index?{...x,description:e.target.value}:x)}))} className="h-9 rounded border border-outline-variant px-2 text-sm" aria-label="Descripción del servicio"/><input type="number" min="1" step="1" value={item.quantity} onChange={e=>setEditingQuote((q:any)=>({...q,items:q.items.map((x:any,i:number)=>i===index?{...x,quantity:Number(e.target.value)}:x)}))} className="h-9 rounded border border-outline-variant px-2 text-sm" aria-label="Cantidad"/><input type="number" min="0.01" step="0.01" value={item.unit_price} onChange={e=>setEditingQuote((q:any)=>({...q,items:q.items.map((x:any,i:number)=>i===index?{...x,unit_price:Number(e.target.value)}:x)}))} className="h-9 rounded border border-outline-variant px-2 text-sm" aria-label="Precio unitario final"/><button type="button" onClick={()=>setEditingQuote((q:any)=>({...q,items:q.items.filter((_:any,i:number)=>i!==index)}))} className="text-rose-600" aria-label="Eliminar línea"><span className="material-symbols-outlined">delete</span></button><p className="sm:col-span-4 text-right text-xs font-semibold text-secondary">Total línea: € {(Number(item.quantity||0)*Number(item.unit_price||0)).toFixed(2)} · IVA incluido</p></div>)}<button type="button" onClick={()=>setEditingQuote((q:any)=>({...q,items:[...q.items,{description:'Nuevo servicio',quantity:1,unit_price:0,total:0,manual_price:true}]}))} className="rounded border border-secondary px-3 py-2 text-xs font-semibold text-secondary">+ Añadir servicio</button><label className="block text-xs font-semibold">Fecha de validez<input type="date" value={editingQuote.valid_until || ''} onChange={e=>setEditingQuote((q:any)=>({...q,valid_until:e.target.value}))} className="mt-1 h-9 w-full rounded border border-outline-variant px-2"/></label><label className="block text-xs font-semibold">Notas para el cliente<textarea value={editingQuote.notes || ''} onChange={e=>setEditingQuote((q:any)=>({...q,notes:e.target.value}))} rows={2} className="mt-1 w-full rounded border border-outline-variant p-2"/></label><label className="block text-xs font-semibold">Notas internas<textarea value={editingQuote.internal_notes || ''} onChange={e=>setEditingQuote((q:any)=>({...q,internal_notes:e.target.value}))} rows={2} className="mt-1 w-full rounded border border-outline-variant p-2"/></label><label className="block text-xs font-semibold">Motivo de modificación (opcional)<input value={editReason} onChange={e=>setEditReason(e.target.value)} className="mt-1 h-9 w-full rounded border border-outline-variant px-2"/></label><div className="flex justify-end gap-2 border-t border-surface-container pt-4"><button type="button" onClick={()=>setEditingQuote(null)} className="rounded border border-outline-variant px-4 py-2 text-xs font-semibold">Cancelar</button><button type="button" onClick={saveQuoteEdit} className="rounded bg-secondary px-4 py-2 text-xs font-semibold text-white">Guardar {['enviado','pendiente','aceptado','convertido','pagado'].includes(editingQuote.status)?'revisión':'borrador'}</button></div></div>
+          </div>
+        </div>
+      )}
+
       {selectedDoc && (
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
           <div className="print-document bg-surface-container-lowest max-w-3xl w-full rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95">
@@ -930,6 +960,7 @@ export default function CRMFacturacionPage() {
               </div>
 
               <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+                {selectedDoc.type === 'quote' && <button type="button" onClick={() => openQuoteEditor(selectedDoc.data)} className="h-7 sm:h-8 px-2 sm:px-3 bg-amber-600 text-white rounded-lg text-[11px] sm:text-xs font-semibold flex items-center gap-1" title="Editar presupuesto o crear revisión"><span className="material-symbols-outlined text-[14px]">edit</span><span className="hidden sm:inline">Editar presupuesto</span></button>}
                 <button
                   type="button"
                   onClick={() => window.print()}
@@ -980,16 +1011,14 @@ export default function CRMFacturacionPage() {
               <div className="flex flex-col sm:flex-row justify-between gap-6 pb-6 border-b border-surface-container">
                 <div>
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-secondary text-white font-bold flex items-center justify-center text-sm">
-                      NG
-                    </div>
-                    <span className="font-bold text-base tracking-tight text-on-surface">NexusGest Advies B.V.</span>
+                    {companySettings.logo_url ? <img src={companySettings.logo_url} alt="Logo de empresa" className="h-8 w-8 rounded-lg object-contain" /> : <div className="w-8 h-8 rounded-lg bg-secondary text-white font-bold flex items-center justify-center text-sm">RP</div>}
+                    <span className="font-bold text-base tracking-tight text-on-surface">{companySettings.commercial_name || 'RP Asesoría'}</span>
                   </div>
                   <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
-                    Gestoría y Asesoría Fiscal en Países Bajos<br />
-                    Keizersgracht 421, 1016 EK Amsterdam<br />
-                    KVK: 84920194 · BTW-id: NL849201940B01<br />
-                    IBAN: NL91 INGB 0001 2345 67 (ING Bank)
+                    {companySettings.description || 'Información y acompañamiento administrativo'}<br />
+                    {companySettings.address || 'Dirección pendiente'}{companySettings.city ? `, ${companySettings.city}` : ''}{companySettings.country ? `, ${companySettings.country}` : ''}<br />
+                    KVK: {companySettings.kvk || '—'} · BTW-id: {companySettings.vat_id || '—'}<br />
+                    IBAN: {companySettings.iban || '—'} · {companySettings.email || '—'} · {companySettings.phone || '—'}
                   </p>
                 </div>
 
@@ -1068,22 +1097,21 @@ export default function CRMFacturacionPage() {
                   </thead>
                   <tbody className="divide-y divide-surface-container">
                     {getDocItems(selectedDoc.data).map((item: any, idx: number) => {
-                      const itemBase = item.total || 0;
-                      const itemBtw = Math.round(itemBase * 0.21 * 100) / 100;
-                      const itemTotal = Math.round((itemBase + itemBtw) * 100) / 100;
+                      const itemTotal = Number(item.total || (Number(item.quantity || 1) * Number(item.unit_price || 0)));
+                      const itemUnitPrice = Number(item.unit_price || itemTotal);
                       return (
                         <tr key={idx} className="hover:bg-surface-container-low/50">
                           <td className="px-4 py-3 font-semibold text-on-surface">
                             {item.description}
                           </td>
                           <td className="px-4 py-3 text-center font-mono-data text-outline">
-                            1
+                            {Number(item.quantity || 1)}
                           </td>
                           <td className="px-4 py-3 text-right font-mono-data">
-                            € {itemBase.toFixed(2)}
+                            € {itemUnitPrice.toFixed(2)}
                           </td>
                           <td className="px-4 py-3 text-center font-mono-data text-outline">
-                            21%
+                            {Number(item.tax_rate ?? 21).toFixed(0)}% · IVA incluido
                           </td>
                           <td className="px-4 py-3 text-right font-mono-data font-bold text-on-surface">
                             € {itemTotal.toFixed(2)}
@@ -1126,7 +1154,7 @@ export default function CRMFacturacionPage() {
             {/* Pie de Acciones Inferior */}
             <div className="no-print bg-surface-container px-6 py-3 border-t border-surface-container-high flex items-center justify-between">
               <div className="text-[11px] text-outline">
-                Documento legal emitido por NexusGest · Países Bajos
+                {companySettings.footer_text || `Documento legal emitido por ${companySettings.commercial_name || 'RP Asesoría'} · ${companySettings.country || 'Países Bajos'}`}
               </div>
 
               <div className="flex items-center gap-2">
