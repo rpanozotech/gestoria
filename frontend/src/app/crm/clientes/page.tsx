@@ -1620,6 +1620,7 @@ export default function CRMClientesPage() {
             <span className="material-symbols-outlined absolute left-3 top-2.5 text-outline text-base">search</span>
             <input
               type="text"
+              aria-label="Buscar clientes por nombre, BSN o email"
               placeholder="Buscar por nombre, BSN, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

@@ -1013,6 +1013,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                   type="file"
                   multiple
                   accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx"
+                  aria-label="Subir documentos para analizar"
                   onChange={(e) => handleFilesSelected(e.target.files)}
                   className="hidden"
                 />
@@ -1115,12 +1116,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 <div>
                   <textarea
                     rows={10}
+                    aria-label="Información de uno o varios clientes"
+                    aria-describedby="ai-text-help"
                     value={nlpPrompt}
                     onChange={(e) => setNlpPrompt(e.target.value)}
                     placeholder="Pega aquí texto desordenado: nombres, BSN, emails, teléfonos, trámites, fechas o importes. La IA lo separará por cliente..."
                     className="w-full p-3.5 border border-outline-variant rounded-xl bg-surface font-body-md text-xs text-on-surface focus:border-secondary focus:outline-none"
                   />
-                  <p className="text-[10px] text-outline mt-1.5 flex items-center gap-1">
+                  <p id="ai-text-help" className="text-[10px] text-outline mt-1.5 flex items-center gap-1">
                     <span className="material-symbols-outlined text-[13px] text-secondary">info</span>
                     <span>
                       El texto pegado se analiza directamente, sin OCR. Para PDF, fotos o escaneos utiliza el panel de documentos.
