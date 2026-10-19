@@ -1623,12 +1623,17 @@ export default function CRMClientesPage() {
             <span className="hidden md:inline">Backup</span>
           </Link>
 
+          <Link href="/crm/clientes/alta-ia" className="h-9 px-3.5 border border-secondary text-secondary text-xs font-semibold rounded-md hover:bg-blue-50 transition-colors flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
+            <span>Crear con IA</span>
+          </Link>
+
           <Link
-            href="/crm/alta-ia"
+            href="/crm/clientes/nuevo"
             className="h-9 px-3.5 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-1.5"
           >
             <span className="material-symbols-outlined text-[16px]">person_add</span>
-            <span>+ Nuevo Cliente</span>
+            <span>+ Nuevo cliente</span>
           </Link>
         </div>
       </div>

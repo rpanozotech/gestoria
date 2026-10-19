@@ -30,6 +30,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [financeOpen, setFinanceOpen] = useState(pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas'));
+  const [clientsOpen, setClientsOpen] = useState(pathname.startsWith('/crm/clientes'));
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -106,14 +107,12 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     { label: 'TRABAJO', items: [
       { href: '/crm', label: 'Centro de gestión', icon: 'dashboard' },
       { href: '/crm/tareas', label: 'Mis tareas', icon: 'task_alt' },
-      { href: '/crm/clientes', label: 'Clientes', icon: 'group', ...(activeClients !== null ? { badge: String(activeClients) } : {}) },
       { href: '/crm/expedientes', label: 'Expedientes', icon: 'folder_open' },
       { href: '/crm/agenda', label: 'Citas', icon: 'calendar_today' },
     ] },
     { label: 'DOCUMENTOS E IA', items: [
       { href: '/crm/documentos-ia', label: 'Documentos', icon: 'description' },
-      { href: '/crm/alta-ia', label: 'Alta con IA', icon: 'auto_awesome' },
-      { href: '/crm/chat-ia', label: 'Chat IA', icon: 'forum', badge: 'En vivo' },
+            { href: '/crm/chat-ia', label: 'Chat IA', icon: 'forum', badge: 'En vivo' },
     ] },
     { label: 'CONFIGURACIÓN', items: [
       { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
@@ -190,6 +189,16 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             <div className="space-y-1">
               {!sidebarCollapsed && <p className="px-3 pb-1 text-[10px] font-bold tracking-[0.14em] text-outline">TRABAJO</p>}
               {navGroups[0].items.map((item) => <NavLink key={item.href} item={item} pathname={pathname} collapsed={sidebarCollapsed} onClick={() => setMobileMenuOpen(false)} />)}
+              <button type="button" onClick={() => setClientsOpen((value) => !value)} aria-expanded={clientsOpen} title="Clientes" className={`group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${pathname.startsWith('/crm/clientes') ? 'bg-secondary text-white' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
+                <span className="flex min-w-0 items-center gap-3"><span className="material-symbols-outlined text-[19px]">group</span>{!sidebarCollapsed && <span>Clientes</span>}</span>
+                {!sidebarCollapsed && <span className="material-symbols-outlined text-[17px]">{clientsOpen ? 'expand_less' : 'expand_more'}</span>}
+              </button>
+              {clientsOpen && !sidebarCollapsed && <div className="ml-4 space-y-1 border-l border-slate-200 pl-2">
+                <NavLink item={{ href: '/crm/clientes', label: 'Directorio de clientes', icon: 'contacts' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
+                <NavLink item={{ href: '/crm/clientes/nuevo', label: 'Nuevo cliente manual', icon: 'person_add' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
+                <NavLink item={{ href: '/crm/clientes/alta-ia', label: 'Alta con IA', icon: 'auto_awesome' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
+                <NavLink item={{ href: '/crm/clientes/importar', label: 'Importar varios clientes', icon: 'upload_file' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
+              </div>}
             </div>
             <div className="space-y-1">
               <button type="button" onClick={() => setFinanceOpen((value) => !value)} aria-expanded={financeOpen} title="Finanzas" className={`group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') || pathname.startsWith('/crm/obligaciones') ? 'bg-secondary text-white' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
