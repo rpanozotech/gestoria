@@ -16,6 +16,11 @@ interface ExtractedClient {
   email: string;
   city: string;
   address: string;
+  preferred_language?: string;
+  client_type?: string;
+  organism?: string;
+  dates?: string;
+  status?: string;
   id_document_number: string;
   service_title: string;
   fee: number;
@@ -390,6 +395,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             email: c.email || '',
             city: c.city || '',
             address: c.address || '',
+            preferred_language: c.preferred_language || c.language || '',
+            client_type: c.client_type || '',
+            organism: c.organism || '',
+            dates: c.dates || '',
+            status: c.status || '',
             id_document_number: c.id_document_number || '',
             service_title: c.service_title || 'Consulta general',
             fee: typeof c.fee === 'number' ? c.fee : 0,
@@ -653,6 +663,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     setIsSaving(true);
     const persistedClients: any[] = [];
     const failedClients: { name: string; reason: string }[] = [];
+    const originalImportText = [nlpPrompt, ...uploadedFiles.map((file) => file.textContent || `${file.name} (${file.type})`)]
+      .filter(Boolean).join('\n\n');
 
     try {
       // 1. Intentar persistir en PostgreSQL mediante API Backend
@@ -663,9 +675,19 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           let clientData: any;
 
           if (matchRes.ok && matchData?.match?.id) {
-            // Un BSN exacto o un único nombre exacto reutiliza la ficha. Así
-            // no se crea un duplicado al importar el segundo documento.
+            // Nunca actualizar ni crear un duplicado en silencio: el gestor decide.
             const existing = matchData.match;
+            const useExisting = window.confirm(
+              `Posible cliente duplicado: ${existing.full_name || client.full_name}.\n\n` +
+              `BSN/email coincidente. Aceptar = comparar y actualizar la ficha existente.`
+            );
+            if (!useExisting) {
+              const createNew = window.confirm(
+                'No se actualizará la ficha existente.\n\nAceptar = crear como cliente nuevo. Cancelar = omitir este cliente.'
+              );
+              if (!createNew) throw new Error('Cliente omitido durante la revisión de duplicados');
+            }
+            if (useExisting) {
             const updateRes = await apiFetch(`/clients/${existing.id}`, {
               method: 'PUT',
               body: JSON.stringify({
@@ -676,14 +698,16 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 id_document_number: client.id_document_number || existing.id_document_number || null,
                 city: client.city || existing.city || null,
                 address: client.address || existing.address || null,
-                notes: [existing.notes, client.notes].filter(Boolean).join('\n'),
+                notes: [existing.notes, client.notes, originalImportText ? `Texto original de importación:\n${originalImportText}` : ''].filter(Boolean).join('\n'),
               }),
             });
             clientData = updateRes.ok ? await updateRes.json() : { client: existing };
             clientData.client = clientData.client || existing;
             const accessRes = await apiFetch(`/clients/${clientData.client.id}/portal-access`, { method: 'POST' });
             clientData.portal_access = accessRes.ok ? (await accessRes.json()).portal_access : null;
-          } else {
+            }
+          }
+          if (!clientData) {
             const clientRes = await apiFetch('/clients', {
             method: 'POST',
             body: JSON.stringify({
@@ -696,7 +720,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               address: client.address,
               status: 'activo',
               digid_status: 'pendiente_activar',
-              notes: client.notes,
+              notes: [client.notes, originalImportText ? `Texto original de importación:\n${originalImportText}` : ''].filter(Boolean).join('\n'),
             }),
           });
           clientData = await clientRes.json();
@@ -924,8 +948,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                     <span className="material-symbols-outlined text-lg">upload_file</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-on-surface">1. Adjuntar Archivos</h3>
-                    <p className="text-[11px] text-outline">PDFs, fotos de pasaportes, cartas de Belastingdienst</p>
+                    <h3 className="font-bold text-sm text-on-surface">Subir documentos para analizar</h3>
+                    <p className="text-[11px] text-outline">PDF, fotos, DNI, cartas y documentos escaneados. El OCR solo se usa aquí.</p>
                   </div>
                 </div>
 
@@ -1047,8 +1071,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       <span className="material-symbols-outlined text-lg">edit_note</span>
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm text-on-surface">2. Notas y Texto de Clientes</h3>
-                      <p className="text-[11px] text-outline">Pega notas de WhatsApp, llamadas o listas con varios clientes</p>
+                      <h3 className="font-bold text-sm text-on-surface">Pega aquí información de uno o varios clientes</h3>
+                      <p className="text-[11px] text-outline">Puedes utilizar español, inglés o holandés. La IA separará automáticamente cada cliente.</p>
                     </div>
                   </div>
 
@@ -1067,13 +1091,13 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                     rows={10}
                     value={nlpPrompt}
                     onChange={(e) => setNlpPrompt(e.target.value)}
-                    placeholder="Pega aquí el texto sin formato. La IA identificará nombres, BSN, ciudades, teléfonos y trámites de uno o más clientes..."
+                    placeholder="Pega aquí texto desordenado: nombres, BSN, emails, teléfonos, trámites, fechas o importes. La IA lo separará por cliente..."
                     className="w-full p-3.5 border border-outline-variant rounded-xl bg-surface font-body-md text-xs text-on-surface focus:border-secondary focus:outline-none"
                   />
                   <p className="text-[10px] text-outline mt-1.5 flex items-center gap-1">
                     <span className="material-symbols-outlined text-[13px] text-secondary">info</span>
                     <span>
-                      Puedes escribir varios clientes separados por números, saltos de línea o simplemente redactados.
+                      El texto pegado se analiza directamente, sin OCR. Para PDF, fotos o escaneos utiliza el panel de documentos.
                     </span>
                   </p>
                 </div>
@@ -1104,7 +1128,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                     {isProcessing ? 'hourglass_top' : 'auto_awesome'}
                   </span>
                   <span>
-                    {isProcessing ? 'Leyendo PDF/OCR local...' : ocrPending ? 'Preparando OCR local...' : 'Leer PDF/OCR local y extraer datos'}
+                    {isProcessing ? 'Leyendo PDF/OCR local...' : ocrPending ? 'Preparando OCR local...' : uploadedFiles.length > 0 ? 'Analizar documentos con OCR e IA' : 'Analizar y preparar fichas'}
                   </span>
                 </button>
               </div>
@@ -1158,7 +1182,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                   </span>
                 </div>
                 <h2 className="font-bold text-base text-on-surface">
-                  {detectedClients.length} Clientes{' '}
+                  {detectedClients.length} clientes detectados{' '}
                   {extraccionLocal ? 'Extraídos localmente' : usadoFallback ? 'Detectados (extracción local)' : 'Identificados por la IA'}
                 </h2>
               </div>
@@ -1244,7 +1268,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
                     <div>
                       <h4 className="font-bold text-sm text-on-surface flex items-center gap-2">
-                        <span>{client.full_name || 'Cliente sin nombre'}</span>
+                        <span>{client.full_name || 'No detectado'}</span>
                         <span className="text-[10px] font-mono-data bg-blue-50 text-secondary px-2 py-0.5 rounded font-semibold">
                           Cliente #{idx + 1}
                         </span>
@@ -1280,6 +1304,9 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 </div>
 
                 {/* Campos Editables */}
+                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+                  <strong>Revisión necesaria:</strong> los campos vacíos muestran <em>No detectado</em>. Confirma o corrige los datos antes de crear la ficha.
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-4 text-xs">
                   <div>
                     <label className="block text-outline uppercase text-[10px] font-semibold mb-1">
@@ -1308,7 +1335,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       )}
                     </label>
                     <input
-                      type="text"
+                      type="password"
+                      autoComplete="off"
                       value={client.bsn}
                       onChange={(e) => handleUpdateClientField(client.id, 'bsn', e.target.value)}
                       placeholder="Ej. 884719203"
@@ -1324,7 +1352,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       type="tel"
                       value={client.phone}
                       onChange={(e) => handleUpdateClientField(client.id, 'phone', e.target.value)}
-                      placeholder="+31 6 ..."
+                      placeholder="No detectado"
                       className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
                     />
                   </div>
@@ -1337,7 +1365,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       type="email"
                       value={client.email}
                       onChange={(e) => handleUpdateClientField(client.id, 'email', e.target.value)}
-                      placeholder="cliente@ejemplo.com"
+                      placeholder="No detectado"
                       className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
                     />
                   </div>
@@ -1350,7 +1378,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       type="text"
                       value={client.city}
                       onChange={(e) => handleUpdateClientField(client.id, 'city', e.target.value)}
-                      placeholder="Amsterdam / Rotterdam"
+                      placeholder="No detectado"
                       className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
                     />
                   </div>
@@ -1363,9 +1391,29 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       type="text"
                       value={client.address}
                       onChange={(e) => handleUpdateClientField(client.id, 'address', e.target.value)}
-                      placeholder="Keizersgracht 45"
+                      placeholder="No detectado"
                       className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-outline uppercase text-[10px] font-semibold mb-1">Idioma preferido</label>
+                    <input type="text" value={client.preferred_language || ''} onChange={(e) => handleUpdateClientField(client.id, 'preferred_language', e.target.value)} placeholder="No detectado · ES / EN / NL" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none" />
+                  </div>
+
+                  <div>
+                    <label className="block text-outline uppercase text-[10px] font-semibold mb-1">Tipo de cliente</label>
+                    <input type="text" value={client.client_type || ''} onChange={(e) => handleUpdateClientField(client.id, 'client_type', e.target.value)} placeholder="No detectado" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none" />
+                  </div>
+
+                  <div>
+                    <label className="block text-outline uppercase text-[10px] font-semibold mb-1">Organismo relacionado</label>
+                    <input type="text" value={client.organism || ''} onChange={(e) => handleUpdateClientField(client.id, 'organism', e.target.value)} placeholder="No detectado" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none" />
+                  </div>
+
+                  <div>
+                    <label className="block text-outline uppercase text-[10px] font-semibold mb-1">Fechas / estado del trámite</label>
+                    <input type="text" value={[client.dates, client.status].filter(Boolean).join(' · ')} onChange={(e) => handleUpdateClientField(client.id, 'dates', e.target.value)} placeholder="No detectado" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none" />
                   </div>
 
                   <div>
@@ -1383,7 +1431,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
                   <div>
                     <label className="block text-outline uppercase text-[10px] font-semibold mb-1">
-                      Honorarios (€)
+                      Importe final (€) · IVA incluido
                     </label>
                     <input
                       type="number"
@@ -1454,7 +1502,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 ¿Todo listo para dar de alta en NexusGest?
               </p>
               <p className="text-[11px] text-outline">
-                Se crearán {selectedCount} fichas completas de cliente con sus expedientes y presupuestos iniciales.
+                Nunca se crea una ficha sin confirmación. Se crearán {selectedCount} fichas completas de cliente con sus expedientes y presupuestos iniciales.
               </p>
             </div>
 
@@ -1530,7 +1578,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 type="tel"
                 value={manualClient.phone}
                 onChange={(e) => setManualClient({ ...manualClient, phone: e.target.value })}
-                placeholder="+31 6 ..."
+                placeholder="No detectado"
                 className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none"
               />
             </div>
@@ -1541,7 +1589,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 type="email"
                 value={manualClient.email}
                 onChange={(e) => setManualClient({ ...manualClient, email: e.target.value })}
-                placeholder="cliente@ejemplo.com"
+                placeholder="No detectado"
                 className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none"
               />
             </div>
@@ -1552,7 +1600,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 type="text"
                 value={manualClient.city}
                 onChange={(e) => setManualClient({ ...manualClient, city: e.target.value })}
-                placeholder="Amsterdam / Rotterdam"
+                placeholder="No detectado"
                 className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none"
               />
             </div>
@@ -1563,7 +1611,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 type="text"
                 value={manualClient.address}
                 onChange={(e) => setManualClient({ ...manualClient, address: e.target.value })}
-                placeholder="Keizersgracht 45"
+                placeholder="No detectado"
                 className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none"
               />
             </div>
