@@ -170,13 +170,13 @@ export default function AltaIAEscaneerPage() {
 
   // Catálogo de trámites para desplegable
   const [servicesCatalog, setServicesCatalog] = useState([
-    { title: 'Declaración Fiscal M-Form', defaultFee: 180.0 },
-    { title: 'Activación DigiD + Zorgtoeslag', defaultFee: 85.0 },
-    { title: 'Solicitud Subsidio Huurtoeslag (Alquiler)', defaultFee: 95.0 },
-    { title: 'Alta Eenmanszaak KVK y BTW-nummer', defaultFee: 250.0 },
-    { title: 'Recurso Bezwaarschrift Belastingdienst', defaultFee: 120.0 },
-    { title: 'Kindgebonden Budget (Ayuda Hijos)', defaultFee: 80.0 },
-    { title: 'Cambio de Cuenta Bancaria Belastingdienst', defaultFee: 45.0 },
+    { title: 'Declaración Fiscal M-Form', defaultFee: 180.0, configured: true },
+    { title: 'Activación DigiD + Zorgtoeslag', defaultFee: 85.0, configured: true },
+    { title: 'Solicitud Subsidio Huurtoeslag (Alquiler)', defaultFee: 95.0, configured: true },
+    { title: 'Alta Eenmanszaak KVK y BTW-nummer', defaultFee: 250.0, configured: true },
+    { title: 'Recurso Bezwaarschrift Belastingdienst', defaultFee: 120.0, configured: true },
+    { title: 'Kindgebonden Budget (Ayuda Hijos)', defaultFee: 80.0, configured: true },
+    { title: 'Cambio de Cuenta Bancaria Belastingdienst', defaultFee: 45.0, configured: true },
   ]);
 
   // El alta inteligente usa el mismo catálogo persistente que Tarifas.
@@ -188,7 +188,8 @@ export default function AltaIAEscaneerPage() {
         if (Array.isArray(data.services) && data.services.length > 0) {
           setServicesCatalog(data.services.map((service: any) => ({
             title: service.title,
-            defaultFee: Number(service.basePrice) || 0,
+            defaultFee: Number(service.basePrice ?? service.priceFinal) || 0,
+            configured: Boolean(service.active !== false && (service.basePrice ?? service.priceFinal) != null && Number(service.basePrice ?? service.priceFinal) > 0),
           })));
         }
       })
@@ -815,9 +816,34 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     fee: 180.0,
   });
   const [manualPortalAccess, setManualPortalAccess] = useState<{ portal_username: string; portal_password: string } | null>(null);
+  const [manualFeeCustomized, setManualFeeCustomized] = useState(false);
+  const selectedManualService = servicesCatalog.find((service) => service.title === manualClient.service_title);
+  const configuredManualFee = selectedManualService?.configured !== false && (selectedManualService?.defaultFee || 0) > 0
+    ? selectedManualService.defaultFee
+    : null;
+
+  // Cuando Tarifas y precios web devuelve el catálogo persistente, alinear el
+  // trámite inicial y su precio para no mostrar una combinación contradictoria.
+  useEffect(() => {
+    const firstConfigured = servicesCatalog.find((service) => service.configured !== false && service.defaultFee > 0) || servicesCatalog[0];
+    if (!firstConfigured) return;
+    setManualClient((current) => {
+      if (servicesCatalog.some((service) => service.title === current.service_title)) return current;
+      return { ...current, service_title: firstConfigured.title, fee: firstConfigured.defaultFee };
+    });
+  }, [servicesCatalog]);
 
   const handleSaveSingleManual = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedManualService || configuredManualFee === null) {
+      showToast('Tarifa pendiente de configurar. Introduce un precio final manualmente.', 'error');
+      if (!Number.isFinite(manualClient.fee) || manualClient.fee < 0) return;
+    }
+    if (!Number.isFinite(manualClient.fee) || manualClient.fee < 0) {
+      showToast('El precio final debe ser numérico y no puede ser negativo.', 'error');
+      return;
+    }
 
     if (!isValidBsn(manualClient.bsn)) {
       showToast('El BSN debe tener 9 dígitos. Revísalo antes de guardar.', 'error');
@@ -1467,7 +1493,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                     >
                       {servicesCatalog.map((s) => (
                         <option key={s.title} value={s.title}>
-                          {s.title} (€{s.defaultFee.toFixed(2)})
+                          {s.title} ({s.configured === false || s.defaultFee <= 0 ? 'Tarifa pendiente de configurar' : `€${s.defaultFee.toFixed(2)} · IVA incluido`})
                         </option>
                       ))}
                     </select>
@@ -1620,7 +1646,16 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               <label className="block text-outline uppercase font-semibold mb-1">Trámite Inicial</label>
               <select
                 value={manualClient.service_title}
-                onChange={(e) => setManualClient({ ...manualClient, service_title: e.target.value })}
+                onChange={(e) => {
+                  const serviceTitle = e.target.value;
+                  const service = servicesCatalog.find((item) => item.title === serviceTitle);
+                  setManualClient({
+                    ...manualClient,
+                    service_title: serviceTitle,
+                    fee: service?.configured !== false && (service?.defaultFee || 0) > 0 ? service.defaultFee : 0,
+                  });
+                  setManualFeeCustomized(false);
+                }}
                 className="w-full h-9 px-2.5 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
               >
                 {servicesCatalog.map((s) => (
@@ -1632,13 +1667,19 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             </div>
 
             <div>
-              <label className="block text-outline uppercase font-semibold mb-1">Tarifa / Honorarios (€ IVA incluido)</label>
+              <label className="block text-outline uppercase font-semibold mb-1">Precio final — IVA incluido</label>
               <input
                 type="number"
+                min="0"
+                step="0.01"
                 value={manualClient.fee}
-                onChange={(e) => setManualClient({ ...manualClient, fee: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => { setManualClient({ ...manualClient, fee: Number(e.target.value) }); setManualFeeCustomized(true); }}
                 className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface font-mono-data font-bold text-secondary focus:border-secondary focus:outline-none"
               />
+              <p className={`text-[10px] mt-1 font-semibold ${manualFeeCustomized ? 'text-amber-700' : configuredManualFee === null ? 'text-amber-700' : 'text-emerald-700'}`}>
+                {configuredManualFee === null ? 'Tarifa pendiente de configurar' : manualFeeCustomized ? 'Precio personalizado' : `Tarifa configurada: €${configuredManualFee.toFixed(2)} · IVA incluido`}
+              </p>
+              <p className="text-[10px] text-outline mt-1">El importe es final. No se añade IVA adicional.</p>
             </div>
           </div>
 
