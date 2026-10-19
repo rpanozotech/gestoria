@@ -140,6 +140,7 @@ export default function PortalClientePage() {
   const [portalMessageDraft, setPortalMessageDraft] = useState('');
   const [portalMessageSending, setPortalMessageSending] = useState(false);
   const [currentClientIndex] = useState(0);
+  const [showFullBsn, setShowFullBsn] = useState(false);
 
   useEffect(() => {
     const syncClientFromCrm = async () => {
@@ -185,21 +186,29 @@ export default function PortalClientePage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    setShowFullBsn(false);
+  }, [portalClientData?.client?.id]);
+
   const baseClient = {
     id: '', full_name: '', email: '', phone: '', bsn: '', city: '', address: '', iban: '',
     digid_status: 'sin_digid', dossier_code: '', dossier_title: '', dossier_status: 'en_preparacion',
     dossier_progress: 0, refund_amount: 0, monthly_zorg: 0, monthly_huur: 0, advisor: 'Tu gestor',
   };
   const firstDossier = portalClientData?.dossiers?.[0];
+  const portalRecord = portalClientData?.client || portalClientData;
   const client = portalClientData
     ? {
         ...baseClient,
-        ...portalClientData,
+        ...portalRecord,
+        dossiers: portalClientData.dossiers || [],
+        invoices: portalClientData.invoices || [],
+        documents: portalClientData.documents || [],
         dossier_code: firstDossier?.code || baseClient.dossier_code,
         dossier_title: firstDossier?.title || baseClient.dossier_title,
         dossier_status: firstDossier?.status || baseClient.dossier_status,
         dossier_progress: firstDossier?.progress_percentage ?? baseClient.dossier_progress,
-        advisor: portalClientData.advisor || baseClient.advisor,
+        advisor: portalRecord.advisor || baseClient.advisor,
       }
     : baseClient;
   const displayClientName = client.full_name || 'Cliente';
@@ -207,7 +216,15 @@ export default function PortalClientePage() {
     const text = String(value ?? '').trim();
     return text || fallback;
   };
-  const displayBsn = client.bsn || 'No registrado';
+  const fullBsn = String(client.bsn ?? '').trim();
+  const displayBsn = !fullBsn ? 'BSN no disponible' : showFullBsn ? fullBsn : `••••••••${fullBsn.slice(-3)}`;
+  const revealBsn = async () => {
+    if (!fullBsn || showFullBsn) return;
+    const response = await fetch(apiUrl('/portal/bsn/reveal'), { method: 'POST' });
+    if (response.ok) setShowFullBsn(true);
+  };
+  const hideBsn = () => setShowFullBsn(false);
+  const displayContact = String(client.email || client.phone || '').trim();
   const displayDossierCode = portalText(client.dossier_code, 'expediente pendiente');
   const displayDossierTitle = portalText(client.dossier_title, 'expediente sin título');
   const displayAddress = [client.address, client.city].map(value => String(value ?? '').trim()).filter(Boolean).join(', ') || 'dirección no disponible';
@@ -798,19 +815,27 @@ export default function PortalClientePage() {
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-mono-data font-bold text-xs flex items-center justify-center shadow-md">
               {displayClientName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
             </div>
-            <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-bold text-white truncate max-w-[130px]">{displayClientName}</span>
-              <span className="text-[10px] font-mono-data text-slate-400">BSN: {displayBsn}</span>
+            <div className="flex min-w-0 flex-col text-left">
+              <span className="text-xs font-bold text-white truncate max-w-[150px]">{displayClientName}</span>
+              <span className="text-[10px] font-mono-data text-slate-400 truncate max-w-[170px]">Cliente activo · BSN: {displayBsn}</span>
+              {displayContact && <span className="text-[10px] text-slate-500 truncate max-w-[170px]">{displayContact}</span>}
+              {fullBsn && (showFullBsn ? (
+                <button type="button" onClick={hideBsn} className="text-[10px] text-blue-300 hover:text-white underline text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300">Ocultar BSN</button>
+              ) : (
+                <button type="button" onClick={() => void revealBsn()} className="text-[10px] text-blue-300 hover:text-white underline text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300">Ver BSN completo</button>
+              ))}
             </div>
           </div>
 
-          <Link
-            href="/"
-            className="text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1 border-l border-slate-800 pl-3"
+          <button
+            type="button"
+            onClick={async () => { await fetch(apiUrl('/auth/logout'), { method: 'POST' }); setShowFullBsn(false); router.replace('/portal/login'); }}
+            className="text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1 border-l border-slate-800 pl-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"
             title="Cerrar sesión"
+            aria-label="Cerrar sesión"
           >
             <span className="material-symbols-outlined text-[18px]">logout</span>
-          </Link>
+          </button>
         </div>
       </header>
 

@@ -350,6 +350,23 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// Revelación explícita de BSN para gestores autorizados. Nunca se guarda el valor en auditoría.
+router.post('/:id/bsn/reveal', async (req: Request, res: Response) => {
+  try {
+    const result = await query('SELECT id, bsn FROM clients WHERE id = $1', [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Cliente no encontrado' });
+    await query(
+      `INSERT INTO client_audit_log (client_id, actor_user_id, actor_role, action, changes)
+       VALUES ($1, $2, $3, 'bsn.revealed', $4::jsonb)`,
+      [req.params.id, req.user?.id || null, req.user?.role || 'gestor', JSON.stringify({ field: 'bsn', origin: 'CRM' })]
+    );
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error('Error registrando revelación de BSN del CRM:', error);
+    return res.status(500).json({ error: 'No se pudo registrar la revelación del BSN' });
+  }
+});
+
 // GET /api/clients/:id/audit - Historial de cambios de la ficha
 router.get('/:id/audit', async (req: Request, res: Response) => {
   try {

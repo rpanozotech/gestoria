@@ -49,6 +49,24 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 });
 
+router.post('/bsn/reveal', async (req: Request, res: Response) => {
+  const clientId = req.user?.client_id;
+  if (!clientId) return res.status(403).json({ error: 'La sesión no está vinculada a un cliente' });
+  try {
+    const result = await query('SELECT bsn FROM clients WHERE id = $1', [clientId]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Cliente no encontrado' });
+    await query(
+      `INSERT INTO client_audit_log (client_id, actor_user_id, actor_role, action, changes)
+       VALUES ($1, $2, $3, 'bsn.revealed', $4::jsonb)`,
+      [clientId, req.user?.id || null, req.user?.role || 'cliente', JSON.stringify({ field: 'bsn', origin: 'Portal' })]
+    );
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error('Error registrando revelación de BSN del portal:', error);
+    return res.status(500).json({ error: 'No se pudo registrar la revelación del BSN' });
+  }
+});
+
 router.post('/appointments', async (req: Request, res: Response) => {
   const clientId = req.user?.client_id;
   const { title, appointment_date, appointment_time, modality, notes } = req.body || {};
