@@ -1794,6 +1794,7 @@ export default function CRMClientesPage() {
                         <span className="material-symbols-outlined text-[15px]">visibility</span>
                         <span>Ficha 360°</span>
                       </button>
+                      <Link href={`/crm/clientes/${client.id}`} className="inline-flex h-8 items-center rounded border border-outline-variant px-2 text-[11px] font-semibold text-on-surface-variant hover:border-secondary hover:text-secondary" aria-label={`Abrir ficha completa de ${client.full_name}`}>Abrir</Link>
                     </div>
                   </td>
                 </tr>

@@ -18,6 +18,7 @@ function json(data: unknown, status = 200): Response {
 export async function previewApiResponse(path: string, init: RequestInit = {}): Promise<Response> {
   const method = init.method || 'GET';
   if (path === '/auth/me') return json({ user: getStoredUser() || { id: 'demo-user', email: 'demo@example.test', full_name: 'Usuario de prueba', role: 'gestor' } });
+  if (path.startsWith('/clients/') && path !== '/clients/count') return json({ client: { ...demoClient, type: 'Particular', status: 'activo', responsible: 'Usuario de prueba', city: 'Eindhoven', address: 'Calle Demo 12', language: 'Español', notes: 'Cliente de demostración para staging.' }, dossiers: [{ id: 'demo-dossier-1', title: 'DigiD y trámites iniciales', status: 'en_proceso', progress_percentage: 68 }], invoices: [{ number: 'FAC-DEMO-001', date: '05 nov 2026', concept: 'Consulta administrativa', total: 89, status: 'pagada' }], documents: [], appointments: [] });
   if (path === '/finance/debts') return json({ debts: [] });
   if (path === '/finance/obligations') return json({ obligations: [] });
   if (path === '/push/preferences') return json({ preferences: { citas: true, deudas: true, pagos: true, documentos: true, mensajes: true, facturas: true, tareas: true } });
