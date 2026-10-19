@@ -18,6 +18,8 @@ function json(data: unknown, status = 200): Response {
 export async function previewApiResponse(path: string, init: RequestInit = {}): Promise<Response> {
   const method = init.method || 'GET';
   if (path === '/auth/me') return json({ user: getStoredUser() || { id: 'demo-user', email: 'demo@example.test', full_name: 'Usuario de prueba', role: 'gestor' } });
+  if (path === '/finance/debts') return json({ debts: [] });
+  if (path === '/finance/obligations') return json({ obligations: [] });
   if (path === '/push/preferences') return json({ preferences: { citas: true, deudas: true, pagos: true, documentos: true, mensajes: true, facturas: true, tareas: true } });
   if (path === '/push/public-key') return json({ publicKey: null, enabled: false });
   if (path === '/push/subscription') return json({ ok: true });

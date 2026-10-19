@@ -112,6 +112,30 @@ export async function migrateDatabase() {
       updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS debts (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+      owner_type VARCHAR(20) NOT NULL DEFAULT 'client' CHECK (owner_type IN ('client','own')),
+      creditor VARCHAR(180) NOT NULL, reference VARCHAR(120) NOT NULL, status VARCHAR(40) NOT NULL DEFAULT 'pending',
+      original_amount NUMERIC(12,2) NOT NULL DEFAULT 0, paid_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      due_date DATE, plan_name VARCHAR(160), visible_to_client BOOLEAN NOT NULL DEFAULT FALSE,
+      created_by UUID REFERENCES users(id) ON DELETE SET NULL, updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_debts_owner_type ON debts(owner_type, status);
+    CREATE TABLE IF NOT EXISTS debt_payments (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE,
+      amount NUMERIC(12,2) NOT NULL CHECK (amount > 0), paid_at DATE NOT NULL DEFAULT CURRENT_DATE,
+      status VARCHAR(20) NOT NULL DEFAULT 'paid', receipt_url TEXT, created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS debt_installments (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE,
+      installment_number INTEGER NOT NULL, due_date DATE NOT NULL, amount NUMERIC(12,2) NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending', receipt_url TEXT, UNIQUE(debt_id, installment_number)
+    );
+    CREATE TABLE IF NOT EXISTS debt_documents (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE, file_name VARCHAR(255) NOT NULL, file_url TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS debt_notes (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE, body TEXT NOT NULL, private BOOLEAN NOT NULL DEFAULT TRUE, created_by UUID REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS debt_audit_log (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE, actor_user_id UUID REFERENCES users(id) ON DELETE SET NULL, actor_role VARCHAR(50), action VARCHAR(80) NOT NULL, changes JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS push_subscriptions (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

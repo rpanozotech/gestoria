@@ -19,6 +19,7 @@ import clientMessagesRouter from './routes/client-messages.js';
 import portalMessagesRouter from './routes/portal-messages.js';
 import integrationsRouter from './routes/integrations.js';
 import pushRouter from './routes/push.js';
+import financeRouter from './routes/finance.js';
 import advisorProfileRouter from './routes/advisor-profile.js';
 import { publicContentRouter, contentAdminRouter } from './routes/content.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
@@ -127,6 +128,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use('/api/dashboard', gestorOnly, dashboardRouter);
 app.use('/api/integrations', gestorOnly, integrationsRouter);
 app.use('/api/push', gestorOnly, pushRouter);
+app.use('/api/finance', gestorOnly, financeRouter);
 app.use('/api/advisor-profile', gestorOnly, advisorProfileRouter);
 app.use('/api/clients', gestorOnly, clientsRouter);
 app.use('/api/client-messages', gestorOnly, clientMessagesRouter);

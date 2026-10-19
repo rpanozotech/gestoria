@@ -218,7 +218,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               {financeOpen && !sidebarCollapsed && <div className="ml-4 space-y-1 border-l border-slate-200 pl-2">
                 <NavLink item={{ href: '/crm/facturacion', label: 'Facturación', icon: 'receipt_long' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
                 <NavLink item={{ href: '/crm/deudas', label: 'Deudas y pagos', icon: 'payments' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
-                <NavLink item={{ href: '/crm/obligaciones', label: 'Obligaciones propias', icon: 'account_balance' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
+                {(user?.role === 'admin' || process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true') && <NavLink item={{ href: '/crm/obligaciones', label: 'Obligaciones propias', icon: 'account_balance' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />}
               </div>}
             </div>
             {navGroups.slice(1).map((group) => <div key={group.label} className="space-y-1">
