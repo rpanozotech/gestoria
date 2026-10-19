@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { LanguageProvider } from '@/context/LanguageContext';
-import CookieBanner from '@/components/CookieBanner';
+import CookieAwareBanner from '@/components/CookieAwareBanner';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -25,7 +25,7 @@ export default function RootLayout({
       </head>
       <body className="bg-surface text-on-surface antialiased font-sans">
         <LanguageProvider>{children}</LanguageProvider>
-        <CookieBanner />
+        <CookieAwareBanner />
       </body>
     </html>
   );
