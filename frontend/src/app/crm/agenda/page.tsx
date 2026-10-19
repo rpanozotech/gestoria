@@ -1294,7 +1294,7 @@ export default function CRMAgendaPage() {
             </div>
             <div>
               <h4 className="font-bold text-sm sm:text-base text-on-surface">Llamar a {callModal.client}</h4>
-              <p className="text-xs sm:text-sm font-mono-data font-bold text-secondary mt-0.5">{callModal.phone}</p>
+              <p className="text-xs sm:text-sm font-mono-data font-bold text-secondary mt-0.5">{callModal.phone || 'Teléfono no configurado'}</p>
               <p className="text-[11px] text-outline mt-1">Llamada telefónica directa configurada.</p>
             </div>
 
@@ -1305,13 +1305,17 @@ export default function CRMAgendaPage() {
               >
                 Cerrar
               </button>
-              <a
-                href={`tel:${callModal.phone}`}
-                className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold rounded text-white flex items-center gap-1.5 shadow-xs"
-              >
-                <span className="material-symbols-outlined text-[15px]">phone_forwarded</span>
-                <span>Llamar Ahora</span>
-              </a>
+              {callModal.phone ? (
+                <a
+                  href={`tel:${callModal.phone}`}
+                  className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold rounded text-white flex items-center gap-1.5 shadow-xs"
+                >
+                  <span className="material-symbols-outlined text-[15px]">phone_forwarded</span>
+                  <span>Llamar Ahora</span>
+                </a>
+              ) : (
+                <span className="h-8 px-3 border border-amber-300 bg-amber-50 text-amber-800 text-xs font-semibold rounded flex items-center">Teléfono no configurado</span>
+              )}
             </div>
           </div>
         </div>

@@ -218,7 +218,31 @@ export default function TerminalTarifasPage() {
       .then(async (response) => {
         if (!response.ok) throw new Error('No se pudo cargar el catálogo.');
         const data = await response.json();
-        if (Array.isArray(data.services)) setServices(data.services);
+        if (Array.isArray(data.services)) {
+          const normalized = data.services.map((raw: any, index: number): ServicePriceItem => {
+            const fallback = DEFAULT_SERVICES[index] || DEFAULT_SERVICES[DEFAULT_SERVICES.length - 1];
+            const rawCategory = String(raw.category || fallback.category).toLowerCase();
+            const category = (['impuestos', 'subsidios', 'llegada', 'empresas', 'vehiculos', 'otros'].includes(rawCategory)
+              ? rawCategory
+              : fallback.category) as ServicePriceItem['category'];
+            return {
+              ...fallback,
+              ...raw,
+              id: String(raw.id || fallback.id),
+              code: String(raw.code || fallback.code),
+              title: String(raw.title || fallback.title),
+              category,
+              basePrice: Number(raw.basePrice ?? raw.priceFinal ?? fallback.basePrice) || 0,
+              btwRate: Number(raw.btwRate ?? 0.21),
+              priceIncludesBtw: raw.priceIncludesBtw !== false,
+              active: raw.active !== false,
+              badge: String(raw.badge || fallback.badge),
+              duration: String(raw.duration || fallback.duration),
+              desc: String(raw.desc || raw.description || fallback.desc),
+            };
+          });
+          setServices(normalized);
+        }
       })
       .catch((error) => window.alert(error instanceof Error ? error.message : 'No se pudo cargar el catálogo.'));
   }, []);
