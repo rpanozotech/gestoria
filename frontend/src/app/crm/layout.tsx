@@ -8,6 +8,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import { getToken, getStoredUser, saveSession, clearSession, SessionUser } from '@/lib/session';
 import { apiFetch } from '@/lib/api';
 
+type NavItem = { href: string; label: string; icon: string; badge?: string };
+function NavLink({ item, pathname, collapsed, onClick }: { item: NavItem; pathname: string; collapsed: boolean; onClick: () => void }) {
+  const isActive = pathname === item.href;
+  return <Link href={item.href} onClick={onClick} title={collapsed ? item.label : undefined} aria-current={isActive ? 'page' : undefined} className={`relative flex items-center justify-between rounded-md px-3 py-2.5 text-xs font-medium transition-all ${isActive ? 'bg-secondary text-white shadow-sm before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full before:bg-blue-950' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
+    <span className="flex min-w-0 items-center gap-3"><span className="material-symbols-outlined text-[19px]">{item.icon}</span>{!collapsed && <span className="truncate whitespace-nowrap">{item.label}</span>}</span>
+    {!collapsed && item.badge && <span className="shrink-0 rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-mono-data text-on-surface">{item.badge}</span>}
+  </Link>;
+}
+
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -19,6 +28,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
   // Estados interactivos para Topbar y Responsive Drawer
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [financeOpen, setFinanceOpen] = useState(pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas'));
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -91,24 +102,25 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const navItems = [
-    { href: '/crm', label: 'Dashboard', icon: 'grid_view' },
-    { href: '/crm/tarifas', label: 'Tarifas & Precios Web', icon: 'price_change' },
-    {
-      href: '/crm/clientes',
-      label: 'Clientes & Ficha 360',
-      icon: 'group',
-      ...(activeClients !== null ? { badge: String(activeClients) } : {}),
-    },
-    { href: '/crm/alta-ia', label: 'Alta IA & Escáner', icon: 'auto_awesome', highlight: true },
-    { href: '/crm/facturacion', label: 'Facturación', icon: 'receipt_long' },
-    { href: '/crm/deudas', label: 'Deudas y pagos', icon: 'account_balance' },
-    { href: '/crm/agenda', label: 'Agenda & Citas', icon: 'calendar_today' },
-    { href: '/crm/documentos-ia', label: 'Asistente Documentos', icon: 'document_scanner' },
-    { href: '/crm/chat-ia', label: 'Chat Asistente IA', icon: 'forum', highlight: true, badge: 'En vivo' },
-    { href: '/crm/integraciones', label: 'Integraciones y Avisos', icon: 'hub' },
-    { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
-    { href: '/crm/backup', label: 'Copia de Seguridad', icon: 'cloud_download' },
+  const navGroups = [
+    { label: 'TRABAJO', items: [
+      { href: '/crm', label: 'Centro de gestión', icon: 'dashboard' },
+      { href: '/crm/tareas', label: 'Mis tareas', icon: 'task_alt' },
+      { href: '/crm/clientes', label: 'Clientes', icon: 'group', ...(activeClients !== null ? { badge: String(activeClients) } : {}) },
+      { href: '/crm/expedientes', label: 'Expedientes', icon: 'folder_open' },
+      { href: '/crm/agenda', label: 'Citas', icon: 'calendar_today' },
+    ] },
+    { label: 'DOCUMENTOS E IA', items: [
+      { href: '/crm/documentos-ia', label: 'Documentos', icon: 'description' },
+      { href: '/crm/alta-ia', label: 'Alta con IA', icon: 'auto_awesome' },
+      { href: '/crm/chat-ia', label: 'Chat IA', icon: 'forum', badge: 'En vivo' },
+    ] },
+    { label: 'CONFIGURACIÓN', items: [
+      { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
+      { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
+      { href: '/crm/backup', label: 'Copias de seguridad', icon: 'cloud_download' },
+      { href: '/crm/tecnico', label: 'Estado técnico', icon: 'dns' },
+    ] },
   ];
 
   const quickSearchResults = [
@@ -143,18 +155,21 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       <aside
         id="crm-sidebar"
         aria-label="Navegación principal del CRM"
-        className={`fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-surface-container-high z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 h-full ${sidebarCollapsed ? 'w-[76px]' : 'w-64'} bg-surface-container-lowest border-r border-surface-container-high z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Brand header */}
-          <div className="brand-header h-16 px-6 flex items-center justify-between">
+          <div className={`brand-header h-16 ${sidebarCollapsed ? 'px-3' : 'px-6'} flex items-center justify-between`}>
+            <button type="button" onClick={() => setSidebarCollapsed((value) => !value)} aria-label={sidebarCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'} title={sidebarCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'} className="hidden lg:flex min-h-9 min-w-9 items-center justify-center rounded-md text-outline hover:bg-surface-container hover:text-on-surface">
+              <span className="material-symbols-outlined text-[20px]">{sidebarCollapsed ? 'menu_open' : 'menu'}</span>
+            </button>
             <Link href="/" className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg overflow-hidden bg-primary-dark border border-slate-700 flex items-center justify-center shadow-sm">
                 <img src="/logo.png" alt="RP Asesoría" className="w-full h-full object-cover" />
               </div>
-              <span className="font-headline-sm text-base font-bold text-on-surface tracking-tight">RP Asesoría</span>
+              <span className={`${sidebarCollapsed ? 'hidden' : 'inline'} font-headline-sm text-base font-bold text-on-surface tracking-tight`}>RP Asesoría</span>
             </Link>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-mono-data text-[10px] font-semibold rounded border border-blue-200">
@@ -171,46 +186,26 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="px-4 py-3">
-            <span className="px-2 text-[11px] font-semibold text-outline uppercase tracking-wider font-label-sm">
-              Gestión & Operaciones
-            </span>
-          </div>
-
-          {/* Navigation links */}
-          <nav aria-label="Navegación principal" className="flex flex-col gap-1 px-3">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-medium transition-all ${
-                    isActive
-                      ? 'bg-secondary-container text-white shadow-sm'
-                      : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <span className={`material-symbols-outlined text-[19px] ${item.highlight && !isActive ? 'text-secondary' : ''}`}>
-                      {item.icon}
-                    </span>
-                    <span className="truncate whitespace-nowrap">{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span className="shrink-0 whitespace-nowrap px-2 py-0.5 bg-surface-container-high text-on-surface text-[10px] font-mono-data rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.highlight && !isActive && !item.badge && (
-                    <span className="shrink-0 px-1.5 py-0.5 bg-secondary text-white text-[10px] font-bold rounded">
-                      IA
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+          <nav aria-label="Navegación principal" className="flex flex-col gap-4 px-3">
+            <div className="space-y-1">
+              {!sidebarCollapsed && <p className="px-3 pb-1 text-[10px] font-bold tracking-[0.14em] text-outline">TRABAJO</p>}
+              {navGroups[0].items.map((item) => <NavLink key={item.href} item={item} pathname={pathname} collapsed={sidebarCollapsed} onClick={() => setMobileMenuOpen(false)} />)}
+            </div>
+            <div className="space-y-1">
+              <button type="button" onClick={() => setFinanceOpen((value) => !value)} aria-expanded={financeOpen} title="Finanzas" className={`group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') || pathname.startsWith('/crm/obligaciones') ? 'bg-secondary text-white' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
+                <span className="flex min-w-0 items-center gap-3"><span className="material-symbols-outlined text-[19px]">account_balance_wallet</span>{!sidebarCollapsed && <span>Finanzas</span>}</span>
+                {!sidebarCollapsed && <span className="material-symbols-outlined text-[17px]">{financeOpen ? 'expand_less' : 'expand_more'}</span>}
+              </button>
+              {financeOpen && !sidebarCollapsed && <div className="ml-4 space-y-1 border-l border-slate-200 pl-2">
+                <NavLink item={{ href: '/crm/facturacion', label: 'Facturación', icon: 'receipt_long' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
+                <NavLink item={{ href: '/crm/deudas', label: 'Deudas y pagos', icon: 'payments' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
+                <NavLink item={{ href: '/crm/obligaciones', label: 'Obligaciones propias', icon: 'account_balance' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
+              </div>}
+            </div>
+            {navGroups.slice(1).map((group) => <div key={group.label} className="space-y-1">
+              {!sidebarCollapsed && <p className="px-3 pb-1 text-[10px] font-bold tracking-[0.14em] text-outline">{group.label}</p>}
+              {group.items.map((item) => <NavLink key={item.href} item={item} pathname={pathname} collapsed={sidebarCollapsed} onClick={() => setMobileMenuOpen(false)} />)}
+            </div>)}
           </nav>
         </div>
 
@@ -252,7 +247,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main Area (Responsive: pl-0 en móvil/tablet, lg:pl-64 en desktop, adaptado a pantalla completa) */}
-      <div className="lg:pl-64 pl-0 flex-1 flex flex-col h-full min-w-0 w-full transition-all overflow-hidden">
+      <div className={`${sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-64'} pl-0 flex-1 flex flex-col h-full min-w-0 w-full transition-all overflow-hidden`}>
         {/* Top Header del CRM general */}
         <header className="h-16 shrink-0 bg-surface/90 backdrop-blur-md border-b border-surface-container-high z-30 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-6">
           {/* Botón Hamburguesa Móvil + Interactive Search Bar */}
