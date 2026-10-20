@@ -190,6 +190,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     // 5. Documentos
     const documents = await query('SELECT * FROM documents WHERE client_id = $1 ORDER BY created_at DESC', [id]);
+    const messages = await query('SELECT m.*, u.full_name AS author_name FROM client_messages m LEFT JOIN users u ON u.id=m.author_user_id WHERE m.client_id = $1 ORDER BY m.created_at DESC', [id]);
+    const audit = await query('SELECT a.*, u.full_name AS actor_name FROM client_audit_log a LEFT JOIN users u ON u.id=a.actor_user_id WHERE a.client_id = $1 ORDER BY a.created_at DESC', [id]);
+    const tasks = await query('SELECT t.*, d.code AS dossier_code FROM crm_tasks t LEFT JOIN dossiers d ON d.id=t.dossier_id WHERE t.client_id = $1 ORDER BY t.due_date ASC NULLS LAST, t.created_at DESC', [id]);
 
     res.json({
       client,
@@ -199,6 +202,9 @@ router.get('/:id', async (req: Request, res: Response) => {
       appointments: appointments.rows,
       service_requests: serviceRequests.rows,
       documents: documents.rows,
+      messages: messages.rows,
+      audit: audit.rows,
+      tasks: tasks.rows,
     });
   } catch (error) {
     console.error('Error al obtener ficha 360 del cliente:', error);

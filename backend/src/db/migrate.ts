@@ -137,6 +137,39 @@ export async function migrateDatabase() {
     CREATE TABLE IF NOT EXISTS debt_documents (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE, file_name VARCHAR(255) NOT NULL, file_url TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS debt_notes (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE, body TEXT NOT NULL, private BOOLEAN NOT NULL DEFAULT TRUE, created_by UUID REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS debt_audit_log (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE, actor_user_id UUID REFERENCES users(id) ON DELETE SET NULL, actor_role VARCHAR(50), action VARCHAR(80) NOT NULL, changes JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS crm_tasks (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+      dossier_id UUID REFERENCES dossiers(id) ON DELETE SET NULL,
+      assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
+      title VARCHAR(255) NOT NULL, description TEXT,
+      status VARCHAR(40) NOT NULL DEFAULT 'pendiente', priority VARCHAR(20) NOT NULL DEFAULT 'normal',
+      category VARCHAR(50) NOT NULL DEFAULT 'seguimiento', due_date DATE,
+      completed_at TIMESTAMPTZ, created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_crm_tasks_work_queue ON crm_tasks(status, due_date);
+    CREATE INDEX IF NOT EXISTS idx_crm_tasks_client ON crm_tasks(client_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS dossier_steps (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), dossier_id UUID NOT NULL REFERENCES dossiers(id) ON DELETE CASCADE,
+      title VARCHAR(255) NOT NULL, due_date DATE, required BOOLEAN NOT NULL DEFAULT TRUE,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending', position INTEGER NOT NULL DEFAULT 0, completed_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    ALTER TABLE dossier_steps ADD COLUMN IF NOT EXISTS required BOOLEAN NOT NULL DEFAULT TRUE;
+    ALTER TABLE dossier_steps ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'pending';
+    ALTER TABLE dossier_steps ADD COLUMN IF NOT EXISTS position INTEGER NOT NULL DEFAULT 0;
+    CREATE INDEX IF NOT EXISTS idx_dossier_steps_dossier ON dossier_steps(dossier_id, position);
+    CREATE TABLE IF NOT EXISTS dossier_activity (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), dossier_id UUID NOT NULL REFERENCES dossiers(id) ON DELETE CASCADE,
+      actor_user_id UUID REFERENCES users(id) ON DELETE SET NULL, action VARCHAR(80) NOT NULL, detail TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_dossier_activity_dossier ON dossier_activity(dossier_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS dossier_notes (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), dossier_id UUID NOT NULL REFERENCES dossiers(id) ON DELETE CASCADE,
+      author_user_id UUID REFERENCES users(id) ON DELETE SET NULL, body TEXT NOT NULL, private BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_dossier_notes_dossier ON dossier_notes(dossier_id, created_at DESC);
     CREATE TABLE IF NOT EXISTS push_subscriptions (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

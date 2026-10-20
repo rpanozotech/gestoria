@@ -133,6 +133,19 @@
 }
 
 @layer components {
+  /* Contrato visual CRM RP Gestoría: superficies claras, azul operativo y
+     jerarquía compacta para trabajo diario, tablas y paneles laterales. */
+  .crm-page { background: #f5f7fb; color: #102a43; }
+  .crm-card { background: #fff; border: 1px solid #e2e8f0; border-radius: .75rem; box-shadow: 0 1px 2px rgb(15 23 42 / .04); }
+  .crm-card-header { border-bottom: 1px solid #edf1f5; padding: 1rem 1.25rem; }
+  .crm-kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: .75rem; padding: .9rem 1rem; box-shadow: 0 1px 2px rgb(15 23 42 / .04); }
+  .crm-table thead { background: #f4f6f9; color: #52657a; }
+  .crm-table tbody tr { border-top: 1px solid #edf1f5; }
+  .crm-table tbody tr:hover { background: #f8fbff; }
+  .crm-sidebar { background: #071f3b; border-color: #17395b; }
+  .crm-topbar { background: rgb(255 255 255 / .96); border-color: #e2e8f0; }
+  .crm-primary-action { background: #1261c9; color: #fff; }
+  .crm-primary-action:hover { background: #0c4fa9; }
   .brand-header {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);

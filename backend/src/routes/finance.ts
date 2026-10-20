@@ -73,6 +73,15 @@ router.post('/debts/:id/plan', async (req, res) => {
   } catch (error) { await db.query('ROLLBACK').catch(() => undefined); console.error('Error creando plan de deuda:', error); res.status(500).json({ error: 'No se pudo crear el plan de pagos' }); } finally { db.release(); }
 });
 
+router.post('/debts/:id/notes', async (req, res) => {
+  const body = String(req.body?.body || '').trim();
+  if (!body) return res.status(400).json({ error: 'La nota no puede estar vacía' });
+  const debt = await query("SELECT id FROM debts WHERE id=$1 AND owner_type='client'", [req.params.id]);
+  if (!debt.rows.length) return res.status(404).json({ error: 'Deuda no encontrada' });
+  const result = await query('INSERT INTO debt_notes (debt_id, body, private, created_by) VALUES ($1,$2,TRUE,$3) RETURNING *', [req.params.id, body, req.user?.id]);
+  await audit(req, req.params.id, 'note_added', { note_id: result.rows[0].id });
+  res.status(201).json({ note: result.rows[0] });
+});
 router.post('/debts/:id/payments', async (req, res) => {
   const amount = Number(req.body?.amount); if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Importe inválido' });
   const result = await query('INSERT INTO debt_payments (debt_id, amount, paid_at, status, created_by) VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),\'paid\',$4) RETURNING *', [req.params.id, amount, req.body?.paid_at || null, req.user?.id]);

@@ -11,9 +11,9 @@ import { apiFetch } from '@/lib/api';
 type NavItem = { href: string; label: string; icon: string; badge?: string };
 function NavLink({ item, pathname, collapsed, onClick }: { item: NavItem; pathname: string; collapsed: boolean; onClick: () => void }) {
   const isActive = pathname === item.href;
-  return <Link href={item.href} onClick={onClick} title={collapsed ? item.label : undefined} aria-current={isActive ? 'page' : undefined} className={`relative flex items-center justify-between rounded-md px-3 py-2.5 text-xs font-medium transition-all ${isActive ? 'bg-secondary text-white shadow-sm before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full before:bg-blue-950' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
+  return <Link href={item.href} onClick={onClick} title={collapsed ? item.label : undefined} aria-current={isActive ? 'page' : undefined} className={`relative flex items-center justify-between rounded-md px-3 py-2.5 text-xs font-medium transition-all ${isActive ? 'bg-secondary text-white shadow-sm before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full before:bg-blue-950' : 'text-slate-200 hover:bg-white/10 hover:text-white'}`}>
     <span className="flex min-w-0 items-center gap-3"><span className="material-symbols-outlined text-[19px]">{item.icon}</span>{!collapsed && <span className="truncate whitespace-nowrap">{item.label}</span>}</span>
-    {!collapsed && item.badge && <span className="shrink-0 rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-mono-data text-on-surface">{item.badge}</span>}
+    {!collapsed && item.badge && <span className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-mono-data text-white">{item.badge}</span>}
   </Link>;
 }
 
@@ -157,7 +157,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   if (checking) {
     return (
       <div className="h-screen h-[100dvh] w-full bg-surface flex items-center justify-center">
-        <span className="material-symbols-outlined text-[28px] text-outline animate-spin">progress_activity</span>
+        <span className="material-symbols-outlined text-[28px] text-slate-400 animate-spin">progress_activity</span>
       </div>
     );
   }
@@ -169,14 +169,14 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       <aside
         id="crm-sidebar"
         aria-label="Navegación principal del CRM"
-        className={`fixed left-0 top-0 h-full ${sidebarCollapsed ? 'w-[76px]' : 'w-64'} bg-surface-container-lowest border-r border-surface-container-high z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
+        className={`crm-sidebar fixed left-0 top-0 h-full ${sidebarCollapsed ? 'w-[76px]' : 'w-64'} border-r z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Brand header */}
           <div className={`brand-header h-16 ${sidebarCollapsed ? 'px-3' : 'px-6'} flex items-center justify-between`}>
-            <button type="button" onClick={() => setSidebarCollapsed((value) => !value)} aria-label={sidebarCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'} title={sidebarCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'} className="hidden lg:flex min-h-9 min-w-9 items-center justify-center rounded-md text-outline hover:bg-surface-container hover:text-on-surface">
+            <button type="button" onClick={() => setSidebarCollapsed((value) => !value)} aria-label={sidebarCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'} title={sidebarCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'} className="hidden lg:flex min-h-9 min-w-9 items-center justify-center rounded-md text-slate-400 hover:bg-surface-container hover:text-on-surface">
               <span className="material-symbols-outlined text-[20px]">{sidebarCollapsed ? 'menu_open' : 'menu'}</span>
             </button>
             <Link href="/" className="flex items-center gap-2.5">
@@ -193,7 +193,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Cerrar menú de navegación"
-                className="lg:hidden p-1 rounded-md text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
+                className="lg:hidden p-1 rounded-md text-slate-400 hover:text-on-surface hover:bg-surface-container transition-colors"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -202,11 +202,11 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
           <nav aria-label="Navegación principal" className="flex flex-col gap-4 px-3">
             <div className="space-y-1">
-              {!sidebarCollapsed && <p className="px-3 pb-1 text-[10px] font-bold tracking-[0.14em] text-outline">TRABAJO</p>}
+              {!sidebarCollapsed && <p className="px-3 pb-1 text-[10px] font-bold tracking-[0.14em] text-slate-400">TRABAJO</p>}
               {navGroups[0].items.map((item) => <NavLink key={item.href} item={item} pathname={pathname} collapsed={sidebarCollapsed} onClick={() => setMobileMenuOpen(false)} />)}
-              <button type="button" onClick={() => setClientsOpen((value) => !value)} aria-expanded={clientsOpen} title="Clientes" className={`group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${pathname.startsWith('/crm/clientes') ? 'bg-secondary text-white' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
+              <button type="button" onClick={() => setClientsOpen((value) => !value)} aria-expanded={clientsOpen} title="Clientes" className={`group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${pathname.startsWith('/crm/clientes') ? 'bg-secondary text-white' : 'text-slate-200 hover:bg-white/10 hover:text-white'}`}>
                 <span className="flex min-w-0 items-center gap-3"><span className="material-symbols-outlined text-[19px]">group</span>{!sidebarCollapsed && <span>Clientes</span>}</span>
-                {!sidebarCollapsed && <span className="flex items-center gap-2">{clientCount !== null && <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-mono-data text-on-surface">{clientCount}</span>}<span className="material-symbols-outlined text-[17px]">{clientsOpen ? 'expand_less' : 'expand_more'}</span></span>}
+                {!sidebarCollapsed && <span className="flex items-center gap-2">{clientCount !== null && <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-mono-data text-white">{clientCount}</span>}<span className="material-symbols-outlined text-[17px]">{clientsOpen ? 'expand_less' : 'expand_more'}</span></span>}
               </button>
               {clientsOpen && !sidebarCollapsed && <div className="ml-4 space-y-1 border-l border-slate-200 pl-2">
                 <NavLink item={{ href: '/crm/clientes', label: 'Directorio de clientes', icon: 'contacts' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
@@ -216,7 +216,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               </div>}
             </div>
             <div className="space-y-1">
-              <button type="button" onClick={() => setFinanceOpen((value) => !value)} aria-expanded={financeOpen} title="Finanzas" className={`group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') || pathname.startsWith('/crm/obligaciones') ? 'bg-secondary text-white' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
+              <button type="button" onClick={() => setFinanceOpen((value) => !value)} aria-expanded={financeOpen} title="Finanzas" className={`group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') || pathname.startsWith('/crm/obligaciones') ? 'bg-secondary text-white' : 'text-slate-200 hover:bg-white/10 hover:text-white'}`}>
                 <span className="flex min-w-0 items-center gap-3"><span className="material-symbols-outlined text-[19px]">account_balance_wallet</span>{!sidebarCollapsed && <span>Finanzas</span>}</span>
                 {!sidebarCollapsed && <span className="material-symbols-outlined text-[17px]">{financeOpen ? 'expand_less' : 'expand_more'}</span>}
               </button>
@@ -227,31 +227,31 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               </div>}
             </div>
             {navGroups.slice(1).map((group) => <div key={group.label} className="space-y-1">
-              {!sidebarCollapsed && <p className="px-3 pb-1 text-[10px] font-bold tracking-[0.14em] text-outline">{group.label}</p>}
+              {!sidebarCollapsed && <p className="px-3 pb-1 text-[10px] font-bold tracking-[0.14em] text-slate-400">{group.label}</p>}
               {group.items.map((item) => <NavLink key={item.href} item={item} pathname={pathname} collapsed={sidebarCollapsed} onClick={() => setMobileMenuOpen(false)} />)}
             </div>)}
           </nav>
         </div>
 
         {/* Footer Sidebar: System Status */}
-        <div className="p-4 bg-surface-container-low border-t border-surface-container-high flex flex-col gap-3">
+        <div className="p-4 bg-[#06213d] border-t border-[#163d62] flex flex-col gap-3">
           <div className="brand-card p-3 text-xs space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-outline">Servidor Coolify</span>
+              <span className="text-[11px] font-semibold text-slate-400">Servidor Coolify</span>
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
             </div>
-            <div className="flex items-center justify-between font-mono-data text-[11px] text-on-surface-variant">
+            <div className="flex items-center justify-between font-mono-data text-[11px] text-slate-200">
               <span>PostgreSQL</span>
               <span className="text-emerald-600 font-semibold">Online</span>
             </div>
-            <div className="flex items-center justify-between font-mono-data text-[11px] text-on-surface-variant">
+            <div className="flex items-center justify-between font-mono-data text-[11px] text-slate-200">
               <span>Storage / OCR</span>
               <span className="text-secondary font-semibold">Ready</span>
             </div>
           </div>
 
           <div className="flex items-center justify-between px-2 text-xs">
-            <Link href="/" className="text-outline hover:text-secondary flex items-center gap-1">
+            <Link href="/" className="text-slate-400 hover:text-secondary flex items-center gap-1">
               <span className="material-symbols-outlined text-[15px]">arrow_back</span>
               <span>Web Pública</span>
             </Link>
@@ -273,7 +273,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       {/* Main Area (Responsive: pl-0 en móvil/tablet, lg:pl-64 en desktop, adaptado a pantalla completa) */}
       <div className={`${sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-64'} pl-0 flex-1 flex flex-col h-full min-w-0 w-full transition-all overflow-hidden`}>
         {/* Top Header del CRM general */}
-        <header className="h-16 shrink-0 bg-surface/90 backdrop-blur-md border-b border-surface-container-high z-30 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-6">
+        <header className="crm-topbar h-[4.5rem] shrink-0 backdrop-blur-md border-b z-30 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-6">
           {/* Botón Hamburguesa Móvil + Interactive Search Bar */}
           <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
             <button
@@ -289,7 +289,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
             <button type="button"
               onClick={() => setShowSearchModal(true)}
-              className="w-full h-9 px-3 bg-surface-container-lowest border border-outline-variant text-outline text-xs rounded-md flex items-center justify-between hover:border-secondary hover:text-on-surface transition-colors shadow-sm"
+              className="w-full h-10 px-3 bg-white border border-slate-200 text-slate-400 text-xs rounded-lg flex items-center justify-between hover:border-secondary hover:text-on-surface transition-colors shadow-sm"
             >
               <div className="flex items-center gap-2 truncate">
                 <span className="material-symbols-outlined text-[18px] shrink-0">search</span>
@@ -304,7 +304,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2 sm:gap-4 relative shrink-0">
             <Link
               href="/crm/clientes/alta-ia"
-              className="h-9 px-3 sm:px-3.5 bg-primary text-on-primary rounded-md text-xs font-semibold flex items-center gap-1.5 sm:gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+              className="crm-primary-action h-10 px-3 sm:px-3.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
               <span className="hidden sm:inline">+ Nuevo con IA</span>
@@ -346,7 +346,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                           Marcar leídas
                         </button>
                       )}
-                      <span className="text-[10px] text-outline font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
+                      <span className="text-[10px] text-slate-400 font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
                         Cerrar
                       </span>
                     </div>
@@ -406,9 +406,9 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="hidden lg:flex flex-col text-left">
                   <span className="text-xs font-bold text-on-surface leading-tight">{user?.full_name || 'Gestor'}</span>
-                  <span className="text-[10px] text-outline capitalize">{user?.role || 'gestor'}</span>
+                  <span className="text-[10px] text-slate-400 capitalize">{user?.role || 'gestor'}</span>
                 </div>
-                <span className="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+                <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
               </button>
 
               {/* Dropdown Usuario */}
@@ -416,7 +416,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 <div className="absolute right-0 top-11 w-60 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl p-3 space-y-2 z-50 text-xs">
                   <div className="px-2 py-1.5 border-b border-surface-container">
                     <p className="font-bold text-on-surface">{user?.full_name || 'Gestor'}</p>
-                    <p className="text-[11px] text-outline font-mono-data">{user?.email}</p>
+                    <p className="text-[11px] text-slate-400 font-mono-data">{user?.email}</p>
                   </div>
 
                   <Link
@@ -433,7 +433,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                     onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px] text-outline">price_change</span>
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">price_change</span>
                     <span>Tarifas Oficiales</span>
                   </Link>
 
@@ -442,7 +442,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                     onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px] text-outline">visibility</span>
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">visibility</span>
                     <span>Probar Vista Cliente</span>
                   </Link>
                   <Link
@@ -475,7 +475,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content View: Adaptado a pantalla completa sin scrollbar visible a la derecha */}
-        <main className={`flex-1 h-[calc(100dvh-4rem)] overflow-x-hidden px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-surface ${
+        <main className={`crm-page flex-1 h-[calc(100dvh-4.5rem)] overflow-x-hidden px-3 sm:px-6 lg:px-8 py-4 sm:py-5 ${
           pathname === '/crm/documentos-ia' ? 'overflow-y-auto xl:overflow-hidden' : 'overflow-y-auto'
         }`}>
           {children}
@@ -494,9 +494,9 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 placeholder="Escribe para buscar cliente, BSN o trámite..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-outline"
+                className="w-full text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-slate-400"
               />
-              <button type="button" aria-label="Cerrar búsqueda" onClick={() => setShowSearchModal(false)} className="min-h-11 min-w-11 text-outline hover:text-on-surface">
+              <button type="button" aria-label="Cerrar búsqueda" onClick={() => setShowSearchModal(false)} className="min-h-11 min-w-11 text-slate-400 hover:text-on-surface">
                 <span className="material-symbols-outlined text-base">close</span>
               </button>
             </div>
@@ -512,19 +512,19 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                   >
                     <div>
                       <p className="font-semibold text-on-surface">{res.title}</p>
-                      <span className="text-[10px] text-outline uppercase font-mono-data">{res.category}</span>
+                      <span className="text-[10px] text-slate-400 uppercase font-mono-data">{res.category}</span>
                     </div>
-                    <span className="material-symbols-outlined text-[16px] text-outline">arrow_forward</span>
+                    <span className="material-symbols-outlined text-[16px] text-slate-400">arrow_forward</span>
                   </Link>
                 ))
               ) : (
-                <div className="p-6 text-center text-xs text-outline">
+                <div className="p-6 text-center text-xs text-slate-400">
                   No se encontraron resultados para &quot;{searchQuery}&quot;
                 </div>
               )}
             </div>
 
-            <div className="p-2.5 bg-surface-container-low border-t border-surface-container text-[11px] text-outline flex justify-between">
+            <div className="p-2.5 bg-surface-container-low border-t border-surface-container text-[11px] text-slate-400 flex justify-between">
               <span>Navega con las flechas o ratón</span>
               <span>ESC para cerrar</span>
             </div>

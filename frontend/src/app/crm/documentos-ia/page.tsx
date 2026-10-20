@@ -396,7 +396,7 @@ export default function DocumentosIAPage() {
   const [details, setDetails] = useState(
     ''
   );
-  const [language, setLanguage] = useState<'nl' | 'es'>('nl');
+  const [language, setLanguage] = useState<'nl' | 'es'>('es');
   const [tone, setTone] = useState<'formal' | 'juridico' | 'urgente'>('juridico');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
@@ -1305,19 +1305,7 @@ ${
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Idioma</label>
-                      <select
-                        value={language}
-                        onChange={(e: any) => setLanguage(e.target.value)}
-                        className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface text-xs font-medium focus:border-secondary focus:outline-none"
-                      >
-                        <option value="nl">Neerlandés (NL)</option>
-                        <option value="es">Español (ES)</option>
-                      </select>
-                    </div>
-
-                    <div>
+                      <div>
                       <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Tono Legal</label>
                       <select
                         value={tone}
@@ -2303,17 +2291,7 @@ ${
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Idioma</label>
-                    <select
-                      value={templateForm.defaultLanguage || 'nl'}
-                      onChange={(e: any) => setTemplateForm({ ...templateForm, defaultLanguage: e.target.value })}
-                      className="w-full h-9 px-2 border border-outline-variant rounded-lg bg-surface text-xs focus:border-secondary focus:outline-none"
-                    >
-                      <option value="nl">Neerlandés (NL)</option>
-                      <option value="es">Español (ES)</option>
-                    </select>
-                  </div>
+
                   <div>
                     <label className="block text-outline uppercase font-semibold text-[10px] mb-1">Tono</label>
                     <select
