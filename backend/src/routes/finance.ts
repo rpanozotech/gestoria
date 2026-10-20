@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { query } from '../db/index.js';
+import { query, pool } from '../db/index.js';
 import { requireRole } from '../middleware/auth.js';
 
 const router = Router();
@@ -22,6 +22,25 @@ router.get('/debts/:id', async (req, res) => {
   ]);
   res.json({ debt: debt.rows[0], payments: payments.rows, installments: installments.rows, documents: documents.rows, notes: notes.rows, history: history.rows });
 });
+router.post('/debts/:id/plan', async (req, res) => {
+  const installments = Array.isArray(req.body?.installments) ? req.body.installments : [];
+  if (!installments.length) return res.status(400).json({ error: 'El plan debe incluir al menos una cuota' });
+  const db = await pool.connect();
+  try {
+    await db.query('BEGIN');
+    const debt = await db.query("SELECT id, original_amount, paid_amount, owner_type FROM debts WHERE id=$1 AND owner_type='client' FOR UPDATE", [req.params.id]);
+    if (!debt.rows.length) { await db.query('ROLLBACK'); return res.status(404).json({ error: 'Deuda no encontrada' }); }
+    const outstanding = Math.round((Number(debt.rows[0].original_amount) - Number(debt.rows[0].paid_amount)) * 100) / 100;
+    const normalized = installments.map((item: any, index: number) => ({ number: index + 1, due_date: String(item.due_date || ''), amount: Math.round(Number(item.amount) * 100) / 100 })).filter((item: any) => /^\\d{4}-\\d{2}-\\d{2}$/.test(item.due_date) && Number.isFinite(item.amount) && item.amount > 0);
+    const total = Math.round(normalized.reduce((sum: number, item: any) => sum + item.amount, 0) * 100) / 100;
+    if (normalized.length !== installments.length || Math.abs(total - outstanding) > 0.01) { await db.query('ROLLBACK'); return res.status(400).json({ error: `Las cuotas deben sumar exactamente el saldo pendiente (${outstanding.toFixed(2)} €).`, outstanding, total }); }
+    await db.query('DELETE FROM debt_installments WHERE debt_id=$1', [req.params.id]);
+    for (const item of normalized) await db.query('INSERT INTO debt_installments (debt_id, installment_number, due_date, amount, status) VALUES ($1,$2,$3,$4,$5)', [req.params.id, item.number, item.due_date, item.amount, 'pending']);
+    await db.query("UPDATE debts SET status='en_cuotas', plan_name=$2, due_date=$3, updated_by=$4, updated_at=CURRENT_TIMESTAMP WHERE id=$1", [req.params.id, `${normalized.length} cuotas`, normalized[0].due_date, req.user?.id]);
+    await db.query('COMMIT'); await audit(req, req.params.id, 'payment_plan_created', { installments: normalized }); res.status(201).json({ installments: normalized, outstanding });
+  } catch (error) { await db.query('ROLLBACK').catch(() => undefined); console.error('Error creando plan de deuda:', error); res.status(500).json({ error: 'No se pudo crear el plan de pagos' }); } finally { db.release(); }
+});
+
 router.post('/debts/:id/payments', async (req, res) => {
   const amount = Number(req.body?.amount); if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Importe inválido' });
   const result = await query('INSERT INTO debt_payments (debt_id, amount, paid_at, status, created_by) VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),\'paid\',$4) RETURNING *', [req.params.id, amount, req.body?.paid_at || null, req.user?.id]);

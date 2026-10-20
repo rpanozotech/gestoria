@@ -32,7 +32,7 @@ router.get('/me', async (req: Request, res: Response) => {
   try {
     const clientId = req.user?.client_id;
     if (!clientId) return res.status(403).json({ error: 'La sesión no está vinculada a un cliente' });
-    const [client, dossiers, invoices, documents, appointments] = await Promise.all([
+    const [client, dossiers, invoices, documents, appointments, debts] = await Promise.all([
       query('SELECT id, full_name, email, phone, bsn, address, city, country, iban, digid_status, status FROM clients WHERE id = $1', [clientId]),
       query('SELECT * FROM dossiers WHERE client_id = $1 ORDER BY created_at DESC', [clientId]),
       query('SELECT * FROM invoices WHERE client_id = $1 ORDER BY created_at DESC', [clientId]),
@@ -40,9 +40,10 @@ router.get('/me', async (req: Request, res: Response) => {
             query(`SELECT a.*, c.full_name AS client_name, c.phone AS client_phone
               FROM appointments a JOIN clients c ON c.id = a.client_id
               WHERE a.client_id = $1 ORDER BY a.appointment_date DESC, a.appointment_time DESC`, [clientId]),
+      query(`SELECT d.id, d.creditor, d.reference, d.status, d.original_amount, d.paid_amount, d.due_date, d.plan_name, COALESCE(SUM(p.amount),0) AS paid_total FROM debts d LEFT JOIN debt_payments p ON p.debt_id=d.id WHERE d.client_id=$1 AND d.owner_type='client' AND d.visible_to_client=true GROUP BY d.id ORDER BY d.due_date ASC NULLS LAST`, [clientId]),
     ]);
     if (client.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
-    res.json({ client: client.rows[0], dossiers: dossiers.rows, invoices: invoices.rows, documents: documents.rows, appointments: appointments.rows });
+    res.json({ client: client.rows[0], dossiers: dossiers.rows, invoices: invoices.rows, documents: documents.rows, appointments: appointments.rows, debts: debts.rows });
   } catch (error) {
     console.error('Error cargando portal:', error);
     res.status(500).json({ error: 'No se pudo cargar el portal' });

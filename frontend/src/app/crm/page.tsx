@@ -24,15 +24,17 @@ export default function CRMDashboardPage() {
   const [notice, setNotice] = useState('');
   const [filter, setFilter] = useState('todas');
   const [clientStats, setClientStats] = useState({ total: 0, activos: 0, archivados: 0, nuevos_este_mes: 0, pendientes: 0 });
+  const [realDebts, setRealDebts] = useState<any[]>([]);
 
   useEffect(() => {
     apiFetch('/dashboard/stats').then((res) => res.ok ? res.json() : null).then(setStats).catch(() => undefined);
     apiFetch('/clients/count').then((res) => res.ok ? res.json() : null).then((data) => data && setClientStats(data)).catch(() => undefined);
+    apiFetch('/finance/debts').then((res) => res.ok ? res.json() : null).then((data) => setRealDebts(data?.debts || [])).catch(() => setRealDebts([]));
   }, []);
 
   const preview = process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true';
   const billing = preview ? demoBilling : [];
-  const debts = preview ? demoDebts : [];
+  const debts = preview ? demoDebts : realDebts.map((debt: any) => ({ id: debt.id, owner: debt.client_name || 'Cliente', creditor: debt.creditor, reference: debt.reference, original: Number(debt.original_amount || 0), paid: Number(debt.paid_total || debt.paid_amount || 0), pending: Math.max(0, Number(debt.original_amount || 0) - Number(debt.paid_total || debt.paid_amount || 0)), status: debt.status, nextDue: debt.due_date || 'Sin vencimiento', plan: debt.plan_name || 'Pago único' }));
   const tasks: Task[] = useMemo(() => {
     const fromApi = stats?.today_appointments?.map((item: any) => ({ id: item.id, priority: 'alta', client: item.client_name || 'Cliente pendiente', type: item.title || 'Cita', due: item.appointment_time ? `Hoy · ${item.appointment_time.slice(0, 5)}` : 'Hoy', status: item.status || 'pendiente', href: '/crm/agenda' })) || [];
     return fromApi.length ? fromApi : preview ? [{ id: 'demo-task', priority: 'alta', client: 'María Ejemplo', type: 'Revisar documentos de toeslagen', due: 'Hoy · 10:30', status: 'Pendiente', href: '/crm/clientes' }] : [];
