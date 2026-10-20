@@ -111,7 +111,7 @@ export default function CRMFacturacionPage() {
   const [companySettings, setCompanySettings] = useState<any>({ commercial_name: 'RP Asesoría', legal_name: '', description: '', address: '', city: '', country: 'Países Bajos', kvk: '', vat_id: '', iban: '', email: '', phone: '', footer_text: '' });
 
   useEffect(() => {
-    apiFetch('/services').then((res) => res.ok ? res.json() : Promise.reject(new Error('services'))).then((data) => setServicesCatalog((data.services || []).map((service: any) => ({ id: String(service.id), title: service.title, category: service.category, defaultFee: Number(service.priceFinal ?? service.basePrice) || 0 })))).catch(() => setServicesCatalog([]));
+    apiFetch('/services').then((res) => res.ok ? res.json() : Promise.reject(new Error('services'))).then((data) => setServicesCatalog((data.services || []).map((service: any) => ({ id: String(service.id), title: service.title, category: service.category, defaultFee: Number(service.priceFinal ?? service.basePrice) || 0, taxRate: Number(service.btwRate ?? 0.21) * (Number(service.btwRate ?? 0.21) < 1 ? 100 : 1) })))).catch(() => setServicesCatalog([]));
   }, []);
 
   useEffect(() => {
@@ -213,6 +213,7 @@ export default function CRMFacturacionPage() {
   const [newQuoteClient, setNewQuoteClient] = useState('');
   const [selectedQuoteServiceIds, setSelectedQuoteServiceIds] = useState<string[]>([]);
   const [customQuoteFees, setCustomQuoteFees] = useState<{ [id: string]: number }>({});
+  const [quoteQuantities, setQuoteQuantities] = useState<{ [id: string]: number }>({});
   const [quoteConcept, setQuoteConcept] = useState('');
   const [manualQuoteAmount, setManualQuoteAmount] = useState(0);
   const [isConceptManuallyEdited, setIsConceptManuallyEdited] = useState(false);
@@ -227,12 +228,15 @@ export default function CRMFacturacionPage() {
         title: s.title,
         category: s.category,
         fee: customQuoteFees[s.id] !== undefined ? customQuoteFees[s.id] : s.defaultFee,
+        quantity: quoteQuantities[s.id] || 1,
+        taxRate: s.taxRate ?? 21,
       }));
   };
 
-  const quoteTotal = Math.round((getSelectedQuoteItems().length ? getSelectedQuoteItems().reduce((acc, item) => acc + item.fee, 0) : manualQuoteAmount) * 100) / 100;
-  const quoteSubtotal = Math.round((quoteTotal / 1.21) * 100) / 100;
-  const quoteTax = Math.round((quoteTotal - quoteSubtotal) * 100) / 100;
+  const selectedQuoteItems = getSelectedQuoteItems();
+  const quoteTotal = Math.round((selectedQuoteItems.length ? selectedQuoteItems.reduce((acc, item) => acc + item.fee * item.quantity, 0) : manualQuoteAmount) * 100) / 100;
+  const quoteTax = Math.round((selectedQuoteItems.length ? selectedQuoteItems.reduce((acc, item) => { const line = item.fee * item.quantity; return acc + (line - line / (1 + item.taxRate / 100)); }, 0) : (quoteTotal - quoteTotal / 1.21)) * 100) / 100;
+  const quoteSubtotal = Math.round((quoteTotal - quoteTax) * 100) / 100;
 
   const toggleQuoteService = (serviceId: string) => {
     let nextIds: string[];
@@ -269,6 +273,9 @@ export default function CRMFacturacionPage() {
   const handleCustomFeeChange = (serviceId: string, val: number) => {
     setCustomQuoteFees((prev) => ({ ...prev, [serviceId]: val }));
   };
+  const handleQuantityChange = (serviceId: string, val: number) => {
+    setQuoteQuantities((prev) => ({ ...prev, [serviceId]: Math.max(1, Math.floor(val) || 1) }));
+  };
 
   const openQuoteModal = () => {
     const initialIds = selectedQuoteServiceIds.length > 0 ? selectedQuoteServiceIds : (servicesCatalog[0] ? [servicesCatalog[0].id] : []);
@@ -285,11 +292,17 @@ export default function CRMFacturacionPage() {
     const client = clients.find((item) => item.full_name === newQuoteClient);
     if (!client?.id) { showToast('Selecciona un cliente real de PostgreSQL.'); return; }
     if (items.length === 0 && !quoteConcept.trim()) { showToast('Selecciona un servicio o indica un concepto.'); return; }
-    const response = await apiFetch('/quotes', { method: 'POST', body: JSON.stringify({ client_id: client.id, items: items.length ? items.map((item) => ({ service_id: item.id, description: item.title, quantity: 1, unit_price: item.fee, manual_price: customQuoteFees[item.id] !== undefined })) : [{ description: quoteConcept.trim(), quantity: 1, unit_price: quoteTotal, manual_price: true }], valid_until: quoteValidUntil || null, notes: quoteConcept.trim() || null }) });
+    const response = await apiFetch('/quotes', { method: 'POST', body: JSON.stringify({ client_id: client.id, items: items.length ? items.map((item) => ({ service_id: item.id, description: item.title, quantity: item.quantity, unit_price: item.fee, manual_price: customQuoteFees[item.id] !== undefined })) : [{ description: quoteConcept.trim(), quantity: 1, unit_price: quoteTotal, manual_price: true }], valid_until: quoteValidUntil || null, notes: quoteConcept.trim() || null }) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.quote?.id) { showToast(data.error || 'No se pudo crear el presupuesto.'); return; }
     setQuotes((current) => [normalizarPresupuesto({ ...data.quote, client_name: client.full_name, client_bsn: client.bsn }), ...current]);
     setShowNewQuoteModal(false); setTab('presupuestos'); showToast(`Presupuesto ${data.quote.code} creado.`);
+  };
+
+  const handleDeleteQuote = async (quote: any) => {
+    if (!['borrador', 'cancelado'].includes(quote.status)) { showToast('Solo se pueden eliminar presupuestos en borrador o cancelados.'); return; }
+    if (!window.confirm(`¿Eliminar el presupuesto ${quote.code}? Esta acción no se puede deshacer.`)) return;
+    try { const response = await apiFetch(`/quotes/${quote.id}`, { method: 'DELETE' }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || 'No se pudo eliminar el presupuesto.'); setQuotes((current) => current.filter((item) => item.id !== quote.id)); showToast('Presupuesto eliminado.'); } catch (error) { showToast(error instanceof Error ? error.message : 'No se pudo eliminar el presupuesto.'); }
   };
 
   // Convertir presupuesto a factura correlativa
@@ -685,14 +698,22 @@ export default function CRMFacturacionPage() {
                         {q.status !== 'convertido' && (
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleConvertToInvoice(q);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); handleConvertToInvoice(q); }}
                             className="h-7 px-3 bg-secondary hover:bg-blue-700 text-white rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
                           >
                             <span className="material-symbols-outlined text-[13px]">transform</span>
                             <span>Convertir a Factura</span>
+                          </button>
+                        )}
+                        {['borrador', 'cancelado'].includes(q.status) && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteQuote(q); }}
+                            className="h-7 w-7 rounded text-outline hover:text-error hover:bg-red-50 inline-flex items-center justify-center"
+                            aria-label={`Eliminar presupuesto ${q.code}`}
+                            title="Eliminar presupuesto"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">delete</span>
                           </button>
                         )}
                       </div>
@@ -826,6 +847,8 @@ export default function CRMFacturacionPage() {
                           <span className="font-medium text-xs text-on-surface truncate">{item.title}</span>
                         </div>
                         <div className="flex items-center gap-2">
+                          <label className="sr-only" htmlFor={`quote-qty-${item.id}`}>Cantidad de {item.title}</label>
+                          <input id={`quote-qty-${item.id}`} type="number" min="1" step="1" value={item.quantity} onChange={(e) => handleQuantityChange(item.id, Number(e.target.value))} className="w-12 h-7 px-1 border border-outline-variant rounded bg-surface text-center text-xs" aria-label={`Cantidad de ${item.title}`} />
                           <span className="text-[11px] text-outline font-mono-data">€</span>
                           <input
                             type="number"

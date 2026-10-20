@@ -111,6 +111,21 @@ router.post('/quotes/:id/cancel', async (req: Request, res: Response) => {
   res.json({ quote: result.rows[0] });
 });
 
+router.delete('/quotes/:id', async (req: Request, res: Response) => {
+  const db = await pool.connect();
+  try {
+    await db.query('BEGIN');
+    const found = await db.query('SELECT id, status FROM quotes WHERE id=$1 FOR UPDATE', [req.params.id]);
+    if (!found.rows.length) { await db.query('ROLLBACK'); return res.status(404).json({ error: 'Presupuesto no encontrado' }); }
+    if (!['borrador', 'cancelado'].includes(found.rows[0].status)) { await db.query('ROLLBACK'); return res.status(409).json({ error: 'Solo se pueden eliminar presupuestos en borrador o cancelados.' }); }
+    await db.query('DELETE FROM quote_items WHERE quote_id=$1', [req.params.id]);
+    await db.query('DELETE FROM quote_versions WHERE quote_id=$1', [req.params.id]);
+    await db.query('DELETE FROM quotes WHERE id=$1', [req.params.id]);
+    await db.query('COMMIT'); res.json({ ok: true, deleted_id: req.params.id });
+  } catch (error) { await db.query('ROLLBACK').catch(() => undefined); console.error('Error eliminando presupuesto:', error); res.status(500).json({ error: 'No se pudo eliminar el presupuesto' }); }
+  finally { db.release(); }
+});
+
 router.post('/quotes/:id/convert', async (req: Request, res: Response) => {
   const client = await pool.connect();
   try {
