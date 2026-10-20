@@ -165,6 +165,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="h-screen h-[100dvh] w-full bg-surface flex overflow-hidden">
+      <title>RP Asesoría | CRM</title>
       {/* Sidebar fijo a la izquierda en desktop, desplegable como cajón en tablet/móvil */}
       <aside
         id="crm-sidebar"
