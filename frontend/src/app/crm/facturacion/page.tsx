@@ -395,6 +395,14 @@ export default function CRMFacturacionPage() {
     }
   };
 
+  const billingSummary = invoices.reduce((summary, invoice) => {
+    const total = Number(invoice.total || 0);
+    summary.billed += total;
+    if (invoice.status === 'pagada') summary.collected += total;
+    else summary.pending += total;
+    return summary;
+  }, { billed: 0, collected: 0, pending: 0 });
+
   return (
     <div className="space-y-6">
       {/* Toast de Notificaciones */}
@@ -472,6 +480,20 @@ export default function CRMFacturacionPage() {
           <span>Presupuestos ({quotes.length})</span>
         </button>
       </div>
+
+      <section aria-label="Rendimiento de facturación" className="space-y-4 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 shadow-sm sm:p-5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div><p className="text-[11px] font-semibold tracking-[0.14em] text-secondary">GESTIÓN DIARIA</p><h2 className="text-xl font-bold text-on-surface">Facturación y rendimiento</h2><p className="text-xs text-on-surface-variant">Resumen calculado con los documentos reales cargados desde PostgreSQL.</p></div>
+          <span className="text-xs text-on-surface-variant">{invoices.length} facturas emitidas</span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            ['Facturado', billingSummary.billed, 'receipt_long', 'text-secondary'],
+            ['Cobrado', billingSummary.collected, 'check_circle', 'text-emerald-600'],
+            ['Pendiente de cobro', billingSummary.pending, 'schedule', 'text-amber-600'],
+          ].map(([label, value, icon, tone]) => <article key={String(label)} className="rounded-lg border border-surface-container bg-surface-container-low p-4"><div className="flex items-center justify-between"><span className="text-xs text-on-surface-variant">{label}</span><span className={`material-symbols-outlined text-[20px] ${tone}`}>{icon}</span></div><p className="mt-3 font-mono-data text-2xl font-bold text-on-surface">€ {Number(value).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p><p className="mt-1 text-[11px] text-on-surface-variant">Importes finales con IVA incluido</p></article>)}
+        </div>
+      </section>
 
       {errorCarga && (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-xs text-error">
