@@ -1094,13 +1094,13 @@ export default function CRMFacturacionPage() {
                       {selectedDoc.data.client_name || selectedDoc.data.full_name || 'Cliente'}
                     </h3>
                     <p className="text-xs text-on-surface-variant font-mono-data mt-0.5">
-                      BSN Oficial: <strong>{selectedDoc.data.client_bsn || selectedDoc.data.bsn || '982145672'}</strong>
+                      BSN Oficial: <strong>{selectedDoc.data.client_bsn || selectedDoc.data.bsn || 'No disponible'}</strong>
                     </p>
                   </div>
                   <div className="text-xs text-on-surface-variant space-y-0.5">
-                    <p>{selectedDoc.data.address || 'Strijpsestraat 142'}</p>
-                    <p>{selectedDoc.data.city || 'Eindhoven'}, Países Bajos</p>
-                    <p className="text-outline">{selectedDoc.data.email || 'cliente@nexusgest.nl'}</p>
+                    <p>{selectedDoc.data.address || 'Dirección no disponible'}</p>
+                    <p>{selectedDoc.data.city || 'Ciudad no disponible'}, {companySettings.country || 'País no disponible'}</p>
+                    <p className="text-outline">{selectedDoc.data.email || 'Email no disponible'}</p>
                   </div>
                 </div>
               </div>
@@ -1164,7 +1164,7 @@ export default function CRMFacturacionPage() {
                   {selectedDoc.type === 'invoice' && selectedDoc.data.status === 'pagada' && (
                     <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-800 font-mono-data text-[10px] space-y-0.5">
                       <span className="font-bold block">Referencia iDEAL:</span>
-                      <span>{selectedDoc.data.payment_reference || 'IDL-TRX-2026-89472'}</span>
+                      <span>{selectedDoc.data.payment_reference || 'Referencia no disponible'}</span>
                     </div>
                   )}
                 </div>
