@@ -1,8 +1,15 @@
 import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import path from 'node:path';
+import fs from 'node:fs';
 import { query, pool } from '../db/index.js';
 import { requireRole } from '../middleware/auth.js';
+import { esTipoDocumentoPermitido, nombreSeguroDocumento, firmaDocumentoValida } from '../utils/upload.js';
 
 const router = Router();
+const uploadDir = process.env.UPLOAD_DIR || './uploads';
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+const debtUpload = multer({ storage: multer.diskStorage({ destination: (_req, _file, cb) => cb(null, uploadDir), filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}-${nombreSeguroDocumento(file.originalname)}`) }), limits: { fileSize: 15 * 1024 * 1024 }, fileFilter: (_req, file, cb) => cb(null, esTipoDocumentoPermitido(file)) });
 const audit = async (req: Request, debtId: string, action: string, changes: Record<string, unknown> = {}) => {
   await query('INSERT INTO debt_audit_log (debt_id, actor_user_id, actor_role, action, changes) VALUES ($1,$2,$3,$4,$5::jsonb)', [debtId, req.user?.id, req.user?.role, action, JSON.stringify(changes)]);
 };
@@ -22,6 +29,31 @@ router.get('/debts/:id', async (req, res) => {
   ]);
   res.json({ debt: debt.rows[0], payments: payments.rows, installments: installments.rows, documents: documents.rows, notes: notes.rows, history: history.rows });
 });
+router.post('/debts/:id/documents', debtUpload.single('file'), async (req, res) => {
+  const file = req.file;
+  if (!file) return res.status(400).json({ error: 'Se requiere un documento válido (PDF, JPG, PNG o WEBP).' });
+  const storedPath = path.resolve(file.path);
+  try {
+    const debt = await query("SELECT id FROM debts WHERE id=$1 AND owner_type='client'", [req.params.id]);
+    if (!debt.rows.length) { fs.rmSync(storedPath, { force: true }); return res.status(404).json({ error: 'Deuda no encontrada' }); }
+    if (!(await firmaDocumentoValida(storedPath, file.mimetype))) { fs.rmSync(storedPath, { force: true }); return res.status(400).json({ error: 'La firma del archivo no coincide con su tipo.' }); }
+    const result = await query('INSERT INTO debt_documents (debt_id, file_name, file_url) VALUES ($1,$2,$3) RETURNING id, debt_id, file_name, created_at', [req.params.id, file.originalname, storedPath]);
+    await audit(req, req.params.id, 'document_attached', { document_id: result.rows[0].id, file_name: file.originalname });
+    return res.status(201).json({ document: result.rows[0] });
+  } catch (error) { fs.rmSync(storedPath, { force: true }); console.error('Error adjuntando documento a deuda:', error); return res.status(500).json({ error: 'No se pudo adjuntar el documento' }); }
+});
+
+router.get('/debts/:id/documents/:documentId/download', async (req, res) => {
+  try {
+    const result = await query('SELECT file_name, file_url FROM debt_documents WHERE id=$1 AND debt_id=$2', [req.params.documentId, req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Documento no encontrado' });
+    const uploadRoot = path.resolve(uploadDir); const storedPath = path.resolve(String(result.rows[0].file_url));
+    if (storedPath !== uploadRoot && !storedPath.startsWith(`${uploadRoot}${path.sep}`)) return res.status(403).json({ error: 'Ruta no permitida' });
+    if (!fs.existsSync(storedPath)) return res.status(404).json({ error: 'Archivo no disponible' });
+    return res.download(storedPath, String(result.rows[0].file_name).replace(/[\"\r\n]/g, ''));
+  } catch (error) { console.error('Error descargando documento de deuda:', error); return res.status(500).json({ error: 'No se pudo abrir el documento' }); }
+});
+
 router.post('/debts/:id/plan', async (req, res) => {
   const installments = Array.isArray(req.body?.installments) ? req.body.installments : [];
   if (!installments.length) return res.status(400).json({ error: 'El plan debe incluir al menos una cuota' });
