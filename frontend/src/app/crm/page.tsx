@@ -55,7 +55,7 @@ export default function CRMDashboardPage() {
     <div className="space-y-6 pb-10">
       {notice && <div role="status" className="fixed right-4 top-20 z-50 rounded-lg border border-secondary/30 bg-slate-900 px-4 py-3 text-xs font-semibold text-white shadow-xl">{notice}</div>}
       <header className="flex flex-col gap-2 border-b border-surface-container pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div><p className="text-[11px] font-semibold tracking-[0.14em] text-secondary">CENTRO DE GESTIÓN</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-on-surface">Centro de gestión</h1><p className="mt-1 text-sm text-on-surface-variant">Una vista clara de tu trabajo, tu facturación y las deudas pendientes.</p></div>
+        <div><p className="text-[11px] font-semibold tracking-[0.14em] text-secondary">CENTRO DE GESTIÓN</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-on-surface">Centro de gestión</h1><p className="mt-1 text-sm text-on-surface-variant">Una vista clara de tu trabajo, tu facturación y las deudas pendientes.</p></div><div className="flex flex-wrap gap-2"><Link href="/crm/deudas" className="min-h-10 rounded-md border border-outline-variant px-3 py-2 text-xs font-bold text-on-surface">+ Nueva deuda</Link><Link href="/crm/facturacion" className="min-h-10 rounded-md bg-secondary px-3 py-2 text-xs font-bold text-white">+ Presupuesto / factura</Link></div>
         {preview && <span className="inline-flex w-fit items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Datos de prueba</span>}
       </header>
 
