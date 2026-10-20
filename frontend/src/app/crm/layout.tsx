@@ -22,9 +22,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState(getStoredUser());
   const [checking, setChecking] = useState(true);
-  // Clientes activos, para el contador del menu. null = aun no cargado,
-  // para no mostrar un 0 que luego salta al valor real.
-  const [activeClients, setActiveClients] = useState<number | null>(null);
+  // Total de clientes no eliminados, para que el contador del menu coincida con el directorio.
+  const [clientCount, setClientCount] = useState<number | null>(null);
 
   // Estados interactivos para Topbar y Responsive Drawer
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -80,7 +79,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       apiFetch('/clients/count')
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
-          if (typeof data?.activos === 'number') setActiveClients(data.activos);
+          if (typeof data?.total === 'number') setClientCount(data.total);
         })
         .catch(() => {});
     };
@@ -207,7 +206,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               {navGroups[0].items.map((item) => <NavLink key={item.href} item={item} pathname={pathname} collapsed={sidebarCollapsed} onClick={() => setMobileMenuOpen(false)} />)}
               <button type="button" onClick={() => setClientsOpen((value) => !value)} aria-expanded={clientsOpen} title="Clientes" className={`group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-semibold transition-colors ${pathname.startsWith('/crm/clientes') ? 'bg-secondary text-white' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
                 <span className="flex min-w-0 items-center gap-3"><span className="material-symbols-outlined text-[19px]">group</span>{!sidebarCollapsed && <span>Clientes</span>}</span>
-                {!sidebarCollapsed && <span className="flex items-center gap-2">{activeClients !== null && <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-mono-data text-on-surface">{activeClients}</span>}<span className="material-symbols-outlined text-[17px]">{clientsOpen ? 'expand_less' : 'expand_more'}</span></span>}
+                {!sidebarCollapsed && <span className="flex items-center gap-2">{clientCount !== null && <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-mono-data text-on-surface">{clientCount}</span>}<span className="material-symbols-outlined text-[17px]">{clientsOpen ? 'expand_less' : 'expand_more'}</span></span>}
               </button>
               {clientsOpen && !sidebarCollapsed && <div className="ml-4 space-y-1 border-l border-slate-200 pl-2">
                 <NavLink item={{ href: '/crm/clientes', label: 'Directorio de clientes', icon: 'contacts' }} pathname={pathname} collapsed={false} onClick={() => setMobileMenuOpen(false)} />
