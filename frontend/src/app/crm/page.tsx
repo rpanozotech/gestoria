@@ -7,15 +7,6 @@ import { apiFetch } from '@/lib/api';
 type Task = { id: string; priority: string; client: string; type: string; due: string; status: string; href: string };
 type Debt = { id: string; owner: string; creditor: string; reference: string; original: number; paid: number; pending: number; status: string; nextDue: string; plan: string };
 
-const demoBilling = [
-  { client: 'María Ejemplo', services: 'Consulta · DigiD', billed: 138, collected: 89, pending: 49, invoices: 2 },
-  { client: 'Carlos Demo', services: 'M-Form', billed: 89, collected: 0, pending: 89, invoices: 1 },
-];
-const demoDebts: Debt[] = [
-  { id: 'debt-1', owner: 'María Ejemplo', creditor: 'Belastingdienst', reference: 'DEMO-BEL-2026', original: 1240, paid: 620, pending: 620, status: 'Pagando', nextDue: '15 nov 2026', plan: '12 cuotas' },
-  { id: 'debt-2', owner: 'Carlos Demo', creditor: 'CJIB', reference: 'DEMO-CJIB-042', original: 380, paid: 0, pending: 380, status: 'Aplazamiento solicitado', nextDue: '30 nov 2026', plan: 'Pendiente' },
-];
-
 const money = (value: number) => `€ ${value.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
 
 export default function CRMDashboardPage() {
@@ -33,11 +24,11 @@ export default function CRMDashboardPage() {
   }, []);
 
   const preview = process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true';
-  const billing = preview ? demoBilling : [];
-  const debts = preview ? demoDebts : realDebts.map((debt: any) => ({ id: debt.id, owner: debt.client_name || 'Cliente', creditor: debt.creditor, reference: debt.reference, original: Number(debt.original_amount || 0), paid: Number(debt.paid_total || debt.paid_amount || 0), pending: Math.max(0, Number(debt.original_amount || 0) - Number(debt.paid_total || debt.paid_amount || 0)), status: debt.status, nextDue: debt.due_date || 'Sin vencimiento', plan: debt.plan_name || 'Pago único' }));
+  const billing: Array<{ client: string; services: string; billed: number; collected: number; pending: number; invoices: number }> = [];
+  const debts = realDebts.map((debt: any) => ({ id: debt.id, owner: debt.client_name || 'Cliente', creditor: debt.creditor, reference: debt.reference, original: Number(debt.original_amount || 0), paid: Number(debt.paid_total || debt.paid_amount || 0), pending: Math.max(0, Number(debt.original_amount || 0) - Number(debt.paid_total || debt.paid_amount || 0)), status: debt.status, nextDue: debt.due_date || 'Sin vencimiento', plan: debt.plan_name || 'Pago único' }));
   const tasks: Task[] = useMemo(() => {
     const fromApi = stats?.today_appointments?.map((item: any) => ({ id: item.id, priority: 'alta', client: item.client_name || 'Cliente pendiente', type: item.title || 'Cita', due: item.appointment_time ? `Hoy · ${item.appointment_time.slice(0, 5)}` : 'Hoy', status: item.status || 'pendiente', href: '/crm/agenda' })) || [];
-    return fromApi.length ? fromApi : preview ? [{ id: 'demo-task', priority: 'alta', client: 'María Ejemplo', type: 'Revisar documentos de toeslagen', due: 'Hoy · 10:30', status: 'Pendiente', href: '/crm/clientes' }] : [];
+    return fromApi;
   }, [preview, stats]);
   const visibleTasks = tasks.filter((task) => filter === 'todas' || (filter === 'urgentes' && task.priority === 'alta') || (filter === 'pendientes' && task.status !== 'completada'));
   const pendingDebt = debts.reduce((total, debt) => total + debt.pending, 0);
