@@ -39,10 +39,10 @@ router.post('/debts', async (req, res) => {
 });
 
 router.delete('/debts/:id', async (req, res) => {
-  const payments = await query("SELECT COUNT(*)::int AS count FROM debt_payments p JOIN debts d ON d.id=p.debt_id WHERE p.debt_id=$1 AND d.owner_type IN ('client','own')", [req.params.id]);
-  if (!payments.rows.length) return res.status(404).json({ error: 'Deuda no encontrada' });
+  const payments = await query("SELECT COUNT(*)::int AS count FROM debt_payments p JOIN debts d ON d.id=p.debt_id WHERE p.debt_id=$1 AND d.owner_type='client'", [req.params.id]);
+  if (!payments.rows.length) return res.status(404).json({ error: 'Deuda de cliente no encontrada' });
   if (payments.rows[0].count > 0) return res.status(409).json({ error: 'No se puede eliminar una deuda con pagos registrados.' });
-  const result = await query("DELETE FROM debts WHERE id=$1 AND owner_type IN ('client','own') RETURNING id", [req.params.id]);
+  const result = await query("DELETE FROM debts WHERE id=$1 AND owner_type='client' RETURNING id", [req.params.id]);
   if (!result.rows.length) return res.status(404).json({ error: 'Deuda no encontrada' });
   res.json({ ok: true, deleted_id: result.rows[0].id });
 });
