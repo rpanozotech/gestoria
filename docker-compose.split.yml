@@ -1,6 +1,6 @@
 services:
   public_web:
-    image: nexusgest-frontend:20261021-fix3
+    image: nexusgest-frontend:20261021-ollama1
     container_name: nexusgest_public_web
     restart: unless-stopped
     environment:
@@ -19,7 +19,7 @@ services:
       traefik.http.routers.nexusgest-web.service: nexusgest-public
       traefik.http.services.nexusgest-public.loadbalancer.server.port: "3000"
   crm:
-    image: nexusgest-frontend:20261021-fix3
+    image: nexusgest-frontend:20261021-ollama1
     container_name: nexusgest_crm
     restart: unless-stopped
     environment:
@@ -28,7 +28,7 @@ services:
       API_INTERNAL_URL: http://backend:5000
       NEXT_PUBLIC_API_BASE: /api/backend
       SURFACE: crm
-    networks: [nexusgest_network]
+    networks: [nexusgest_network, ollama_network]
     labels:
       traefik.enable: "true"
       traefik.docker.network: nexusgest_network
@@ -38,7 +38,7 @@ services:
       traefik.http.routers.nexusgest-app.service: nexusgest-crm
       traefik.http.services.nexusgest-crm.loadbalancer.server.port: "3000"
   portal:
-    image: nexusgest-frontend:20261021-fix3
+    image: nexusgest-frontend:20261021-ollama1
     container_name: nexusgest_portal
     restart: unless-stopped
     environment:
@@ -58,4 +58,7 @@ services:
       traefik.http.services.nexusgest-portal.loadbalancer.server.port: "3000"
 networks:
   nexusgest_network:
+    external: true
+  ollama_network:
+    name: openclaw-xibd_default
     external: true

@@ -71,8 +71,8 @@ const AI_PRESETS = [
     name: 'Ollama Local (Sin clave / Privado)',
     badge: '100% Local',
     defaultUrl: 'http://ollama:11434/v1',
-    defaultModel: 'llama3.2:1b',
-    models: ['llama3.2:1b', 'qwen2.5-coder:1.5b', 'qwen3:1.7b'],
+    defaultModel: 'qwen2.5-coder:3b',
+    models: ['qwen2.5-coder:3b', 'openbmb/minicpm5-2b:latest'],
     keyHelp: 'Ejecuta Ollama en tu equipo local con ollama run llama3',
     keyPlaceholder: 'No se requiere clave (dejar en blanco o test)',
   },
@@ -99,7 +99,7 @@ const DEFAULT_CONFIG: AIConfig = {
   provider: 'ollama',
   apiUrl: 'http://ollama:11434/v1',
   apiKey: '',
-  model: 'llama3.2:1b',
+  model: 'qwen2.5-coder:3b',
 };
 
 function renderChatMarkdown(text: string) {
@@ -146,7 +146,7 @@ export default function ChatIAPage() {
       role: 'assistant',
       content: `¡Bienvenido al **Chat Asistente NexusGest**!
 
-En este servidor no hay una clave de proveedor de IA configurada. No tengo acceso a expedientes ni puedo afirmar que haya ejecutado una acción desde este chat.
+Este chat está configurado para usar Ollama en este servidor, con el modelo local qwen2.5-coder:3b. Las respuestas se generan localmente; revisa siempre la información y los documentos antes de usarlos.
 
 Puedes consultar y editar clientes, tareas, citas, deudas y facturas en sus secciones del CRM. La creación de un pago debe registrarse solo después de verificar el cobro fuera de la aplicación.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -176,7 +176,11 @@ Puedes consultar y editar clientes, tareas, citas, deudas y facturas en sus secc
       if (savedConfig) {
         const parsed = JSON.parse(savedConfig);
         if (!parsed.apiKey && (parsed.provider === 'openai' || parsed.apiUrl === 'https://api.openai.com/v1')) {
-          setConfig({ provider: 'ollama', apiUrl: 'http://ollama:11434/v1', apiKey: '', model: 'llama3.2:1b' });
+          setConfig({ provider: 'ollama', apiUrl: 'http://ollama:11434/v1', apiKey: '', model: 'qwen2.5-coder:3b' });
+        } else if (parsed.provider === 'ollama' && parsed.model === 'llama3.2:1b') {
+          const migrated = { ...parsed, apiUrl: 'http://ollama:11434/v1', model: 'qwen2.5-coder:3b' };
+          setConfig(migrated);
+          localStorage.setItem('nexusgest_ai_config', JSON.stringify(migrated));
         } else {
           setConfig(parsed);
         }
