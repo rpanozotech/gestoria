@@ -67,7 +67,7 @@ function LoginForm() {
     <div className="min-h-screen bg-[--delft] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8 space-y-6 border-t-4 border-[--oranje-subdued]">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
+          <Link href="https://rp-gestoria.tech/" className="inline-flex items-center gap-2.5 mb-6">
             <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-900 border border-slate-700 flex items-center justify-center">
               <img src="/logo.png" alt="RP Asesoría" className="w-full h-full object-cover" />
             </div>
@@ -143,7 +143,7 @@ function LoginForm() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="text-xs text-outline hover:text-secondary transition-colors inline-flex items-center gap-1">
+          <Link href="https://rp-gestoria.tech/" className="text-xs text-outline hover:text-secondary transition-colors inline-flex items-center gap-1">
             <span className="material-symbols-outlined text-[14px]">arrow_back</span>
             Volver a la web pública
           </Link>

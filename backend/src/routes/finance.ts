@@ -18,7 +18,7 @@ router.get('/debts', async (req, res) => {
   res.json({ debts: result.rows });
 });
 router.get('/debts/:id', async (req, res) => {
-  const debt = await query(`SELECT d.*, c.full_name AS client_name FROM debts d LEFT JOIN clients c ON c.id=d.client_id WHERE d.id=$1 AND d.owner_type='client'`, [req.params.id]);
+  const debt = await query(`SELECT d.*, c.full_name AS client_name, COALESCE(SUM(p.amount),0) AS paid_total FROM debts d LEFT JOIN clients c ON c.id=d.client_id LEFT JOIN debt_payments p ON p.debt_id=d.id WHERE d.id=$1 AND d.owner_type='client' GROUP BY d.id,c.full_name`, [req.params.id]);
   if (!debt.rows.length) return res.status(404).json({ error: 'Deuda no encontrada' });
   const [payments, installments, documents, notes, history] = await Promise.all([
     query('SELECT * FROM debt_payments WHERE debt_id=$1 ORDER BY paid_at DESC', [req.params.id]),
@@ -83,10 +83,30 @@ router.post('/debts/:id/notes', async (req, res) => {
   res.status(201).json({ note: result.rows[0] });
 });
 router.post('/debts/:id/payments', async (req, res) => {
-  const amount = Number(req.body?.amount); if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Importe inválido' });
-  const result = await query('INSERT INTO debt_payments (debt_id, amount, paid_at, status, created_by) VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),\'paid\',$4) RETURNING *', [req.params.id, amount, req.body?.paid_at || null, req.user?.id]);
-  await query('UPDATE debts SET paid_amount=(SELECT COALESCE(SUM(amount),0) FROM debt_payments WHERE debt_id=$1), updated_by=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND owner_type=\'client\'', [req.params.id, req.user?.id]);
-  await audit(req, req.params.id, 'payment_created', { amount }); res.status(201).json({ payment: result.rows[0] });
+  const amount = Number(req.body?.amount);
+  const method = String(req.body?.method || 'transferencia').trim().toLowerCase();
+  const paidAt = req.body?.paid_at || null;
+  if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Importe inválido' });
+  if (!['transferencia', 'efectivo', 'otro'].includes(method)) return res.status(400).json({ error: 'Método no disponible. No se procesan pagos en línea.' });
+  if (paidAt && !/^\d{4}-\d{2}-\d{2}$/.test(String(paidAt))) return res.status(400).json({ error: 'Fecha de pago inválida.' });
+  const db = await pool.connect();
+  try {
+    await db.query('BEGIN');
+    const debt = await db.query("SELECT id, original_amount FROM debts WHERE id=$1 AND owner_type='client' FOR UPDATE", [req.params.id]);
+    if (!debt.rows.length) { await db.query('ROLLBACK'); return res.status(404).json({ error: 'Deuda no encontrada' }); }
+    const total = await db.query('SELECT COALESCE(SUM(amount),0) AS paid FROM debt_payments WHERE debt_id=$1', [req.params.id]);
+    const outstanding = Math.max(0, Number(debt.rows[0].original_amount) - Number(total.rows[0].paid));
+    if (amount > outstanding + 0.001) { await db.query('ROLLBACK'); return res.status(409).json({ error: 'El pago supera el saldo pendiente.', outstanding }); }
+    const result = await db.query("INSERT INTO debt_payments (debt_id, amount, paid_at, status, created_by, payment_method) VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),'paid',$4,$5) RETURNING *", [req.params.id, amount, paidAt, req.user?.id, method]);
+    await db.query("UPDATE debts SET paid_amount=(SELECT COALESCE(SUM(amount),0) FROM debt_payments WHERE debt_id=$1), status=CASE WHEN (SELECT COALESCE(SUM(amount),0) FROM debt_payments WHERE debt_id=$1) >= original_amount THEN 'pagado' ELSE status END, updated_by=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND owner_type='client'", [req.params.id, req.user?.id]);
+    await db.query('INSERT INTO debt_audit_log (debt_id, actor_user_id, actor_role, action, changes) VALUES ($1,$2,$3,$4,$5::jsonb)', [req.params.id, req.user?.id, req.user?.role, 'payment_created', JSON.stringify({ amount, method })]);
+    await db.query('COMMIT');
+    return res.status(201).json({ payment: result.rows[0], outstanding: Math.max(0, outstanding - amount) });
+  } catch (error) {
+    await db.query('ROLLBACK').catch(() => undefined);
+    console.error('Error registrando pago de deuda:', error);
+    return res.status(500).json({ error: 'No se pudo registrar el pago.' });
+  } finally { db.release(); }
 });
 router.post('/debts', async (req, res) => {
   const { client_id, creditor, reference, original_amount, due_date, plan_name, visible_to_client } = req.body || {};

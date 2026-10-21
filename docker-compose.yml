@@ -79,7 +79,10 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - nexusgest_network
+      nexusgest_network: {}
+      split_frontends:
+        aliases:
+          - backend
 
   # 3. Frontend Web + CRM + Portal Cliente (Next.js Standalone)
   frontend:
@@ -135,15 +138,21 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
+    external: true
+    name: nexusgest_postgres_data
   uploads_data:
-    driver: local
+    external: true
+    name: nexusgest_uploads_data
   # Dumps de la base de datos. Montado en postgres para que pg_dump
   # escriba en un volumen persistente y no en la capa del contenedor,
   # que se pierde al recrear el servicio. Ver backup.sh.
   backups_data:
-    driver: local
+    external: true
+    name: nexusgest_backups_data
 
 networks:
   nexusgest_network:
     driver: bridge
+  split_frontends:
+    name: nexusgest_network
+    external: true

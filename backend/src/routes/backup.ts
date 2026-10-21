@@ -407,8 +407,8 @@ router.post('/full/restore', receiveFullBackup, async (req: Request, res: Respon
 
 /**
  * POST /api/backup/reset
- * Vacía los datos operativos del CRM, pero conserva las cuentas del equipo
- * gestor y la estructura de la base de datos para poder empezar de nuevo.
+ * Vacía los datos operativos del CRM y las cuentas de portal vinculadas,
+ * conservando las cuentas del equipo gestor y la configuración del sistema.
  * Requiere una frase exacta para evitar borrados accidentales.
  */
 router.post('/reset', async (req: Request, res: Response) => {
@@ -427,6 +427,12 @@ router.post('/reset', async (req: Request, res: Response) => {
     // Las tablas relacionadas con clientes tienen ON DELETE CASCADE.
     // El orden explícito mantiene el endpoint seguro aunque cambie el esquema.
     await client.query('DELETE FROM ai_logs');
+    await client.query('DELETE FROM ai_import_history');
+    await client.query('DELETE FROM contact_messages');
+    await client.query('DELETE FROM service_requests');
+    await client.query('DELETE FROM withdrawal_requests');
+    await client.query('DELETE FROM crm_tasks');
+    await client.query("DELETE FROM debts WHERE owner_type = 'client'");
     await client.query('DELETE FROM documents');
     await client.query('DELETE FROM appointments');
     await client.query('DELETE FROM invoices');
@@ -434,6 +440,8 @@ router.post('/reset', async (req: Request, res: Response) => {
     await client.query('DELETE FROM dossier_steps');
     await client.query('DELETE FROM dossiers');
     await client.query('DELETE FROM clients');
+    await client.query("DELETE FROM users WHERE role = 'cliente'");
+    await client.query("ALTER SEQUENCE IF EXISTS withdrawal_requests_id_seq RESTART WITH 1");
 
     await client.query('COMMIT');
 
@@ -450,7 +458,7 @@ router.post('/reset', async (req: Request, res: Response) => {
 
     return res.json({
       message: 'CRM reseteado correctamente',
-      preserved: ['users'],
+      preserved: ['admin/gestor accounts', 'service catalog', 'company settings', 'published content', 'integration settings'],
     });
   } catch (err: any) {
     await client.query('ROLLBACK').catch(() => undefined);

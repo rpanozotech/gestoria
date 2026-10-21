@@ -23,6 +23,7 @@ import financeRouter from './routes/finance.js';
 import tasksRouter from './routes/tasks.js';
 import portalFinanceRouter from './routes/portal-finance.js';
 import advisorProfileRouter from './routes/advisor-profile.js';
+import contactRouter from './routes/contact.js';
 import companySettingsRouter from './routes/company-settings.js';
 import { publicContentRouter, contentAdminRouter } from './routes/content.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
@@ -81,6 +82,7 @@ app.get('/health', (req: Request, res: Response) => {
 // una victima concreta para dejarla sin poder entrar.
 app.use('/api/auth/login', rateLimit({ nombre: 'login', max: 10, ventanaMs: 15 * 60 * 1000, soloFallidos: true }));
 app.use('/api/auth/portal-login', rateLimit({ nombre: 'login', max: 10, ventanaMs: 15 * 60 * 1000, soloFallidos: true }));
+app.use('/api/contact', rateLimit({ nombre: 'contacto', max: 5, ventanaMs: 60 * 60 * 1000 }));
 
 // Formulario de solicitud: escribe en clients/dossiers sin autenticacion.
 app.use('/api/service-requests', rateLimit({ nombre: 'solicitudes', max: 5, ventanaMs: 60 * 60 * 1000 }));
@@ -108,6 +110,7 @@ app.use('/api/appointments', (req, res, next) =>
 app.use('/api/portal', rateLimit({ nombre: 'portal', max: 200, ventanaMs: 5 * 60 * 1000 }));
 
 app.use('/api/auth', authRouter);
+app.use('/api/contact', contactRouter);
 app.use('/api/withdrawals', rateLimit({ nombre: 'desistimientos', max: 5, ventanaMs: 60 * 60 * 1000 }));
 app.use('/api/withdrawals', withdrawalsRouter);
 app.use('/api/service-requests', serviceRequestsRouter);

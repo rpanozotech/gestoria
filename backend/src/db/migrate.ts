@@ -52,6 +52,19 @@ export async function migrateDatabase() {
       service VARCHAR(200), contracted_at DATE, message TEXT NOT NULL,
       status VARCHAR(40) NOT NULL DEFAULT 'pendiente', created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS contact_messages (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      full_name VARCHAR(200) NOT NULL,
+      email VARCHAR(320) NOT NULL,
+      phone VARCHAR(50) NOT NULL,
+      topic VARCHAR(100) NOT NULL,
+      message TEXT NOT NULL CHECK (length(trim(message)) > 0),
+      legal_consent BOOLEAN NOT NULL DEFAULT FALSE,
+      legal_consent_at TIMESTAMPTZ,
+      status VARCHAR(20) NOT NULL DEFAULT 'pendiente' CHECK (status IN ('pendiente','leido','resuelto')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_contact_messages_created ON contact_messages(created_at DESC);
     CREATE TABLE IF NOT EXISTS quote_items (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       quote_id UUID NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
@@ -129,6 +142,7 @@ export async function migrateDatabase() {
       status VARCHAR(20) NOT NULL DEFAULT 'paid', receipt_url TEXT, created_by UUID REFERENCES users(id) ON DELETE SET NULL,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE debt_payments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(40) NOT NULL DEFAULT 'transferencia';
     CREATE TABLE IF NOT EXISTS debt_installments (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), debt_id UUID NOT NULL REFERENCES debts(id) ON DELETE CASCADE,
       installment_number INTEGER NOT NULL, due_date DATE NOT NULL, amount NUMERIC(12,2) NOT NULL,

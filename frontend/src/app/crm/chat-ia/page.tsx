@@ -144,21 +144,11 @@ export default function ChatIAPage() {
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; timestamp?: string }>>([
     {
       role: 'assistant',
-      content: `¡Bienvenido al **Chat Asistente Integral NexusGest IA**!
+      content: `¡Bienvenido al **Chat Asistente NexusGest**!
 
-Tengo **acceso en tiempo real a todo el directorio de clientes**, expedientes, documentos, presupuestos, facturas y agenda.
+En este servidor no hay una clave de proveedor de IA configurada. No tengo acceso a expedientes ni puedo afirmar que haya ejecutado una acción desde este chat.
 
-**Acciones que puedo ejecutar de forma autónoma:**
-1. **Emitir Facturas**: *"Crea una factura de 180€ para Cliente seleccionado por M-Form"*
-2. **Generar Presupuestos**: *"Genera un presupuesto de 95€ para Cliente seleccionado"*
-3. **Agendar Citas**: *"Agenda una llamada para Cliente seleccionado el 18 de octubre a las 16:00"*
-4. **Archivar Documentos / Informes**: *"Redacta un dictamen fiscal para Cliente seleccionado y archívalo en sus documentos"*
-5. **Modificar Clientes**: *"Actualiza el teléfono de Cliente seleccionado a +34 654 000 111"*
-6. **Asesoría Legal & Fiscal**: Consultas sobre *Awb, Belastingdienst, Toeslagen, KVK y CAK*.
-
-También puedo consultar deudas y registrar pagos, siempre pidiendo confirmación antes de una operación financiera.
-
-Escribe tu instrucción u orden en la barra inferior para ejecutarla.`,
+Puedes consultar y editar clientes, tareas, citas, deudas y facturas en sus secciones del CRM. La creación de un pago debe registrarse solo después de verificar el cobro fuera de la aplicación.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -258,12 +248,8 @@ Escribe tu instrucción u orden en la barra inferior para ejecutarla.`,
 
     // Procesamiento de órdenes sobre clientes (Facturas, Presupuestos, Citas, Documentos, Modificaciones)
     const lower = textToSend.toLowerCase();
-    const currentClients = clients.length > 0 ? clients : [{
-      id: 'demo-client-1', full_name: 'María Ejemplo', email: 'demo@example.test', phone: '', dossiers: [],
-    }];
-    const currentDebts = debts.length > 0 ? debts : [{
-      id: 'demo-debt-1', client_id: 'demo-client-1', creditor: 'CJIB', original_amount: 1200, paid_total: 360, paid_amount: 360,
-    }];
+    const currentClients = clients;
+    const currentDebts = debts;
 
     const matchedClient = currentClients.find((c: any) => {
       const fn = (c.full_name || '').toLowerCase();

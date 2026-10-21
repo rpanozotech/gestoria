@@ -45,10 +45,10 @@ export default function CRMAgendaPage() {
   // Modo de visualización: Calendario Mensual (por defecto) o Lista
   const [viewMode, setViewMode] = useState<'calendario' | 'lista'>('calendario');
 
-  // Estado del calendario mensual (Octubre 2026)
-  const [calendarYear, setCalendarYear] = useState<number>(2026);
-  const [calendarMonth, setCalendarMonth] = useState<number>(9); // 9 = Octubre (0-indexed)
-  const [selectedDate, setSelectedDate] = useState<string>('2026-10-10');
+  // Iniciar el calendario en el día actual; no fijar meses de datos de prueba.
+  const [calendarYear, setCalendarYear] = useState<number>(() => new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState<number>(() => new Date().getMonth());
+  const [selectedDate, setSelectedDate] = useState<string>(() => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; });
 
   // Filtros
   const [filterModality, setFilterModality] = useState<'todas' | 'llamada' | 'presencial' | 'online_meet'>('todas');
@@ -60,7 +60,7 @@ export default function CRMAgendaPage() {
   const [aptPhone, setAptPhone] = useState('');
   const [clientOptions, setClientOptions] = useState<any[]>([]);
   const [aptTitle, setAptTitle] = useState('Consulta Telefónica Gestoría');
-  const [aptDate, setAptDate] = useState('2026-10-10');
+  const [aptDate, setAptDate] = useState(() => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; });
   const [aptTime, setAptTime] = useState('11:00');
   const [aptModality, setAptModality] = useState<'llamada' | 'presencial' | 'online_meet'>('llamada');
 
@@ -126,9 +126,10 @@ export default function CRMAgendaPage() {
   };
 
   const handleGoToDefaultOct2026 = () => {
-    setCalendarYear(2026);
-    setCalendarMonth(9);
-    setSelectedDate('2026-10-10');
+    const now = new Date();
+    setCalendarYear(now.getFullYear());
+    setCalendarMonth(now.getMonth());
+    setSelectedDate(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`);
   };
 
   // Cuadrícula de días mensual

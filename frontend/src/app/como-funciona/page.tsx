@@ -150,7 +150,7 @@ export default function ComoFuncionaPage() {
                 </p>
                 <div className="pt-2">
                   <Link
-                    href="/portal"
+                    href="https://portal.rp-gestoria.tech/portal/login"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-blue-600 transition-colors shadow-md"
                   >
                     <span>Entrar a mi Área Cliente</span>

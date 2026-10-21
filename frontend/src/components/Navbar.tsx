@@ -89,7 +89,7 @@ export default function Navbar() {
 
             {/* ÁREA CLIENTE BUTTON -> acceso al portal */}
             <Link
-              href="/portal/login"
+              href="https://portal.rp-gestoria.tech/portal/login"
               className="hidden sm:inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 xl:px-2.5 text-xs xl:text-sm font-bold text-white bg-slate-900 hover:bg-blue-600 rounded-xl shadow-md hover:shadow-blue-500/20 transition-all shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">account_circle</span>
@@ -143,7 +143,7 @@ export default function Navbar() {
                 <span>{t('nav_book_mobile')}</span>
               </Link>
               <Link
-                href="/portal/login"
+                href="https://portal.rp-gestoria.tech/portal/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full text-center py-3 text-sm font-bold text-white bg-slate-900 rounded-xl flex items-center justify-center gap-2"
               >

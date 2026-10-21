@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { query } from '../db/index.js';
+import type { PoolClient } from 'pg';
+import { pool, query } from '../db/index.js';
 import { diffChangedFields } from '../utils/audit.js';
 
 const router = Router();
@@ -214,7 +215,12 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // POST /api/clients - Crear nuevo cliente (Manual o tras revisión IA)
 router.post('/', async (req: Request, res: Response) => {
+  let db: PoolClient | undefined;
+  let transactionOpen = false;
   try {
+    db = await pool.connect();
+    await db.query('BEGIN');
+    transactionOpen = true;
     const {
       full_name,
       email,
@@ -260,7 +266,7 @@ router.post('/', async (req: Request, res: Response) => {
       notes || null,
     ];
 
-    const clientResult = await query(insertSql, values);
+    const clientResult = await db.query(insertSql, values);
     const client = clientResult.rows[0];
 
     // Credenciales reales del portal: la clave se muestra una sola vez en la
@@ -271,29 +277,34 @@ router.post('/', async (req: Request, res: Response) => {
     const portalUsername = `${baseUsername}-${crypto.randomBytes(3).toString('hex')}`;
     const portalPassword = `RP-${crypto.randomBytes(6).toString('base64url')}`;
     const portalHash = await bcrypt.hash(portalPassword, 12);
-    const userResult = await query(
+    const userResult = await db.query(
       `INSERT INTO users (email, password_hash, full_name, role, is_active)
        VALUES ($1, $2, $3, 'cliente', true) RETURNING id, email, full_name, role`,
       [`${portalUsername}@portal.local`, portalHash, full_name.trim()]
     );
-    await query(
+    await db.query(
       'UPDATE clients SET user_id = $1, portal_username = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
       [userResult.rows[0].id, portalUsername, client.id]
     );
     client.user_id = userResult.rows[0].id;
     client.portal_username = portalUsername;
 
+    await db.query('COMMIT');
+    transactionOpen = false;
     res.status(201).json({
       client,
       portal_access: { username: portalUsername, password: portalPassword },
       message: 'Cliente registrado exitosamente',
     });
   } catch (error: any) {
+    if (db && transactionOpen) await db.query('ROLLBACK').catch(() => undefined);
     if (error.code === '23505') {
       return res.status(409).json({ error: 'Ya existe un cliente con ese número de BSN' });
     }
     console.error('Error al registrar cliente:', error);
     res.status(500).json({ error: 'Error al guardar el cliente' });
+  } finally {
+    db?.release();
   }
 });
 

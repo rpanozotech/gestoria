@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { query } from '../db/index.js';
 
 export interface AuthUser {
   id: string;
@@ -45,22 +46,35 @@ export const tokenFromRequest = (req: Request): string | null => {
 };
 
 /** Exige un JWT valido. Adjunta req.user. */
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   const token = tokenFromRequest(req);
   if (!token) return res.status(401).json({ error: 'No autorizado' });
 
+  let decoded: any;
   try {
-    const decoded = jwt.verify(token, jwtSecret()) as any;
-    req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      full_name: decoded.full_name,
-      role: decoded.role,
-      client_id: decoded.client_id,
-    };
-    next();
+    decoded = jwt.verify(token, jwtSecret()) as any;
   } catch {
     return res.status(401).json({ error: 'Token invalido o expirado' });
+  }
+
+  try {
+    // JWTs remain valid until expiry after an account is deleted or disabled.
+    // Resolve role/activity in PostgreSQL so reset and offboarding revoke sessions immediately.
+    const result = await query('SELECT id, email, full_name, role, is_active FROM users WHERE id = $1', [decoded.id]);
+    const user = result.rows[0];
+    if (!user || !user.is_active || user.role !== decoded.role) {
+      return res.status(401).json({ error: 'La sesión ya no está activa' });
+    }
+    let clientId: string | undefined;
+    if (user.role === 'cliente') {
+      const linked = await query('SELECT id FROM clients WHERE id = $1 AND user_id = $2', [decoded.client_id, user.id]);
+      if (!decoded.client_id || !linked.rows.length) return res.status(401).json({ error: 'La cuenta ya no está vinculada a un cliente' });
+      clientId = linked.rows[0].id;
+    }
+    req.user = { id: user.id, email: user.email, full_name: user.full_name, role: user.role, client_id: clientId };
+    return next();
+  } catch (error) {
+    return next(error);
   }
 };
 

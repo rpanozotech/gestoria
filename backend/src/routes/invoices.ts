@@ -60,7 +60,7 @@ router.post('/quotes', async (req: Request, res: Response) => {
     await client.query("SELECT pg_advisory_xact_lock(hashtext('nexusgest_quotes_number'))");
     const settings = await documentSettings();
     const year = new Date().getFullYear();
-    const count = await client.query('SELECT COUNT(*)::int AS n FROM quotes WHERE code LIKE $1', [`${settings.quote_prefix}-${year}-%`]);
+    const count = await client.query("SELECT COALESCE(MAX((regexp_match(code, '([0-9]+)$'))[1]::int), 0) AS n FROM quotes WHERE code LIKE $1", [`${settings.quote_prefix}-${year}-%`]);
     const code = documentCode(settings.number_format, settings.quote_prefix, year, count.rows[0].n + 1);
     const quote = await client.query(`INSERT INTO quotes (code,client_id,dossier_id,items,subtotal,tax_rate,tax_amount,total,status,valid_until,notes,manual_price) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'borrador',$9,$10,$11) RETURNING *`, [code, client_id, dossier_id || null, JSON.stringify(normalized), subtotal, taxRate, taxAmount, total, valid_until || null, notes || null, normalized.some((item: any) => item.manual_price)]);
     for (const item of normalized) await client.query('INSERT INTO quote_items (quote_id,service_id,description,quantity,unit_price,total,tax_rate,tax_amount,manual_price) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)', [quote.rows[0].id, item.service_id, item.description, item.quantity, item.unit_price, item.total, item.tax_rate, item.tax_amount, item.manual_price]);
@@ -138,7 +138,7 @@ router.post('/quotes/:id/convert', async (req: Request, res: Response) => {
     await client.query("SELECT pg_advisory_xact_lock(hashtext('nexusgest_invoices_number'))");
     const settings = await documentSettings();
     const year = new Date().getFullYear();
-    const count = await client.query('SELECT COUNT(*)::int AS n FROM invoices WHERE code LIKE $1', [`${settings.invoice_prefix}-${year}-%`]);
+    const count = await client.query("SELECT COALESCE(MAX((regexp_match(code, '([0-9]+)$'))[1]::int), 0) AS n FROM invoices WHERE code LIKE $1", [`${settings.invoice_prefix}-${year}-%`]);
     const code = documentCode(settings.number_format, settings.invoice_prefix, year, count.rows[0].n + 1);
     const due = new Date(); due.setDate(due.getDate() + 14);
     const items = Array.isArray(quote.items) ? quote.items : (typeof quote.items === 'string' ? JSON.parse(quote.items) : []);
@@ -186,31 +186,37 @@ router.get('/invoices', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/invoices/:id/pay - Registrar cobro (ej. pasarela iDEAL o transferencia)
+// Registrar un cobro manual confirmado por el equipo. No simular iDEAL:
+// solo un webhook validado de una pasarela debe registrar un cobro online.
 router.post('/invoices/:id/pay', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { payment_method, payment_reference } = req.body;
-
-    const ref = payment_reference || `IDL-PAY-${Date.now().toString().slice(-6)}`;
+    const payment_method = String(req.body?.payment_method || '');
+    const payment_reference = String(req.body?.payment_reference || '').trim();
+    if (!['transferencia', 'efectivo', 'otro'].includes(payment_method)) {
+      return res.status(400).json({ error: 'Método no disponible. iDEAL solo se habilitará al integrar una pasarela verificada.' });
+    }
+    if (payment_reference.length > 100) return res.status(400).json({ error: 'La referencia supera el límite de 100 caracteres.' });
 
     const sql = `
       UPDATE invoices SET
         status = 'pagada',
-        payment_method = COALESCE($1, 'ideal'),
-        payment_reference = $2,
+        payment_method = $1,
+        payment_reference = NULLIF($2, ''),
         paid_at = CURRENT_TIMESTAMP,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3
+      WHERE id = $3 AND status <> 'pagada'
       RETURNING *;
     `;
 
-    const result = await query(sql, [payment_method, ref, id]);
+    const result = await query(sql, [payment_method, payment_reference, id]);
     if (result.rows.length === 0) {
+      const exists = await query('SELECT status FROM invoices WHERE id = $1', [id]);
+      if (exists.rows.length && exists.rows[0].status === 'pagada') return res.status(409).json({ error: 'La factura ya está marcada como pagada.' });
       return res.status(404).json({ error: 'Factura no encontrada' });
     }
 
-    res.json({ invoice: result.rows[0], message: 'Pago registrado con éxito' });
+    res.json({ invoice: result.rows[0], message: 'Cobro manual registrado; no se procesó ningún pago iDEAL.' });
   } catch (error) {
     console.error('Error registrando pago de factura:', error);
     res.status(500).json({ error: 'Error al registrar el pago' });

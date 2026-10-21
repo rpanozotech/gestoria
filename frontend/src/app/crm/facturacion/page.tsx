@@ -153,7 +153,7 @@ export default function CRMFacturacionPage() {
       csv += '"Numero Factura";"Cliente";"BSN";"Concepto";"Base EUR";"BTW 21%";"Total EUR";"Estado";"Metodo Pago";"Vencimiento"\r\n';
       invoices.forEach((inv) => {
         const { subtotal, tax, total } = getDocTotals(inv);
-        csv += `"${inv.code}";"${inv.client_name}";"${inv.client_bsn || ''}";"${inv.items?.[0]?.description || 'Servicios Gestoría'}";"${subtotal.toFixed(2)}";"${tax.toFixed(2)}";"${total.toFixed(2)}";"${inv.status}";"${inv.payment_method || 'ideal'}";"${inv.due_date || ''}"\r\n`;
+        csv += `"${inv.code}";"${inv.client_name}";"${inv.client_bsn || ''}";"${inv.items?.[0]?.description || 'Servicios Gestoría'}";"${subtotal.toFixed(2)}";"${tax.toFixed(2)}";"${total.toFixed(2)}";"${inv.status}";"${inv.payment_method || '—'}";"${inv.due_date || ''}"\r\n`;
       });
     } else {
       csv += '"Numero Presupuesto";"Cliente";"BSN";"Concepto";"Base EUR";"BTW 21%";"Total EUR";"Estado";"Valido Hasta"\r\n';
@@ -322,36 +322,30 @@ export default function CRMFacturacionPage() {
     if (process.env.NODE_ENV === 'production') await cargarFacturacion();
   };
 
-  // Registrar cobro iDEAL
+  // Registro manual tras confirmar que el dinero ya se recibió. No es iDEAL.
   const handleMarkAsPaid = async (invoiceId: string) => {
+    const payment_method = window.prompt('Método confirmado: escribe transferencia, efectivo u otro.', 'transferencia')?.trim().toLowerCase();
+    if (!payment_method || !['transferencia', 'efectivo', 'otro'].includes(payment_method)) {
+      if (payment_method) showToast('Método no válido. No se registró ningún cobro.');
+      return null;
+    }
+    if (!window.confirm('Confirma que el dinero ya se recibió y se verificó fuera de esta aplicación. Esto cambiará el estado contable de la factura.')) return null;
+    const payment_reference = window.prompt('Referencia bancaria o comprobante (opcional).', '') || '';
     try {
       const response = await apiFetch(`/invoices/${invoiceId}/pay`, {
         method: 'POST',
-        body: JSON.stringify({ payment_method: 'ideal' }),
+        body: JSON.stringify({ payment_method, payment_reference }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'No se pudo registrar el pago.');
-      setInvoices((current) => current.map((invoice) => invoice.id === invoiceId ? normalizarFactura({ ...invoice, ...data.invoice }) : invoice));
-      showToast('Pago registrado y guardado en PostgreSQL.');
-      return;
+      if (!response.ok) throw new Error(data.error || 'No se pudo registrar el cobro.');
+      const updated = normalizarFactura(data.invoice);
+      setInvoices((current) => current.map((invoice) => invoice.id === invoiceId ? updated : invoice));
+      showToast('Cobro manual registrado. No se procesó ningún pago en línea.');
+      return updated;
     } catch (error) {
-      if (process.env.NODE_ENV === 'production') {
-        showToast(error instanceof Error ? error.message : 'No se pudo registrar el pago.');
-        return;
-      }
+      showToast(error instanceof Error ? error.message : 'No se pudo registrar el cobro.');
+      return null;
     }
-    setInvoices(
-      invoices.map((inv) =>
-        inv.id === invoiceId
-          ? {
-              ...inv,
-              status: 'pagada',
-              payment_reference: `IDL-PAY-${Math.floor(100000 + Math.random() * 900000)}`,
-            }
-          : inv
-      )
-    );
-    showToast('Pago guardado solo en modo local.');
   };
 
   // Eliminar factura: llama al backend. El backend bloquea el borrado de
@@ -557,7 +551,7 @@ export default function CRMFacturacionPage() {
                       {inv.status === 'pagada' ? (
                         <div>
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Pagada (iDEAL)
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Pagada
                           </span>
                           <div className="text-xs text-outline font-mono-data mt-0.5">{inv.payment_reference}</div>
                         </div>
@@ -594,7 +588,7 @@ export default function CRMFacturacionPage() {
                             className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
                           >
                             <span className="material-symbols-outlined text-[15px]">credit_card</span>
-                            <span>Cobro iDEAL</span>
+                            <span>Registrar cobro</span>
                           </button>
                         )}
                         {/* Eliminar. En las pagadas el handler ofrece
@@ -1085,7 +1079,7 @@ export default function CRMFacturacionPage() {
                       selectedDoc.data.status === 'pagada' ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase">
                           <span className="material-symbols-outlined text-[13px]">check_circle</span>
-                          <span>Pagada vía iDEAL</span>
+                          <span>Pago registrado</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-100 text-amber-800 font-bold text-[10px] uppercase">
@@ -1174,7 +1168,7 @@ export default function CRMFacturacionPage() {
                   </p>
                   {selectedDoc.type === 'invoice' && selectedDoc.data.status === 'pagada' && (
                     <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-800 font-mono-data text-[10px] space-y-0.5">
-                      <span className="font-bold block">Referencia iDEAL:</span>
+                      <span className="font-bold block">Referencia de pago:</span>
                       <span>{selectedDoc.data.payment_reference || 'Referencia no disponible'}</span>
                     </div>
                   )}
@@ -1199,21 +1193,14 @@ export default function CRMFacturacionPage() {
                 {selectedDoc.type === 'invoice' && selectedDoc.data.status !== 'pagada' && (
                   <button
                     type="button"
-                    onClick={() => {
-                      handleMarkAsPaid(selectedDoc.data.id);
-                      setSelectedDoc({
-                        ...selectedDoc,
-                        data: {
-                          ...selectedDoc.data,
-                          status: 'pagada',
-                          payment_reference: `IDL-PAY-${Math.floor(100000 + Math.random() * 900000)}`,
-                        },
-                      });
+                    onClick={async () => {
+                      const paidInvoice = await handleMarkAsPaid(selectedDoc.data.id);
+                      if (paidInvoice) setSelectedDoc({ type: 'invoice', data: paidInvoice });
                     }}
                     className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                   >
                     <span className="material-symbols-outlined text-[15px]">credit_card</span>
-                    <span>Registrar Cobro iDEAL</span>
+                    <span>Registrar cobro recibido</span>
                   </button>
                 )}
 

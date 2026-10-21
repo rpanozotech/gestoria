@@ -1,6 +1,6 @@
 services:
   public_web:
-    image: nexusgest-frontend:public-20261014
+    image: nexusgest-frontend:20261021-fix3
     container_name: nexusgest_public_web
     restart: unless-stopped
     environment:
@@ -19,7 +19,7 @@ services:
       traefik.http.routers.nexusgest-web.service: nexusgest-public
       traefik.http.services.nexusgest-public.loadbalancer.server.port: "3000"
   crm:
-    image: nexusgest-frontend:crm-20261014
+    image: nexusgest-frontend:20261021-fix3
     container_name: nexusgest_crm
     restart: unless-stopped
     environment:
@@ -38,7 +38,7 @@ services:
       traefik.http.routers.nexusgest-app.service: nexusgest-crm
       traefik.http.services.nexusgest-crm.loadbalancer.server.port: "3000"
   portal:
-    image: nexusgest-frontend:portal-20261014
+    image: nexusgest-frontend:20261021-fix3
     container_name: nexusgest_portal
     restart: unless-stopped
     environment:

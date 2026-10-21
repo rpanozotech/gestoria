@@ -257,7 +257,7 @@ export default function ServiciosPage() {
                   </p>
                   <div className="pt-2">
                     <Link
-                      href="/portal"
+                      href="https://portal.rp-gestoria.tech/portal/login"
                       className="inline-block px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-md"
                     >
                       Ir a mi Área de Cliente

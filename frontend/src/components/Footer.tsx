@@ -55,7 +55,7 @@ export default function Footer() {
           <div className="space-y-3">
             <p className="text-white font-bold uppercase tracking-wider text-xs">Páginas</p>
             <ul className="space-y-2">
-              <li><Link href="/portal" className="text-blue-400 font-bold hover:underline">Área Cliente (Mijn RP)</Link></li>
+              <li><Link href="https://portal.rp-gestoria.tech/portal/login" className="text-blue-400 font-bold hover:underline">Área Cliente (Mijn RP)</Link></li>
               <li><Link href="/reservar" className="hover:text-blue-400 transition-colors">Reservar Cita</Link></li>
               <li><Link href="/calculadora" className="hover:text-blue-400 transition-colors">Calculadora M-Form</Link></li>
               <li><Link href="/como-funciona" className="hover:text-blue-400 transition-colors">Cómo funciona</Link></li>

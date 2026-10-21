@@ -36,7 +36,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     // 4. Facturación mensual y facturas pendientes
     const invoicesStats = await query(
       `SELECT 
-         COALESCE(SUM(CASE WHEN status = 'pagada' THEN total ELSE 0 END), 0) as paid_month,
+         COALESCE(SUM(total) FILTER (WHERE status = 'pagada' AND paid_at >= date_trunc('month', CURRENT_DATE)), 0) as paid_month,
          COALESCE(SUM(CASE WHEN status = 'emitida' THEN total ELSE 0 END), 0) as pending_amount,
          COUNT(CASE WHEN status = 'emitida' THEN 1 END) as pending_count
        FROM invoices`

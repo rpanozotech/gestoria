@@ -48,7 +48,7 @@ export default function PortalLoginPage() {
 
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-3 mb-7 group">
+          <Link href="https://rp-gestoria.tech/" className="inline-flex items-center gap-3 mb-7 group">
             <span className="w-12 h-12 rounded-2xl overflow-hidden border border-slate-700 bg-white shadow-lg group-hover:scale-105 transition-transform">
               <img src="/logo.png" alt="RP Asesoría" className="w-full h-full object-cover" />
             </span>
@@ -116,7 +116,7 @@ export default function PortalLoginPage() {
 
         </section>
 
-        <Link href="/" className="mt-6 flex justify-center items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+        <Link href="https://rp-gestoria.tech/" className="mt-6 flex justify-center items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
           <span className="material-symbols-outlined text-[16px]">arrow_back</span>
           Volver a la web pública
         </Link>

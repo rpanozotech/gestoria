@@ -33,7 +33,7 @@ export default function DeudasPage() {
   const [newDebtOpen, setNewDebtOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('Transferencia bancaria');
+  const [paymentMethod, setPaymentMethod] = useState('transferencia');
   const [notice, setNotice] = useState('');
   const [newDebt, setNewDebt] = useState({
     client: '', creditor: '', reference: '', originalAmount: '', dueDate: '', installments: '1',
@@ -69,39 +69,43 @@ export default function DeudasPage() {
     const amount = Number(paymentAmount);
     if (!amount || amount <= 0) { setNotice('Introduce un importe de pago válido.'); return; }
     const response = await apiFetch('/finance/debts/' + selected.id + '/payments', { method: 'POST', body: JSON.stringify({ amount, method: paymentMethod }) });
+    const data = await response.json().catch(() => ({}));
     if (response.ok) {
+      const paidTotal = selectedPaid + amount;
+      const updated = { ...selected, paid_amount: paidTotal, paid_total: paidTotal, status: Number(data.outstanding) <= 0 ? 'pagado' : selected.status };
       setNotice(`Pago de ${money(amount)} registrado correctamente.`);
-      setSelected({ ...selected, paid_amount: selectedPaid + amount, paid_total: selectedPaid + amount });
+      setSelected(updated);
+      setDebts((current) => current.map((debt) => debt.id === selected.id ? updated : debt));
       setPaymentAmount('');
       setPaymentModalOpen(false);
-    } else setNotice('No se pudo registrar el pago.');
+    } else setNotice(data.error || 'No se pudo registrar el pago.');
   };
-  const createDebt = (event: React.FormEvent<HTMLFormElement>) => {
+  const createDebt = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const amount = Number(newDebt.originalAmount);
-    if (!newDebt.client.trim() || !newDebt.creditor.trim() || !newDebt.reference.trim() || !amount || amount <= 0 || !newDebt.dueDate) {
+    if (!newDebt.client || !newDebt.creditor.trim() || !newDebt.reference.trim() || !amount || amount <= 0 || !newDebt.dueDate) {
       setNotice('Completa cliente, acreedor, referencia, importe y vencimiento.');
       return;
     }
-    const created: Debt = {
-      id: `demo-debt-${Date.now()}`,
-      client_id: 'demo-client-new',
-      client_name: newDebt.client.trim(),
-      creditor: newDebt.creditor.trim(),
-      reference: newDebt.reference.trim(),
-      status: newDebt.status,
-      original_amount: amount,
-      paid_amount: 0,
-      paid_total: 0,
-      due_date: newDebt.dueDate,
-      plan_name: Number(newDebt.installments) > 1 ? `${newDebt.installments} cuotas · ${newDebt.frequency}` : 'Pago único',
-    };
-    setDebts((current) => [created, ...current]);
-    setSelected(created);
-    setDetailTab('Resumen');
-    setNewDebtOpen(false);
-    setNewDebt({ client: '', creditor: '', reference: '', originalAmount: '', dueDate: '', installments: '1', frequency: 'No aplica', status: 'Pendiente', notes: '' });
-    setNotice(`Deuda ${created.reference} creada en modo demo.`);
+    const planName = Number(newDebt.installments) > 1 ? `${newDebt.installments} cuotas · ${newDebt.frequency}` : 'Pago único';
+    try {
+      const response = await apiFetch('/finance/debts', {
+        method: 'POST',
+        body: JSON.stringify({ client_id: newDebt.client, creditor: newDebt.creditor.trim(), reference: newDebt.reference.trim(), original_amount: amount, due_date: newDebt.dueDate, plan_name: planName, visible_to_client: true }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo crear la deuda.');
+      const client = clients.find((item) => item.id === newDebt.client);
+      const created: Debt = { ...data.debt, client_name: client?.full_name || 'Cliente', paid_total: 0, paid_amount: 0 };
+      setDebts((current) => [created, ...current]);
+      setSelected(created);
+      setDetailTab('Resumen');
+      setNewDebtOpen(false);
+      setNewDebt({ client: '', creditor: '', reference: '', originalAmount: '', dueDate: '', installments: '1', frequency: 'No aplica', status: 'Pendiente', notes: '' });
+      setNotice('Deuda guardada en el CRM.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'No se pudo crear la deuda.');
+    }
   };
 
   return (
@@ -195,7 +199,7 @@ export default function DeudasPage() {
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 font-bold text-primary text-xs sm:text-sm">CD</div>
                 <div>
-                  <h2 className="text-sm sm:text-base font-bold text-on-surface">{selected.client_name || 'Cliente demo A'}</h2>
+                  <h2 className="text-sm sm:text-base font-bold text-on-surface">{selected.client_name || 'Cliente'}</h2>
                   <p className="text-xs text-on-surface-variant flex items-center gap-1.5 mt-0.5"><span>Deuda</span> · <Badge value={selected.status} /></p>
                 </div>
               </div>
@@ -229,7 +233,7 @@ export default function DeudasPage() {
                     </div>
                   </div>
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs sm:text-sm text-amber-900 leading-relaxed">
-                    Cliente al corriente. Ha solicitado mantener el plan actual acordado.
+                    Consulta el estado y el historial de pagos registrados para esta deuda.
                   </div>
                 </>
               )}
@@ -254,7 +258,7 @@ export default function DeudasPage() {
     {paymentModalOpen && selected && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4">
       <form onSubmit={registerPayment} className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
         <div className="flex items-start justify-between border-b border-slate-100 pb-3"><div><p className="text-[11px] font-bold tracking-wide text-secondary">FINANZAS · COBRO</p><h2 className="mt-1 text-lg font-bold">Registrar pago</h2><p className="mt-1 text-xs text-slate-500">{selected.client_name} · pendiente {money(selectedPending)}</p></div><button type="button" aria-label="Cerrar registro de pago" onClick={() => setPaymentModalOpen(false)} className="rounded-lg p-1 text-2xl text-slate-500 hover:bg-slate-100">×</button></div>
-        <div className="mt-4 space-y-3"><label className="block text-xs font-bold text-slate-700">Importe del pago (€)<input required min="0.01" max={selectedPending || undefined} step="0.01" type="number" value={paymentAmount} onChange={(event) => setPaymentAmount(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-outline-variant px-3 text-sm font-normal outline-none focus:border-secondary" /></label><label className="block text-xs font-bold text-slate-700">Método<select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-outline-variant bg-white px-3 text-sm font-normal outline-none focus:border-secondary"><option>Transferencia bancaria</option><option>Domiciliación SEPA</option><option>Tarjeta / iDEAL</option><option>Efectivo</option></select></label></div>
+        <div className="mt-4 space-y-3"><label className="block text-xs font-bold text-slate-700">Importe del pago (€)<input required min="0.01" max={selectedPending || undefined} step="0.01" type="number" value={paymentAmount} onChange={(event) => setPaymentAmount(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-outline-variant px-3 text-sm font-normal outline-none focus:border-secondary" /></label><label className="block text-xs font-bold text-slate-700">Método<select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-outline-variant bg-white px-3 text-sm font-normal outline-none focus:border-secondary"><option value="transferencia">Transferencia bancaria</option><option value="efectivo">Efectivo</option><option value="otro">Otro cobro verificado</option></select></label></div>
         <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" onClick={() => setPaymentModalOpen(false)} className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancelar</button><button type="submit" className="rounded-lg bg-secondary px-5 py-2 text-sm font-bold text-white hover:bg-blue-700">Confirmar pago</button></div>
       </form>
     </div>}
@@ -266,7 +270,7 @@ export default function DeudasPage() {
           <button type="button" aria-label="Cerrar nueva deuda" onClick={() => setNewDebtOpen(false)} className="rounded-lg p-1 text-2xl text-slate-500 hover:bg-slate-100">×</button>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label className="text-xs font-bold text-slate-700">Cliente registrado *<select required value={newDebt.client} onChange={(event) => setNewDebt((current) => ({ ...current, client: event.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-outline-variant bg-white px-3 text-sm font-normal outline-none focus:border-secondary"><option value="">Selecciona un cliente</option>{clients.map((client) => { const name = client.full_name || client.name || client.client_name || 'Cliente sin nombre'; return <option key={client.id || name} value={name}>{name}{client.bsn ? ` · BSN ${client.bsn}` : ''}</option>; })}<option value="Otro cliente">Otro cliente</option></select></label>
+          <label className="text-xs font-bold text-slate-700">Cliente registrado *<select required value={newDebt.client} onChange={(event) => setNewDebt((current) => ({ ...current, client: event.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-outline-variant bg-white px-3 text-sm font-normal outline-none focus:border-secondary"><option value="">Selecciona un cliente</option>{clients.map((client) => { const name = client.full_name || client.name || client.client_name || 'Cliente sin nombre'; return <option key={client.id} value={client.id}>{name}</option>; })}</select></label>
           <label className="text-xs font-bold text-slate-700">Administración / agencia *<select required value={newDebt.creditor} onChange={(event) => setNewDebt((current) => ({ ...current, creditor: event.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-outline-variant bg-white px-3 text-sm font-normal outline-none focus:border-secondary"><option value="">Selecciona un acreedor</option>{Object.entries(creditorGroups).map(([group, values]) => <optgroup key={group} label={group}>{values.map((value) => <option key={value} value={value}>{value}</option>)}</optgroup>)}<option value="Otro acreedor">Otro acreedor</option></select></label>
           <label className="text-xs font-bold text-slate-700">Referencia *<input required value={newDebt.reference} onChange={(event) => setNewDebt((current) => ({ ...current, reference: event.target.value }))} placeholder="Ej. AEAT-2026-001" className="mt-1 h-10 w-full rounded-lg border border-outline-variant px-3 text-sm font-normal outline-none focus:border-secondary" /></label>
           <label className="text-xs font-bold text-slate-700">Importe original (€) *<input required min="0.01" step="0.01" type="number" value={newDebt.originalAmount} onChange={(event) => setNewDebt((current) => ({ ...current, originalAmount: event.target.value }))} placeholder="0,00" className="mt-1 h-10 w-full rounded-lg border border-outline-variant px-3 text-sm font-normal outline-none focus:border-secondary" /></label>

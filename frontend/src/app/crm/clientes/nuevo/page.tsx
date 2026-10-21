@@ -1,65 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
+import { apiFetch } from '@/lib/api';
 
 export default function NuevoClientePage() {
-  const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', bsn: '' });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [created, setCreated] = useState<{name:string;username:string;password:string}|null>(null);
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
-  const submit = (event: React.FormEvent) => { 
-    event.preventDefault(); 
-    localStorage.setItem('crm-demo-new-client', JSON.stringify({ ...form, id: `demo-${Date.now()}`, status: 'activo' })); 
-    setSaved(true); 
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setError(''); setSaving(true);
+    try {
+      const response = await apiFetch('/clients', { method: 'POST', body: JSON.stringify(form) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo guardar el cliente.');
+      setCreated({ name: data.client.full_name, username: data.portal_access.username, password: data.portal_access.password });
+      setForm({ full_name: '', email: '', phone: '', bsn: '' });
+      window.dispatchEvent(new Event('crm-client-count-updated'));
+      window.dispatchEvent(new Event('nexusgest_clients_updated'));
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo guardar el cliente.'); }
+    finally { setSaving(false); }
   };
 
-  return (
-    <div className="w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-3">
-      <header className="border-b border-surface-container pb-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold text-on-surface">Nuevo Cliente Manual</h1>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary/10 text-secondary">Directorio</span>
-        </div>
-        <p className="text-[11px] text-on-surface-variant">Completa los datos básicos para crear una ficha de cliente.</p>
-      </header>
-
-      {saved && (
-        <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 shrink-0">
-          Cliente demo guardado con éxito.
-        </div>
-      )}
-
-      <form onSubmit={submit} className="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm space-y-4 shrink-0">
-        <div className="grid gap-3.5 sm:grid-cols-2">
-          <label className="text-xs font-semibold text-on-surface">
-            <span className="block text-[11px] font-semibold text-outline uppercase tracking-wider mb-1">Nombre completo *</span>
-            <input required value={form.full_name} onChange={(e) => update('full_name', e.target.value)} className="h-9 w-full rounded-md border border-outline-variant bg-surface px-3 text-xs" />
-          </label>
-          <label className="text-xs font-semibold text-on-surface">
-            <span className="block text-[11px] font-semibold text-outline uppercase tracking-wider mb-1">Email</span>
-            <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} className="h-9 w-full rounded-md border border-outline-variant bg-surface px-3 text-xs" />
-          </label>
-          <label className="text-xs font-semibold text-on-surface">
-            <span className="block text-[11px] font-semibold text-outline uppercase tracking-wider mb-1">Teléfono</span>
-            <input value={form.phone} onChange={(e) => update('phone', e.target.value)} className="h-9 w-full rounded-md border border-outline-variant bg-surface px-3 text-xs" />
-          </label>
-          <label className="text-xs font-semibold text-on-surface">
-            <span className="block text-[11px] font-semibold text-outline uppercase tracking-wider mb-1">BSN</span>
-            <input inputMode="numeric" value={form.bsn} onChange={(e) => update('bsn', e.target.value)} className="h-9 w-full rounded-md border border-outline-variant bg-surface px-3 text-xs font-mono-data" />
-          </label>
-        </div>
-        <div className="flex flex-wrap gap-2.5 pt-2 border-t border-surface-container">
-          <button type="submit" className="h-9 rounded-md bg-secondary px-4 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
-            Guardar cliente
-          </button>
-          <Link href="/crm/clientes/alta-ia" className="inline-flex h-9 items-center rounded-md border border-secondary px-3.5 text-xs font-semibold text-secondary hover:bg-blue-50 transition-colors">
-            Crear con IA
-          </Link>
-          <Link href="/crm/clientes" className="inline-flex h-9 items-center rounded-md border border-outline-variant px-3.5 text-xs font-semibold text-on-surface-variant hover:bg-surface transition-colors">
-            Cancelar
-          </Link>
-        </div>
-      </form>
-    </div>
-  );
+  return <main className="h-full overflow-y-auto space-y-4 p-4 sm:p-6"><header><h1 className="text-xl font-bold text-slate-900">Nuevo cliente</h1><p className="text-sm text-slate-600">La ficha y el acceso del portal se crean en el CRM.</p></header>
+    {error&&<p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+    {created&&<section role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><h2 className="font-bold text-emerald-900">Cliente creado: {created.name}</h2><p className="mt-1 text-sm text-emerald-900">Acceso inicial al portal (la contraseña solo se muestra ahora):</p><dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2"><div><dt className="text-xs text-slate-600">Usuario</dt><dd className="font-mono">{created.username}</dd></div><div><dt className="text-xs text-slate-600">Contraseña inicial</dt><dd className="font-mono">{created.password}</dd></div></dl><p className="mt-2 text-xs text-slate-600">Entrégala por un canal privado seguro. No se guarda en el navegador.</p><Link href="/crm/clientes" className="mt-3 inline-block text-sm font-bold text-blue-700 underline">Ir al directorio →</Link></section>}
+    <form onSubmit={submit} className="max-w-3xl space-y-4 rounded-xl border bg-white p-5 shadow-sm"><div className="grid gap-3 sm:grid-cols-2">{([['full_name','Nombre completo *','text',true],['email','Email','email',false],['phone','Teléfono','tel',false],['bsn','BSN','text',false]] as const).map(([key,label,type,required])=><label key={key} className="text-xs font-semibold text-slate-700"><span className="mb-1 block">{label}</span><input required={required} type={type} value={form[key]} onChange={(e)=>update(key,e.target.value)} maxLength={key==='bsn'?20:255} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"/></label>)}</div><div className="flex flex-wrap gap-2 border-t pt-4"><button disabled={saving} type="submit" className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{saving?'Guardando…':'Guardar cliente real'}</button><Link href="/crm/clientes/alta-ia" className="rounded-lg border px-4 py-2 text-sm font-semibold">Alta con IA</Link><Link href="/crm/clientes" className="rounded-lg border px-4 py-2 text-sm font-semibold">Cancelar</Link></div></form>
+  </main>;
 }

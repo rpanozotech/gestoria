@@ -5,20 +5,39 @@ import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PublishedContent from '@/components/PublishedContent';
+import { apiUrl } from '@/lib/api';
 
 export default function ContactoPage() {
   const { lang } = useLanguage();
   const english = lang === 'EN';
   const [submitted, setSubmitted] = useState(false);
+  const [legalConsent, setLegalConsent] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [topic, setTopic] = useState('mform');
   const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitError('');
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(apiUrl('/contact'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, topic, message, legal_consent: legalConsent }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'No se pudo guardar el mensaje.');
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'No se pudo guardar el mensaje.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -123,9 +142,9 @@ export default function ContactoPage() {
                     <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
                       <span className="material-symbols-outlined text-[36px]">check_circle</span>
                     </div>
-                    <h4 className="font-heading font-extrabold text-2xl text-slate-900">¡Mensaje enviado con éxito!</h4>
+                    <h4 className="font-heading font-extrabold text-2xl text-slate-900">Consulta guardada correctamente</h4>
                     <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                      Hemos recibido tu consulta y nuestro equipo se pondrá en contacto contigo en breve.
+                      Tu consulta quedó guardada en el CRM para que el equipo la revise. Para una respuesta inmediata, usa WhatsApp o correo.
                     </p>
                   </div>
                 ) : (
@@ -197,11 +216,14 @@ export default function ContactoPage() {
                       ></textarea>
                     </div>
 
+                    <label className="flex items-start gap-2 text-xs text-slate-600"><input type="checkbox" required checked={legalConsent} onChange={(event) => setLegalConsent(event.target.checked)} className="mt-0.5" /><span>Acepto el tratamiento de mis datos para responder a esta consulta. Consulta la <a className="underline" href="/privacidad">política de privacidad</a>.</span></label>
+                    {submitError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{submitError}</p>}
                     <button
                       type="submit"
+                      disabled={isSubmitting}
                       className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-heading font-extrabold text-sm tracking-wide shadow-lg shadow-blue-600/20 transition-all"
                     >
-                      Enviar Consulta Gratuita
+                      {isSubmitting ? 'Guardando…' : 'Enviar Consulta Gratuita'}
                     </button>
                   </form>
                 )}

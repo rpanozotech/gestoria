@@ -255,7 +255,7 @@ export default function ReservarCitaPage() {
                       Reservar otra fecha
                     </button>
                     <a
-                      href="/portal"
+                      href="https://portal.rp-gestoria.tech/portal/login"
                       className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-md"
                     >
                       Ir al Área de Cliente

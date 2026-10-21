@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { unlink } from 'node:fs/promises';
 import path from 'node:path';
 import multer from 'multer';
-import { query } from '../db/index.js';
+import { pool, query } from '../db/index.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { esTipoDocumentoPermitido, firmaDocumentoValida } from '../utils/upload.js';
 
@@ -78,9 +78,18 @@ router.post('/appointments', async (req: Request, res: Response) => {
   if (!['online_meet', 'llamada', 'presencial'].includes(modality)) {
     return res.status(400).json({ error: 'Modalidad de cita no válida.' });
   }
+  if (appointment_date < new Date().toISOString().slice(0, 10)) {
+    return res.status(400).json({ error: 'No se pueden solicitar citas en una fecha pasada.' });
+  }
 
+  const db = await pool.connect();
+  let transactionOpen = false;
   try {
-    const conflict = await query(
+    await db.query('BEGIN');
+    transactionOpen = true;
+    // Use the same per-date lock as public bookings to prevent race conditions.
+    await db.query('SELECT pg_advisory_xact_lock(48127, hashtext($1))', [appointment_date]);
+    const conflict = await db.query(
       `SELECT id FROM appointments
        WHERE appointment_date = $1 AND status NOT IN ('cancelada', 'completada')
          AND ($2::time < appointment_time + ((COALESCE(duration_minutes, 30) + 15) * interval '1 minute'))
@@ -88,18 +97,27 @@ router.post('/appointments', async (req: Request, res: Response) => {
        LIMIT 1`,
       [appointment_date, appointment_time]
     );
-    if (conflict.rows.length > 0) return res.status(409).json({ error: 'Ese horario ya no está disponible. Elige otra hora.' });
+    if (conflict.rows.length > 0) {
+      await db.query('ROLLBACK');
+      transactionOpen = false;
+      return res.status(409).json({ error: 'Ese horario ya no está disponible. Elige otra hora.' });
+    }
 
-    const result = await query(
+    const result = await db.query(
       `INSERT INTO appointments (client_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes)
        VALUES ($1, $2, $3, $4, 30, $5, 'pendiente', $6)
        RETURNING *`,
       [clientId, title.trim(), appointment_date, appointment_time, modality, notes ? `Solicitada desde el portal: ${String(notes).trim()}` : 'Solicitada desde el portal del cliente']
     );
+    await db.query('COMMIT');
+    transactionOpen = false;
     return res.status(201).json({ appointment: { ...result.rows[0], client_name: req.user?.full_name } });
   } catch (error) {
+    if (transactionOpen) await db.query('ROLLBACK').catch(() => undefined);
     console.error('Error al solicitar cita desde el portal:', error);
     return res.status(500).json({ error: 'No se pudo guardar la solicitud de cita.' });
+  } finally {
+    db.release();
   }
 });
 

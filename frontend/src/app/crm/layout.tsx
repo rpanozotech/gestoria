@@ -63,7 +63,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const [financeOpen, setFinanceOpen] = useState(pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas'));
   const [clientsOpen, setClientsOpen] = useState(pathname.startsWith('/crm/clientes'));
   const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(3);
+  const unreadCount = 0;
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -167,17 +167,18 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       label: 'OPERACIÓN',
       items: [
         { href: '/crm', label: 'Dashboard', icon: 'dashboard' },
-        { href: '/crm/tareas', label: 'Mi trabajo de hoy', icon: 'checklist', badge: '5' },
-        { href: '/crm/clientes', label: 'Clientes', icon: 'groups', badge: clientCount ? String(clientCount) : '1' },
+        { href: '/crm/tareas', label: 'Mi trabajo de hoy', icon: 'checklist' },
+        { href: '/crm/clientes', label: 'Clientes', icon: 'groups', badge: clientCount === null ? undefined : String(clientCount) },
         { href: '/crm/expedientes', label: 'Expedientes', icon: 'folder_open' },
-        { href: '/crm/agenda', label: 'Agenda y citas', icon: 'calendar_month', badge: '3' },
+        { href: '/crm/agenda', label: 'Agenda y citas', icon: 'calendar_month' },
+        { href: '/crm/contacto', label: 'Consultas web', icon: 'inbox' },
       ],
     },
     {
       label: 'FINANZAS',
       items: [
         { href: '/crm/facturacion', label: 'Facturación', icon: 'receipt_long' },
-        { href: '/crm/deudas', label: 'Cobros y deudas', icon: 'payments', badge: '4', badgeColor: 'bg-rose-50 text-rose-700 border border-rose-200' },
+        { href: '/crm/deudas', label: 'Cobros y deudas', icon: 'payments' },
         { href: '/crm/tarifas', label: 'Tarifas', icon: 'sell' },
       ],
     },
@@ -196,7 +197,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
         { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
         { href: '/crm/contenido', label: 'CMS', icon: 'language' },
-        { href: '/crm/backup', label: 'Copias de seguridad', icon: 'cloud_sync', badge: '1' },
+        { href: '/crm/backup', label: 'Copias de seguridad', icon: 'cloud_sync' },
       ],
     },
   ];
@@ -337,13 +338,13 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           )}
           <div className="flex items-center justify-between px-1 pt-0.5 text-xs">
             <Link
-              href="/"
+              href="https://rp-gestoria.tech/"
               className="text-slate-500 hover:text-slate-900 font-medium transition-colors flex items-center gap-1"
             >
               <span>← Web Pública</span>
             </Link>
             <Link
-              href="/portal"
+              href="https://portal.rp-gestoria.tech/portal/login"
               className="text-slate-500 hover:text-slate-900 font-medium transition-colors flex items-center gap-1"
             >
               <span>Portal Cliente ↗</span>
@@ -427,49 +428,14 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                   <div className="flex items-center justify-between pb-2 border-b border-surface-container">
                     <span className="font-bold text-xs text-on-surface">Notificaciones ({unreadCount})</span>
                     <div className="flex items-center gap-2">
-                      {unreadCount > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setUnreadCount(0)}
-                          className="text-[10px] text-secondary font-semibold hover:underline"
-                        >
-                          Marcar leídas
-                        </button>
-                      )}
+
                       <span className="text-[10px] text-slate-400 font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
                         Cerrar
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-xs">
-                    <Link
-                      href="/crm/documentos-ia"
-                      onClick={() => setShowNotifications(false)}
-                      className="p-2.5 rounded-lg bg-blue-50 border border-blue-200 block hover:bg-blue-100 transition-colors"
-                    >
-                      <span className="font-bold text-blue-900 block">Resolución Belastingdienst</span>
-                      <span className="text-[11px] text-blue-800">Nueva carta de liquidación recibida para Cliente seleccionado.</span>
-                    </Link>
-
-                    <Link
-                      href="/crm/facturacion"
-                      onClick={() => setShowNotifications(false)}
-                      className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 block hover:bg-amber-100 transition-colors"
-                    >
-                      <span className="font-bold text-amber-900 block">Presupuesto por Vencer</span>
-                      <span className="text-[11px] text-amber-800">PRE-2026-0002 vence en 3 días.</span>
-                    </Link>
-
-                    <Link
-                      href="/crm/agenda"
-                      onClick={() => setShowNotifications(false)}
-                      className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 block hover:bg-emerald-100 transition-colors"
-                    >
-                      <span className="font-bold text-emerald-900 block">Cita Confirmada</span>
-                      <span className="text-[11px] text-emerald-800">Videollamada M-Form con Cliente seleccionado a las 10:00.</span>
-                    </Link>
-                  </div>
+                  <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">Las notificaciones automáticas aún no están conectadas.</p>
                 </div>
               )}
             </div>
@@ -530,7 +496,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                   </Link>
 
                   <Link
-                    href="/portal"
+                    href="https://portal.rp-gestoria.tech/portal/login"
                     onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors"
                   >
@@ -538,7 +504,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                     <span>Probar Vista Cliente</span>
                   </Link>
                   <Link
-                    href="/"
+                    href="https://rp-gestoria.tech/"
                     onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors"
                   >

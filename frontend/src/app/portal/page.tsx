@@ -50,88 +50,9 @@ export default function PortalClientePage() {
   const { lang } = useLanguage();
   const english = lang === 'EN';
   const router = useRouter();
-  // Clientes disponibles para simular o cambiar vista
-  const defaultClients = [
-    {
-      id: '1',
-      full_name: 'Maria Popescu',
-      email: 'maria.popescu@gmail.com',
-      phone: '+31 6 81239845',
-      bsn: '982145672',
-      city: 'Eindhoven',
-      address: 'Strijpsestraat 142',
-      iban: 'NL91INGB0001234567',
-      digid_status: 'pendiente_activar',
-      dossier_code: 'EXP-2026-0041',
-      dossier_title: 'Activación DigiD + Solicitud Zorgtoeslag 2026',
-      dossier_status: 'en_belastingdienst',
-      dossier_progress: 65,
-      refund_amount: 2410,
-      monthly_zorg: 154,
-      monthly_huur: 0,
-      advisor: 'Rony P.',
-    },
-    {
-      id: '2',
-      full_name: 'Carlos Mendoza Ruiz',
-      email: 'carlos.mendoza@techmail.nl',
-      phone: '+34 654 321 987',
-      bsn: '817293845',
-      city: 'Ámsterdam',
-      address: 'Keizersgracht 421',
-      iban: 'NL44ABNA0412849201',
-      digid_status: 'activo',
-      dossier_code: 'EXP-2026-0042',
-      dossier_title: 'Declaración Fiscal M-Form 2026',
-      dossier_status: 'en_preparacion',
-      dossier_progress: 80,
-      refund_amount: 2890,
-      monthly_zorg: 0,
-      monthly_huur: 0,
-      advisor: 'Rony P.',
-    },
-    {
-      id: '3',
-      full_name: 'Lars Van Dijk',
-      email: 'lars.vandijk@techconsulting.nl',
-      phone: '+31 6 49201948',
-      bsn: '728194028',
-      city: 'Rotterdam',
-      address: 'Coolsingel 88',
-      iban: 'NL02RABO0319284756',
-      digid_status: 'activo',
-      dossier_code: 'EXP-2026-0043',
-      dossier_title: 'Alta Eenmanszaak KVK y BTW-nummer',
-      dossier_status: 'completado',
-      dossier_progress: 100,
-      refund_amount: 0,
-      monthly_zorg: 0,
-      monthly_huur: 0,
-      advisor: 'Rony P.',
-    },
-    {
-      id: '4',
-      full_name: 'Elena Morales Castillo',
-      email: 'elena.morales@hotmail.com',
-      phone: '+34 611 223 344',
-      bsn: '639102847',
-      city: 'Utrecht',
-      address: 'Oudegracht 120',
-      iban: 'NL88BUNQ2019283746',
-      digid_status: 'activo',
-      dossier_code: 'EXP-2026-0044',
-      dossier_title: 'Subsidio Huurtoeslag de Alquiler',
-      dossier_status: 'aprobado',
-      dossier_progress: 95,
-      refund_amount: 1450,
-      monthly_zorg: 154,
-      monthly_huur: 380,
-      advisor: 'Rony P.',
-    },
-  ];
 
-  // El portal usa el mismo registro que el CRM. Se conserva un cliente demo
-  // como respaldo para que la maqueta siga siendo navegable si no hay sesión.
+
+  // El portal solo muestra datos después de validar la sesión y recibir datos del backend.
   const [portalClientData, setPortalClientData] = useState<any>(null);
   const [advisorProfile, setAdvisorProfile] = useState<any>(null);
   const [publicServices, setPublicServices] = useState<any[]>([]);
@@ -366,111 +287,8 @@ export default function PortalClientePage() {
     }
   };
 
-  // =========================================================================
-  // SISTEMA COMPLETO DE CITAS Y SOLICITUD DESDE EL PORTAL DEL CLIENTE
-  // =========================================================================
-  const initialAppointments: PortalAppointment[] = [
-    {
-      id: '1',
-      client_name: 'Maria Popescu',
-      client_phone: '+31 6 81239845',
-      title: 'Seguimiento Telefónico Zorgtoeslag',
-      appointment_date: '2026-10-10',
-      appointment_time: '10:00:00',
-      modality: 'llamada',
-      status: 'confirmada',
-      advisor: 'Rony P.',
-      notes: 'Llamar para verificar si ya llegó la carta física con el código de activación DigiD.',
-    },
-    {
-      id: '8',
-      client_name: 'Maria Popescu',
-      client_phone: '+31 6 81239845',
-      title: 'Verificación Certificado DigiD',
-      appointment_date: '2026-10-05',
-      appointment_time: '10:00:00',
-      modality: 'llamada',
-      status: 'completada',
-      advisor: 'Rony P.',
-      notes: 'Revisión y confirmación de activación de código por SMS.',
-    },
-    {
-      id: '2',
-      client_name: 'Carlos Mendoza Ruiz',
-      client_phone: '+34 654 321 987',
-      title: 'Revisión M-Form Carlos Mendoza',
-      appointment_date: '2026-10-10',
-      appointment_time: '11:30:00',
-      modality: 'online_meet',
-      status: 'confirmada',
-      advisor: 'Rony P.',
-      notes: 'Revisar certificado de retenciones emitido en España antes del traslado a Ámsterdam.',
-    },
-    {
-      id: '7',
-      client_name: 'Carlos Mendoza Ruiz',
-      client_phone: '+34 654 321 987',
-      title: 'Firma Presencial Modelo 30% Ruling',
-      appointment_date: '2026-10-27',
-      appointment_time: '15:00:00',
-      modality: 'presencial',
-      status: 'confirmada',
-      advisor: 'Rony P.',
-      notes: 'Firma conjunta con empleador del formulario 30% Ruling ante la Belastingdienst.',
-    },
-    {
-      id: '3',
-      client_name: 'Lars Van Dijk',
-      client_phone: '+31 6 49201948',
-      title: 'Firma Presencial Documentación KVK',
-      appointment_date: '2026-10-10',
-      appointment_time: '16:00:00',
-      modality: 'presencial',
-      status: 'confirmada',
-      advisor: 'Rony P.',
-      notes: 'Firma de estatutos y verificación presencial de pasaporte en despacho.',
-    },
-    {
-      id: '5',
-      client_name: 'Lars Van Dijk',
-      client_phone: '+31 6 49201948',
-      title: 'Videollamada Liquidación BTW 3T',
-      appointment_date: '2026-10-15',
-      appointment_time: '12:00:00',
-      modality: 'online_meet',
-      status: 'confirmada',
-      advisor: 'Rony P.',
-      notes: 'Presentación trimestral del IVA (Omzetbelasting) y facturas deducibles.',
-    },
-    {
-      id: '4',
-      client_name: 'Elena Morales Castillo',
-      client_phone: '+34 611 223 344',
-      title: 'Consulta Telefónica Huurtoeslag',
-      appointment_date: '2026-10-12',
-      appointment_time: '09:30:00',
-      modality: 'llamada',
-      status: 'pendiente',
-      advisor: 'Rony P.',
-      notes: 'Resolver dudas sobre el contrato de arrendamiento en Utrecht y límite de ingresos.',
-    },
-    {
-      id: '6',
-      client_name: 'Elena Morales Castillo',
-      client_phone: '+34 611 223 344',
-      title: 'Consulta Deducción Hipoteca (Eigenwoningforfait)',
-      appointment_date: '2026-10-22',
-      appointment_time: '11:15:00',
-      modality: 'llamada',
-      status: 'confirmada',
-      advisor: 'Rony P.',
-      notes: 'Análisis fiscal sobre compra de vivienda habitual en Países Bajos.',
-    },
-  ];
-
-  const [allAppointments, setAllAppointments] = useState<PortalAppointment[]>(
-    process.env.NODE_ENV === 'production' ? [] : initialAppointments
-  );
+  // Agenda del portal sin citas predeterminadas: se llena exclusivamente desde PostgreSQL.
+  const [allAppointments, setAllAppointments] = useState<PortalAppointment[]>([]);
   const [aptFilter, setAptFilter] = useState<'todas' | 'proximas' | 'completadas'>('todas');
 
   // La agenda del portal refleja las citas guardadas en PostgreSQL.
@@ -721,7 +539,7 @@ export default function PortalClientePage() {
       {/* ========================================================================= */}
       <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 lg:px-10 h-16 sm:h-18 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="https://rp-gestoria.tech/" className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 rounded-xl overflow-hidden bg-slate-950 border border-slate-700 text-white flex items-center justify-center font-bold text-sm shadow-md group-hover:scale-105 transition-transform">
               <img src="/logo.png" alt="RP Asesoría" className="w-full h-full object-cover" />
             </div>

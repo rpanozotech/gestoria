@@ -518,7 +518,7 @@ export default function CRMClientesPage() {
       `Hola ${selectedClient.full_name},`,
       '',
       'Ya tienes acceso a tu Portal Cliente de RP Asesoría:',
-      'Enlace: https://rp-gestoria.tech/portal/login',
+      'Enlace: https://portal.rp-gestoria.tech/portal/login',
       `Usuario: ${portalAccess.username}`,
       `Contraseña inicial: ${portalAccess.password}`,
       '',
