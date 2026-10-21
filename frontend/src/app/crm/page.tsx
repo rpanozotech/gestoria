@@ -11,7 +11,9 @@ type DashboardData = {
     appointments_today: { total: number; completed: number; pending: number };
     active_dossiers: { total: number; belastingdienst: number };
     finances: { monthly_revenue: number; pending_revenue: number; pending_invoices_count: number };
+    debts?: { open_count: number; open_amount: number; overdue_count: number; overdue_amount: number };
   };
+  monthly_finance?: Array<{ month: string; billed: number; collected: number }>;
   today_appointments: Array<{ id: string; client_name: string; title: string; appointment_time: string; status: string }>;
   recent_dossiers: Array<{ id: string; client_name: string; title: string; code: string; status: string }>;
 };
@@ -74,6 +76,19 @@ export default function CRMDashboardPage() {
         <p className="mt-3 text-xs text-slate-500">Altas este mes: {data.kpis.client_stats.new_this_month} · Clientes incompletos: {data.kpis.client_stats.incomplete} · Citas pendientes hoy: {data.kpis.appointments_today.pending}</p>
       </section>
 
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-bold">Deudas y cobros pendientes</h2><Link href="/crm/deudas" className="text-sm font-semibold text-blue-700">Gestionar deudas →</Link></div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-lg border bg-slate-50 p-3"><span className="block text-xs text-slate-600">Facturas por cobrar</span><strong className="block text-xl">{loading ? '—' : euro(data.kpis.finances.pending_revenue)}</strong><span className="text-xs text-slate-500">{data.kpis.finances.pending_invoices_count} facturas</span></div>
+          <div className="rounded-lg border bg-slate-50 p-3"><span className="block text-xs text-slate-600">Deudas abiertas</span><strong className="block text-xl">{loading ? '—' : euro(data.kpis.debts?.open_amount ?? 0)}</strong><span className="text-xs text-slate-500">{data.kpis.debts?.open_count ?? 0} registros</span></div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3"><span className="block text-xs text-amber-800">Deudas vencidas</span><strong className="block text-xl text-amber-900">{loading ? '—' : euro(data.kpis.debts?.overdue_amount ?? 0)}</strong><span className="text-xs text-amber-800">{data.kpis.debts?.overdue_count ?? 0} vencidas</span></div>
+          <div className="rounded-lg border bg-slate-50 p-3"><span className="block text-xs text-slate-600">Cobrado este mes</span><strong className="block text-xl">{loading ? '—' : euro(data.kpis.finances.monthly_revenue)}</strong><span className="text-xs text-slate-500">Según facturas pagadas</span></div>
+        </div>
+      </section>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-bold">Facturación y cobros · últimos 6 meses</h2><Link href="/crm/facturacion" className="text-sm font-semibold text-blue-700">Ver facturación →</Link></div>
+        {data.monthly_finance?.length ? <><div className="flex h-44 items-end gap-2 border-b border-slate-200 px-2">{data.monthly_finance.map((item) => { const peak = Math.max(1, ...data.monthly_finance!.flatMap((x) => [x.billed, x.collected])); return <div key={item.month} className="flex h-full flex-1 flex-col justify-end" title={item.month + ': facturado ' + euro(item.billed) + ', cobrado ' + euro(item.collected)}><div className="flex h-[85%] items-end justify-center gap-1"><div className="w-1/3 rounded-t bg-blue-600" style={{height: Math.max(2, item.billed / peak * 100) + '%'}}/><div className="w-1/3 rounded-t bg-emerald-500" style={{height: Math.max(2, item.collected / peak * 100) + '%'}}/></div><span className="mt-2 truncate text-center text-xs text-slate-600">{item.month}</span></div>; })}</div><div className="mt-3 flex gap-4 text-xs text-slate-600"><span><i className="mr-1 inline-block h-2.5 w-2.5 bg-blue-600"/>Facturado</span><span><i className="mr-1 inline-block h-2.5 w-2.5 bg-emerald-500"/>Cobrado</span></div></> : <p className="py-6 text-center text-sm text-slate-500">{loading ? 'Cargando serie mensual…' : 'Sin datos de facturación en el período.'}</p>}
+      </section>
       <div className="grid gap-4 xl:grid-cols-2">
         <section aria-labelledby="appointments-heading" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between"><h2 id="appointments-heading" className="text-lg font-bold">Citas de hoy</h2><Link href="/crm/agenda" className="text-sm font-semibold text-blue-700">Ver agenda →</Link></div>
