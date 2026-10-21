@@ -1,0 +1,787 @@
+src/lib\a11y.ts:37: *   <tr onClick={abrir} {...activableConTeclado(abrir)} role-agnostic>
+src/components\CookieBanner.tsx:32:        <button type="button" onClick={() => save({ necessary: true, analytics: false, marketing: false })} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-800">Rechazar</button>
+src/components\CookieBanner.tsx:33:        <button type="button" onClick={() => setOpen(true)} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-800">Configurar</button>
+src/components\CookieBanner.tsx:34:        <button type="button" onClick={() => save({ necessary: true, analytics: true, marketing: true })} className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white">Aceptar</button>
+src/components\Footer.tsx:34:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">M-Form Renta</Link></li>
+src/components\Footer.tsx:35:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">DigiD Holanda</Link></li>
+src/components\Footer.tsx:36:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">Zorgtoeslag</Link></li>
+src/components\Footer.tsx:37:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">Seguro Médico</Link></li>
+src/components\Footer.tsx:38:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">Formulario U1</Link></li>
+src/components\Footer.tsx:46:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">Alta Autónomo ZZP</Link></li>
+src/components\Footer.tsx:47:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">Impuesto BTW Trimestral</Link></li>
+src/components\Footer.tsx:48:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">Importación RDW / BPM</Link></li>
+src/components\Footer.tsx:49:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">Residencia Fiscal</Link></li>
+src/components\Footer.tsx:50:              <li><Link href="/servicios" className="hover:text-blue-400 transition-colors">Paro UWV (WW)</Link></li>
+src/components\Footer.tsx:58:              <li><Link href="/portal" className="text-blue-400 font-bold hover:underline">Área Cliente (Mijn RP)</Link></li>
+src/components\Footer.tsx:59:              <li><Link href="/reservar" className="hover:text-blue-400 transition-colors">Reservar Cita</Link></li>
+src/components\Footer.tsx:60:              <li><Link href="/calculadora" className="hover:text-blue-400 transition-colors">Calculadora M-Form</Link></li>
+src/components\Footer.tsx:61:              <li><Link href="/como-funciona" className="hover:text-blue-400 transition-colors">Cómo funciona</Link></li>
+src/components\Footer.tsx:62:              <li><Link href="/nosotros" className="hover:text-blue-400 transition-colors">Sobre nosotros</Link></li>
+src/components\Footer.tsx:63:              <li><Link href="/faq" className="hover:text-blue-400 transition-colors">Preguntas Frecuentes</Link></li>
+src/components\Footer.tsx:64:              <li><Link href="/contacto" className="hover:text-blue-400 transition-colors">Contacto Directo</Link></li>
+src/components\Footer.tsx:73:            <Link href="/privacidad" className="hover:text-slate-300">Privacidad</Link>
+src/components\Footer.tsx:74:            <Link href="/cookies" className="hover:text-slate-300">Cookies</Link>
+src/components\Footer.tsx:75:            <Link href="/condiciones" className="hover:text-slate-300">Condiciones generales</Link>
+src/components\Footer.tsx:76:            <Link href="/desistimiento" className="hover:text-slate-300">Desistimiento</Link>
+src/components\Footer.tsx:77:            <Link href="/contacto" className="hover:text-slate-300">Contacto</Link>
+src/components\Navbar.tsx:29:      <a href="#contenido-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-slate-900 focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-white">Ir al contenido principal</a>
+src/components\Navbar.tsx:35:          <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group lg:w-[265px] xl:w-[280px]">
+src/components\Navbar.tsx:65:                  href={link.href}
+src/components\Navbar.tsx:83:              href="/reservar"
+src/components\Navbar.tsx:92:              href="/portal/login"
+src/components\Navbar.tsx:100:            <button
+src/components\Navbar.tsx:101:              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+src/components\Navbar.tsx:123:                  href={link.href}
+src/components\Navbar.tsx:124:                  onClick={() => setMobileMenuOpen(false)}
+src/components\Navbar.tsx:138:                href="/reservar"
+src/components\Navbar.tsx:139:                onClick={() => setMobileMenuOpen(false)}
+src/components\Navbar.tsx:146:                href="/portal/login"
+src/components\Navbar.tsx:147:                onClick={() => setMobileMenuOpen(false)}
+src/components\CookieSettingsLink.tsx:2:export default function CookieSettingsLink() { return <button type="button" onClick={() => window.dispatchEvent(new Event('rp-open-cookie-settings'))} className="hover:text-slate-300 underline-offset-2 hover:underline">Configurar cookies</button>; }
+src/app/crm\ajustes-datos-empresa\page.tsx:64:          <button 
+src/app/crm\ajustes-datos-empresa\page.tsx:66:            onClick={save} 
+src/app/crm\ajustes-datos-empresa\page.tsx:76:        <Link href="/crm/ajustes-datos-empresa" className="pb-1.5 border-b-2 border-secondary text-secondary flex items-center gap-1.5">
+src/app/crm\ajustes-datos-empresa\page.tsx:80:        <Link href="/crm/integraciones" className="pb-1.5 border-b-2 border-transparent text-outline hover:text-on-surface flex items-center gap-1.5">
+src/app/crm\ajustes-datos-empresa\page.tsx:84:        <Link href="/crm/preferencias-avisos" className="pb-1.5 border-b-2 border-transparent text-outline hover:text-on-surface flex items-center gap-1.5">
+src/app/crm\agenda\page.tsx:471:            <button
+src/app/crm\agenda\page.tsx:473:              onClick={handlePrevMonth}
+src/app/crm\agenda\page.tsx:483:            <button
+src/app/crm\agenda\page.tsx:485:              onClick={handleNextMonth}
+src/app/crm\agenda\page.tsx:492:            <button
+src/app/crm\agenda\page.tsx:494:              onClick={handleGoToDefaultOct2026}
+src/app/crm\agenda\page.tsx:529:            <button
+src/app/crm\agenda\page.tsx:531:              onClick={() => setViewMode('calendario')}
+src/app/crm\agenda\page.tsx:542:            <button
+src/app/crm\agenda\page.tsx:544:              onClick={() => setViewMode('lista')}
+src/app/crm\agenda\page.tsx:570:          <button
+src/app/crm\agenda\page.tsx:572:            onClick={handleExportAgendaCsv}
+src/app/crm\agenda\page.tsx:582:            href="/crm/backup"
+src/app/crm\agenda\page.tsx:591:          <button type="button"
+src/app/crm\agenda\page.tsx:592:            onClick={() => handleOpenNewForDate(selectedDate)}
+src/app/crm\agenda\page.tsx:637:                    onClick={() => {
+src/app/crm\agenda\page.tsx:786:                <button
+src/app/crm\agenda\page.tsx:788:                  onClick={() => handleOpenNewForDate(selectedDate)}
+src/app/crm\agenda\page.tsx:827:                          <button
+src/app/crm\agenda\page.tsx:829:                            onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+src/app/crm\agenda\page.tsx:872:                        <button
+src/app/crm\agenda\page.tsx:874:                          onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+src/app/crm\agenda\page.tsx:883:                          <button
+src/app/crm\agenda\page.tsx:885:                            onClick={() => setCallModal({ client: apt.client_name, phone: apt.client_phone })}
+src/app/crm\agenda\page.tsx:894:                          <button
+src/app/crm\agenda\page.tsx:896:                            onClick={() => setMeetModal(`meet.google.com/nxg-${apt.id}-asesoria`)}
+src/app/crm\agenda\page.tsx:913:                        <button
+src/app/crm\agenda\page.tsx:915:                          onClick={() => handleToggleComplete(apt.id)}
+src/app/crm\agenda\page.tsx:932:                          <button
+src/app/crm\agenda\page.tsx:934:                            onClick={() => handleCancelAppointment(apt.id)}
+src/app/crm\agenda\page.tsx:943:                        <button
+src/app/crm\agenda\page.tsx:945:                          onClick={() => handleDeleteAppointment(apt.id)}
+src/app/crm\agenda\page.tsx:967:                  <button
+src/app/crm\agenda\page.tsx:969:                    onClick={() => handleOpenNewForDate(selectedDate)}
+src/app/crm\agenda\page.tsx:1027:                        <button
+src/app/crm\agenda\page.tsx:1029:                          onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+src/app/crm\agenda\page.tsx:1065:                      <button
+src/app/crm\agenda\page.tsx:1067:                        onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+src/app/crm\agenda\page.tsx:1076:                        <button type="button"
+src/app/crm\agenda\page.tsx:1077:                          onClick={() => setCallModal({ client: apt.client_name, phone: apt.client_phone })}
+src/app/crm\agenda\page.tsx:1086:                        <button type="button"
+src/app/crm\agenda\page.tsx:1087:                          onClick={() => setMeetModal(`meet.google.com/nxg-${apt.id}-asesoria`)}
+src/app/crm\agenda\page.tsx:1103:                    <button type="button"
+src/app/crm\agenda\page.tsx:1104:                      onClick={() => handleToggleComplete(apt.id)}
+src/app/crm\agenda\page.tsx:1135:              <button
+src/app/crm\agenda\page.tsx:1137:                onClick={() => setShowNewAptModal(false)}
+src/app/crm\agenda\page.tsx:1152:                  <button
+src/app/crm\agenda\page.tsx:1154:                    onClick={() => {
+src/app/crm\agenda\page.tsx:1170:                  <button
+src/app/crm\agenda\page.tsx:1172:                    onClick={() => {
+src/app/crm\agenda\page.tsx:1188:                  <button
+src/app/crm\agenda\page.tsx:1190:                    onClick={() => {
+src/app/crm\agenda\page.tsx:1270:              <button
+src/app/crm\agenda\page.tsx:1272:                onClick={() => setShowNewAptModal(false)}
+src/app/crm\agenda\page.tsx:1277:              <button
+src/app/crm\agenda\page.tsx:1302:              <button type="button"
+src/app/crm\agenda\page.tsx:1303:                onClick={() => setCallModal(null)}
+src/app/crm\agenda\page.tsx:1310:                  href={`tel:${callModal.phone}`}
+src/app/crm\agenda\page.tsx:1334:              <button type="button"
+src/app/crm\agenda\page.tsx:1335:                onClick={() => setMeetModal(null)}
+src/app/crm\agenda\page.tsx:1340:              <button type="button"
+src/app/crm\agenda\page.tsx:1341:                onClick={() => {
+src/components\PublishedContent.tsx:83:                  <Link href={block.cta.href || '/'} className="mt-5 inline-flex rounded-xl bg-[#f28c28] px-5 py-3 font-bold text-white">{block.cta.label}</Link>
+src/components\ui\IconButton.tsx:14:    <button
+src/components\ui\Button.tsx:27:    <button
+src/components\ui\Modal.tsx:26:          <IconButton ref={closeRef} label="Cerrar" onClick={onClose}><span aria-hidden="true">×</span></IconButton>
+src/app/crm\page.tsx:116:            <button
+src/app/crm\page.tsx:118:              onClick={() => setTaskFilter('todas')}
+src/app/crm\page.tsx:127:            <button
+src/app/crm\page.tsx:129:              onClick={() => setTaskFilter('urgentes')}
+src/app/crm\page.tsx:138:            <button
+src/app/crm\page.tsx:140:              onClick={() => setTaskFilter('en_espera')}
+src/app/crm\page.tsx:149:            <button
+src/app/crm\page.tsx:151:              onClick={() => setTaskFilter('completadas')}
+src/app/crm\page.tsx:161:              href="/crm/tareas"
+src/app/crm\page.tsx:212:                      href="/crm/tareas"
+src/app/crm\page.tsx:254:              <Link href="/crm/facturacion" className="text-xs font-semibold text-[#0055D4] hover:underline">
+src/app/crm\page.tsx:343:            href="/crm/backup"
+src/app/crm\page.tsx:351:            href="/crm/facturacion"
+src/app/crm\page.tsx:359:            href="/crm/documentos-ia"
+src/app/crm\page.tsx:367:            href="/crm/clientes/alta-ia"
+src/app/crm\asesor-portal\page.tsx:58:          <button 
+src/app/crm\asesor-portal\page.tsx:61:            onClick={save} 
+src/app/crm\asesor-portal\page.tsx:72:          <button type="button" onClick={() => window.location.reload()} className="font-bold underline text-xs">Reintentar</button>
+src/app/crm\obligaciones\page.tsx:76:            <Link href="/crm/deudas" className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1">
+src/app/crm\obligaciones\page.tsx:88:        <button
+src/app/crm\obligaciones\page.tsx:90:          onClick={() => setOpen(true)}
+src/app/crm\obligaciones\page.tsx:129:                  <button
+src/app/crm\obligaciones\page.tsx:131:                    onClick={() => remove(item)}
+src/app/crm\obligaciones\page.tsx:149:              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar" className="text-outline hover:text-on-surface">
+src/app/crm\obligaciones\page.tsx:172:              <button type="button" onClick={() => setOpen(false)} className="rounded-md border border-outline-variant px-3 py-1.5 text-xs font-semibold text-on-surface hover:bg-surface">
+src/app/crm\obligaciones\page.tsx:175:              <button type="submit" disabled={busy} className="rounded-md bg-secondary px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 disabled:opacity-50">
+src/app/crm\integraciones\page.tsx:79:          href="/crm/ajustes-datos-empresa"
+src/app/crm\integraciones\page.tsx:86:          href="/crm/integraciones"
+src/app/crm\integraciones\page.tsx:93:          href="/crm/preferencias-avisos"
+src/app/crm\integraciones\page.tsx:219:                <button
+src/app/crm\integraciones\page.tsx:222:                  onClick={() => save(channel)}
+src/app/crm\facturacion\page.tsx:433:          <button
+src/app/crm\facturacion\page.tsx:435:            onClick={handleExportCsv}
+src/app/crm\facturacion\page.tsx:444:            href="/crm/backup"
+src/app/crm\facturacion\page.tsx:452:          <button type="button"
+src/app/crm\facturacion\page.tsx:453:            onClick={openQuoteModal}
+src/app/crm\facturacion\page.tsx:465:          <button type="button"
+src/app/crm\facturacion\page.tsx:466:            onClick={() => setTab('facturas')}
+src/app/crm\facturacion\page.tsx:474:          <button type="button"
+src/app/crm\facturacion\page.tsx:475:            onClick={() => setTab('presupuestos')}
+src/app/crm\facturacion\page.tsx:504:          <button type="button" onClick={() => void cargarFacturacion()} className="font-semibold underline">
+src/app/crm\facturacion\page.tsx:530:                    onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
+src/app/crm\facturacion\page.tsx:536:                      <button
+src/app/crm\facturacion\page.tsx:538:                        onClick={(e) => {
+src/app/crm\facturacion\page.tsx:578:                        <button
+src/app/crm\facturacion\page.tsx:580:                          onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
+src/app/crm\facturacion\page.tsx:588:                          <button
+src/app/crm\facturacion\page.tsx:590:                            onClick={(e) => {
+src/app/crm\facturacion\page.tsx:602:                        <button
+src/app/crm\facturacion\page.tsx:604:                          onClick={(e) => {
+src/app/crm\facturacion\page.tsx:649:                    onClick={(e) => {
+src/app/crm\facturacion\page.tsx:658:                      <button
+src/app/crm\facturacion\page.tsx:660:                        onClick={(e) => {
+src/app/crm\facturacion\page.tsx:711:                        <button
+src/app/crm\facturacion\page.tsx:713:                          onClick={(e) => {
+src/app/crm\facturacion\page.tsx:724:                          <button
+src/app/crm\facturacion\page.tsx:726:                            onClick={(e) => { e.stopPropagation(); handleConvertToInvoice(q); }}
+src/app/crm\facturacion\page.tsx:734:                          <button
+src/app/crm\facturacion\page.tsx:736:                            onClick={(e) => { e.stopPropagation(); handleDeleteQuote(q); }}
+src/app/crm\facturacion\page.tsx:773:              <button
+src/app/crm\facturacion\page.tsx:775:                onClick={() => setShowNewQuoteModal(false)}
+src/app/crm\facturacion\page.tsx:805:                    <button
+src/app/crm\facturacion\page.tsx:807:                      onClick={handleSelectAllQuoteServices}
+src/app/crm\facturacion\page.tsx:813:                    <button
+src/app/crm\facturacion\page.tsx:815:                      onClick={handleClearQuoteServices}
+src/app/crm\facturacion\page.tsx:830:                        onClick={() => toggleQuoteService(s.id)}
+src/app/crm\facturacion\page.tsx:886:                          <button
+src/app/crm\facturacion\page.tsx:888:                            onClick={() => toggleQuoteService(item.id)}
+src/app/crm\facturacion\page.tsx:906:                    <button
+src/app/crm\facturacion\page.tsx:908:                      onClick={() => {
+src/app/crm\facturacion\page.tsx:960:              <button
+src/app/crm\facturacion\page.tsx:962:                onClick={() => setShowNewQuoteModal(false)}
+src/app/crm\facturacion\page.tsx:967:              <button
+src/app/crm\facturacion\page.tsx:984:            <div className="flex items-center justify-between border-b border-surface-container pb-3"><div><h2 className="text-lg font-bold">{['enviado','pendiente','aceptado','convertido','pagado'].includes(editingQuote.status) ? 'Crear revisión de presupuesto' : 'Editar presupuesto'}</h2><p className="text-xs text-on-surface-variant">Los precios son finales e incluyen IVA.</p></div><button type="button" onClick={() => setEditingQuote(null)} aria-label="Cerrar editor" className="p-2"><span className="material-symbols-outlined">close</span></button></div>
+src/app/crm\facturacion\page.tsx:985:            <div className="mt-4 space-y-3">{editingQuote.items.map((item: any, index: number) => <div key={index} className="grid gap-2 rounded-lg border border-outline-variant p-3 sm:grid-cols-[1fr_90px_120px_32px]"><input value={item.description} onChange={e=>setEditingQuote((q:any)=>({...q,items:q.items.map((x:any,i:number)=>i===index?{...x,description:e.target.value}:x)}))} className="h-9 rounded border border-outline-variant px-2 text-sm" aria-label="Descripción del servicio"/><input type="number" min="1" step="1" value={item.quantity} onChange={e=>setEditingQuote((q:any)=>({...q,items:q.items.map((x:any,i:number)=>i===index?{...x,quantity:Number(e.target.value)}:x)}))} className="h-9 rounded border border-outline-variant px-2 text-sm" aria-label="Cantidad"/><input type="number" min="0.01" step="0.01" value={item.unit_price} onChange={e=>setEditingQuote((q:any)=>({...q,items:q.items.map((x:any,i:number)=>i===index?{...x,unit_price:Number(e.target.value)}:x)}))} className="h-9 rounded border border-outline-variant px-2 text-sm" aria-label="Precio final unitario (IVA incluido)"/><button type="button" onClick={()=>setEditingQuote((q:any)=>({...q,items:q.items.filter((_:any,i:number)=>i!==index)}))} className="text-rose-600" aria-label="Eliminar línea"><span className="material-symbols-outlined">delete</span></button><p className="sm:col-span-4 text-right text-xs font-semibold text-secondary">Total línea: € {(Number(item.quantity||0)*Number(item.unit_price||0)).toFixed(2)} · IVA incluido</p></div>)}<button type="button" onClick={()=>setEditingQuote((q:any)=>({...q,items:[...q.items,{description:'Nuevo servicio',quantity:1,unit_price:0,total:0,manual_price:true}]}))} className="rounded border border-secondary px-3 py-2 text-xs font-semibold text-secondary">+ Añadir servicio</button><label className="block text-xs font-semibold">Fecha de validez<input type="date" value={editingQuote.valid_until || ''} onChange={e=>setEditingQuote((q:any)=>({...q,valid_until:e.target.value}))} className="mt-1 h-9 w-full rounded border border-outline-variant px-2"/></label><label className="block text-xs font-semibold">Notas para el cliente<textarea value={editingQuote.notes || ''} onChange={e=>setEditingQuote((q:any)=>({...q,notes:e.target.value}))} rows={2} className="mt-1 w-full rounded border border-outline-variant p-2"/></label><label className="block text-xs font-semibold">Notas internas<textarea value={editingQuote.internal_notes || ''} onChange={e=>setEditingQuote((q:any)=>({...q,internal_notes:e.target.value}))} rows={2} className="mt-1 w-full rounded border border-outline-variant p-2"/></label><label className="block text-xs font-semibold">Motivo de modificación (opcional)<input value={editReason} onChange={e=>setEditReason(e.target.value)} className="mt-1 h-9 w-full rounded border border-outline-variant px-2"/></label><div className="flex justify-end gap-2 border-t border-surface-container pt-4"><button type="button" onClick={()=>setEditingQuote(null)} className="rounded border border-outline-variant px-4 py-2 text-xs font-semibold">Cancelar</button><button type="button" onClick={saveQuoteEdit} className="rounded bg-secondary px-4 py-2 text-xs font-semibold text-white">Guardar {['enviado','pendiente','aceptado','convertido','pagado'].includes(editingQuote.status)?'revisión':'borrador'}</button></div></div>
+src/app/crm\facturacion\page.tsx:1011:                {selectedDoc.type === 'quote' && <button type="button" onClick={() => openQuoteEditor(selectedDoc.data)} className="h-7 sm:h-8 px-2 sm:px-3 bg-amber-600 text-white rounded-lg text-[11px] sm:text-xs font-semibold flex items-center gap-1" title="Editar presupuesto o crear revisión"><span className="material-symbols-outlined text-[14px]">edit</span><span className="hidden sm:inline">Editar presupuesto</span></button>}
+src/app/crm\facturacion\page.tsx:1012:                <button
+src/app/crm\facturacion\page.tsx:1014:                  onClick={() => window.print()}
+src/app/crm\facturacion\page.tsx:1023:                <button
+src/app/crm\facturacion\page.tsx:1025:                  onClick={() => {
+src/app/crm\facturacion\page.tsx:1036:                <button
+src/app/crm\facturacion\page.tsx:1038:                  onClick={() => setSelectedDoc(null)}
+src/app/crm\facturacion\page.tsx:1200:                  <button
+src/app/crm\facturacion\page.tsx:1202:                    onClick={() => {
+src/app/crm\facturacion\page.tsx:1221:                  <button
+src/app/crm\facturacion\page.tsx:1223:                    onClick={() => {
+src/app/crm\facturacion\page.tsx:1234:                <button
+src/app/crm\facturacion\page.tsx:1236:                  onClick={() => setSelectedDoc(null)}
+src/app/crm\tarifas\page.tsx:381:          <button
+src/app/crm\tarifas\page.tsx:383:            onClick={() => setShowAddModal(true)}
+src/app/crm\tarifas\page.tsx:390:          <button
+src/app/crm\tarifas\page.tsx:392:            onClick={handleResetDefaults}
+src/app/crm\tarifas\page.tsx:432:            <button type="button"
+src/app/crm\tarifas\page.tsx:433:              onClick={() => handleApplyBulkDiscount(10)}
+src/app/crm\tarifas\page.tsx:438:            <button type="button"
+src/app/crm\tarifas\page.tsx:439:              onClick={() => handleApplyBulkDiscount(-10)}
+src/app/crm\tarifas\page.tsx:444:            <button type="button"
+src/app/crm\tarifas\page.tsx:445:              onClick={() => handleApplyBulkDiscount(-15)}
+src/app/crm\tarifas\page.tsx:479:            <button
+src/app/crm\tarifas\page.tsx:482:              onClick={() => setActiveCategory(tab.id)}
+src/app/crm\tarifas\page.tsx:591:                      <button
+src/app/crm\tarifas\page.tsx:593:                        onClick={() => handleToggleActive(srv.id)}
+src/app/crm\tarifas\page.tsx:610:                          <button
+src/app/crm\tarifas\page.tsx:612:                            onClick={() => handleSaveEdit(srv.id)}
+src/app/crm\tarifas\page.tsx:618:                          <button
+src/app/crm\tarifas\page.tsx:620:                            onClick={() => setEditingId(null)}
+src/app/crm\tarifas\page.tsx:627:                        <button
+src/app/crm\tarifas\page.tsx:629:                          onClick={() => handleStartEdit(srv)}
+src/app/crm\tarifas\page.tsx:654:              <button type="button" aria-label="Cerrar nuevo trámite" onClick={() => setShowAddModal(false)} className="text-on-surface-variant hover:text-on-surface text-sm">✕</button>
+src/app/crm\tarifas\page.tsx:734:                <button
+src/app/crm\tarifas\page.tsx:736:                  onClick={() => setShowAddModal(false)}
+src/app/crm\tarifas\page.tsx:741:                <button
+src/app/crm\tareas\page.tsx:245:            <button type="button" className="h-7 w-7 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">‹</button>
+src/app/crm\tareas\page.tsx:251:            <button type="button" className="h-7 w-7 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">›</button>
+src/app/crm\tareas\page.tsx:265:              <button
+src/app/crm\tareas\page.tsx:268:                onClick={() => setFilter(val as string)}
+src/app/crm\tareas\page.tsx:294:            <button type="button" className="h-8 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-semibold flex items-center gap-1">
+src/app/crm\tareas\page.tsx:298:            <button type="button" className="h-8 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-semibold flex items-center gap-1">
+src/app/crm\tareas\page.tsx:308:            <button type="button" onClick={() => setNotice('')} className="text-blue-500 font-bold">✕</button>
+src/app/crm\tareas\page.tsx:327:          <button type="button" onClick={() => setNotice('Tareas asignadas.')} className="h-7 px-2.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1">
+src/app/crm\tareas\page.tsx:331:          <button type="button" onClick={() => setNotice('Tareas pospuestas.')} className="h-7 px-2.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1">
+src/app/crm\tareas\page.tsx:335:          <button type="button" onClick={() => setNotice('Cliente marcado en espera.')} className="h-7 px-2.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1">
+src/app/crm\tareas\page.tsx:339:          <button type="button" onClick={() => setNotice('Seguimiento creado.')} className="h-7 px-2.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1">
+src/app/crm\tareas\page.tsx:350:              onClick={() => setSelected(task)}
+src/app/crm\tareas\page.tsx:435:              <button
+src/app/crm\tareas\page.tsx:438:                onClick={() => setSelected(null)}
+src/app/crm\tareas\page.tsx:455:              <button
+src/app/crm\tareas\page.tsx:458:                onClick={() => setDetailTab(t)}
+src/app/crm\tareas\page.tsx:495:                  href="/crm/clientes/demo-client-1"
+src/app/crm\tareas\page.tsx:516:              <button
+src/app/crm\tareas\page.tsx:518:                onClick={() => setNotice('Tarea marcada como completada.')}
+src/app/crm\tareas\page.tsx:524:                <button
+src/app/crm\tareas\page.tsx:526:                  onClick={() => setNotice('Pospuesta.')}
+src/app/crm\tareas\page.tsx:531:                <button
+src/app/crm\tareas\page.tsx:533:                  onClick={() => setNotice('En espera cliente.')}
+src/app/crm\tareas\page.tsx:538:                <button
+src/app/crm\tareas\page.tsx:540:                  onClick={() => setNotice('Seguimiento creado.')}
+src/app/crm\tareas\page.tsx:545:                <button
+src/app/crm\tareas\page.tsx:547:                  onClick={() => setNotice('Asignar tarea.')}
+src/app/crm\tareas\page.tsx:566:              <button
+src/app/crm\tareas\page.tsx:568:                onClick={() => setNotice('Añadir siguiente paso.')}
+src/app/crm\expedientes\page.tsx:51:          href="/crm/clientes"
+src/app/crm\expedientes\page.tsx:73:              href="/crm/clientes"
+src/app/crm\expedientes\page.tsx:97:                    href={`/crm/expedientes/${item.id}`}
+src/app/crm\expedientes\page.tsx:115:                    href={`/crm/expedientes/${item.id}`}
+src/app/crm\layout.tsx:21:      href={item.href}
+src/app/crm\layout.tsx:22:      onClick={onClick}
+src/app/crm\layout.tsx:244:            <Link href="/crm" className="flex items-center gap-2.5 min-w-0">
+src/app/crm\layout.tsx:257:              <button
+src/app/crm\layout.tsx:259:                onClick={() => setSidebarCollapsed((value) => !value)}
+src/app/crm\layout.tsx:266:              <button
+src/app/crm\layout.tsx:268:                onClick={() => setMobileMenuOpen(false)}
+src/app/crm\layout.tsx:287:                      <button
+src/app/crm\layout.tsx:289:                        onClick={() => setOpenGroups((groups) => ({ ...groups, [group.label]: !isOpen }))}
+src/app/crm\layout.tsx:303:                    <NavLink key={item.href} item={item} pathname={pathname} collapsed={sidebarCollapsed} onClick={() => setMobileMenuOpen(false)} />
+src/app/crm\layout.tsx:340:              href="/"
+src/app/crm\layout.tsx:346:              href="/portal"
+src/app/crm\layout.tsx:358:          onClick={() => setMobileMenuOpen(false)}
+src/app/crm\layout.tsx:369:            <button
+src/app/crm\layout.tsx:371:              onClick={() => setMobileMenuOpen(true)}
+src/app/crm\layout.tsx:380:            <button type="button"
+src/app/crm\layout.tsx:381:              onClick={() => setShowSearchModal(true)}
+src/app/crm\layout.tsx:396:              href={pathname === '/crm/tareas' ? '/crm/agenda' : '/crm/clientes/alta-ia'}
+src/app/crm\layout.tsx:406:              <button type="button"
+src/app/crm\layout.tsx:407:                onClick={() => {
+src/app/crm\layout.tsx:431:                        <button
+src/app/crm\layout.tsx:433:                          onClick={() => setUnreadCount(0)}
+src/app/crm\layout.tsx:439:                      <span className="text-[10px] text-slate-400 font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
+src/app/crm\layout.tsx:447:                      href="/crm/documentos-ia"
+src/app/crm\layout.tsx:448:                      onClick={() => setShowNotifications(false)}
+src/app/crm\layout.tsx:456:                      href="/crm/facturacion"
+src/app/crm\layout.tsx:457:                      onClick={() => setShowNotifications(false)}
+src/app/crm\layout.tsx:465:                      href="/crm/agenda"
+src/app/crm\layout.tsx:466:                      onClick={() => setShowNotifications(false)}
+src/app/crm\layout.tsx:479:              <button type="button"
+src/app/crm\layout.tsx:480:                onClick={() => {
+src/app/crm\layout.tsx:515:                    href="/crm/backup"
+src/app/crm\layout.tsx:516:                    onClick={() => setShowUserMenu(false)}
+src/app/crm\layout.tsx:524:                    href="/crm/tarifas"
+src/app/crm\layout.tsx:525:                    onClick={() => setShowUserMenu(false)}
+src/app/crm\layout.tsx:533:                    href="/portal"
+src/app/crm\layout.tsx:534:                    onClick={() => setShowUserMenu(false)}
+src/app/crm\layout.tsx:541:                    href="/"
+src/app/crm\layout.tsx:542:                    onClick={() => setShowUserMenu(false)}
+src/app/crm\layout.tsx:549:                    <button type="button"
+src/app/crm\layout.tsx:550:                      onClick={() => {
+src/app/crm\layout.tsx:589:              <button type="button" aria-label="Cerrar búsqueda" onClick={() => setShowSearchModal(false)} className="min-h-11 min-w-11 text-slate-400 hover:text-on-surface">
+src/app/crm\layout.tsx:599:                    href={res.href}
+src/app/crm\layout.tsx:600:                    onClick={() => setShowSearchModal(false)}
+src/app/crm\preferencias-avisos\page.tsx:149:          href="/crm/ajustes-datos-empresa"
+src/app/crm\preferencias-avisos\page.tsx:156:          href="/crm/integraciones"
+src/app/crm\preferencias-avisos\page.tsx:163:          href="/crm/preferencias-avisos"
+src/app/crm\preferencias-avisos\page.tsx:208:            <button
+src/app/crm\preferencias-avisos\page.tsx:210:              onClick={subscribe}
+src/app/crm\preferencias-avisos\page.tsx:216:            <button
+src/app/crm\preferencias-avisos\page.tsx:218:              onClick={unsubscribe}
+src/app/crm\contenido\page.tsx:63:          <button
+src/app/crm\contenido\page.tsx:65:            onClick={() => save('draft')}
+src/app/crm\contenido\page.tsx:70:          <button
+src/app/crm\contenido\page.tsx:72:            onClick={() => save('published')}
+src/app/crm\expedientes\[id]\page.tsx:34:  if (!dossier) return <div className="space-y-3"><Link href="/crm/expedientes" className="text-xs font-semibold text-secondary">← Volver a expedientes</Link><div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error || 'Expediente no encontrado'}</div></div>;
+src/app/crm\expedientes\[id]\page.tsx:40:        <Link href="/crm/expedientes" className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1">
+src/app/crm\expedientes\[id]\page.tsx:46:        <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-primary">{(dossier.client_name || 'LC').slice(0, 2).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h1 className="text-lg font-bold">{dossier.client_name || 'Cliente'}</h1><span className="rounded-md border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-700">{dossier.status || 'En curso'}</span></div><p className="text-[11px] text-on-surface-variant">{dossier.code} · {dossier.category || 'Trámite'} · Cliente particular</p></div><Link href="/crm/clientes/demo-client-1" className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-secondary">Ver ficha completa ↗</Link><button type="button" onClick={() => setError('Acciones rápidas disponibles en staging.')} className="rounded-md border border-outline-variant px-2.5 py-1.5 text-[11px] font-bold">⋯</button></div>
+src/app/crm\expedientes\[id]\page.tsx:49:      <nav className="flex gap-1 overflow-x-auto border-b border-surface-container shrink-0">{['Vista general', 'Documentos', 'Comunicaciones', 'Notas', 'Historial', 'Facturación'].map((item) => <button key={item} type="button" onClick={() => setTab(item)} className={'whitespace-nowrap border-b-2 px-3 py-1.5 text-[11px] font-semibold ' + (tab === item ? 'border-secondary text-secondary' : 'border-transparent text-on-surface-variant')}>{item}</button>)}</nav>
+src/app/crm\expedientes\[id]\page.tsx:52:      <div className="space-y-3"><section className="rounded-lg border border-outline-variant bg-surface-container-lowest p-3 shadow-sm"><div className="flex items-center justify-between"><div><h2 className="text-sm font-bold">Documentos requeridos</h2><p className="text-[11px] text-on-surface-variant">{completed} de {steps.length} completados</p></div><span className="text-[11px] font-bold text-secondary">Ver todos →</span></div><div className="mt-2 divide-y divide-surface-container">{steps.map((step) => <label key={step.id} className="flex items-center gap-2 py-2"><input type="checkbox" checked={step.status === 'completed'} onChange={() => undefined} /><span className={'text-xs ' + (step.status === 'completed' ? 'text-on-surface-variant line-through' : 'font-semibold')}>{step.title}</span><span className="ml-auto text-[10px] text-on-surface-variant">{dateLabel(step.due_date)}</span></label>)}</div></section><section className="rounded-lg border border-outline-variant bg-surface-container-lowest p-3 shadow-sm"><h2 className="text-sm font-bold">Notas internas</h2><p className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs">Pendiente de recibir extractos bancarios. Recordar revisar el M-form antes de la presentación.</p><button type="button" onClick={() => setTab('Notas')} className="mt-2 text-[11px] font-bold text-secondary">+ Añadir nota</button></section></div>
+src/app/crm\expedientes\[id]\page.tsx:53:      <section className="rounded-lg border border-outline-variant bg-surface-container-lowest p-3 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-bold">Últimas comunicaciones</h2><Link href="/crm/chat-ia" className="text-[11px] font-bold text-secondary">Ver todas →</Link></div><div className="mt-2 divide-y divide-surface-container">{(messages.length ? messages : [{ id: 'demo', body: 'Perfecto, muchas gracias por la explicación. Adjunto el comprobante.', author_name: dossier.client_name, created_at: '2026-11-18' }, { id: 'demo2', body: 'Te confirmo que hemos recibido la documentación.', author_name: 'Usuario de prueba', created_at: '2026-11-17' }]).map((message) => <article key={message.id} className="py-2"><div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-primary">{(message.author_name || 'RP').slice(0, 2).toUpperCase()}</div><div><p className="text-xs font-semibold">{message.author_name}</p><p className="text-xs text-on-surface-variant">{message.body}</p><p className="mt-1 text-[10px] text-on-surface-variant">{dateLabel(message.created_at)}</p></div></div></article>)}</div></section>
+src/app/crm\expedientes\[id]\page.tsx:54:      <aside className="space-y-3"><section className="rounded-lg border border-outline-variant bg-surface-container-lowest p-3 shadow-sm"><h2 className="text-sm font-bold">Próxima cita</h2><p className="mt-2 text-sm font-bold">Jue, 20 nov 2026</p><p className="text-xs text-on-surface-variant">10:00 – 10:30 · Videollamada</p><p className="mt-2 text-xs text-on-surface-variant">Revisar documentos pendientes y resolver dudas sobre deducciones.</p><button type="button" onClick={() => setError('Videollamada disponible en staging.')} className="mt-2 w-full rounded-md bg-secondary px-3 py-2 text-[11px] font-bold text-white">Iniciar videollamada</button></section><section className="rounded-lg border border-outline-variant bg-surface-container-lowest p-3 shadow-sm"><h2 className="text-sm font-bold">Gestor asignado</h2><p className="mt-2 text-xs font-bold">{dossier.assigned_to_name || 'Usuario de prueba'}</p><p className="text-[11px] text-on-surface-variant">Especialista fiscal · Equipo gestor</p><button type="button" onClick={() => setError('Cambio de gestor disponible en staging.')} className="mt-2 w-full rounded-md border border-outline-variant px-3 py-2 text-[11px] font-bold">Cambiar gestor</button></section><section className="rounded-lg border border-orange-200 bg-orange-50 p-3"><h2 className="text-sm font-bold text-orange-900">Estado y próximos pasos</h2><p className="mt-2 text-xs text-orange-900">Esperando documentación del cliente.</p><button type="button" onClick={() => setError('Recordatorio enviado en modo demo.')} className="mt-2 w-full rounded-md bg-orange-500 px-3 py-2 text-[11px] font-bold text-white">Recordar al cliente</button></section></aside>
+src/app/crm\backup\page.tsx:291:        <button
+src/app/crm\backup\page.tsx:293:          onClick={handleCreateFullBackup}
+src/app/crm\backup\page.tsx:409:            <button
+src/app/crm\backup\page.tsx:411:              onClick={() => handleDownloadCsv('clients')}
+src/app/crm\backup\page.tsx:436:            <button
+src/app/crm\backup\page.tsx:438:              onClick={() => handleDownloadCsv('invoices')}
+src/app/crm\backup\page.tsx:463:            <button
+src/app/crm\backup\page.tsx:465:              onClick={() => handleDownloadCsv('quotes')}
+src/app/crm\backup\page.tsx:490:            <button
+src/app/crm\backup\page.tsx:492:              onClick={() => handleDownloadCsv('appointments')}
+src/app/crm\backup\page.tsx:517:            <button
+src/app/crm\backup\page.tsx:519:              onClick={() => handleDownloadCsv('dossiers')}
+src/app/crm\backup\page.tsx:544:            <button
+src/app/crm\backup\page.tsx:546:              onClick={handleDownloadFullBackup}
+src/app/crm\backup\page.tsx:620:                  <button
+src/app/crm\backup\page.tsx:622:                    onClick={handleSaveCurrentBackupBeforeRestore}
+src/app/crm\backup\page.tsx:634:            <button
+src/app/crm\backup\page.tsx:636:              onClick={handleExecuteRestore}
+src/app/crm\backup\page.tsx:721:          <button
+src/app/crm\backup\page.tsx:723:            onClick={() => setShowResetModal(true)}
+src/app/crm\backup\page.tsx:762:                <button
+src/app/crm\backup\page.tsx:764:                  onClick={() => { setShowResetModal(false); setResetConfirmation(''); }}
+src/app/crm\backup\page.tsx:770:                <button
+src/app/crm\clientes\error.tsx:17:        <button type="button" onClick={() => reset()} className="mt-5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Reintentar</button>
+src/app/crm\clientes\alta-ia\page.tsx:983:        <button
+src/app/crm\clientes\alta-ia\page.tsx:985:          onClick={() => {
+src/app/crm\clientes\alta-ia\page.tsx:1001:        <button
+src/app/crm\clientes\alta-ia\page.tsx:1003:          onClick={() => setActiveTab('manual')}
+src/app/crm\clientes\alta-ia\page.tsx:1037:                {process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true' && <button
+src/app/crm\clientes\alta-ia\page.tsx:1039:                  onClick={handleLoadSampleFiles}
+src/app/crm\clientes\alta-ia\page.tsx:1059:                onClick={() => fileInputRef.current?.click()}
+src/app/crm\clientes\alta-ia\page.tsx:1094:                    <button
+src/app/crm\clientes\alta-ia\page.tsx:1096:                      onClick={() => setUploadedFiles([])}
+src/app/crm\clientes\alta-ia\page.tsx:1135:                        <button
+src/app/crm\clientes\alta-ia\page.tsx:1138:                          onClick={() => handleRemoveFile(file.id)}
+src/app/crm\clientes\alta-ia\page.tsx:1164:                  <button
+src/app/crm\clientes\alta-ia\page.tsx:1166:                    onClick={handleLoadSampleNotes}
+src/app/crm\clientes\alta-ia\page.tsx:1208:                <button
+src/app/crm\clientes\alta-ia\page.tsx:1210:                  onClick={handleProcessMultiAI}
+src/app/crm\clientes\alta-ia\page.tsx:1282:              <button
+src/app/crm\clientes\alta-ia\page.tsx:1284:                onClick={() => setIsReviewMode(false)}
+src/app/crm\clientes\alta-ia\page.tsx:1291:              <button
+src/app/crm\clientes\alta-ia\page.tsx:1293:                onClick={handleAddManualClientToBatch}
+src/app/crm\clientes\alta-ia\page.tsx:1382:                    <button
+src/app/crm\clientes\alta-ia\page.tsx:1384:                      onClick={() => handleRemoveDetectedClient(client.id)}
+src/app/crm\clientes\alta-ia\page.tsx:1599:              <button
+src/app/crm\clientes\alta-ia\page.tsx:1601:                onClick={() => setIsReviewMode(false)}
+src/app/crm\clientes\alta-ia\page.tsx:1606:              <button
+src/app/crm\clientes\alta-ia\page.tsx:1608:                onClick={handleSaveSelectedClients}
+src/app/crm\clientes\alta-ia\page.tsx:1750:            <button
+src/app/crm\clientes\alta-ia\page.tsx:1776:            <button
+src/app/crm\clientes\alta-ia\page.tsx:1778:              onClick={() => router.push('/crm/clientes')}
+src/app/crm\clientes\alta-ia\page.tsx:1806:            <button
+src/app/crm\clientes\alta-ia\page.tsx:1809:              onClick={() => setAviso(null)}
+src/app/crm\clientes\alta-ia\page.tsx:1879:              <button
+src/app/crm\clientes\alta-ia\page.tsx:1881:                onClick={() => {
+src/app/crm\documentos-ia\page.tsx:1090:          <button
+src/app/crm\documentos-ia\page.tsx:1092:            onClick={() => {
+src/app/crm\documentos-ia\page.tsx:1114:          <button
+src/app/crm\documentos-ia\page.tsx:1116:            onClick={handleOpenCreateTemplate}
+src/app/crm\documentos-ia\page.tsx:1125:          <button
+src/app/crm\documentos-ia\page.tsx:1127:            onClick={() => {
+src/app/crm\documentos-ia\page.tsx:1142:        <button
+src/app/crm\documentos-ia\page.tsx:1144:          onClick={() => setActiveView('generador')}
+src/app/crm\documentos-ia\page.tsx:1156:        <button
+src/app/crm\documentos-ia\page.tsx:1158:          onClick={() => setActiveView('analizador')}
+src/app/crm\documentos-ia\page.tsx:1195:                    <button type="button"
+src/app/crm\documentos-ia\page.tsx:1196:                      onClick={handleOpenCreateTemplate}
+src/app/crm\documentos-ia\page.tsx:1204:                        <button type="button"
+src/app/crm\documentos-ia\page.tsx:1205:                          onClick={handleOpenEditTemplate}
+src/app/crm\documentos-ia\page.tsx:1211:                        <button type="button"
+src/app/crm\documentos-ia\page.tsx:1212:                          onClick={() => handleDeleteCustomTemplate(activeTemplateObj.id)}
+src/app/crm\documentos-ia\page.tsx:1272:                              <button
+src/app/crm\documentos-ia\page.tsx:1275:                                onClick={() => handlePickClient(c)}
+src/app/crm\documentos-ia\page.tsx:1337:                <button type="button"
+src/app/crm\documentos-ia\page.tsx:1338:                  onClick={() => handleGenerate()}
+src/app/crm\documentos-ia\page.tsx:1364:                      <button type="button"
+src/app/crm\documentos-ia\page.tsx:1365:                        onClick={handleExportWord}
+src/app/crm\documentos-ia\page.tsx:1374:                      <button type="button"
+src/app/crm\documentos-ia\page.tsx:1375:                        onClick={handlePrintDocument}
+src/app/crm\documentos-ia\page.tsx:1383:                      <button type="button"
+src/app/crm\documentos-ia\page.tsx:1384:                        onClick={handleCopy}
+src/app/crm\documentos-ia\page.tsx:1402:                    <button type="button"
+src/app/crm\documentos-ia\page.tsx:1403:                      onClick={() =>
+src/app/crm\documentos-ia\page.tsx:1411:                    <button type="button"
+src/app/crm\documentos-ia\page.tsx:1412:                      onClick={() =>
+src/app/crm\documentos-ia\page.tsx:1422:                    <button type="button"
+src/app/crm\documentos-ia\page.tsx:1423:                      onClick={() =>
+src/app/crm\documentos-ia\page.tsx:1495:                    <button
+src/app/crm\documentos-ia\page.tsx:1497:                      onClick={() => analyzerFileInputRef.current?.click()}
+src/app/crm\documentos-ia\page.tsx:1507:                      <button
+src/app/crm\documentos-ia\page.tsx:1517:                        <button
+src/app/crm\documentos-ia\page.tsx:1519:                          onClick={() => handleLoadSampleDoc('belastingdienst')}
+src/app/crm\documentos-ia\page.tsx:1525:                        <button
+src/app/crm\documentos-ia\page.tsx:1527:                          onClick={() => handleLoadSampleDoc('zorgtoeslag')}
+src/app/crm\documentos-ia\page.tsx:1533:                        <button
+src/app/crm\documentos-ia\page.tsx:1535:                          onClick={() => handleLoadSampleDoc('cak')}
+src/app/crm\documentos-ia\page.tsx:1541:                        <button
+src/app/crm\documentos-ia\page.tsx:1543:                          onClick={() => handleLoadSampleDoc('huurtoeslag')}
+src/app/crm\documentos-ia\page.tsx:1553:                    <button
+src/app/crm\documentos-ia\page.tsx:1555:                      onClick={() => setIsAnalyzerMaximized(true)}
+src/app/crm\documentos-ia\page.tsx:1581:                            onClick={() => handleSelectActiveDoc(doc)}
+src/app/crm\documentos-ia\page.tsx:1599:                            <button
+src/app/crm\documentos-ia\page.tsx:1601:                              onClick={(e) => handleRemoveDoc(doc.id, e)}
+src/app/crm\documentos-ia\page.tsx:1612:                      <button
+src/app/crm\documentos-ia\page.tsx:1614:                        onClick={() => analyzerFileInputRef.current?.click()}
+src/app/crm\documentos-ia\page.tsx:1633:                        <button
+src/app/crm\documentos-ia\page.tsx:1635:                          onClick={() => setDocToAnalyze('')}
+src/app/crm\documentos-ia\page.tsx:1653:                <button type="button"
+src/app/crm\documentos-ia\page.tsx:1654:                  onClick={handleAnalyzeDoc}
+src/app/crm\documentos-ia\page.tsx:1724:                      <button type="button"
+src/app/crm\documentos-ia\page.tsx:1725:                        onClick={handleApplyAnalysisToLetter}
+src/app/crm\documentos-ia\page.tsx:1766:                <button type="button"
+src/app/crm\documentos-ia\page.tsx:1767:                  onClick={() => {
+src/app/crm\documentos-ia\page.tsx:1782:                <button type="button"
+src/app/crm\documentos-ia\page.tsx:1783:                  onClick={() => setIsChatSidebarOpen(false)}
+src/app/crm\documentos-ia\page.tsx:1800:                <button type="button"
+src/app/crm\documentos-ia\page.tsx:1802:                  onClick={() => handleSendChatMessage(shortcut)}
+src/app/crm\documentos-ia\page.tsx:1838:                      <button type="button"
+src/app/crm\documentos-ia\page.tsx:1839:                        onClick={() => {
+src/app/crm\documentos-ia\page.tsx:1849:                      <button type="button"
+src/app/crm\documentos-ia\page.tsx:1850:                        onClick={() => handleInsertChatIntoDoc(msg.content)}
+src/app/crm\documentos-ia\page.tsx:1889:              <button
+src/app/crm\documentos-ia\page.tsx:1909:              <button
+src/app/crm\documentos-ia\page.tsx:1911:                onClick={() => setIsAnalyzerMaximized(false)}
+src/app/crm\documentos-ia\page.tsx:1942:              <button
+src/app/crm\documentos-ia\page.tsx:1944:                onClick={() => analyzerFileInputRef.current?.click()}
+src/app/crm\documentos-ia\page.tsx:1951:              <button
+src/app/crm\documentos-ia\page.tsx:1953:                onClick={handleAnalyzeDoc}
+src/app/crm\documentos-ia\page.tsx:1963:              <button
+src/app/crm\documentos-ia\page.tsx:1965:                onClick={() => setIsAnalyzerMaximized(false)}
+src/app/crm\documentos-ia\page.tsx:2009:                              onClick={() => handleSelectActiveDoc(doc)}
+src/app/crm\documentos-ia\page.tsx:2027:                              <button
+src/app/crm\documentos-ia\page.tsx:2029:                                onClick={(e) => handleRemoveDoc(doc.id, e)}
+src/app/crm\documentos-ia\page.tsx:2039:                        <button
+src/app/crm\documentos-ia\page.tsx:2041:                          onClick={() => analyzerFileInputRef.current?.click()}
+src/app/crm\documentos-ia\page.tsx:2058:                          <button
+src/app/crm\documentos-ia\page.tsx:2060:                            onClick={() => setDocToAnalyze('')}
+src/app/crm\documentos-ia\page.tsx:2081:                    <button
+src/app/crm\documentos-ia\page.tsx:2083:                      onClick={() => handleLoadSampleDoc('belastingdienst')}
+src/app/crm\documentos-ia\page.tsx:2089:                    <button
+src/app/crm\documentos-ia\page.tsx:2091:                      onClick={() => handleLoadSampleDoc('zorgtoeslag')}
+src/app/crm\documentos-ia\page.tsx:2097:                    <button
+src/app/crm\documentos-ia\page.tsx:2099:                      onClick={() => handleLoadSampleDoc('cak')}
+src/app/crm\documentos-ia\page.tsx:2106:                  <button type="button"
+src/app/crm\documentos-ia\page.tsx:2107:                    onClick={handleAnalyzeDoc}
+src/app/crm\documentos-ia\page.tsx:2181:                      <button type="button"
+src/app/crm\documentos-ia\page.tsx:2182:                        onClick={() => {
+src/app/crm\documentos-ia\page.tsx:2223:              <button type="button"
+src/app/crm\documentos-ia\page.tsx:2224:                onClick={() => setShowTemplateModal(false)}
+src/app/crm\documentos-ia\page.tsx:2325:                    <button
+src/app/crm\documentos-ia\page.tsx:2328:                      onClick={() => handleInsertVariable(v.key)}
+src/app/crm\documentos-ia\page.tsx:2367:              <button
+src/app/crm\documentos-ia\page.tsx:2369:                onClick={() => setShowTemplateModal(false)}
+src/app/crm\documentos-ia\page.tsx:2374:              <button
+src/app/crm\documentos-ia\page.tsx:2376:                onClick={handleSaveTemplate}
+src/app/crm\documentos-ia\page.tsx:2403:              <button type="button"
+src/app/crm\documentos-ia\page.tsx:2404:                onClick={() => setShowConfigModal(false)}
+src/app/crm\documentos-ia\page.tsx:2421:                      <button
+src/app/crm\documentos-ia\page.tsx:2424:                        onClick={() => handleSelectPreset(p.id)}
+src/app/crm\documentos-ia\page.tsx:2473:                  <button
+src/app/crm\documentos-ia\page.tsx:2475:                    onClick={() => setShowApiKey(!showApiKey)}
+src/app/crm\documentos-ia\page.tsx:2524:                      <button
+src/app/crm\documentos-ia\page.tsx:2527:                        onClick={() => setConfig({ ...config, model: m })}
+src/app/crm\documentos-ia\page.tsx:2562:              <button
+src/app/crm\documentos-ia\page.tsx:2564:                onClick={handleTestConnection}
+src/app/crm\documentos-ia\page.tsx:2575:                <button
+src/app/crm\documentos-ia\page.tsx:2577:                  onClick={() => setShowConfigModal(false)}
+src/app/crm\documentos-ia\page.tsx:2582:                <button
+src/app/crm\documentos-ia\page.tsx:2584:                  onClick={handleSaveConfig}
+src/app/crm\deudas\page.tsx:65:        <button type="button" onClick={() => setNewDebtOpen(true)} className="h-9 rounded-lg bg-secondary px-3.5 text-xs sm:text-sm font-bold text-white shadow-2xs hover:bg-blue-700 transition-colors flex items-center gap-1.5">
+src/app/crm\deudas\page.tsx:91:        <button type="button" onClick={() => { setQuery(''); setStatus('Todos'); setCreditor('Todos'); }} className="h-9 rounded-lg border border-secondary px-3 text-xs sm:text-sm font-semibold text-secondary hover:bg-blue-50 transition-colors">
+src/app/crm\deudas\page.tsx:103:            <button type="button" onClick={() => setNewDebtOpen(true)} className="rounded-lg border border-secondary px-2.5 py-1 text-xs font-bold text-secondary hover:bg-blue-50">
+src/app/crm\deudas\page.tsx:124:                    <tr key={debt.id} onClick={() => { setSelected(debt); setDetailTab('Resumen'); }} className={'cursor-pointer transition hover:bg-blue-50/50 ' + (active ? 'bg-blue-50' : '')}>
+src/app/crm\deudas\page.tsx:153:              <button type="button" aria-label="Cerrar detalle" onClick={() => setSelected(null)} className="text-2xl text-on-surface-variant leading-none">×</button>
+src/app/crm\deudas\page.tsx:157:                <button key={item} type="button" onClick={() => setDetailTab(item)} className={'flex-1 border-b-2 py-2 font-semibold ' + (detailTab === item ? 'border-secondary text-secondary' : 'border-transparent text-on-surface-variant')}>
+src/app/crm\deudas\page.tsx:190:              <button type="button" onClick={() => void registerPayment()} className="h-9 rounded-lg bg-secondary text-xs sm:text-sm font-bold text-white shadow-2xs hover:bg-blue-700 transition-colors">
+src/app/crm\deudas\page.tsx:193:              <Link href={'/crm/deudas/' + selected.id} className="rounded-lg border border-outline-variant py-2 text-center text-xs sm:text-sm font-bold text-secondary hover:bg-slate-50 transition-colors">
+src/app/crm\deudas\page.tsx:205:    {newDebtOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"><div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><p className="text-[11px] font-bold tracking-wide text-secondary">FINANZAS</p><h2 className="mt-1 text-xl font-bold">Nueva deuda</h2><p className="mt-1 text-sm text-on-surface-variant">En el modo demo puedes explorar el flujo de creación.</p></div><button type="button" onClick={() => setNewDebtOpen(false)} className="text-2xl">×</button></div><div className="mt-5 grid gap-3"><input placeholder="Cliente" className="h-11 rounded-md border border-outline-variant px-3 text-sm" /><input placeholder="Acreedor" className="h-11 rounded-md border border-outline-variant px-3 text-sm" /><input placeholder="Importe original" type="number" className="h-11 rounded-md border border-outline-variant px-3 text-sm" /></div><button type="button" onClick={() => { setNewDebtOpen(false); setNotice('Formulario demo listo para crear una deuda.'); }} className="mt-5 min-h-11 w-full rounded-md bg-secondary text-xs font-bold text-white">Guardar deuda demo</button></div></div>}
+src/app/crm\deudas\[id]\page.tsx:103:          <Link href="/crm/deudas" className="text-slate-500 hover:text-slate-800 font-semibold text-xs transition-colors">
+src/app/crm\deudas\[id]\page.tsx:114:          href="/crm/deudas"
+src/app/crm\deudas\[id]\page.tsx:124:          <button type="button" onClick={() => setNotice('')} className="text-blue-500 hover:text-blue-800 font-bold">✕</button>
+src/app/crm\deudas\[id]\page.tsx:228:          <button
+src/app/crm\deudas\[id]\page.tsx:231:            onClick={() => setTab(t)}
+src/app/crm\deudas\[id]\page.tsx:252:            <button
+src/app/crm\deudas\[id]\page.tsx:254:              onClick={() => setNotice('Vista de calendario disponible en staging.')}
+src/app/crm\deudas\[id]\page.tsx:302:                      <button
+src/app/crm\deudas\[id]\page.tsx:304:                        onClick={() => setNotice(`Opciones para la cuota ${item.cuota}`)}
+src/app/crm\deudas\[id]\page.tsx:324:              <button
+src/app/crm\deudas\[id]\page.tsx:326:                onClick={() => setRegisterModalOpen(true)}
+src/app/crm\deudas\[id]\page.tsx:333:              <button
+src/app/crm\deudas\[id]\page.tsx:335:                onClick={() => setNotice('Formulario para crear aplazamiento listo.')}
+src/app/crm\deudas\[id]\page.tsx:342:              <button
+src/app/crm\deudas\[id]\page.tsx:344:                onClick={() => setNotice('Selector de archivos listo para adjuntar comprobante.')}
+src/app/crm\deudas\[id]\page.tsx:351:              <button
+src/app/crm\deudas\[id]\page.tsx:353:                onClick={() => setNotice('Editor de deuda disponible en staging.')}
+src/app/crm\deudas\[id]\page.tsx:373:              <button
+src/app/crm\deudas\[id]\page.tsx:375:                onClick={() => setNotice('Nota guardada correctamente.')}
+src/app/crm\deudas\[id]\page.tsx:424:              <button
+src/app/crm\deudas\[id]\page.tsx:426:                onClick={() => setRegisterModalOpen(false)}
+src/app/crm\deudas\[id]\page.tsx:456:                <button
+src/app/crm\deudas\[id]\page.tsx:458:                  onClick={() => setRegisterModalOpen(false)}
+src/app/crm\deudas\[id]\page.tsx:463:                <button
+src/app/crm\clientes\importar\page.tsx:37:        <Link href="/crm/clientes" className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1">
+src/app/crm\clientes\importar\page.tsx:50:          <button type="button" onClick={importCsv} disabled={busy || !csv} className="rounded-md bg-secondary px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">
+src/app/crm\clientes\importar\page.tsx:53:          <Link href="/crm/clientes" className="rounded-md border border-outline-variant px-4 py-2 text-xs font-semibold text-on-surface hover:bg-surface transition-colors">
+src/app/crm\clientes\page.tsx:1636:          <button
+src/app/crm\clientes\page.tsx:1638:            onClick={handleExportClientsCsv}
+src/app/crm\clientes\page.tsx:1647:            href="/crm/backup"
+src/app/crm\clientes\page.tsx:1655:          <Link href="/crm/clientes/alta-ia" className="h-8 px-3 border border-secondary text-secondary text-xs font-semibold rounded-md hover:bg-blue-50 transition-colors flex items-center gap-1">
+src/app/crm\clientes\page.tsx:1661:            href="/crm/clientes/nuevo"
+src/app/crm\clientes\page.tsx:1704:          <button type="button"
+src/app/crm\clientes\page.tsx:1705:            onClick={() => setFilterStatus('todos')}
+src/app/crm\clientes\page.tsx:1712:          <button type="button"
+src/app/crm\clientes\page.tsx:1713:            onClick={() => setFilterStatus('con_digid')}
+src/app/crm\clientes\page.tsx:1720:          <button type="button"
+src/app/crm\clientes\page.tsx:1721:            onClick={() => setFilterStatus('pendientes')}
+src/app/crm\clientes\page.tsx:1754:                  onClick={() => handleOpenClient(client)}
+src/app/crm\clientes\page.tsx:1801:                      <button
+src/app/crm\clientes\page.tsx:1803:                        onClick={(e) => {
+src/app/crm\clientes\page.tsx:1812:                      <Link href={`/crm/clientes/${client.id}`} className="inline-flex h-8 items-center rounded border border-outline-variant px-2 text-[11px] font-semibold text-on-surface-variant hover:border-secondary hover:text-secondary" aria-label={`Abrir ficha completa de ${client.full_name}`}>Abrir</Link>
+src/app/crm\clientes\page.tsx:1838:              <button
+src/app/crm\clientes\page.tsx:1840:                onClick={handleCloseFicha}
+src/app/crm\clientes\page.tsx:1868:              <button
+src/app/crm\clientes\page.tsx:1870:                onClick={() => handleOpenEditClient(selectedClient)}
+src/app/crm\clientes\page.tsx:1882:                <button
+src/app/crm\clientes\page.tsx:1884:                  onClick={handleDeactivateClient}
+src/app/crm\clientes\page.tsx:1895:              <button
+src/app/crm\clientes\page.tsx:1897:                onClick={handleDeleteClient}
+src/app/crm\clientes\page.tsx:1906:              <button
+src/app/crm\clientes\page.tsx:1908:                onClick={() => setIsMaximized(!isMaximized)}
+src/app/crm\clientes\page.tsx:1924:            <button
+src/app/crm\clientes\page.tsx:1926:              onClick={() => setActive360Tab('resumen')}
+src/app/crm\clientes\page.tsx:1937:            <button
+src/app/crm\clientes\page.tsx:1939:              onClick={() => setActive360Tab('personales')}
+src/app/crm\clientes\page.tsx:1950:            <button
+src/app/crm\clientes\page.tsx:1952:              onClick={() => setActive360Tab('servicios')}
+src/app/crm\clientes\page.tsx:1963:            <button
+src/app/crm\clientes\page.tsx:1965:              onClick={() => setActive360Tab('documentos')}
+src/app/crm\clientes\page.tsx:1976:            <button
+src/app/crm\clientes\page.tsx:1978:              onClick={() => setActive360Tab('presupuestos')}
+src/app/crm\clientes\page.tsx:1989:            <button type="button"
+src/app/crm\clientes\page.tsx:1990:              onClick={() => setActive360Tab('facturas')}
+src/app/crm\clientes\page.tsx:2000:            <button type="button"
+src/app/crm\clientes\page.tsx:2001:              onClick={() => setActive360Tab('citas')}
+src/app/crm\clientes\page.tsx:2011:            <button
+src/app/crm\clientes\page.tsx:2013:              onClick={() => setActive360Tab('mensajes')}
+src/app/crm\clientes\page.tsx:2024:            <button type="button"
+src/app/crm\clientes\page.tsx:2025:              onClick={() => setActive360Tab('tareas')}
+src/app/crm\clientes\page.tsx:2035:            <button type="button"
+src/app/crm\clientes\page.tsx:2036:              onClick={() => setActive360Tab('historial')}
+src/app/crm\clientes\page.tsx:2046:            <button type="button"
+src/app/crm\clientes\page.tsx:2047:              onClick={() => setActive360Tab('ia')}
+src/app/crm\clientes\page.tsx:2081:                        <button type="button"
+src/app/crm\clientes\page.tsx:2082:                          onClick={() => setActive360Tab('servicios')}
+src/app/crm\clientes\page.tsx:2125:                                <button type="button"
+src/app/crm\clientes\page.tsx:2126:                                  onClick={() => setActive360Tab('servicios')}
+src/app/crm\clientes\page.tsx:2171:                              <button type="button"
+src/app/crm\clientes\page.tsx:2172:                                onClick={() => setActive360Tab('documentos')}
+src/app/crm\clientes\page.tsx:2187:                        <button type="button"
+src/app/crm\clientes\page.tsx:2188:                          onClick={() => setActive360Tab('documentos')}
+src/app/crm\clientes\page.tsx:2227:                        <button type="button"
+src/app/crm\clientes\page.tsx:2228:                          onClick={() => handleConvertQuoteInFicha(selectedClient.quotes[0])}
+src/app/crm\clientes\page.tsx:2235:                        <button type="button"
+src/app/crm\clientes\page.tsx:2236:                          onClick={() => setActive360Tab('presupuestos')}
+src/app/crm\clientes\page.tsx:2274:                          href={selectedClient.phone ? `tel:${selectedClient.phone}` : undefined}
+src/app/crm\clientes\page.tsx:2280:                        <button type="button"
+src/app/crm\clientes\page.tsx:2281:                          onClick={() => setActive360Tab('citas')}
+src/app/crm\clientes\page.tsx:2315:                      <button type="button"
+src/app/crm\clientes\page.tsx:2316:                        onClick={() => setActive360Tab('historial')}
+src/app/crm\clientes\page.tsx:2334:                    <button type="button"
+src/app/crm\clientes\page.tsx:2335:                      onClick={() => setIsEditingNotes(!isEditingNotes)}
+src/app/crm\clientes\page.tsx:2351:                      <button type="button"
+src/app/crm\clientes\page.tsx:2352:                        onClick={handleSaveNotes}
+src/app/crm\clientes\page.tsx:2370:                    <button type="button"
+src/app/crm\clientes\page.tsx:2371:                      onClick={() => {
+src/app/crm\clientes\page.tsx:2458:                    <button
+src/app/crm\clientes\page.tsx:2460:                      onClick={() => {
+src/app/crm\clientes\page.tsx:2471:                    <button
+src/app/crm\clientes\page.tsx:2473:                      onClick={() => setShowNewTextDocModal(true)}
+src/app/crm\clientes\page.tsx:2481:                    <button
+src/app/crm\clientes\page.tsx:2483:                      onClick={() => handleGenerateAIDocument('informe_general')}
+src/app/crm\clientes\page.tsx:2538:                            <button
+src/app/crm\clientes\page.tsx:2540:                              onClick={() => void handlePreviewDocument(doc)}
+src/app/crm\clientes\page.tsx:2548:                            <button
+src/app/crm\clientes\page.tsx:2550:                              onClick={() => {
+src/app/crm\clientes\page.tsx:2569:                            <button
+src/app/crm\clientes\page.tsx:2571:                              onClick={() => handleDeleteDocument(doc.id)}
+src/app/crm\clientes\page.tsx:2589:                    <button
+src/app/crm\clientes\page.tsx:2591:                      onClick={() => fileInputRef.current?.click()}
+src/app/crm\clientes\page.tsx:2612:                    <button type="button"
+src/app/crm\clientes\page.tsx:2613:                      onClick={openQuoteModal}
+src/app/crm\clientes\page.tsx:2626:                            <button
+src/app/crm\clientes\page.tsx:2628:                              onClick={() =>
+src/app/crm\clientes\page.tsx:2667:                            <button
+src/app/crm\clientes\page.tsx:2669:                              onClick={() =>
+src/app/crm\clientes\page.tsx:2691:                              <button
+src/app/crm\clientes\page.tsx:2693:                                onClick={() => handleConvertQuoteInFicha(q)}
+src/app/crm\clientes\page.tsx:2729:                            <button
+src/app/crm\clientes\page.tsx:2731:                              onClick={() =>
+src/app/crm\clientes\page.tsx:2768:                            <button
+src/app/crm\clientes\page.tsx:2770:                              onClick={() =>
+src/app/crm\clientes\page.tsx:2810:                    <button type="button"
+src/app/crm\clientes\page.tsx:2811:                      onClick={() => {
+src/app/crm\clientes\page.tsx:2837:                                href={selectedClient.phone ? `tel:${selectedClient.phone}` : undefined}
+src/app/crm\clientes\page.tsx:2870:                  <button
+src/app/crm\clientes\page.tsx:2872:                    onClick={() => handleOpenEditClient(selectedClient)}
+src/app/crm\clientes\page.tsx:2894:                      <button
+src/app/crm\clientes\page.tsx:2896:                        onClick={() => copyToClipboard(selectedClient.bsn, 'BSN')}
+src/app/crm\clientes\page.tsx:2911:                      <button
+src/app/crm\clientes\page.tsx:2913:                        onClick={() => copyToClipboard(selectedClient.id_document_number, 'Pasaporte')}
+src/app/crm\clientes\page.tsx:2930:                          href={selectedClient.phone ? `tel:${selectedClient.phone}` : undefined}
+src/app/crm\clientes\page.tsx:2936:                        <button
+src/app/crm\clientes\page.tsx:2938:                          onClick={() => copyToClipboard(selectedClient.phone, 'Teléfono')}
+src/app/crm\clientes\page.tsx:2956:                          href={`mailto:${selectedClient.email}`}
+src/app/crm\clientes\page.tsx:2962:                        <button
+src/app/crm\clientes\page.tsx:2964:                          onClick={() => copyToClipboard(selectedClient.email, 'Correo')}
+src/app/crm\clientes\page.tsx:2990:                      <button
+src/app/crm\clientes\page.tsx:2992:                        onClick={() => copyToClipboard(selectedClient.iban, 'IBAN')}
+src/app/crm\clientes\page.tsx:3036:                          <button type="button" onClick={() => setShowPortalPassword((value) => !value)} className="h-9 px-3 rounded-lg border border-blue-300 bg-white text-blue-700 text-xs font-semibold">
+src/app/crm\clientes\page.tsx:3039:                          <button type="button" onClick={handlePreparePortalWhatsApp} disabled={!selectedClient.phone} className="h-9 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold disabled:opacity-40">
+src/app/crm\clientes\page.tsx:3047:                        <button type="button" onClick={handleGeneratePortalAccess} disabled={isGeneratingPortalAccess} className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-50">
+src/app/crm\clientes\page.tsx:3084:                      <button type="button" onClick={sendClientMessage} disabled={!clientMessageDraft.trim() || clientMessageSending} className="rounded-lg bg-secondary px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{clientMessageSending ? 'Guardando…' : 'Guardar mensaje'}</button>
+src/app/crm\clientes\page.tsx:3102:                        <button type="button"
+src/app/crm\clientes\page.tsx:3103:                          onClick={() => setIsEditingNotes(!isEditingNotes)}
+src/app/crm\clientes\page.tsx:3120:                          <button type="button"
+src/app/crm\clientes\page.tsx:3121:                            onClick={handleSaveNotes}
+src/app/crm\clientes\page.tsx:3160:                          <button type="button"
+src/app/crm\clientes\page.tsx:3161:                            onClick={() => setTaskFilter('todas')}
+src/app/crm\clientes\page.tsx:3168:                          <button type="button"
+src/app/crm\clientes\page.tsx:3169:                            onClick={() => setTaskFilter('pendientes')}
+src/app/crm\clientes\page.tsx:3176:                          <button type="button"
+src/app/crm\clientes\page.tsx:3177:                            onClick={() => setTaskFilter('completadas')}
+src/app/crm\clientes\page.tsx:3196:                        <button
+src/app/crm\clientes\page.tsx:3250:                                <button
+src/app/crm\clientes\page.tsx:3252:                                  onClick={() => handleDeleteTask(task.id)}
+src/app/crm\clientes\page.tsx:3285:                      <button type="button"
+src/app/crm\clientes\page.tsx:3286:                        onClick={() => setHistoryFilter('todos')}
+src/app/crm\clientes\page.tsx:3293:                      <button type="button"
+src/app/crm\clientes\page.tsx:3294:                        onClick={() => setHistoryFilter('ia')}
+src/app/crm\clientes\page.tsx:3301:                      <button type="button"
+src/app/crm\clientes\page.tsx:3302:                        onClick={() => setHistoryFilter('gestor')}
+src/app/crm\clientes\page.tsx:3332:                          <button type="button" onClick={sendClientMessage} disabled={!clientMessageDraft.trim() || clientMessageSending} className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{clientMessageSending ? 'Guardando…' : 'Guardar'}</button>
+src/app/crm\clientes\page.tsx:3419:                  <button
+src/app/crm\clientes\page.tsx:3421:                    onClick={() => handleSendClientAiMessage('Crea un presupuesto oficial de 180€ para este cliente')}
+src/app/crm\clientes\page.tsx:3427:                  <button
+src/app/crm\clientes\page.tsx:3429:                    onClick={() => handleSendClientAiMessage('Emite una factura oficial por 150€ con IVA incluido')}
+src/app/crm\clientes\page.tsx:3435:                  <button
+src/app/crm\clientes\page.tsx:3437:                    onClick={() => handleSendClientAiMessage('Agenda una llamada telefónica para el cliente el 16 de octubre a las 11:00')}
+src/app/crm\clientes\page.tsx:3443:                  <button
+src/app/crm\clientes\page.tsx:3445:                    onClick={() => handleSendClientAiMessage('Genera un dictamen resumen de su situación y guárdalo en sus documentos')}
+src/app/crm\clientes\page.tsx:3480:                              <button
+src/app/crm\clientes\page.tsx:3482:                                onClick={() =>
+src/app/crm\clientes\page.tsx:3498:                              <button
+src/app/crm\clientes\page.tsx:3500:                                onClick={() =>
+src/app/crm\clientes\page.tsx:3516:                              <button
+src/app/crm\clientes\page.tsx:3518:                                onClick={() => setActive360Tab('documentos')}
+src/app/crm\clientes\page.tsx:3525:                              <button
+src/app/crm\clientes\page.tsx:3527:                                onClick={() => setActive360Tab('citas')}
+src/app/crm\clientes\page.tsx:3563:                    <button
+src/app/crm\clientes\page.tsx:3596:              <button
+src/app/crm\clientes\page.tsx:3598:                onClick={() => setShowEditClientModal(false)}
+src/app/crm\clientes\page.tsx:3712:              <button
+src/app/crm\clientes\page.tsx:3714:                onClick={() => setShowEditClientModal(false)}
+src/app/crm\clientes\page.tsx:3719:              <button
+src/app/crm\clientes\page.tsx:3741:              <button type="button" onClick={() => setShowUploadDocModal(false)} className="text-outline">
+src/app/crm\clientes\page.tsx:3777:                onClick={() => fileInputRef.current?.click()}
+src/app/crm\clientes\page.tsx:3787:              <button
+src/app/crm\clientes\page.tsx:3789:                onClick={() => setShowUploadDocModal(false)}
+src/app/crm\clientes\page.tsx:3813:              <button type="button" onClick={() => setShowNewTextDocModal(false)} className="text-outline">
+src/app/crm\clientes\page.tsx:3859:              <button
+src/app/crm\clientes\page.tsx:3861:                onClick={() => setShowNewTextDocModal(false)}
+src/app/crm\clientes\page.tsx:3866:              <button
+src/app/crm\clientes\page.tsx:3893:              <button type="button" onClick={closeDocumentPreview} className="text-outline hover:text-on-surface" aria-label="Cerrar">
+src/app/crm\clientes\page.tsx:3913:                <button
+src/app/crm\clientes\page.tsx:3915:                  onClick={() => window.print()}
+src/app/crm\clientes\page.tsx:3921:                <button
+src/app/crm\clientes\page.tsx:3923:                  onClick={() => {
+src/app/crm\clientes\page.tsx:3965:              <button type="button" onClick={() => setShowAddDossierModal(false)} className="text-outline">
+src/app/crm\clientes\page.tsx:4051:              <button
+src/app/crm\clientes\page.tsx:4053:                onClick={() => setShowAddDossierModal(false)}
+src/app/crm\clientes\page.tsx:4058:              <button
+src/app/crm\clientes\page.tsx:4083:              <button type="button" onClick={() => setShowNewAptModal(false)} className="text-outline">
+src/app/crm\clientes\page.tsx:4100:                  <button
+src/app/crm\clientes\page.tsx:4102:                    onClick={() => {
+src/app/crm\clientes\page.tsx:4116:                  <button
+src/app/crm\clientes\page.tsx:4118:                    onClick={() => {
+src/app/crm\clientes\page.tsx:4132:                  <button
+src/app/crm\clientes\page.tsx:4134:                    onClick={() => {
+src/app/crm\clientes\page.tsx:4186:              <button
+src/app/crm\clientes\page.tsx:4188:                onClick={() => setShowNewAptModal(false)}
+src/app/crm\clientes\page.tsx:4193:              <button
+src/app/crm\clientes\page.tsx:4225:              <button
+src/app/crm\clientes\page.tsx:4227:                onClick={() => setShowNewQuoteModal(false)}
+src/app/crm\clientes\page.tsx:4242:                    <button
+src/app/crm\clientes\page.tsx:4244:                      onClick={handleSelectAllQuoteServices}
+src/app/crm\clientes\page.tsx:4250:                    <button
+src/app/crm\clientes\page.tsx:4252:                      onClick={handleClearQuoteServices}
+src/app/crm\clientes\page.tsx:4266:                        onClick={() => toggleQuoteService(s.id)}
+src/app/crm\clientes\page.tsx:4319:                          <button
+src/app/crm\clientes\page.tsx:4321:                            onClick={() => toggleQuoteService(item.id)}
+src/app/crm\clientes\page.tsx:4363:              <button
+src/app/crm\clientes\page.tsx:4365:                onClick={() => setShowNewQuoteModal(false)}
+src/app/crm\clientes\page.tsx:4370:              <button
+src/app/crm\clientes\page.tsx:4402:                <button
+src/app/crm\clientes\page.tsx:4404:                  onClick={() => window.print()}
+src/app/crm\clientes\page.tsx:4410:                <button
+src/app/crm\clientes\page.tsx:4412:                  onClick={() => setSelectedDoc(null)}
+src/app/crm\clientes\page.tsx:4545:                  <button
+src/app/crm\clientes\page.tsx:4547:                    onClick={() => {
+src/app/crm\clientes\page.tsx:4558:                <button
+src/app/crm\clientes\page.tsx:4560:                  onClick={() => setSelectedDoc(null)}
+src/app/crm\clientes\[id]\page.tsx:92:          <Link href="/crm/clientes" className="text-slate-500 hover:text-slate-800 font-semibold text-xs sm:text-sm transition-colors">
+src/app/crm\clientes\[id]\page.tsx:105:          <button
+src/app/crm\clientes\[id]\page.tsx:107:            onClick={() => setNotice('Editor de cliente abierto en modo staging.')}
+src/app/crm\clientes\[id]\page.tsx:115:            <button
+src/app/crm\clientes\[id]\page.tsx:117:              onClick={() => setActionsDropdown(!actionsDropdown)}
+src/app/crm\clientes\[id]\page.tsx:127:                  <button
+src/app/crm\clientes\[id]\page.tsx:130:                    onClick={() => {
+src/app/crm\clientes\[id]\page.tsx:148:          <button type="button" onClick={() => setNotice('')} className="text-blue-500 hover:text-blue-800 font-bold">✕</button>
+src/app/crm\clientes\[id]\page.tsx:199:          <button
+src/app/crm\clientes\[id]\page.tsx:202:            onClick={() => setTab(kpi.tabTarget)}
+src/app/crm\clientes\[id]\page.tsx:222:          <button
+src/app/crm\clientes\[id]\page.tsx:225:            onClick={() => setTab(t)}
+src/app/crm\clientes\[id]\page.tsx:306:              <button type="button" onClick={() => setTab('Facturación')} className="text-xs font-semibold text-[#0055D4] hover:underline">
+src/app/crm\clientes\[id]\page.tsx:345:              <button type="button" onClick={() => setTab('Expedientes')} className="text-xs font-semibold text-[#0055D4] hover:underline">
+src/app/crm\clientes\[id]\page.tsx:386:            <button
+src/app/crm\clientes\[id]\page.tsx:388:              onClick={() => setNotice('Acción marcada como completada.')}
+src/app/crm\clientes\[id]\page.tsx:402:              <Link href="/crm/deudas" className="text-xs font-semibold text-[#0055D4] hover:underline">
+src/app/crm\clientes\[id]\page.tsx:421:              href="/crm/deudas/demo-client-1"
+src/app/crm\clientes\[id]\page.tsx:437:          <button type="button" onClick={() => setTab('Historial')} className="text-xs font-semibold text-[#0055D4] hover:underline">
+src/app/crm\clientes\nuevo\page.tsx:52:          <button type="submit" className="h-9 rounded-md bg-secondary px-4 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
+src/app/crm\clientes\nuevo\page.tsx:55:          <Link href="/crm/clientes/alta-ia" className="inline-flex h-9 items-center rounded-md border border-secondary px-3.5 text-xs font-semibold text-secondary hover:bg-blue-50 transition-colors">
+src/app/crm\clientes\nuevo\page.tsx:58:          <Link href="/crm/clientes" className="inline-flex h-9 items-center rounded-md border border-outline-variant px-3.5 text-xs font-semibold text-on-surface-variant hover:bg-surface transition-colors">
+src/app/crm\chat-ia\page.tsx:532:          <button
+src/app/crm\chat-ia\page.tsx:534:            onClick={() => setShowTopicsSidebar(!showTopicsSidebar)}
+src/app/crm\chat-ia\page.tsx:552:            href="/crm/documentos-ia"
+src/app/crm\chat-ia\page.tsx:561:          <button
+src/app/crm\chat-ia\page.tsx:563:            onClick={handleExportChatToWord}
+src/app/crm\chat-ia\page.tsx:573:          <button
+src/app/crm\chat-ia\page.tsx:575:            onClick={() => window.print()}
+src/app/crm\chat-ia\page.tsx:585:          <button
+src/app/crm\chat-ia\page.tsx:587:            onClick={() => {
+src/app/crm\chat-ia\page.tsx:610:              <button
+src/app/crm\chat-ia\page.tsx:612:                onClick={() => setShowTopicsSidebar(false)}
+src/app/crm\chat-ia\page.tsx:630:                      <button
+src/app/crm\chat-ia\page.tsx:633:                        onClick={() => handleSendChatMessage(p)}
+src/app/crm\chat-ia\page.tsx:665:                <button
+src/app/crm\chat-ia\page.tsx:667:                  onClick={() => setShowTopicsSidebar(true)}
+src/app/crm\chat-ia\page.tsx:683:              <button
+src/app/crm\chat-ia\page.tsx:685:                onClick={() => {
+src/app/crm\chat-ia\page.tsx:746:                        <button type="button"
+src/app/crm\chat-ia\page.tsx:747:                          onClick={() => {
+src/app/crm\chat-ia\page.tsx:758:                          href="/crm/documentos-ia"
+src/app/crm\chat-ia\page.tsx:805:              <button
+src/app/crm\chat-ia\page.tsx:834:              <button
+src/app/crm\chat-ia\page.tsx:836:                onClick={() => setShowConfigModal(false)}
+src/app/crm\chat-ia\page.tsx:853:                      <button
+src/app/crm\chat-ia\page.tsx:856:                        onClick={() => handleSelectPreset(p.id)}
+src/app/crm\chat-ia\page.tsx:903:                  <button
+src/app/crm\chat-ia\page.tsx:905:                    onClick={() => setShowApiKey(!showApiKey)}
+src/app/crm\chat-ia\page.tsx:953:                      <button
+src/app/crm\chat-ia\page.tsx:956:                        onClick={() => setConfig({ ...config, model: m })}
+src/app/crm\chat-ia\page.tsx:990:              <button
+src/app/crm\chat-ia\page.tsx:992:                onClick={handleTestConnection}
+src/app/crm\chat-ia\page.tsx:1003:                <button
+src/app/crm\chat-ia\page.tsx:1005:                  onClick={() => setShowConfigModal(false)}
+src/app/crm\chat-ia\page.tsx:1010:                <button
+src/app/crm\chat-ia\page.tsx:1012:                  onClick={handleSaveConfig}

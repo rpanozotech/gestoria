@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "error-container": "#ffdad6", "surface-container": "#e5eeff", "tertiary": "#000000", "on-error": "#ffffff", "on-tertiary": "#ffffff", "on-primary-container": "#7c839b", "tertiary-fixed": "#e1e0ff", "primary": "#000000", "primary-fixed": "#dae2fd", "on-secondary-fixed-variant": "#003ea8", "secondary-fixed-dim": "#b4c5ff", "tertiary-fixed-dim": "#c0c1ff", "on-error-container": "#93000a", "error": "#ba1a1a", "surface-container-high": "#dce9ff", "outline-variant": "#c6c6cd", "primary-container": "#131b2e", "secondary-container": "#316bf3", "inverse-surface": "#213145", "on-tertiary-fixed": "#07006c", "surface-tint": "#565e74", "surface-container-low": "#eff4ff", "surface-container-lowest": "#ffffff", "on-secondary": "#ffffff", "inverse-on-surface": "#eaf1ff", "surface-bright": "#f8f9ff", "on-tertiary-container": "#7073ff", "on-primary-fixed": "#131b2e", "primary-fixed-dim": "#bec6e0", "on-surface-variant": "#45464d", "surface-variant": "#d3e4fe", "surface-dim": "#cbdbf5", "secondary-fixed": "#dbe1ff", "secondary": "#0051d5", "inverse-primary": "#bec6e0", "on-secondary-container": "#fefcff", "background": "#f8f9ff", "on-primary-fixed-variant": "#3f465c", "on-tertiary-fixed-variant": "#2f2ebe", "tertiary-container": "#07006c", "on-surface": "#0b1c30", "on-background": "#0b1c30", "on-secondary-fixed": "#00174b", "surface-container-highest": "#d3e4fe", "surface": "#f8f9ff", "on-primary": "#ffffff", "outline": "#76777d" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "margin-md": "1.5rem", "gutter": "1rem", "space-xs": "0.25rem", "space-xl": "1.5rem", "margin-lg": "2rem", "margin": "1rem", "space-md": "0.75rem", "space-3xl": "3rem", "space-2xs": "0.125rem", "space-lg": "1rem", "space-sm": "0.5rem", "gutter-lg": "1.5rem", "space-2xl": "2rem" }, "fontFamily": { "headline-md": [ "Plus Jakarta Sans" ], "headline-sm": [ "Plus Jakarta Sans" ], "label-sm": [ "Inter" ], "body-sm": [ "Inter" ], "body-md": [ "Inter" ], "headline-lg": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "display-lg": [ "Plus Jakarta Sans" ], "mono-data": [ "JetBrains Mono" ], "label-md": [ "Inter" ] }, "fontSize": { "headline-md": [ "22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.025em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.005em", "fontWeight": "400" } ], "body-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "display-lg": [ "36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" } ], "mono-data": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "label-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" } ] } } } }</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full max-w-7xl mx-auto px-margin-lg flex items-center justify-between"><div class="flex items-center gap-space-md"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface leading-none tracking-tight">NexusGest</span><span class="font-label-sm text-label-sm text-on-surface-variant">Tax &amp; Legal NL</span></div></div><nav class="hidden xl:flex items-center gap-space-lg" data-active-classes="bg-surface-container-high text-on-surface font-label-md"><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-space-xs rounded-lg transition-colors" data-path="inicio" href="#">Inicio</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-space-xs rounded-lg transition-colors" data-path="servicios" href="#">Servicios</a><div class="relative flex items-center"><a aria-current="page" class="px-space-sm py-space-xs rounded-lg transition-colors bg-surface-container-high text-on-surface font-label-md" data-path="calculadora-fiscal" href="#">Calculadora Fiscal</a><span class="ml-space-2xs bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-space-xs py-space-2xs rounded-full uppercase">Gratis</span></div><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-space-xs rounded-lg transition-colors" data-path="precios" href="#">Precios</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-space-sm py-space-xs rounded-lg transition-colors" data-path="reservar-cita" href="#">Reservar Cita</a></nav><div class="flex items-center gap-space-md"><a class="hidden sm:inline-flex items-center justify-center bg-primary text-on-primary hover:bg-surface-container-highest hover:text-on-surface px-space-lg py-space-sm rounded-lg font-label-md text-label-md transition-all shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" data-path="portal-clientes" href="#">Acceso Clientes</a><div class="flex items-center pl-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VE8POL9nnf4cvlLj8Py1GsPsfUwePNkGHzqLy5Ckd7C-c0dfxCNE3n8ooZuwdqSHGZsKi0_QH2hsgj-8g-mh5cvDoyV9_l__67YW6YrnVy2l7QTmOICovoE_xUrjSKI15qju3P8ih21PhopDtOJaHjPYbUEE2sMYU0p7bBdtvNpjR2MS4Cz6HWDJ79NDNCK3_3xKsRtgxjyAodoptR5z5spYJLdQA615Md2bfipUq81Bd2L_4geLfaw5o"/></div></div></div></header><main class="w-full pt-16 bg-surface min-h-[calc(100vh-400px)]"><div class="flex flex-col w-full font-body-md text-on-surface antialiased">
+<!-- ========================================== -->
+<!-- 1. HERO HEADER: TAX SIMULATOR OVERVIEW     -->
+<!-- ========================================== -->
+<section class="relative w-full max-w-7xl mx-auto px-margin-lg pt-space-xl pb-space-2xl overflow-hidden">
+<!-- Subtle Ambient Backdrop Gradient Glow -->
+<div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[720px] h-[340px] bg-gradient-to-b from-secondary-container/15 via-surface-container-high/40 to-transparent blur-3xl pointer-events-none -z-10"></div>
+<div class="flex flex-col items-center text-center max-w-4xl mx-auto">
+<!-- High-Precision Regulatory Status Pill -->
+<div class="inline-flex items-center gap-space-xs px-space-md py-space-2xs bg-surface-container-low rounded-full shadow-sm mb-space-md">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-mono-data text-mono-data uppercase tracking-wider text-secondary font-semibold">Simulador Fiscal Oficial 2025/2026</span>
+<span class="text-outline-variant font-label-sm">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+          Algoritmo Auditado Belastingdienst NL
+        </span>
+</div>
+<!-- Main High-Impact Typographic Headline -->
+<h1 class="font-display-lg text-display-lg md:text-[44px] md:leading-[52px] text-on-surface tracking-tight max-w-3xl mb-space-md">
+        Calcula tu ahorro fiscal y devolución estimada de la renta holandesa en <span class="text-secondary underline decoration-secondary-container decoration-2 underline-offset-4">2 minutos</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-space-xl">
+        Descubre al instante cuánto dinero puedes recuperar con el formulario <strong class="text-on-surface font-semibold">M-Form</strong> y el impacto exacto del <strong class="text-on-surface font-semibold">30% Ruling</strong> en tu nómina neta anual.
+      </p>
+<!-- Trust Credential Badges Row -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-md w-full max-w-2xl">
+<div class="flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-surface-container-lowest rounded-xl shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]">lock</span>
+<span class="font-label-md text-label-md text-on-surface font-medium">100% Gratuito y Confidencial</span>
+</div>
+<div class="flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-surface-container-lowest rounded-xl shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]">no_encryption</span>
+<span class="font-label-md text-label-md text-on-surface font-medium">Sin necesidad de DigiD previo</span>
+</div>
+<div class="flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-surface-container-lowest rounded-xl shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]">groups</span>
+<span class="font-label-md text-label-md text-on-surface font-medium">+4.200 expatriados asesorados</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 2. CENTRAL INTERACTIVE WORKSPACE (2 COLS) -->
+<!-- ========================================== -->
+<section class="w-full max-w-7xl mx-auto px-margin-lg pb-space-3xl">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-start">
+<!-- LEFT COLUMN: TAXPAYER PARAMETERS (7 COLS) -->
+<div class="lg:col-span-7 flex flex-col gap-space-lg bg-surface-container-lowest p-space-xl rounded-xl shadow-md">
+<div class="flex items-center justify-between pb-space-sm bg-surface-container-low/50 -mx-space-xl -mt-space-xl px-space-xl pt-space-lg rounded-t-xl mb-space-2xs">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">Paso 1 de 2 • Parámetros Personales</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Configuración Fiscal de tu Ejercicio</h2>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/60 text-[24px]">tune</span>
+</div>
+<!-- Tax Year Selection -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between">
+<span>Año Fiscal a Declarar</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant text-[11px]">Plazo máximo: 5 años atrás</span>
+</label>
+<div class="grid grid-cols-3 gap-space-sm">
+<button class="year-btn py-space-sm px-space-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md text-center shadow-sm transition-all" data-year="2025" type="button">
+<span class="block font-bold">2025</span>
+<span class="font-mono-data text-mono-data text-[10px] opacity-80">Campaña Actual</span>
+</button>
+<button class="year-btn py-space-sm px-space-sm bg-surface-container-low text-on-surface hover:bg-surface-container-high rounded-lg font-label-md text-label-md text-center transition-all" data-year="2024" type="button">
+<span class="block font-bold">2024</span>
+<span class="font-mono-data text-mono-data text-[10px] text-on-surface-variant">Retroactivo</span>
+</button>
+<button class="year-btn py-space-sm px-space-sm bg-surface-container-low text-on-surface hover:bg-surface-container-high rounded-lg font-label-md text-label-md text-center transition-all" data-year="2026" type="button">
+<span class="block font-bold">2026</span>
+<span class="font-mono-data text-mono-data text-[10px] text-on-surface-variant">Planificación</span>
+</button>
+</div>
+</div>
+<!-- Residency / Arrival Status -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface">Situación de llegada a Países Bajos</label>
+<div class="flex flex-col gap-space-xs">
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-low cursor-pointer transition-colors hover:bg-surface-container">
+<input checked="" class="mt-1 accent-primary w-4 h-4 cursor-pointer" name="residency_status" type="radio" value="m_form"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Llegué a Países Bajos durante el año fiscal (M-Formulair obligatorio)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Genera la mayor devolución media al calcular la tasa anualizada sobre meses efectivos.</span>
+</div>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-low cursor-pointer transition-colors hover:bg-surface-container">
+<input class="mt-1 accent-primary w-4 h-4 cursor-pointer" name="residency_status" type="radio" value="p_form"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Residente durante todo el año natural (P-Form estándar)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Para contribuyentes residentes fiscales durante los 12 meses completos.</span>
+</div>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-low cursor-pointer transition-colors hover:bg-surface-container">
+<input class="mt-1 accent-primary w-4 h-4 cursor-pointer" name="residency_status" type="radio" value="zzp"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Trabajador Autónomo / ZZP / Freelance</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Deducciones por autónomo (Zelfstandigenaftrek) y MKB-winstvrijstelling.</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Gross Annual Salary Slider + Input -->
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="salaryRange">Salario Bruto Anual Estimado</label>
+<div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-space-2xs rounded-lg">
+<span class="font-mono-data text-mono-data text-on-surface-variant font-bold">€</span>
+<input class="w-24 bg-transparent font-mono-data text-mono-data font-bold text-on-surface text-right focus:outline-none" id="salaryInput" max="150000" min="30000" step="1000" type="number" value="65000"/>
+<span class="font-label-sm text-label-sm text-on-surface-variant">/año</span>
+</div>
+</div>
+<input class="w-full accent-secondary h-2 bg-surface-container rounded-lg cursor-pointer" id="salaryRange" max="150000" min="30000" step="1000" type="range" value="65000"/>
+<div class="flex justify-between font-mono-data text-mono-data text-[11px] text-on-surface-variant">
+<span>30.000 € (Mínimo profesional)</span>
+<span>65.000 € (Media Tech/Finance)</span>
+<span>150.000 €+</span>
+</div>
+</div>
+<!-- 30% Ruling Toggle Card -->
+<div class="p-space-md bg-surface-container-low rounded-xl flex items-center justify-between gap-space-md">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[26px] mt-0.5">percent</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md font-semibold text-on-surface">30% Ruling (Resolución Belastingdienst)</span>
+<span class="px-space-xs py-space-2xs bg-secondary-container text-on-secondary-container font-label-sm text-[10px] rounded-full uppercase">Exención 30%</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Requisito salarial 2025 cumplido: Salario mínimo taxable neto requerido superado (&gt; 46.107 €).
+              </p>
+</div>
+</div>
+<!-- Toggle Button -->
+<button aria-pressed="true" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full bg-secondary transition-colors duration-200 ease-in-out focus:outline-none" id="toggle30Ruling" type="button">
+<span class="translate-x-5 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-on-secondary shadow ring-0 transition duration-200 ease-in-out mt-0.5 ml-0.5" id="toggleKnob"></span>
+</button>
+</div>
+<!-- Months Worked in NL (Crucial for M-Form) -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface font-semibold">Meses trabajados en Países Bajos este año</label>
+<span class="font-mono-data text-mono-data text-secondary font-bold" id="monthsDisplay">8 meses (Llegada en Mayo)</span>
+</div>
+<input class="w-full accent-primary h-2 bg-surface-container rounded-lg cursor-pointer" id="monthsSlider" max="12" min="1" type="range" value="8"/>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">
+            El empleador retiene el IRPF anual como si trabajaras los 12 meses. Al haber trabajado menos, tienes una retención excesiva a devolver íntegramente.
+          </p>
+</div>
+<!-- Tax Deductions Multi-Checkboxes -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Deducciones fiscales aplicables que incrementan tu devolución:</span>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<label class="flex items-start gap-space-sm p-space-sm bg-surface rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors">
+<input checked="" class="mt-1 accent-secondary w-4 h-4 cursor-pointer" id="deductRelocation" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Gastos de mudanza y asesoría legal transfronteriza</span>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm bg-surface rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors">
+<input class="mt-1 accent-secondary w-4 h-4 cursor-pointer" id="deductMortgage" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Hipoteca en Países Bajos (Hypotheekrenteaftrek)</span>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm bg-surface rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors">
+<input checked="" class="mt-1 accent-secondary w-4 h-4 cursor-pointer" id="deductChildren" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Cargas familiares / Hijos a cargo (Korting)</span>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm bg-surface rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors">
+<input class="mt-1 accent-secondary w-4 h-4 cursor-pointer" id="deductHealthcare" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Gastos médicos no cubiertos por seguro holandés</span>
+</label>
+</div>
+</div>
+<!-- Proactive Intelligence Alert Pill -->
+<div class="p-space-md bg-surface-container-low rounded-lg flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]">auto_awesome</span>
+<div class="flex-1">
+<p class="font-body-sm text-body-sm text-on-surface leading-snug">
+<strong>Análisis Inteligente NexusGest:</strong> Al tributar por el M-Form con 8 meses trabajados y 30% Ruling, tu empleador ha adelantado Loonheffing en el tramo máximo general del 36,97%. Tienes derecho a la regularización íntegra del crédito general (Algemene Heffingskorting).
+            </p>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: DYNAMIC RESULTS CARD & LEAD CAPTURE (5 COLS - STICKY) -->
+<div class="lg:col-span-5 flex flex-col gap-space-lg lg:sticky lg:top-20">
+<!-- Live Calculation Box -->
+<div class="bg-primary text-on-primary p-space-xl rounded-xl shadow-xl flex flex-col gap-space-md relative overflow-hidden">
+<!-- Background geometric flare -->
+<div class="absolute -right-16 -top-16 w-48 h-48 bg-secondary-container/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="px-space-sm py-space-2xs bg-surface-container-lowest/10 text-primary-fixed font-mono-data text-mono-data rounded-full flex items-center gap-space-2xs">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-fixed"></span>
+              Cálculo en Tiempo Real
+            </span>
+<span class="font-label-sm text-label-sm text-primary-fixed-dim">Actualizado: Campaña 2025</span>
+</div>
+<!-- Highlight Amount -->
+<div class="flex flex-col gap-space-2xs pt-space-xs">
+<span class="font-label-md text-label-md text-primary-fixed-dim uppercase tracking-wider">Devolución Estimada a tu Favor</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-display-lg text-[44px] leading-tight font-bold text-on-primary tracking-tight" id="calculatedRefund">+2.840,00 €</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary-fixed-dim flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+              Importe depositado directamente por Belastingdienst en tu IBAN
+            </span>
+</div>
+<!-- Accurate Breakdown Table -->
+<div class="bg-primary-container/80 p-space-md rounded-lg flex flex-col gap-space-xs font-mono-data text-mono-data text-[12px]">
+<div class="flex justify-between items-center text-primary-fixed-dim pb-space-2xs">
+<span>Retención pagada de más (Loonheffing):</span>
+<span class="text-on-primary font-semibold" id="breakdownPaid">16.420 €</span>
+</div>
+<div class="flex justify-between items-center text-primary-fixed-dim pb-space-2xs">
+<span>Impuesto real devengado (Box 1 NL):</span>
+<span class="text-on-primary font-semibold" id="breakdownTax">13.580 €</span>
+</div>
+<div class="flex justify-between items-center text-secondary-fixed pb-space-2xs">
+<span>Base exenta neta por 30% Ruling:</span>
+<span class="font-semibold" id="breakdownRuling">+9.750 €</span>
+</div>
+<div class="flex justify-between items-center text-primary-fixed-dim">
+<span>Deducción por honorarios NexusGest:</span>
+<span class="text-on-primary font-semibold">-120 € (Ahorro)</span>
+</div>
+</div>
+<!-- Visual Comparison Bar Chart -->
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<span class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-wider">Impacto de la Optimización Fiscal:</span>
+<div class="flex flex-col gap-space-2xs">
+<div class="flex justify-between font-label-sm text-label-sm text-primary-fixed-dim">
+<span>Sin asesoría especializada (Borrador Belastingdienst):</span>
+<span class="font-mono-data text-mono-data">+650 €</span>
+</div>
+<div class="w-full bg-primary-container h-2.5 rounded-full overflow-hidden">
+<div class="bg-outline-variant h-full w-[23%] rounded-full"></div>
+</div>
+</div>
+<div class="flex flex-col gap-space-2xs pt-space-2xs">
+<div class="flex justify-between font-label-sm text-label-sm text-on-primary font-semibold">
+<span class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-secondary text-[14px]">bolt</span>
+                  Con NexusGest (M-Form exhaustivo + Deducciones):
+                </span>
+<span class="font-mono-data text-mono-data text-secondary-fixed" id="compNexusGest">+2.840 €</span>
+</div>
+<div class="w-full bg-primary-container h-3.5 rounded-full overflow-hidden p-0.5">
+<div class="bg-secondary-container h-full w-[100%] rounded-full transition-all duration-300" id="barNexus"></div>
+</div>
+</div>
+</div>
+<!-- Instant Conversion Form / Lead Capture -->
+<div class="bg-surface-container-lowest text-on-surface p-space-md rounded-xl mt-space-xs flex flex-col gap-space-sm shadow-md">
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">¡Reclama tu devolución estimada hoy!</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Nuestros asesores acreditados tramitan tu expediente telemático con Belastingdienst sin errores ni retrasos.</p>
+</div>
+<form class="flex flex-col gap-space-sm" onsubmit="event.preventDefault(); alert('¡Gracias! Un asesor fiscal de NexusGest revisará tu caso en menos de 2 horas laborables.');">
+<div class="flex flex-col gap-space-2xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant font-medium">Nombre completo</label>
+<input class="h-9 px-space-sm bg-surface-container-low text-on-surface rounded-lg font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-secondary" placeholder="Ej. Carlos Mendoza" required="" type="text"/>
+</div>
+<div class="flex flex-col gap-space-2xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant font-medium">Email de contacto o WhatsApp</label>
+<input class="h-9 px-space-sm bg-surface-container-low text-on-surface rounded-lg font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-secondary" placeholder="carlos@empresa.com / +31 6 12345678" required="" type="text"/>
+</div>
+<button class="w-full py-space-sm px-space-md bg-primary hover:bg-inverse-surface text-on-primary rounded-lg font-headline-sm text-[15px] font-semibold flex items-center justify-center gap-space-sm transition-all shadow-md group" type="submit">
+<span>Solicitar mi Declaración M-Form</span>
+<span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</form>
+<div class="flex flex-col items-center gap-space-2xs pt-space-2xs">
+<a class="font-label-md text-label-md text-secondary hover:underline flex items-center gap-space-2xs font-medium" href="#">
+<span class="material-symbols-outlined text-[16px]">video_call</span>
+                Reservar videollamada de 15 min con un gestor fiscal
+              </a>
+<p class="font-mono-data text-mono-data text-[10px] text-on-surface-variant text-center">
+                Honorarios 100% a éxito o tarifa fija sin sorpresas. Factura deducible en tu propia declaración.
+              </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 3. FAQS AND PRACTICAL CASES SECTION        -->
+<!-- ========================================== -->
+<section class="w-full bg-surface-container-low py-space-3xl">
+<div class="max-w-7xl mx-auto px-margin-lg flex flex-col gap-space-2xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div class="max-w-xl">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">Base de Conocimiento Fiscal</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Guía práctica para expatriados en Países Bajos</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">
+          La fiscalidad holandesa ofrece notables deducciones a profesionales desplazados, pero su laberinto burocrático exige conocimiento exhaustivo.
+        </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter-lg">
+<!-- Card 1: M-Form -->
+<div class="p-space-xl bg-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">
+              ¿Qué es el M-Form y por qué Belastingdienst no te lo pone fácil?
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+              Si te mudaste a los Países Bajos a mitad de año, estás obligado a presentar el M-Formulair. Belastingdienst por defecto envía un librillo en papel de más de 80 páginas en neerlandés cerrado. En NexusGest disponemos de canal digital directo con el servidor tributario para tramitarlo en minutos y evitar hasta 6 meses de espera postal.
+            </p>
+</div>
+<div class="pt-space-md flex items-center text-secondary font-label-md text-label-md font-semibold gap-space-2xs">
+<span>Ver normativa M-Form</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+<!-- Card 2: 30% Ruling Reform -->
+<div class="p-space-xl bg-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">calculate</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">
+              ¿Cómo funciona el 30% Ruling tras la reforma normativa?
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+              A partir de las recientes revisiones de la ley de presupuestos holandesa, el régimen fiscal especial para talento extranjero aplica con un umbral salarial neto actualizado de 46.107 € (o 35.048 € para menores de 30 años con máster universitario). Aseguramos que la base imponible se declare con la máxima reducción permitida para evitar regularizaciones retroactivas.
+            </p>
+</div>
+<div class="pt-space-md flex items-center text-secondary font-label-md text-label-md font-semibold gap-space-2xs">
+<span>Simular impacto sueldo neto</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+<!-- Card 3: Deadlines and Prescription -->
+<div class="p-space-xl bg-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">history</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">
+              ¿Qué pasa si presento fuera de plazo o no solicité mi dinero?
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+              Tienes por ley hasta <strong>5 años retroactivos</strong> para solicitar devoluciones no reclamadas a la Hacienda holandesa. Muchos expatriados pierden entre 2.000 € y 4.500 € simplemente por no haber entregado el M-Form de su año de llegada. NexusGest puede auditar y recuperar ejercicios desde 2020 inclusive sin penalización.
+            </p>
+</div>
+<div class="pt-space-md flex items-center text-secondary font-label-md text-label-md font-semibold gap-space-2xs">
+<span>Reclamar ejercicios pasados</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 4. REAL TESTIMONIALS FROM EXPATRIATES      -->
+<!-- ========================================== -->
+<section class="w-full max-w-7xl mx-auto px-margin-lg py-space-3xl">
+<div class="flex flex-col items-center text-center max-w-3xl mx-auto mb-space-2xl">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">Casos de Éxito Verificados</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Respaldado por expatriados de las principales compañías de los Países Bajos</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Historias reales con resoluciones de devolución emitidas directamente por la administración tributaria neerlandesa.
+      </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter-lg">
+<!-- Testimonial 1 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col justify-between gap-space-lg">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-space-sm py-space-2xs bg-surface-container text-secondary font-mono-data text-mono-data rounded-md font-bold">
+              +3.120 € devueltos
+            </span>
+<span class="font-mono-data text-mono-data text-[11px] text-on-surface-variant">Ejercicio 2024</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface italic">
+            “Llegué a Ámsterdam en agosto contratado por Booking. Pensé que mi empresa gestionaba todo, pero me explicaron que el M-Form lo tenía que hacer yo. NexusGest resolvió mi trámite telemáticamente y recibí más de 3.000 € en menos de 9 semanas.”
+          </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm bg-surface-container-low/40 -mx-space-xl -mb-space-xl p-space-md rounded-b-xl">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Professional studio portrait of an engineer expat in Amsterdam wearing navy blazer, clean neutral studio lighting, high resolution corporate headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAutJnptcyX9KmcZHQC8DIPlBZ-O7_JLW0qUolEDgbOhiX5iWdeqsEAgF6TMMBC9XomiTe5XevyhYbomEiX5JaWq2-1OsJcewLvmezuKR-iujyBVJfo5_m-oG0a76-crElksoIGiyZjfnYhenGEEARbMIXD-rixwHFCngySZS2Ftuy0LzDOkgfnaCLnGBtXLFdW3ZD3AGum2pjsK-CcL4kPIhJknPpTlh_ooUt_93lL_FhAWoBJV6_e"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Alejandro V.</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Senior Product Owner @ Booking.com (Ámsterdam)</span>
+</div>
+</div>
+</div>
+<!-- Testimonial 2 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col justify-between gap-space-lg">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-space-sm py-space-2xs bg-surface-container text-secondary font-mono-data text-mono-data rounded-md font-bold">
+              +2.450 € devueltos
+            </span>
+<span class="font-mono-data text-mono-data text-[11px] text-on-surface-variant">Ejercicio 2024</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface italic">
+            “El papeleo en holandés era incomprensible. Además de tramitar el M-Form, en NexusGest optimizaron mi deducción hipotecaria y la aplicación combinada del 30% Ruling de mi marido. Su profesionalidad y rigor legal son insuperables.”
+          </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm bg-surface-container-low/40 -mx-space-xl -mb-space-xl p-space-md rounded-b-xl">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Corporate professional portrait of a Hispanic woman data scientist in Eindhoven, smiling confident in modern office with soft daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYs8dSQxoXqvIAo6v7eLJOVGmXqi93Nh_wtNakolxQROuEWseAAZFlrBuLebPoAksob0caN1YLnzlOc0SkAAZ22DbHgfqMGpyq6eBE7NHa7i99HhYicWWW56GuI4DprU0UWs4J8zJa5TdaLYqecdLY2RUrAjzbOjqQi1AxISHfYuo5n3SBbysf34nj-n8kEOSwdKTzIJg1IPq3uZMLqgK91ltfr9FoAYTyxKM9MNbJ95r8HBEbzoxB"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Beatriz M.</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Data Scientist @ ASML (Veldhoven / Eindhoven)</span>
+</div>
+</div>
+</div>
+<!-- Testimonial 3 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col justify-between gap-space-lg">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-space-sm py-space-2xs bg-surface-container text-secondary font-mono-data text-mono-data rounded-md font-bold">
+              +1.890 € devueltos
+            </span>
+<span class="font-mono-data text-mono-data text-[11px] text-on-surface-variant">Ejercicio 2023</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface italic">
+            “Había dejado pasar un año sin pedir la devolución creyendo que ya no se podía. Recuperaron mi ejercicio anterior y gestionaron el cambio a mi condición de autónomo ZZP. Te explican exactamente cada céntimo que Belastingdienst te ingresa.”
+          </p>
+</div>
+<div class="flex items-center gap-space-sm pt-space-sm bg-surface-container-low/40 -mx-space-xl -mb-space-xl p-space-md rounded-b-xl">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Portrait of an international corporate consultant in Rotterdam working with laptop in bright glass modern office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCySBIZrLpqjoDUV15fO7IcVBXGAZzLpFLRypWs3-JDmjTOHthOei1gb2JxruLHJUkPg2dgRdrY4c8IIffm4eX2flBuiTp1KIQ28INYNak9jAdQeFtfR7J-eFdqGqeIyH9978JBQKhB4DWMV4v6VUOFPWna26eUN8Tz95BWDLclYZTEkqFNUMOYFchSU4rcp78waCGh_pxr53CigHzjnJFUaQAYJdVn4fmJKYmYf9lsJOLL1SBWr0_G"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Javier S.</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Operations Lead @ Uber BV (Ámsterdam)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Final Institutional Reassurance Strip -->
+<div class="mt-space-2xl p-space-lg bg-surface-container-lowest rounded-xl flex flex-col sm:flex-row items-center justify-between gap-space-md shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[28px]">shield</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Garantía de Satisfacción y Confidencialidad RGPD</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Tus datos fiscales se procesan conforme al estándar europeo de seguridad bancaria con conexión cifrada SSL.</span>
+</div>
+</div>
+<button class="px-space-lg py-space-sm bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-lg font-label-md text-label-md font-semibold transition-colors flex items-center gap-space-xs" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+<span>Volver a Calcular</span>
+<span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Client-side Interactive Dynamic Simulator Logic -->
+<script>
+  (function initTaxCalculator() {
+    const salaryRange = document.getElementById('salaryRange');
+    const salaryInput = document.getElementById('salaryInput');
+    const monthsSlider = document.getElementById('monthsSlider');
+    const monthsDisplay = document.getElementById('monthsDisplay');
+    const toggle30 = document.getElementById('toggle30Ruling');
+    const toggleKnob = document.getElementById('toggleKnob');
+    
+    const calculatedRefund = document.getElementById('calculatedRefund');
+    const breakdownPaid = document.getElementById('breakdownPaid');
+    const breakdownTax = document.getElementById('breakdownTax');
+    const breakdownRuling = document.getElementById('breakdownRuling');
+    const compNexusGest = document.getElementById('compNexusGest');
+    const barNexus = document.getElementById('barNexus');
+
+    const deductRelocation = document.getElementById('deductRelocation');
+    const deductMortgage = document.getElementById('deductMortgage');
+    const deductChildren = document.getElementById('deductChildren');
+    const deductHealthcare = document.getElementById('deductHealthcare');
+
+    let has30Ruling = true;
+
+    // Toggle 30% Ruling
+    toggle30.addEventListener('click', () => {
+      has30Ruling = !has30Ruling;
+      toggle30.setAttribute('aria-pressed', has30Ruling);
+      if (has30Ruling) {
+        toggle30.classList.remove('bg-outline-variant');
+        toggle30.classList.add('bg-secondary');
+        toggleKnob.classList.add('translate-x-5');
+        toggleKnob.classList.remove('translate-x-0');
+      } else {
+        toggle30.classList.remove('bg-secondary');
+        toggle30.classList.add('bg-outline-variant');
+        toggleKnob.classList.remove('translate-x-5');
+        toggleKnob.classList.add('translate-x-0');
+      }
+      recalculate();
+    });
+
+    // Sync Slider and Input
+    salaryRange.addEventListener('input', (e) => {
+      salaryInput.value = e.target.value;
+      recalculate();
+    });
+    salaryInput.addEventListener('input', (e) => {
+      salaryRange.value = e.target.value;
+      recalculate();
+    });
+
+    // Month slider
+    monthsSlider.addEventListener('input', (e) => {
+      const months = parseInt(e.target.value, 10);
+      const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      const arrivalIndex = 12 - months;
+      const arrivalName = monthNames[arrivalIndex] || "Inicio de año";
+      monthsDisplay.innerText = months === 12 ? "12 meses (Año completo)" : `${months} meses (Llegada en ${arrivalName})`;
+      recalculate();
+    });
+
+    // Checkboxes recalculate
+    [deductRelocation, deductMortgage, deductChildren, deductHealthcare].forEach(cb => {
+      cb.addEventListener('change', recalculate);
+    });
+
+    // Year buttons
+    document.querySelectorAll('.year-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.year-btn').forEach(b => {
+          b.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+          b.classList.add('bg-surface-container-low', 'text-on-surface');
+        });
+        btn.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+        btn.classList.remove('bg-surface-container-low', 'text-on-surface');
+        recalculate();
+      });
+    });
+
+    function recalculate() {
+      const gross = parseFloat(salaryRange.value) || 65000;
+      const months = parseInt(monthsSlider.value, 10) || 8;
+
+      // Belastingdienst Tax Brackets Approximation (2025: Box 1 ~36.97% up to ~75,518€, ~49.50% above)
+      let taxableBase = gross;
+      let rulingExemption = 0;
+
+      if (has30Ruling) {
+        rulingExemption = Math.round(gross * 0.30 * (months / 12));
+        taxableBase = gross - (gross * 0.30);
+      }
+
+      // Pro-rated actual income for partial year (M-Form core benefit)
+      const effectiveAnnualSalary = (gross / 12) * months;
+      const estimatedPaidLoonheffing = Math.round((gross * 0.3697) * (months / 12));
+
+      // Actual progressive tax after general credit
+      let baseTax = Math.round((taxableBase / 12) * months * 0.31);
+
+      // Deductions additions
+      let totalDeductionsValue = 0;
+      if (deductRelocation.checked) totalDeductionsValue += 480;
+      if (deductMortgage.checked) totalDeductionsValue += 650;
+      if (deductChildren.checked) totalDeductionsValue += 390;
+      if (deductHealthcare.checked) totalDeductionsValue += 220;
+
+      // Partial year correction factor (the fewer months worked, the bigger the refund)
+      const partialYearBonus = Math.round(((12 - months) * 160));
+
+      let refund = estimatedPaidLoonheffing - baseTax + totalDeductionsValue + partialYearBonus;
+      if (refund < 250) refund = 250;
+
+      // Update UI numbers
+      calculatedRefund.innerText = `+${refund.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+      breakdownPaid.innerText = `${estimatedPaidLoonheffing.toLocaleString('es-ES')} €`;
+      breakdownTax.innerText = `${baseTax.toLocaleString('es-ES')} €`;
+      breakdownRuling.innerText = has30Ruling ? `+${rulingExemption.toLocaleString('es-ES')} €` : '0 € (No aplicado)';
+      compNexusGest.innerText = `+${refund.toLocaleString('es-ES')} €`;
+    }
+
+    recalculate();
+  })();
+</script></main><footer class="w-full bg-surface-container-low"><div class="w-full max-w-7xl mx-auto px-margin-lg pt-space-3xl pb-space-2xl"><div class="mb-space-2xl pb-space-xl bg-surface-container-lowest rounded-xl p-space-xl shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]"><div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg"><div class="max-w-md"><span class="font-label-sm text-label-sm uppercase text-secondary tracking-wider block mb-space-2xs">Garantía y Cumplimiento Legal</span><h4 class="font-headline-sm text-headline-sm text-on-surface">Acreditaciones oficiales en Países Bajos</h4></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-space-md w-full md:w-auto"><div class="flex flex-col items-center justify-center p-space-sm bg-surface-container-low rounded-lg text-center min-w-[120px]"><span class="font-label-sm text-label-sm text-secondary font-semibold">KvK Registro</span><span class="font-mono-data text-mono-data text-on-surface-variant">84920193</span></div><div class="flex flex-col items-center justify-center p-space-sm bg-surface-container-low rounded-lg text-center min-w-[120px]"><span class="font-label-sm text-label-sm text-secondary font-semibold">Belastingdienst</span><span class="font-mono-data text-mono-data text-on-surface-variant">Intermediair NL</span></div><div class="flex flex-col items-center justify-center p-space-sm bg-surface-container-low rounded-lg text-center min-w-[120px]"><span class="font-label-sm text-label-sm text-secondary font-semibold">DNB Regulated</span><span class="font-mono-data text-mono-data text-on-surface-variant">Wtt Compliant</span></div><div class="flex flex-col items-center justify-center p-space-sm bg-surface-container-low rounded-lg text-center min-w-[120px]"><span class="font-label-sm text-label-sm text-secondary font-semibold">ISO 27001</span><span class="font-mono-data text-mono-data text-on-surface-variant">Cert. Data Security</span></div></div></div></div><div class="grid grid-cols-1 md:grid-cols-5 gap-space-2xl pb-space-2xl"><div class="md:col-span-2 flex flex-col gap-space-md"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm text-on-surface">NexusGest BV</span></div><p class="font-body-md text-body-md text-on-surface-variant max-w-sm">Especialistas en fiscalidad holandesa, 30% Ruling, constitución de BV y compliance transfronterizo para expatriados y empresas internacionales en Ámsterdam, Róterdam y La Haya.</p><div class="flex items-center gap-space-sm font-mono-data text-mono-data text-on-surface-variant"><span class="material-symbols-outlined text-secondary text-[18px]">verified</span>Keizersgracht 421, 1016 EK Amsterdam</div></div><div class="flex flex-col gap-space-sm"><span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Servicios</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="servicios" href="#">Declaración de la Renta (M-Form)</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="servicios" href="#">Aplicación 30% Ruling</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="servicios" href="#">Autónomos (ZZP) &amp; Facturación</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="servicios" href="#">Creación de Sociedad BV</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Herramientas</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="calculadora-fiscal" href="#">Simulador Sueldo Neto (30%)</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="calculadora-fiscal" href="#">Calculador Impuesto Box 3</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="precios" href="#">Planes de Asesoría Integral</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="reservar-cita" href="#">Diagnóstico Inicial 30 Min</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Legal &amp; Privacidad</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" href="#">Aviso Legal KvK</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" href="#">Política de Privacidad RGPD</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" href="#">Condiciones Generales</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" href="#">Seguridad de Datos Cifrados</a></div></div><div class="pt-space-xl flex flex-col sm:flex-row items-center justify-between gap-space-md text-on-surface-variant font-label-sm text-label-sm"><p>© 2025 NexusGest B.V. Todos los derechos reservados. Registrado ante la Cámara de Comercio de Países Bajos (Kamer van Koophandel).</p><div class="flex items-center gap-space-lg"><span class="flex items-center gap-space-2xs text-secondary"><span class="material-symbols-outlined text-[16px]">lock</span>Conexión Segura SSL 256-bit</span></div></div></div></footer></body></html>

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-tint": "#565e74", "surface-bright": "#f8f9ff", "inverse-on-surface": "#eaf1ff", "on-error-container": "#93000a", "inverse-primary": "#bec6e0", "on-primary-container": "#7c839b", "tertiary": "#000000", "on-surface-variant": "#45464d", "background": "#f8f9ff", "surface-container-highest": "#d3e4fe", "secondary-fixed": "#dbe1ff", "on-secondary-container": "#fefcff", "on-background": "#0b1c30", "surface-container": "#e5eeff", "error": "#ba1a1a", "on-primary-fixed-variant": "#3f465c", "primary": "#000000", "outline": "#76777d", "surface-dim": "#cbdbf5", "surface-variant": "#d3e4fe", "surface-container-high": "#dce9ff", "surface-container-lowest": "#ffffff", "primary-fixed": "#dae2fd", "on-primary-fixed": "#131b2e", "on-tertiary": "#ffffff", "on-error": "#ffffff", "on-surface": "#0b1c30", "error-container": "#ffdad6", "on-secondary-fixed-variant": "#003ea8", "on-tertiary-container": "#7073ff", "outline-variant": "#c6c6cd", "on-tertiary-fixed-variant": "#2f2ebe", "tertiary-container": "#07006c", "primary-fixed-dim": "#bec6e0", "on-tertiary-fixed": "#07006c", "tertiary-fixed": "#e1e0ff", "inverse-surface": "#213145", "secondary": "#0051d5", "on-secondary-fixed": "#00174b", "on-secondary": "#ffffff", "secondary-fixed-dim": "#b4c5ff", "tertiary-fixed-dim": "#c0c1ff", "surface": "#f8f9ff", "secondary-container": "#316bf3", "surface-container-low": "#eff4ff", "primary-container": "#131b2e", "on-primary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-lg": "1rem", "space-2xl": "2rem", "margin-md": "1.5rem", "gutter-lg": "1.5rem", "space-3xl": "3rem", "space-sm": "0.5rem", "space-xl": "1.5rem", "margin-lg": "2rem", "space-xs": "0.25rem", "margin": "1rem", "space-md": "0.75rem", "space-2xs": "0.125rem", "gutter": "1rem" }, "fontFamily": { "label-md": [ "Inter" ], "body-md": [ "Inter" ], "label-sm": [ "Inter" ], "headline-sm": [ "Plus Jakarta Sans" ], "mono-data": [ "JetBrains Mono" ], "headline-lg": [ "Plus Jakarta Sans" ], "display-lg": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "headline-md": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ] }, "fontSize": { "label-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "body-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.025em", "fontWeight": "600" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "mono-data": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "display-lg": [ "36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" } ], "body-lg": [ "16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "headline-md": [ "22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.005em", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 max-w-7xl mx-auto px-margin lg:px-margin-lg flex items-center justify-between gap-gutter"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">NexusGest<span class="text-secondary">.bv</span></span><span class="font-mono-data text-mono-data text-on-surface-variant leading-none mt-space-2xs">Mijn NexusGest Portal</span></div></div><div class="hidden xl:flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-low rounded-lg text-on-surface"><span class="material-symbols-outlined text-secondary text-sm">verified_user</span><span class="font-mono-data text-mono-data uppercase tracking-wider text-on-surface-variant">SSL / eIDAS 256-bit</span></div></div><nav class="hidden lg:flex items-center gap-space-xs" data-active-classes="bg-surface-container text-on-surface font-semibold"><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="resumen-general" href="#">Resumen General</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="mis-expedientes" href="#">Mis Expedientes</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="documentos-subidas" href="#">Documentos &amp; Subidas</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="citas-asesor" href="#">Citas &amp; Asesor</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="facturas-pagos" href="#">Facturas &amp; Pagos</a></nav><div class="flex items-center gap-space-md"><div class="flex items-center bg-surface-container-low rounded-lg p-space-2xs text-on-surface-variant"><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm bg-surface-container-lowest text-on-surface shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" type="button">ES</button><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface" type="button">NL</button><button class="px-space-xs py-space-2xs rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface" type="button">EN</button></div><button aria-label="Notificaciones del portal" class="relative p-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="text-right hidden sm:block"><p class="font-label-md text-label-md text-on-surface leading-tight">Alejandro Ramos</p><p class="font-mono-data text-mono-data text-on-surface-variant">KVK 84920193</p></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" src="https://lh3.googleusercontent.com/aida/AEtjO1VE8POL9nnf4cvlLj8Py1GsPsfUwePNkGHzqLy5Ckd7C-c0dfxCNE3n8ooZuwdqSHGZsKi0_QH2hsgj-8g-mh5cvDoyV9_l__67YW6YrnVy2l7QTmOICovoE_xUrjSKI15qju3P8ih21PhopDtOJaHjPYbUEE2sMYU0p7bBdtvNpjR2MS4Cz6HWDJ79NDNCK3_3xKsRtgxjyAodoptR5z5spYJLdQA615Md2bfipUq81Bd2L_4geLfaw5o"/></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-140px)]"><div class="flex flex-col w-full">
+<!-- Interactive State Management Script -->
+<script>
+    function updateSimulation() {
+      const partner = document.querySelector('input[name="sim-partner"]:checked')?.value || 'single';
+      const income = parseInt(document.getElementById('sim-income-slider').value, 10);
+      const rent = parseInt(document.getElementById('sim-rent-slider').value, 10);
+      const kids = parseInt(document.getElementById('sim-kids-input').value, 10);
+      const assetsHigh = document.getElementById('sim-assets-check').checked;
+
+      document.getElementById('sim-income-display').innerText = income.toLocaleString('es-ES') + ' €';
+      document.getElementById('sim-rent-display').innerText = rent.toLocaleString('es-ES') + ' €';
+
+      let zorg = 0;
+      let huur = 0;
+      let kind = 0;
+
+      if (!assetsHigh) {
+        // Zorgtoeslag simplified official scale
+        const zorgMaxIncome = partner === 'couple' ? 48000 : 38000;
+        if (income < zorgMaxIncome) {
+          const ratio = Math.max(0, 1 - (income - 22000) / (zorgMaxIncome - 22000));
+          zorg = Math.round(partner === 'couple' ? (123 + 105 * ratio) : (123 * Math.min(1, ratio + 0.3)));
+          if (zorg > (partner === 'couple' ? 246 : 123)) zorg = partner === 'couple' ? 246 : 123;
+        }
+
+        // Huurtoeslag simplified official rental subsidy curve (< 879.66 rent threshold)
+        if (rent > 450 && rent <= 879.66) {
+          const huurMaxIncome = partner === 'couple' ? 42000 : 35000;
+          if (income < huurMaxIncome) {
+            huur = Math.round(Math.min(380, (rent - 400) * 0.72));
+          }
+        }
+
+        // Kindgebonden budget
+        if (kids > 0 && income < 55000) {
+          kind = Math.round(kids * Math.max(80, 210 - (income > 30000 ? (income - 30000) * 0.005 : 0)));
+        }
+      }
+
+      const totalMonthly = zorg + huur + kind;
+      const totalYearly = totalMonthly * 12;
+
+      document.getElementById('sim-zorg-val').innerText = zorg + ' €/mes';
+      document.getElementById('sim-huur-val').innerText = huur + ' €/mes';
+      document.getElementById('sim-kind-val').innerText = kind + ' €/mes';
+      document.getElementById('sim-total-result').innerText = totalMonthly + ' €';
+      document.getElementById('sim-annual-result').innerText = totalYearly.toLocaleString('es-ES') + ' € / año';
+
+      const riskBadge = document.getElementById('sim-risk-badge');
+      if (assetsHigh) {
+        riskBadge.innerHTML = '<span class="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-DEFAULT bg-error-container text-on-error-container font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>Límite Box 3 Superado: Inelegible temporalmente</span>';
+      } else if (income > 42000) {
+        riskBadge.innerHTML = '<span class="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-DEFAULT bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Riesgo Bajo: Ajuste por tramo de ingresos altos</span>';
+      } else {
+        riskBadge.innerHTML = '<span class="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-DEFAULT bg-surface-container text-on-surface font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Estimación Protegida con Auditoría NexusGest</span>';
+      }
+    }
+
+    function toggleFaq(btn) {
+      const body = btn.nextElementSibling;
+      const icon = btn.querySelector('.faq-icon');
+      if (body.classList.contains('hidden')) {
+        body.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+      } else {
+        body.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+      }
+    }
+  </script>
+<!-- Main Grid Container -->
+<div class="max-w-7xl mx-auto w-full px-margin lg:px-margin-lg py-space-xl flex flex-col gap-space-2xl">
+<!-- Screen Header & Official Trust Badges -->
+<section class="flex flex-col gap-space-md">
+<div class="flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex flex-wrap items-center gap-space-xs">
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container rounded-lg text-on-surface font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-secondary text-sm">hub</span>
+<span>Conexión Oficial Dienst Toeslagen</span>
+</div>
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-low rounded-lg text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span>Cálculo Auditado Ejercicio 2025/2026</span>
+</div>
+<div class="flex items-center gap-space-xs px-space-sm py-space-2xs bg-secondary text-on-secondary rounded-lg font-mono-data text-mono-data">
+<span class="material-symbols-outlined text-xs">price_check</span>
+<span>Tarifa Plana 45€ / subsidio</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs font-mono-data text-mono-data text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>BSN Validado: 384.920.118</span>
+</div>
+</div>
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-lg">
+<div class="max-w-3xl">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+            Gestor &amp; Simulador de Subsidios <span class="text-secondary">(Toeslagen Hub)</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-space-xs">
+            Comprueba en segundos los subsidios sociales del Estado neerlandés a los que tienes derecho legal, evita penalizaciones por ingresos imprevistos y tramita con el respaldo de Lars van Dijk.
+          </p>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-space-sm rounded-lg bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface-container-low font-label-md text-label-md flex items-center gap-space-xs" onclick="document.getElementById('simulador-widget').scrollIntoView({ behavior: 'smooth' })" type="button">
+<span class="material-symbols-outlined text-sm">tune</span>
+<span>Ajustar Parámetros</span>
+</button>
+<button class="px-space-md py-space-sm rounded-lg bg-primary text-on-primary hover:bg-surface-container-highest hover:text-on-surface transition-colors font-label-md text-label-md flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-sm">cloud_sync</span>
+<span>Sincronizar DigiD</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Consolidated Assessment Banner (Hero KPI Bento) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg">
+<!-- Left KPI Card: Total Potential -->
+<div class="lg:col-span-8 bg-surface-container-lowest rounded-xl p-space-xl shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="relative z-10 flex flex-col sm:flex-row sm:items-start justify-between gap-space-md">
+<div>
+<div class="inline-flex items-center gap-space-xs text-secondary font-label-sm text-label-sm uppercase tracking-wider mb-space-2xs">
+<span class="material-symbols-outlined text-sm">payments</span>
+<span>Aporte Estatal Estimado para tu Hogar</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="font-display-lg text-display-lg text-on-surface tracking-tight">+314,00 €</span>
+<span class="font-label-md text-label-md text-on-surface-variant">/ mes</span>
+</div>
+<p class="font-mono-data text-mono-data text-on-surface-variant mt-space-2xs">
+              Equivalente garantizado a <strong class="text-on-surface font-semibold">+3.768,00 €</strong> anuales ingresados de forma directa por Belastingdienst.
+            </p>
+</div>
+<!-- Status Distribution Pills -->
+<div class="flex flex-col gap-space-xs bg-surface-container-low p-space-sm rounded-lg text-right">
+<div class="flex items-center justify-between sm:justify-end gap-space-sm font-label-sm text-label-sm">
+<span class="text-on-surface-variant">2 elegibles pendientes</span>
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+</div>
+<div class="flex items-center justify-between sm:justify-end gap-space-sm font-label-sm text-label-sm">
+<span class="text-on-surface-variant">1 subsidio cobrando activo</span>
+<span class="w-2.5 h-2.5 rounded-full bg-on-surface"></span>
+</div>
+<div class="flex items-center justify-between sm:justify-end gap-space-sm font-label-sm text-label-sm">
+<span class="text-on-surface-variant">1 pendiente de guardería</span>
+<span class="w-2.5 h-2.5 rounded-full bg-surface-dim"></span>
+</div>
+</div>
+</div>
+<!-- Inline SVG Visualization: Subsidies Allocation Sparkline & Timeline -->
+<div class="my-space-md py-space-sm bg-surface-container-low rounded-lg p-space-md">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Distribución del Flujo Mensual Actual vs Potencial</span>
+<span class="font-mono-data text-mono-data text-on-surface">Activo: 154 € | Disponible: 160 €</span>
+</div>
+<div class="w-full bg-surface-container-high h-3 rounded-full flex overflow-hidden">
+<div class="bg-primary h-full" style="width: 49%;" title="Kindgebonden Budget (154 €)"></div>
+<div class="bg-secondary h-full" style="width: 39%;" title="Zorgtoeslag Elegible (123 €)"></div>
+<div class="bg-secondary-container h-full" style="width: 12%;" title="Huurtoeslag Estimado (37 €)"></div>
+</div>
+<div class="flex flex-wrap items-center gap-space-md mt-space-xs font-mono-data text-mono-data text-on-surface-variant">
+<span class="flex items-center gap-space-2xs"><span class="w-2 h-2 rounded-full bg-primary"></span>Kindgebonden (154€)</span>
+<span class="flex items-center gap-space-2xs"><span class="w-2 h-2 rounded-full bg-secondary"></span>Zorgtoeslag (123€)</span>
+<span class="flex items-center gap-space-2xs"><span class="w-2 h-2 rounded-full bg-secondary-container"></span>Huurtoeslag (+37€)</span>
+</div>
+</div>
+<div class="relative z-10 pt-space-xs flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-xs text-on-surface font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-secondary text-sm">shield</span>
+<span>Garantía de Cero Devoluciones: Supervisión anual de ingresos por Lars van Dijk</span>
+</div>
+<button class="px-space-lg py-space-sm rounded-lg bg-secondary text-on-secondary hover:bg-secondary-container transition-all font-label-md text-label-md flex items-center gap-space-xs shadow-sm" type="button">
+<span>Solicitar Tramitación de Todas las Ayudas</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Right Bento Card: Expat Advisor Spotlight -->
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col justify-between">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Tu Asesor Asignado</span>
+<span class="px-space-xs py-space-2xs bg-surface-container rounded-DEFAULT font-mono-data text-mono-data text-on-surface">Licencia Toeslagen B.V.</span>
+</div>
+<div class="flex items-center gap-space-md pt-space-xs">
+<img alt="Lars van Dijk" class="w-14 h-14 rounded-full object-cover shadow-sm" data-alt="Portrait of Lars van Dijk, a senior Dutch tax and subsidy advisor in professional navy suit in a brightly lit modern office in Amsterdam Zuidas with canal view in the background, confident, warm and highly trustworthy look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCltfptJbm7wVQLRdDp_qK_JSto5gfSMqbf0Uq2FTBnBR9Ou75aV7_06oXZYPqNm4IPnwOH1dtYvceebQ1EZlQHaXvCaQflLbXnqfPV9TEv_-pJer7lkJtUCzErowSpZwzHFkqviHEnllHk_8hQaps5joVk8dC6sza00an1nYo3FhFJDAXyfPzneeVoJTEW7d0aqB0HGabRWNYnz3Sqne8qYxE7Bt1yvC99OwXy8n9DFcj27LHaOGbU"/>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface leading-snug">Lars van Dijk</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Senior Fiscalist Expatriados</p>
+<div class="flex items-center gap-space-2xs text-secondary mt-space-2xs">
+<span class="material-symbols-outlined text-xs">star</span>
+<span class="material-symbols-outlined text-xs">star</span>
+<span class="material-symbols-outlined text-xs">star</span>
+<span class="material-symbols-outlined text-xs">star</span>
+<span class="material-symbols-outlined text-xs">star</span>
+<span class="font-mono-data text-mono-data text-on-surface ml-space-2xs">4.98 (420+ casos)</span>
+</div>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs">
+            "Al vivir en Países Bajos con contrato español o régimen 30%, muchos expatriados no solicitan subsidios por miedo al idioma o errores de cálculo. En NexusGest tramitamos con representación oficial y protegemos tu expediente."
+          </p>
+</div>
+<div class="pt-space-md flex flex-col gap-space-xs">
+<a class="w-full py-space-sm px-space-md rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center justify-center gap-space-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-secondary text-sm">chat</span>
+<span>Consultar con Lars por WhatsApp</span>
+</a>
+</div>
+</div>
+</section>
+<!-- The 4 Core Dutch Subsidies Cards Grid -->
+<section class="flex flex-col gap-space-lg">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-space-xs">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest font-semibold">Subsidios Oficiales Neerlandeses</span>
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">
+            Los 4 Pilares de Ayuda de Dienst Toeslagen
+          </h2>
+</div>
+<p class="font-mono-data text-mono-data text-on-surface-variant">
+          Actualizado con baremos de enero 2026
+        </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- CARD 1: Zorgtoeslag -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-base">health_and_safety</span>
+</span>
+<span class="inline-flex items-center gap-space-2xs px-space-xs py-space-2xs rounded-DEFAULT bg-surface-container text-on-surface font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Elegible
+              </span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Zorgtoeslag</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Subsidio de Seguro Médico</p>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Aprobación Estimada</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">123,00 €</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/ mes</span>
+</div>
+<span class="font-mono-data text-mono-data text-secondary">1.476 € al año</span>
+</div>
+<!-- Checklist of verified criteria -->
+<div class="flex flex-col gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">check_circle</span>
+<span>Ingreso inferior a 37.496 € anuales</span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">check_circle</span>
+<span>Póliza de seguro básica (Basisverzekering)</span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">check_circle</span>
+<span>Patrimonio Box 3 bajo el límite</span>
+</div>
+</div>
+</div>
+<div class="pt-space-md flex flex-col gap-space-xs">
+<button class="w-full py-space-sm rounded-lg bg-primary text-on-primary hover:bg-surface-container-highest hover:text-on-surface transition-colors font-label-md text-label-md flex items-center justify-center gap-space-xs" type="button">
+<span>Tramitar con NexusGest</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+<button class="w-full py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm text-center" type="button">
+              Ver desglose de cálculo
+            </button>
+</div>
+</div>
+<!-- CARD 2: Huurtoeslag -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-base">home</span>
+</span>
+<span class="inline-flex items-center gap-space-2xs px-space-xs py-space-2xs rounded-DEFAULT bg-surface-container text-on-surface font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Elegible
+              </span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Huurtoeslag</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Subsidio de Ayuda al Alquiler</p>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Aprobación Estimada</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">191,00 €</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/ mes</span>
+</div>
+<span class="font-mono-data text-mono-data text-secondary">2.292 € al año</span>
+</div>
+<!-- Checklist of verified criteria -->
+<div class="flex flex-col gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">check_circle</span>
+<span>Renta base menor de 879,66 €/mes</span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">check_circle</span>
+<span>Vivienda independiente con cerradura propia</span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">check_circle</span>
+<span>Inscripción activa en BRP (Gemeente)</span>
+</div>
+</div>
+</div>
+<div class="pt-space-md flex flex-col gap-space-xs">
+<button class="w-full py-space-sm rounded-lg bg-primary text-on-primary hover:bg-surface-container-highest hover:text-on-surface transition-colors font-label-md text-label-md flex items-center justify-center gap-space-xs" type="button">
+<span>Tramitar Alquiler</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+<button class="w-full py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm text-center" type="button">
+              Revisar contrato de arrendamiento
+            </button>
+</div>
+</div>
+<!-- CARD 3: Kindgebonden Budget -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+<div class="absolute top-0 right-0 w-2 h-full bg-secondary"></div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="w-8 h-8 rounded-lg bg-secondary text-on-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-base">family_restroom</span>
+</span>
+<span class="inline-flex items-center gap-space-2xs px-space-xs py-space-2xs rounded-DEFAULT bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Cobro Activo
+              </span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Kindgebonden</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ayuda Económica por Hijos</p>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Ingreso Recibido</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">154,00 €</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/ mes</span>
+</div>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Próximo abono: 20 de Abril</span>
+</div>
+<div class="flex flex-col gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">verified_user</span>
+<span>Asociado a 1 hijo registrado (Lucas)</span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">account_balance</span>
+<span>IBAN: NL91 INGB •••• 4402</span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm mt-0.5">schedule</span>
+<span>Resolución anual vigente 2025</span>
+</div>
+</div>
+</div>
+<div class="pt-space-md flex flex-col gap-space-xs">
+<button class="w-full py-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-label-md flex items-center justify-center gap-space-xs" type="button">
+<span>Gestionar Expediente</span>
+<span class="material-symbols-outlined text-sm">settings</span>
+</button>
+<button class="w-full py-space-xs rounded-lg text-secondary hover:underline font-label-sm text-label-sm text-center" type="button">
+              Modificar ingresos del hogar
+            </button>
+</div>
+</div>
+<!-- CARD 4: Kinderopvangtoeslag -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-base">child_care</span>
+</span>
+<span class="inline-flex items-center gap-space-2xs px-space-xs py-space-2xs rounded-DEFAULT bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                Pendiente Datos
+              </span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Kinderopvang</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Guardería y Extraescolares</p>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Cobertura Máxima</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">Hasta 96%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">coste/h</span>
+</div>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Ahorro típico 600€ - 1.400€/m</span>
+</div>
+<div class="flex flex-col gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-outline text-sm mt-0.5">info</span>
+<span>Ambos progenitores deben trabajar</span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-outline text-sm mt-0.5">info</span>
+<span>Centro registrado en registro LRK</span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-outline text-sm mt-0.5">info</span>
+<span>Contrato por horas estipulado</span>
+</div>
+</div>
+</div>
+<div class="pt-space-md flex flex-col gap-space-xs">
+<button class="w-full py-space-sm rounded-lg bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center gap-space-xs" type="button">
+<span>Simular con Horas</span>
+<span class="material-symbols-outlined text-sm">calculate</span>
+</button>
+<button class="w-full py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm text-center" type="button">
+              Consultar registro LRK de guardería
+            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive Simulator & Clawback Protection Widget -->
+<section class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-xl" id="simulador-widget">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Simulador en Tiempo Real</span>
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">
+            Calculadora de Elegibilidad y Riesgo de Devolución
+          </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+            Prueba cómo varían tus importes al cambiar de salario, añadir hijos o contraer matrimonio o pareja registrada (Toeslagpartner).
+          </p>
+</div>
+<div id="sim-risk-badge">
+<span class="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-DEFAULT bg-surface-container text-on-surface font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Estimación Protegida con Auditoría NexusGest
+          </span>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg">
+<!-- Simulator Inputs (8 cols) -->
+<div class="lg:col-span-7 flex flex-col gap-space-lg bg-surface-container-low p-space-lg rounded-xl">
+<!-- Living Situation Radio -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface">Situación convivencial fiscal:</label>
+<div class="grid grid-cols-2 gap-space-sm">
+<label class="flex items-center gap-space-sm p-space-sm bg-surface-container-lowest rounded-lg cursor-pointer shadow-sm">
+<input checked="" class="accent-secondary" name="sim-partner" onchange="updateSimulation()" type="radio" value="single"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Soltero / Independiente</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sin toeslagpartner</span>
+</div>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm bg-surface-container-lowest rounded-lg cursor-pointer shadow-sm">
+<input class="accent-secondary" name="sim-partner" onchange="updateSimulation()" type="radio" value="couple"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Con Pareja Fiscal</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Casado o empadronados juntos</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Income Slider -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface">Ingreso Bruto Anual del Hogar (Toetsingsinkomen):</label>
+<span class="font-mono-data text-mono-data text-secondary font-semibold" id="sim-income-display">32.500 €</span>
+</div>
+<input class="w-full accent-secondary h-2 bg-surface-container-high rounded-lg cursor-pointer" id="sim-income-slider" max="65000" min="18000" oninput="updateSimulation()" step="500" type="range" value="32500"/>
+<div class="flex justify-between text-on-surface-variant font-mono-data text-mono-data">
+<span>18.000 €</span>
+<span>40.000 €</span>
+<span>65.000 €+</span>
+</div>
+</div>
+<!-- Rent Slider -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface">Alquiler Básico Mensual (Kaalhuur):</label>
+<span class="font-mono-data text-mono-data text-secondary font-semibold" id="sim-rent-display">820 €</span>
+</div>
+<input class="w-full accent-secondary h-2 bg-surface-container-high rounded-lg cursor-pointer" id="sim-rent-slider" max="1100" min="300" oninput="updateSimulation()" step="10" type="range" value="820"/>
+<div class="flex justify-between text-on-surface-variant font-mono-data text-mono-data">
+<span>300 €</span>
+<span class="text-error font-medium">Límite Huurtoeslag: 879 €</span>
+<span>1.100 €</span>
+</div>
+</div>
+<!-- Children & Assets Checklist -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md pt-space-xs">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface" for="sim-kids-input">Hijos menores a cargo (&lt; 18 años):</label>
+<select class="h-9 px-space-sm bg-surface-container-lowest rounded-lg text-on-surface font-body-md text-body-md shadow-sm" id="sim-kids-input" onchange="updateSimulation()">
+<option value="0">0 hijos</option>
+<option selected="" value="1">1 hijo</option>
+<option value="2">2 hijos</option>
+<option value="3">3 o más hijos</option>
+</select>
+</div>
+<div class="flex items-center gap-space-sm pt-space-md">
+<input class="w-4 h-4 accent-secondary rounded" id="sim-assets-check" onchange="updateSimulation()" type="checkbox"/>
+<label class="font-body-sm text-body-sm text-on-surface-variant leading-tight" for="sim-assets-check">
+                ¿Ahorros en Box 3 superiores a 36.952 € (o 73.904 € pareja)?
+              </label>
+</div>
+</div>
+</div>
+<!-- Simulation Output & Risk Pedagogic Shield (5 cols) -->
+<div class="lg:col-span-5 bg-surface-container-high rounded-xl p-space-lg flex flex-col justify-between">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider font-semibold">Resumen de Tu Simulación</span>
+<span class="font-mono-data text-mono-data text-secondary">Actualizado 2026</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex justify-between items-center py-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Zorgtoeslag (Salud):</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold" id="sim-zorg-val">123 €/mes</span>
+</div>
+<div class="flex justify-between items-center py-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Huurtoeslag (Alquiler):</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold" id="sim-huur-val">191 €/mes</span>
+</div>
+<div class="flex justify-between items-center py-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Kindgebonden (Hijos):</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold" id="sim-kind-val">154 €/mes</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col gap-space-xs mt-space-xs">
+<span class="font-label-sm text-label-sm text-secondary uppercase font-semibold">Total Subsidio Mensual Estimado:</span>
+<div class="flex items-baseline justify-between">
+<span class="font-display-lg text-display-lg text-on-surface font-bold" id="sim-total-result">468 €</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant" id="sim-annual-result">5.616 € / año</span>
+</div>
+</div>
+<!-- Warning Notice on Clawback (Terugvordering) -->
+<div class="bg-surface-container-lowest p-space-sm rounded-lg flex items-start gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-base mt-0.5">verified_user</span>
+<p class="font-body-sm text-body-sm leading-snug">
+<strong class="text-on-surface">Escudo Anti-Devolución NexusGest:</strong> Si recibes un bonus laboral o cambias de empresa, nuestro sistema reajusta tu base en Belastingdienst para que no tengas que devolver dinero en el finiquito de año.
+              </p>
+</div>
+</div>
+<div class="pt-space-md">
+<button class="w-full py-space-sm px-space-md bg-secondary text-on-secondary hover:bg-secondary-container rounded-lg font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-sm" type="button">
+<span class="material-symbols-outlined text-sm">assignment_turned_in</span>
+<span>Guardar Simulación e Iniciar Solicitud</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Official Payout Calendar & Document Resolutions (Toeslagen Kalender) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg">
+<!-- Official Payout Calendar (7 cols) -->
+<div class="lg:col-span-7 bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Calendario de Ingresos</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Fechas Oficiales de Cobro (Betaaldatum)</h3>
+</div>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Dienst Toeslagen</span>
+</div>
+<div class="flex flex-col gap-space-xs">
+<!-- Calendar Item 1 (Done) -->
+<div class="flex items-center justify-between p-space-sm bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex flex-col items-center justify-center text-center shadow-sm">
+<span class="font-label-sm text-label-sm text-secondary font-bold leading-none">20</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant leading-none">MAR</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Ingreso de Marzo 2026</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Kindgebonden budget • Ref: 9812-409</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md text-on-surface font-semibold">+154,00 €</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Abonado en cuenta</span>
+</div>
+</div>
+<!-- Calendar Item 2 (Next - Active) -->
+<div class="flex items-center justify-between p-space-sm bg-surface-container rounded-lg">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-secondary text-on-secondary flex flex-col items-center justify-center text-center shadow-sm">
+<span class="font-label-sm text-label-sm font-bold leading-none">20</span>
+<span class="font-mono-data text-mono-data leading-none">ABR</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Próximo Ingreso Estimado</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Procesando orden de transferencia</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md text-secondary font-bold">+154,00 €</span>
+<span class="block font-mono-data text-mono-data text-on-surface">En 12 días</span>
+</div>
+</div>
+<!-- Calendar Item 3 (Upcoming) -->
+<div class="flex items-center justify-between p-space-sm bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex flex-col items-center justify-center text-center shadow-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold leading-none">20</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant leading-none">MAY</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Ingreso de Mayo 2026</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Incluirá Zorgtoeslag si tramitas hoy</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md text-on-surface-variant">+277,00 €</span>
+<span class="block font-mono-data text-mono-data text-on-surface-variant">Programado</span>
+</div>
+</div>
+<!-- Calendar Item 4 (Upcoming) -->
+<div class="flex items-center justify-between p-space-sm bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex flex-col items-center justify-center text-center shadow-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold leading-none">22</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant leading-none">JUN</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Ingreso de Junio 2026</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Ajuste por día festivo</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md text-on-surface-variant">+277,00 €</span>
+<span class="block font-mono-data text-mono-data text-on-surface-variant">Programado</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs font-body-sm text-body-sm text-on-surface-variant pt-space-xs">
+<span class="material-symbols-outlined text-secondary text-sm">schedule</span>
+<span>Los subsidios holandeses siempre se ingresan el día 20 (o siguiente hábil) para pagar los gastos del mes entrante.</span>
+</div>
+</div>
+<!-- Resolutions & Translated Official PDFs (5 cols) -->
+<div class="lg:col-span-5 bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col justify-between">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Documentos Oficiales</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Resoluciones (Beschikkingen)</h3>
+</div>
+<span class="material-symbols-outlined text-secondary">description</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            NexusGest traduce automáticamente cada resolución que recibes en tu MijnToeslagen o Berichtenbox y te la explica en español.
+          </p>
+<div class="flex flex-col gap-space-xs">
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary">picture_as_pdf</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Voorschotbeschikking 2025</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Kindgebonden budget • PDF ES/NL</span>
+</div>
+</div>
+<button class="p-space-xs text-secondary hover:text-on-surface transition-colors" title="Descargar documento" type="button">
+<span class="material-symbols-outlined text-base">download</span>
+</button>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary">picture_as_pdf</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Definitieve Berekening 2024</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Cierre fiscal definitivo • Aprobado</span>
+</div>
+</div>
+<button class="p-space-xs text-secondary hover:text-on-surface transition-colors" title="Descargar documento" type="button">
+<span class="material-symbols-outlined text-base">download</span>
+</button>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant">history_edu</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Poder Notarial de Representación</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Machtiging Toeslagen B.V.</span>
+</div>
+</div>
+<span class="px-space-xs py-space-2xs bg-surface-container text-on-surface font-label-sm text-label-sm rounded-DEFAULT">Activo</span>
+</div>
+</div>
+</div>
+<div class="pt-space-md">
+<button class="w-full py-space-sm px-space-md bg-surface-container text-on-surface hover:bg-surface-container-high rounded-lg font-label-md text-label-md flex items-center justify-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-sm">folder_open</span>
+<span>Ver Archivo Documental Completo</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Expat Knowledge Hub & FAQs Section -->
+<section class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-lg">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-space-sm">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest font-semibold">Respuestas Prácticas para Particulares</span>
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">
+            Preguntas Frecuentes sobre Toeslagen para Residentes en Países Bajos
+          </h2>
+</div>
+<a class="font-label-md text-label-md text-secondary hover:underline flex items-center gap-space-2xs" href="#">
+<span>Guía completa en PDF</span>
+<span class="material-symbols-outlined text-sm">open_in_new</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- FAQ 1 -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-space-xs">
+<button class="w-full flex items-center justify-between text-left" onclick="toggleFaq(this)" type="button">
+<span class="font-headline-sm text-headline-sm text-on-surface">¿Pierdo el subsidio si me conceden el 30% Ruling?</span>
+<span class="material-symbols-outlined text-secondary transition-transform faq-icon">expand_more</span>
+</button>
+<div class="font-body-sm text-body-sm text-on-surface-variant pt-space-xs">
+            No necesariamente. El 30% Ruling reduce tu salario gravable (Box 1). Como el Belastingdienst utiliza el <em>toetsingsinkomen</em> (ingreso fiscal después de aplicar la exención del 30%), a menudo tu elegibilidad para recibir Zorgtoeslag o Huurtoeslag <strong>aumenta</strong> en vez de disminuir. Lars y su equipo calculan tu caso exacto antes de presentar.
+          </div>
+</div>
+<!-- FAQ 2 -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-space-xs">
+<button class="w-full flex items-center justify-between text-left" onclick="toggleFaq(this)" type="button">
+<span class="font-headline-sm text-headline-sm text-on-surface">¿Qué sucede si me suben el salario a mitad de año?</span>
+<span class="material-symbols-outlined text-secondary transition-transform faq-icon">expand_more</span>
+</button>
+<div class="font-body-sm text-body-sm text-on-surface-variant pt-space-xs">
+            Si tus ingresos aumentan, debes notificarlo de inmediato para que Dienst Toeslagen reajuste el pago mensual proporcionalmente. Con NexusGest, solo nos avisas por el chat o subes tu nueva nómina y nosotros actualizamos telemáticamente tu expediente en el portal oficial en menos de 24 horas, evitando sustos a final de año.
+          </div>
+</div>
+<!-- FAQ 3 -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-space-xs">
+<button class="w-full flex items-center justify-between text-left" onclick="toggleFaq(this)" type="button">
+<span class="font-headline-sm text-headline-sm text-on-surface">¿Puedo pedir subsidios con carácter retroactivo?</span>
+<span class="material-symbols-outlined text-secondary transition-transform faq-icon">expand_more</span>
+</button>
+<div class="font-body-sm text-body-sm text-on-surface-variant pt-space-xs">
+            Sí. Puedes reclamar subsidios del año anterior hasta el <strong>1 de septiembre</strong> del año en curso (o posterior si tienes prórroga formal para tu declaración IRPF / Inkomstenbelasting). Si no los pediste durante 2024 o 2025, podemos solicitar miles de euros que legalmente te pertenecen en un único trámite.
+          </div>
+</div>
+<!-- FAQ 4 -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-space-xs">
+<button class="w-full flex items-center justify-between text-left" onclick="toggleFaq(this)" type="button">
+<span class="font-headline-sm text-headline-sm text-on-surface">¿Qué define a un 'Toeslagpartner' en Holanda?</span>
+<span class="material-symbols-outlined text-secondary transition-transform faq-icon">expand_more</span>
+</button>
+<div class="font-body-sm text-body-sm text-on-surface-variant pt-space-xs">
+            No solo es tu cónyuge o pareja de hecho registrada. Si estás empadronado en la misma vivienda con otra persona y tenéis un hijo juntos, una hipoteca conjunta, o uno es beneficiario de un plan de pensiones del otro, el Belastingdienst os considerará pareja fiscal de subsidios sumando ambos ingresos.
+          </div>
+</div>
+</div>
+</section>
+<!-- Bottom Action Ribbon / Banner for Family Assistance -->
+<section class="bg-surface-container-high rounded-xl p-space-xl flex flex-col md:flex-row items-center justify-between gap-space-lg shadow-sm">
+<div class="flex items-center gap-space-lg">
+<div class="w-12 h-12 rounded-full bg-secondary text-on-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-2xl">support_agent</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">¿Tienes dudas con tu contrato de alquiler o póliza de seguro?</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+            Sube tu contrato o póliza en PDF y nuestro equipo revisará gratis en 30 minutos si cumples todos los requisitos de Dienst Toeslagen.
+          </p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm shrink-0 w-full md:w-auto">
+<button class="w-full md:w-auto px-space-lg py-space-sm rounded-lg bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-sm">upload_file</span>
+<span>Subir Documento</span>
+</button>
+<button class="w-full md:w-auto px-space-lg py-space-sm rounded-lg bg-primary text-on-primary hover:bg-surface-container-highest hover:text-on-surface transition-colors font-label-md text-label-md flex items-center justify-center gap-space-xs" type="button">
+<span>Agendar llamada con Lars</span>
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+</button>
+</div>
+</section>
+</div>
+</div></main><footer class="w-full bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="max-w-7xl mx-auto px-margin lg:px-margin-lg py-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs font-mono-data text-mono-data text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-secondary"></span><span>Asesor Activo: <strong class="font-label-md text-on-surface">Lars van Dijk (Senior Tax Adviseur)</strong></span></div><div class="hidden sm:flex items-center gap-space-xs px-space-sm py-space-2xs bg-surface-container-low rounded-lg text-on-surface"><span class="material-symbols-outlined text-secondary text-sm">chat</span><a class="font-label-sm text-label-sm text-on-surface hover:text-secondary" href="#">WhatsApp Asesor Directo</a></div></div><div class="flex items-center gap-space-lg"><a class="inline-flex items-center gap-space-xs font-label-md text-label-md text-secondary hover:text-on-secondary-fixed-variant" data-path="citas-asesor" href="#"><span class="material-symbols-outlined text-base">calendar_month</span><span>Agendar sesión de revisión</span></a><span class="font-mono-data text-mono-data text-on-surface-variant">© 2024 NexusGest B.V. • Amsterdam • Madrid</span></div></div></footer></body></html>

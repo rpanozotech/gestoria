@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error-container": "#ffdad6",
+          "on-primary-fixed": "#131b2e",
+          "on-secondary-container": "#fefcff",
+          "on-secondary-fixed": "#00174b",
+          "on-surface": "#0b1c30",
+          "on-background": "#0b1c30",
+          "primary-container": "#131b2e",
+          "on-tertiary-fixed-variant": "#2f2ebe",
+          "primary": "#000000",
+          "on-primary-fixed-variant": "#3f465c",
+          "secondary-fixed": "#dbe1ff",
+          "on-surface-variant": "#45464d",
+          "on-primary": "#ffffff",
+          "on-error": "#ffffff",
+          "inverse-surface": "#213145",
+          "secondary-fixed-dim": "#b4c5ff",
+          "surface-dim": "#cbdbf5",
+          "tertiary-fixed-dim": "#c0c1ff",
+          "tertiary-container": "#07006c",
+          "error": "#ba1a1a",
+          "outline": "#76777d",
+          "surface-container": "#e5eeff",
+          "surface-container-high": "#dce9ff",
+          "primary-fixed": "#dae2fd",
+          "surface-container-highest": "#d3e4fe",
+          "tertiary": "#000000",
+          "surface-tint": "#565e74",
+          "tertiary-fixed": "#e1e0ff",
+          "surface-variant": "#d3e4fe",
+          "on-tertiary": "#ffffff",
+          "surface-container-lowest": "#ffffff",
+          "surface-bright": "#f8f9ff",
+          "on-tertiary-container": "#7073ff",
+          "primary-fixed-dim": "#bec6e0",
+          "inverse-primary": "#bec6e0",
+          "secondary-container": "#316bf3",
+          "surface": "#f8f9ff",
+          "background": "#f8f9ff",
+          "on-secondary": "#ffffff",
+          "on-tertiary-fixed": "#07006c",
+          "on-error-container": "#93000a",
+          "secondary": "#0051d5",
+          "inverse-on-surface": "#eaf1ff",
+          "on-primary-container": "#7c839b",
+          "outline-variant": "#c6c6cd",
+          "surface-container-low": "#eff4ff",
+          "on-secondary-fixed-variant": "#003ea8"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "margin-lg": "2rem",
+          "space-2xs": "0.125rem",
+          "space-xs": "0.25rem",
+          "gutter": "1rem",
+          "space-md": "0.75rem",
+          "space-sm": "0.5rem",
+          "space-2xl": "2rem",
+          "margin-md": "1.5rem",
+          "space-xl": "1.5rem",
+          "space-lg": "1rem",
+          "margin": "1rem",
+          "gutter-lg": "1.5rem",
+          "space-3xl": "3rem"
+        },
+        "fontFamily": {
+          "label-sm": [
+            "Inter"
+          ],
+          "body-lg": [
+            "Inter"
+          ],
+          "headline-md": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "display-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "mono-data": [
+            "JetBrains Mono"
+          ],
+          "body-md": [
+            "Inter"
+          ],
+          "label-md": [
+            "Inter"
+          ],
+          "body-sm": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "label-sm": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.025em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-lg": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "-0.005em",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-md": [
+            "22px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "-0.015em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "28px",
+            {
+              "lineHeight": "36px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "600"
+            }
+          ],
+          "display-lg": [
+            "36px",
+            {
+              "lineHeight": "44px",
+              "letterSpacing": "-0.025em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "mono-data": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "500"
+            }
+          ],
+          "body-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "label-md": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "500"
+            }
+          ],
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.005em",
+              "fontWeight": "400"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased"><div class="fixed top-0 left-0 right-0 z-50"><aside class="w-full bg-primary-container text-on-primary border-b border-surface-tint/20"><div class="w-full px-gutter-lg h-9 flex items-center justify-between font-label-sm text-label-sm"><div class="flex items-center gap-space-sm overflow-hidden whitespace-nowrap"><span class="flex h-2 w-2 rounded-full bg-secondary-container animate-pulse"></span><span>🇳🇱 <strong>Campaña de Renta Holandesa 2025 abierta</strong> · Reserva tu cita antes del 30 de Abril · Plazas limitadas</span></div><div class="hidden md:flex items-center gap-space-lg"><a class="text-secondary-fixed hover:text-on-primary transition-colors flex items-center gap-space-xs font-semibold" data-path="reservar-cita-online" href="#">Reservar plaza renta<span class="material-symbols-outlined text-[14px]">arrow_forward</span></a></div></div></aside><header class="w-full bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30"><div class="w-full px-gutter-lg h-20 flex items-center justify-between gap-gutter"><div class="flex items-center gap-gutter"><a class="flex items-center gap-space-md focus:outline-none" data-path="inicio" href="#"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold leading-none">NexusGest</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-tight mt-space-2xs">Asesoría Legal &amp; Fiscal · NL</span></div></a><nav class="hidden xl:flex items-center gap-space-xs" data-active-classes="text-secondary font-semibold bg-surface-container-low"><a aria-current="page" class="px-space-md py-space-xs rounded-lg transition-colors text-secondary font-semibold bg-surface-container-low" data-path="inicio" href="#">Inicio</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="servicios-tarifas" href="#">Servicios &amp; Tarifas</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="como-funciona" href="#">Cómo Funciona</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="calculadora-fiscal" href="#">Calculadora Fiscal</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="opiniones" href="#">Opiniones</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="contacto" href="#">Contacto</a></nav></div><div class="flex items-center gap-space-md"><div class="hidden lg:flex items-center bg-surface-container px-space-xs py-space-2xs rounded-lg font-mono-data text-mono-data text-on-surface-variant"><button class="px-space-xs py-space-2xs rounded-lg bg-surface-container-lowest text-on-surface font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.05)]" type="button">ES</button><button class="px-space-xs py-space-2xs rounded-lg hover:text-on-surface transition-colors" type="button">NL</button><button class="px-space-xs py-space-2xs rounded-lg hover:text-on-surface transition-colors" type="button">EN</button></div><a class="hidden sm:inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors" data-path="area-clientes-login" href="#">Área Clientes</a><a class="inline-flex items-center justify-center px-space-lg py-space-sm rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-all shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" data-path="reservar-cita-online" href="#">Reservar Cita Online</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header></div><main class="w-full pt-[116px] bg-surface min-h-[calc(100vh-320px)]"><div class="flex flex-col w-full">
+<!-- Hero Section -->
+<section class="relative w-full bg-gradient-to-b from-surface via-surface-container-low/40 to-surface pt-space-xl pb-space-3xl overflow-hidden">
+<div class="absolute -top-40 right-10 w-96 h-96 rounded-full bg-secondary-container/10 blur-3xl pointer-events-none"></div>
+<div class="absolute bottom-10 left-[-5%] w-80 h-80 rounded-full bg-secondary-fixed/30 blur-2xl pointer-events-none"></div>
+<div class="w-full px-gutter-lg max-w-7xl mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-center">
+<!-- Hero Text -->
+<div class="lg:col-span-7 space-y-space-lg">
+<div class="inline-flex items-center gap-space-xs px-space-md py-space-2xs rounded-full bg-surface-container-high text-on-surface">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-mono-data text-mono-data uppercase tracking-wider text-secondary font-semibold">Campaña Renta 2025 · Plazas Activas</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm">· Países Bajos</span>
+</div>
+<h1 class="font-display-lg text-display-lg font-bold text-on-surface leading-[1.1] tracking-tight">
+            Tu fiscalidad y trámites en Holanda, resueltos <span class="text-secondary underline decoration-secondary/30 decoration-wavy decoration-2">sin complicaciones</span> y en tu idioma.
+          </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
+            Especialistas en Declaración de la Renta (M-Form / P-Form), Alta de Autónomos (ZZP / KVK), gestión urgente de DigiD y recursos ante Belastingdienst. Conectados directamente con la administración tributaria neerlandesa.
+          </p>
+<!-- Dual CTAs -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-space-md pt-space-xs">
+<a class="inline-flex items-center justify-center gap-space-sm px-space-xl py-3.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold shadow-md hover:bg-primary-container transition-all" data-path="reservar-cita-online" href="#">
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+<span>Reservar Cita Online (Videollamada o Presencial)</span>
+</a>
+<a class="inline-flex items-center justify-center gap-space-xs px-space-lg py-3.5 rounded-xl bg-surface-container-lowest text-on-surface font-label-md text-label-md font-medium shadow-sm hover:bg-surface-container transition-colors" href="#tarifas-servicios">
+<span class="material-symbols-outlined text-[18px] text-secondary">payments</span>
+<span>Ver Precios Transparentes</span>
+</a>
+</div>
+<!-- Trust Badges Strip -->
+<div class="pt-space-md grid grid-cols-1 sm:grid-cols-3 gap-space-md">
+<div class="p-space-sm rounded-lg bg-surface-container-lowest shadow-sm flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-md bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed shrink-0">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div class="min-w-0">
+<div class="font-label-sm text-label-sm font-bold text-on-surface truncate">Certificación eIDAS</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate">Interlocución oficial NL</div>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest shadow-sm flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-md bg-surface-container-highest flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+</div>
+<div class="min-w-0">
+<div class="font-label-sm text-label-sm font-bold text-on-surface truncate">+1.800 Casos</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate">Expedientes aprobados</div>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest shadow-sm flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-md bg-surface-container-highest flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<div class="min-w-0">
+<div class="font-label-sm text-label-sm font-bold text-on-surface truncate">99.4% Satisfacción</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate">4.9/5 en Google Reviews</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Card Visual Showcase -->
+<div class="lg:col-span-5 relative mt-space-xl lg:mt-0">
+<div class="relative mx-auto max-w-md w-full bg-surface-container-lowest rounded-xl shadow-xl p-space-lg overflow-hidden">
+<!-- Top badge status -->
+<div class="flex items-center justify-between pb-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="inline-flex h-2.5 w-2.5 rounded-full bg-secondary animate-ping"></span>
+<span class="font-mono-data text-mono-data text-secondary font-semibold uppercase tracking-wider">Trámite en curso</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface font-mono-data text-mono-data">Belastingdienst API</span>
+</div>
+<!-- Advisor Preview Card -->
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-center gap-space-md">
+<img class="w-14 h-14 rounded-full object-cover shrink-0 shadow-sm" data-alt="Professional portrait of Elena Martinez, Spanish-speaking tax and legal advisor in modern Amsterdam office, wearing business attire, soft cinematic natural lighting, high corporate quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIEOZOGrWIUqJHrbGAQ9OAp_oFLdvshQjN4LnnRkBq0mOIqE5T-FcPRqg1kKAl2jsoDVgkt5sVKdn32dDl6i72doKSEYFrNC_rYhqlucd5OObCdxabnhXcp3gDyE7kaCSyq--tPwhZXQLyuYW3QtGTkrxotiBVJ9-XnmoDvO9LnML6siVhWQR2_UivLVPz0L1WRVIINDGnabOcYlfcWbiDkZ1uwhRoDg3YLm4lZDFSl6IwIPDj7K4R"/>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-space-xs">
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface truncate">Elena Martínez</h4>
+<span class="material-symbols-outlined text-secondary text-[16px]">verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Asesora fiscal senior asignada</p>
+<div class="mt-space-2xs inline-flex items-center gap-space-2xs text-secondary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span>Contacto garantizado en &lt;1h</span>
+</div>
+</div>
+</div>
+<!-- Tax Return Filing Telemetry -->
+<div class="mt-space-md p-space-md bg-surface-bright rounded-lg space-y-space-sm">
+<div class="flex items-center justify-between text-on-surface">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tipo de Expediente</span>
+<span class="font-mono-data text-mono-data font-bold">M-Form 2024 / 2025</span>
+</div>
+<!-- Progress bar -->
+<div class="space-y-space-2xs">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Revisión Jaaropgave &amp; Deducciones</span>
+<span class="font-mono-data text-mono-data font-semibold text-secondary">92%</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[92%] rounded-full transition-all"></div>
+</div>
+</div>
+<div class="pt-space-xs flex items-center justify-between font-mono-data text-mono-data text-on-surface-variant">
+<span>Devolución estimada:</span>
+<span class="text-on-surface font-bold text-headline-sm text-headline-sm text-secondary">€ 1.450,00</span>
+</div>
+</div>
+<!-- Slot availability widget -->
+<div class="mt-space-md p-space-sm rounded-lg bg-surface-container flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[18px]">schedule</span>
+<span class="font-label-sm text-label-sm font-medium">Disponibilidad Hoy:</span>
+</div>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-lowest font-mono-data text-mono-data font-semibold text-on-surface shadow-xs">
+                2 slots disponibles
+              </span>
+</div>
+<div class="mt-space-md">
+<a class="w-full flex items-center justify-center gap-space-xs py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-all" data-path="reservar-cita-online" href="#">
+<span>Confirmar Cita Renta con Elena</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Value Proposition / Differentiators -->
+<section class="w-full py-space-3xl bg-surface-container-low">
+<div class="w-full px-gutter-lg max-w-7xl mx-auto space-y-space-2xl">
+<div class="max-w-2xl">
+<span class="font-mono-data text-mono-data text-secondary uppercase font-semibold tracking-wider">Seguridad Jurídica &amp; Claridad</span>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface mt-space-xs">
+          Diseñado para hispanohablantes que viven, cotizan y emprenden en Países Bajos.
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-xs">
+          Combinamos la calidez y el entendimiento cultural con la máxima exigencia tributaria neerlandesa.
+        </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter-lg">
+<!-- Pillar 1 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm space-y-space-md flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="space-y-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[26px]">translate</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">
+              En tu idioma, con rigor neerlandés
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+              Olvídate de traducir cartas notariales complejas o de interminables llamadas en holandés a Hacienda. Nos comunicamos contigo en español y gestionamos ante la administración en neerlandés nativo.
+            </p>
+</div>
+<div class="pt-space-sm flex items-center gap-space-xs text-secondary font-label-sm text-label-sm font-semibold">
+<span>Atención sin barreras de idioma</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</div>
+</div>
+<!-- Pillar 2 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm space-y-space-md flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="space-y-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[26px]">smart_toy</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">
+              IA &amp; Automatización supervisada
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+              Extracción instantánea de Jaaropgave, nóminas y contratos mediante IA homologada. Cada cálculo es validado minuciosamente por asesores fiscales colegiados en Ámsterdam.
+            </p>
+</div>
+<div class="pt-space-sm flex items-center gap-space-xs text-secondary font-label-sm text-label-sm font-semibold">
+<span>Cero errores de transcripción</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</div>
+</div>
+<!-- Pillar 3 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm space-y-space-md flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="space-y-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[26px]">price_check</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">
+              Precios cerrados y sin sorpresas
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+              Presupuestos previos transparentes desde 35 €. Sabes exactamente lo que vas a pagar antes de autorizar cualquier trámite, sin letra pequeña, cuotas ocultas ni permanencias mensuales obligatorias.
+            </p>
+</div>
+<div class="pt-space-sm flex items-center gap-space-xs text-secondary font-label-sm text-label-sm font-semibold">
+<span>Tarifas fijas estipuladas</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Tariffs & Services Grid -->
+<section class="w-full py-space-3xl bg-surface" id="tarifas-servicios">
+<div class="w-full px-gutter-lg max-w-7xl mx-auto space-y-space-2xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div>
+<span class="font-mono-data text-mono-data text-secondary uppercase font-semibold tracking-wider">Tarifas Transparentes 2025</span>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface mt-space-xs">
+            Servicios más demandados
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Selecciona el trámite que necesitas resolver y reserva de forma inmediata.</p>
+</div>
+<div class="inline-flex items-center gap-space-xs bg-surface-container-low px-space-md py-space-sm rounded-lg text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-secondary text-[16px]">lock</span>
+<span>Facturas con IVA (BTW) desglosado para deducción</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Service Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col justify-between hover:shadow-lg transition-all relative">
+<div class="absolute top-space-sm right-space-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-mono-data text-mono-data font-bold">
+            Popular
+          </div>
+<div class="space-y-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">assignment</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">
+                Declaración de la Renta (M-Form / P-Form)
+              </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+                Aangifte Inkomstenbelasting 2024 / 2025. Revisión exhaustiva de deducciones, hipoteca, 30% ruling y parejas fiscales.
+              </p>
+</div>
+<div class="pt-space-xs">
+<div class="text-on-surface-variant font-label-sm text-label-sm">Tarifa inicial</div>
+<div class="font-headline-lg text-headline-lg font-bold text-on-surface">Desde 35 €</div>
+<div class="font-mono-data text-mono-data text-on-surface-variant">Revisión previa sin coste</div>
+</div>
+<ul class="space-y-space-xs pt-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Modelo M (año de llegada/salida)</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Optimización con socio fiscal</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Presentación telemática oficial</span>
+</li>
+</ul>
+</div>
+<div class="pt-space-lg">
+<a class="w-full flex items-center justify-center py-2.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors" data-path="reservar-cita-online" href="#">
+              Reservar este trámite
+            </a>
+</div>
+</div>
+<!-- Service Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col justify-between hover:shadow-lg transition-all">
+<div class="space-y-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">badge</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">
+                Trámite &amp; Activación DigiD Personal
+              </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+                Obtención acelerada de credenciales DigiD para residentes o no residentes. Gestión de cita consular o municipal.
+              </p>
+</div>
+<div class="pt-space-xs">
+<div class="text-on-surface-variant font-label-sm text-label-sm">Tarifa cerrada</div>
+<div class="font-headline-lg text-headline-lg font-bold text-on-surface">60 €</div>
+<div class="font-mono-data text-mono-data text-on-surface-variant">Pago único sin recargos</div>
+</div>
+<ul class="space-y-space-xs pt-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Solicitud de código de activación</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Configuración App 2FA en móvil</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Asistencia remota personalizada</span>
+</li>
+</ul>
+</div>
+<div class="pt-space-lg">
+<a class="w-full flex items-center justify-center py-2.5 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold hover:bg-secondary-fixed transition-colors" data-path="reservar-cita-online" href="#">
+              Reservar este trámite
+            </a>
+</div>
+</div>
+<!-- Service Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col justify-between hover:shadow-lg transition-all">
+<div class="space-y-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">store</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">
+                Pack Alta Autónomo ZZP / KVK
+              </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+                Inscripción legal en la Cámara de Comercio neerlandesa (KVK), alta de IVA y guía de inicio contable profesional.
+              </p>
+</div>
+<div class="pt-space-xs">
+<div class="text-on-surface-variant font-label-sm text-label-sm">Tarifa integral</div>
+<div class="font-headline-lg text-headline-lg font-bold text-on-surface">120 €</div>
+<div class="font-mono-data text-mono-data text-on-surface-variant">Incluye cita presencial KVK</div>
+</div>
+<ul class="space-y-space-xs pt-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Obtención de BTW-id &amp; RSIN</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Plantilla factura homologada NL</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Sesión de 45 min sobre deducciones</span>
+</li>
+</ul>
+</div>
+<div class="pt-space-lg">
+<a class="w-full flex items-center justify-center py-2.5 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold hover:bg-secondary-fixed transition-colors" data-path="reservar-cita-online" href="#">
+              Reservar este trámite
+            </a>
+</div>
+</div>
+<!-- Service Card 4 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col justify-between hover:shadow-lg transition-all">
+<div class="space-y-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">gavel</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">
+                Recursos y Deudas (CAK, HollandZorg, CJIB)
+              </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+                Defensa ante multas, deudas de seguro médico y sanciones administrativas. Paralización cautelar y planes de pago.
+              </p>
+</div>
+<div class="pt-space-xs">
+<div class="text-on-surface-variant font-label-sm text-label-sm">Tarifa por gestión</div>
+<div class="font-headline-lg text-headline-lg font-bold text-on-surface">85 €</div>
+<div class="font-mono-data text-mono-data text-on-surface-variant">Respuesta en 24-48 horas</div>
+</div>
+<ul class="space-y-space-xs pt-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Suspensión cautelar de recargos</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Negociación plan a plazos (Betalingsregeling)</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Interlocución telefónica oficial</span>
+</li>
+</ul>
+</div>
+<div class="pt-space-lg">
+<a class="w-full flex items-center justify-center py-2.5 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold hover:bg-secondary-fixed transition-colors" data-path="reservar-cita-online" href="#">
+              Reservar este trámite
+            </a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works (4-Step Workflow) -->
+<section class="w-full py-space-3xl bg-surface-container-low">
+<div class="w-full px-gutter-lg max-w-7xl mx-auto space-y-space-2xl">
+<div class="text-center max-w-2xl mx-auto space-y-space-xs">
+<span class="font-mono-data text-mono-data text-secondary uppercase font-semibold tracking-wider">Flujo Transparente</span>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">
+          Cómo resolvemos tu trámite en 4 sencillos pasos
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Sin desplazamientos innecesarios, sin papeles perdidos y con seguimiento en tiempo real.
+        </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter-lg relative">
+<!-- Step 1 -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative space-y-space-md">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-mono-data text-mono-data font-bold">
+            01
+          </div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">
+              Reserva tu cita en 60s
+            </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+              Elige entre videollamada por Google Meet o visita a nuestro despacho en Keizersgracht (Ámsterdam). Sin esperas.
+            </p>
+</div>
+<div class="flex items-center gap-space-2xs text-secondary font-mono-data text-mono-data font-semibold">
+<span class="material-symbols-outlined text-[16px]">videocam</span>
+<span>Confirmación instantánea</span>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative space-y-space-md">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-mono-data text-mono-data font-bold">
+            02
+          </div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">
+              Sube tus documentos
+            </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+              Adjunta tu Jaaropgave, pasaporte o cartas oficiales mediante nuestro portal cifrado o con una foto por WhatsApp corporativo.
+            </p>
+</div>
+<div class="flex items-center gap-space-2xs text-secondary font-mono-data text-mono-data font-semibold">
+<span class="material-symbols-outlined text-[16px]">cloud_upload</span>
+<span>Cifrado eIDAS nivel alto</span>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative space-y-space-md">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-mono-data text-mono-data font-bold">
+            03
+          </div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">
+              Revisión &amp; Redacción asistida
+            </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+              Nuestro motor analiza retenciones e incongruencias, y tu gestor asignado valida cada partida para maximizar tu ahorro legal.
+            </p>
+</div>
+<div class="flex items-center gap-space-2xs text-secondary font-mono-data text-mono-data font-semibold">
+<span class="material-symbols-outlined text-[16px]">psychology</span>
+<span>Doble verificación fiscal</span>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative space-y-space-md">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-mono-data text-mono-data font-bold">
+            04
+          </div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">
+              Presentación Oficial &amp; Recibo
+            </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+              Enviamos el expediente de forma telemática directa a Belastingdienst o KVK y te remitimos el justificante sellado oficial.
+            </p>
+</div>
+<div class="flex items-center gap-space-2xs text-secondary font-mono-data text-mono-data font-semibold">
+<span class="material-symbols-outlined text-[16px]">task_alt</span>
+<span>Justificante con valor legal</span>
+</div>
+</div>
+</div>
+<!-- Live Flow Data Visual Callout -->
+<div class="p-space-lg rounded-xl bg-surface-container-highest shadow-sm flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary shrink-0 shadow-xs">
+<span class="material-symbols-outlined text-[24px]">speed</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">Tiempo medio de resolución: 48 horas laborales</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Conectados mediante canales B2G certificados con la Agencia Tributaria holandesa.</div>
+</div>
+</div>
+<a class="inline-flex items-center gap-space-xs text-on-surface font-label-md text-label-md font-semibold hover:text-secondary transition-colors whitespace-nowrap" data-path="como-funciona" href="#">
+<span>Conoce nuestra metodología</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Real Client Testimonials (Expats & ZZPs) -->
+<section class="w-full py-space-3xl bg-surface">
+<div class="w-full px-gutter-lg max-w-7xl mx-auto space-y-space-2xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div>
+<span class="font-mono-data text-mono-data text-secondary uppercase font-semibold tracking-wider">Historias Reales</span>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface mt-space-xs">
+            La tranquilidad de delegar en manos expertas
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Comentarios verificados de clientes residentes en Países Bajos.</p>
+</div>
+<div class="flex items-center gap-space-xs text-secondary font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[20px]">stars</span>
+<span>4.9 / 5 estrellas promedio en Trustpilot y Google</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter-lg">
+<!-- Testimonial 1 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col justify-between space-y-space-lg hover:shadow-md transition-shadow">
+<div class="space-y-space-md">
+<div class="flex items-center gap-space-2xs text-secondary">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface italic leading-relaxed">
+              "Tenía un lío enorme con una deuda imprevista de HollandZorg y me lo solucionaron en 48 horas solicitando la suspensión y un plan de pago cómodo. Todo en perfecto español y sin tecnicismos raros."
+            </p>
+</div>
+<div class="flex items-center gap-space-md pt-space-sm">
+<img class="w-11 h-11 rounded-full object-cover shadow-xs shrink-0" data-alt="Portrait of Maria Popescu, satisfied female client in modern Eindhoven tech setting, smiling warmly, professional headshot, high definition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDxxoAIgESc6mA4w8Dc3UfYhouKkNmdyZZ2AqFrxRH0A0-WJLAAZJgoVoTCX-BRfh9t6N-kJEL4YPcFrQmurr9u_fHPmHoteaWQ9oPObbrbsfjBapP8Q7kycbLpe0vOQqXUF0K70W5x4B_L6xIpJci8O-FvvymPvn6CYhzIdh0fuORKqr7c3nM-UgBoDc9UPGESbVxu8UqmNcy32UemoMYd0UE4rmIwBxtez6uVJMaETzrfYhNOdTT"/>
+<div class="min-w-0">
+<div class="font-label-md text-label-md font-bold text-on-surface truncate">Maria Popescu</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate">Eindhoven · Sanidad y Seguros</div>
+</div>
+</div>
+</div>
+<!-- Testimonial 2 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col justify-between space-y-space-lg hover:shadow-md transition-shadow">
+<div class="space-y-space-md">
+<div class="flex items-center gap-space-2xs text-secondary">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface italic leading-relaxed">
+              "La declaración de la renta holandesa (M-Form) me daba pánico por el cambio de residencia desde España. NexusGest revisó mis deducciones y me consiguieron una devolución de 1.450 € que ni esperaba."
+            </p>
+</div>
+<div class="flex items-center gap-space-md pt-space-sm">
+<img class="w-11 h-11 rounded-full object-cover shadow-xs shrink-0" data-alt="Portrait of Carlos Gomez, Spanish software engineer living in Utrecht, looking confident and smiling outdoors near canals, crisp daylight photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpkSEJnf_Og9mDHH_0VmWRHHnHeeSmBZAEFeiJ4KhfiqowbYw4tZO0-61qykeAASW22-r5nOdFDEz3Ualb9_FatFC0fuXTqX6IRcogUekAfApl0a3OJl5qPwAxGbA_1DIE0JBunyDzOkGAJeYO0gjUafDaLES3eXvBquN3IruEmwm0NExTVh4Ftv_6aeuw9ewuKruLwbYdy-Dk4-OPkdUKOdWFEPybcXu3p0sQx70LGJt8sCl41siR"/>
+<div class="min-w-0">
+<div class="font-label-md text-label-md font-bold text-on-surface truncate">Carlos Gómez</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate">Utrecht · Declaración M-Form</div>
+</div>
+</div>
+</div>
+<!-- Testimonial 3 -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col justify-between space-y-space-lg hover:shadow-md transition-shadow">
+<div class="space-y-space-md">
+<div class="flex items-center gap-space-2xs text-secondary">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface italic leading-relaxed">
+              "Me dieron de alta como autónomo ZZP en un día hábil. Me prepararon la cita en la Cámara de Comercio KVK y me explicaron la facturación trimestral con BTW paso a paso. Servicio impecable."
+            </p>
+</div>
+<div class="flex items-center gap-space-md pt-space-sm">
+<img class="w-11 h-11 rounded-full object-cover shadow-xs shrink-0" data-alt="Portrait of Andrei Ionescu, freelance creative consultant in Rotterdam studio, contemporary modern workspace, confident professional expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8RYHQWSN6CmXrx3DOnaL42SYdj7WUaz1dnLfhe5pfhQyIZ9bLSmifbM-NdHQeF8290CKszESljnGgrHFrSx9FRH-AYr8rmGwPCn05c-QQ9s5HPOIKWnsB9KkdON2jA_QLs0CzBQ_vrd5J3At0MMrGEFGIRuBKnFpfmpVyMvjLZg9_vuOvyQG_Z0BA9yoM6zsPoXj4b1l19iC546yCIA_nYqDVpNZ6K2ezbWwbWeGM_MZa7thT6ytP"/>
+<div class="min-w-0">
+<div class="font-label-md text-label-md font-bold text-on-surface truncate">Andrei Ionescu</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate">Rotterdam · Alta ZZP &amp; KVK</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive Tax Calculator Teaser Strip -->
+<section class="w-full py-space-2xl bg-surface-container-low">
+<div class="w-full px-gutter-lg max-w-7xl mx-auto">
+<div class="bg-surface-container-lowest rounded-2xl shadow-md p-space-xl md:p-space-2xl grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-center">
+<div class="lg:col-span-8 space-y-space-sm">
+<div class="inline-flex items-center gap-space-2xs px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface font-mono-data text-mono-data">
+<span class="material-symbols-outlined text-[14px] text-secondary">calculate</span>
+<span>Herramienta Gratuita 2025</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">
+            ¿Quieres saber cuánto te devolverá Belastingdienst antes de contratar?
+          </h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl leading-relaxed">
+            Utiliza nuestro simulador fiscal automatizado. Introduce tus ingresos brutos y deducciones habituales para obtener una estimación precisa en menos de 2 minutos.
+          </p>
+</div>
+<div class="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-space-sm">
+<a class="w-full flex items-center justify-center gap-space-xs py-3.5 px-space-lg rounded-xl bg-secondary text-on-secondary font-label-md text-label-md font-semibold hover:bg-secondary-container transition-all shadow-sm" data-path="calculadora-fiscal" href="#">
+<span class="material-symbols-outlined text-[18px]">query_stats</span>
+<span>Probar Calculadora Gratuita</span>
+</a>
+<a class="w-full flex items-center justify-center gap-space-xs py-3 px-space-lg rounded-xl bg-surface-container text-on-surface font-label-md text-label-md font-medium hover:bg-surface-container-high transition-colors" href="https://wa.me/31208943320" target="_blank">
+<span class="material-symbols-outlined text-[18px] text-secondary">chat</span>
+<span>Consultar caso por WhatsApp</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Direct CTA Banner -->
+<section class="w-full py-space-3xl bg-primary text-on-primary relative overflow-hidden">
+<div class="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-secondary/20 blur-3xl pointer-events-none"></div>
+<div class="absolute -left-20 -top-20 w-80 h-80 rounded-full bg-secondary-fixed/10 blur-3xl pointer-events-none"></div>
+<div class="w-full px-gutter-lg max-w-5xl mx-auto text-center space-y-space-lg relative z-10">
+<div class="inline-flex items-center gap-space-2xs px-space-md py-space-2xs rounded-full bg-surface-container-highest/10 text-on-primary font-mono-data text-mono-data">
+<span class="material-symbols-outlined text-[16px] text-secondary-fixed">security</span>
+<span>Asesoría Legal Colegiada · KVK: 84920194</span>
+</div>
+<h2 class="font-display-lg text-display-lg font-bold leading-tight tracking-tight">
+        Empieza hoy mismo a poner al día tus trámites en Países Bajos.
+      </h2>
+<p class="font-body-lg text-body-lg text-on-primary-container max-w-2xl mx-auto leading-relaxed">
+        Deja atrás la incertidumbre burocrática y las cartas de Hacienda sin entender. Agenda tu sesión con un gestor hispanohablante y obtén una solución definitiva.
+      </p>
+<div class="pt-space-sm flex flex-col sm:flex-row items-center justify-center gap-space-md">
+<a class="w-full sm:w-auto inline-flex items-center justify-center gap-space-sm px-space-2xl py-4 rounded-xl bg-surface text-primary font-label-md text-label-md font-bold hover:bg-surface-bright transition-all shadow-lg hover:scale-[1.02]" data-path="reservar-cita-online" href="#">
+<span class="material-symbols-outlined text-[20px] text-secondary">calendar_today</span>
+<span>Reservar Cita Ahora</span>
+</a>
+<a class="w-full sm:w-auto inline-flex items-center justify-center gap-space-xs px-space-xl py-4 rounded-xl bg-primary-container text-on-primary font-label-md text-label-md font-semibold hover:bg-on-primary-fixed-variant transition-colors" data-path="contacto" href="#">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+<span>Dudas Frecuentes</span>
+</a>
+</div>
+<div class="pt-space-md flex flex-wrap items-center justify-center gap-space-lg font-mono-data text-mono-data text-on-primary-container">
+<div class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-[16px] text-secondary-fixed">check</span>
+<span>Sin permanencia</span>
+</div>
+<div class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-[16px] text-secondary-fixed">check</span>
+<span>Presupuesto previo sin coste</span>
+</div>
+<div class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-[16px] text-secondary-fixed">check</span>
+<span>Cancelación flexible</span>
+</div>
+</div>
+</div>
+</section>
+</div></main><footer class="w-full bg-surface-container-low border-t border-outline-variant/30 pt-space-3xl pb-space-2xl text-on-surface"><div class="w-full px-gutter-lg"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter-lg pb-space-2xl border-b border-outline-variant/30"><div class="space-y-space-md"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"/><span class="font-headline-sm text-headline-sm font-bold tracking-tight text-on-surface">NexusGest B.V.</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Gestoría, asesoría fiscal y jurídica de alta fidelidad en Países Bajos. Acompañamiento integral para expatriados, nómadas digitales y profesionales ZZP.</p><div class="pt-space-xs font-mono-data text-mono-data text-on-surface-variant space-y-space-2xs"><div>Keizersgracht 421-B, 1016 EK Amsterdam</div><div>KVK: 84920194 · BTW-id: NL863412098B01</div></div></div><div><h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface mb-space-md">Servicios Principales</h4><ul class="space-y-space-sm font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Declaración de la Renta M-Form</a></li><li><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Alta Autónomo ZZP &amp; KVK</a></li><li><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Gestión y Recuperación DigiD</a></li><li><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Seguros &amp; Subsidios Zorgtoeslag</a></li><li><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Aplicación Regla 30% Ruling</a></li></ul></div><div><h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface mb-space-md">Legal y Seguridad</h4><ul class="space-y-space-sm font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-secondary transition-colors" data-path="aviso-legal" href="#">Aviso Legal &amp; Términos de Servicio</a></li><li><a class="hover:text-secondary transition-colors" data-path="politica-privacidad" href="#">Política de Privacidad RGPD</a></li><li><a class="hover:text-secondary transition-colors" data-path="cumplimiento-fiscal" href="#">Cumplimiento Belastingdienst</a></li><li><a class="hover:text-secondary transition-colors" data-path="seguridad-datos" href="#">Certificación Criptográfica eIDAS</a></li><li><a class="hover:text-secondary transition-colors" data-path="canal-denuncias" href="#">Canal Ético y Whistleblowing</a></li></ul></div><div><h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface mb-space-md">Contacto &amp; Urgencias</h4><div class="space-y-space-sm font-body-sm text-body-sm text-on-surface-variant"><div><span class="font-semibold text-on-surface block">WhatsApp Directo:</span><a class="hover:text-secondary transition-colors font-mono-data text-mono-data" href="https://wa.me/31208943320" target="_blank">+31 20 894 3320</a></div><div><span class="font-semibold text-on-surface block">Email Oficial:</span><a class="hover:text-secondary transition-colors font-mono-data text-mono-data" href="mailto:info@nexusgest.nl">info@nexusgest.nl</a></div><div><span class="font-semibold text-on-surface block">Atención al Cliente:</span><span>Lunes a Viernes: 09:00 - 18:00 CET</span></div><div class="pt-space-xs"><a class="inline-flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-lowest border border-outline-variant/60 rounded-lg text-on-surface font-label-sm text-label-sm font-semibold hover:border-secondary transition-all" data-path="reservar-cita-online" href="#"><span class="material-symbols-outlined text-[16px] text-secondary">calendar_month</span>Cita de Diagnóstico Gratis</a></div></div></div></div><div class="pt-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md font-body-sm text-body-sm text-on-surface-variant"><div class="flex items-center gap-space-sm"><span>© 2026 NexusGest B.V. · Todos los derechos reservados.</span></div><div class="flex items-center gap-space-lg font-label-sm text-label-sm"><span>Registrado en Países Bajos</span><span>·</span><span>Amsterdam Chamber of Commerce</span></div></div></div></footer></body></html>

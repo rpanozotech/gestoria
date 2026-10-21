@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"inverse-surface":"#213145","on-error":"#ffffff","on-tertiary":"#ffffff","on-tertiary-fixed":"#07006c","primary-fixed-dim":"#bec6e0","secondary-container":"#316bf3","outline":"#76777d","on-primary-fixed-variant":"#3f465c","on-tertiary-fixed-variant":"#2f2ebe","on-error-container":"#93000a","on-secondary-container":"#fefcff","outline-variant":"#c6c6cd","on-primary-container":"#7c839b","error-container":"#ffdad6","primary":"#000000","tertiary-container":"#07006c","on-primary":"#ffffff","secondary-fixed-dim":"#b4c5ff","surface-container-highest":"#d3e4fe","tertiary-fixed":"#e1e0ff","error":"#ba1a1a","secondary-fixed":"#dbe1ff","surface-container-lowest":"#ffffff","primary-fixed":"#dae2fd","tertiary":"#000000","on-secondary-fixed-variant":"#003ea8","on-background":"#0b1c30","tertiary-fixed-dim":"#c0c1ff","inverse-on-surface":"#eaf1ff","inverse-primary":"#bec6e0","on-secondary":"#ffffff","on-surface":"#0b1c30","surface":"#f8f9ff","primary-container":"#131b2e","on-tertiary-container":"#7073ff","surface-dim":"#cbdbf5","on-primary-fixed":"#131b2e","on-surface-variant":"#45464d","background":"#f8f9ff","on-secondary-fixed":"#00174b","surface-container-low":"#eff4ff","surface-bright":"#f8f9ff","surface-container-high":"#dce9ff","surface-container":"#e5eeff","secondary":"#0051d5","surface-tint":"#565e74","surface-variant":"#d3e4fe"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{"space-xl":"1.5rem","margin-md":"1.5rem","space-2xl":"2rem",gutter:"1rem","space-3xl":"3rem","space-sm":"0.5rem","space-2xs":"0.125rem","gutter-lg":"1.5rem",margin:"1rem","margin-lg":"2rem","space-lg":"1rem","space-xs":"0.25rem","space-md":"0.75rem"},fontFamily:{"label-sm":["Inter"],"body-sm":["Inter"],"mono-data":["JetBrains Mono"],"headline-sm":["Plus Jakarta Sans"],"body-lg":["Inter"],"body-md":["Inter"],"display-lg":["Plus Jakarta Sans"],"label-md":["Inter"],"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"]},fontSize:{"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.025em",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",letterSpacing:"0.005em",fontWeight:"400"}],"mono-data":["12px",{lineHeight:"16px",letterSpacing:"-0.01em",fontWeight:"500"}],"headline-sm":["18px",{lineHeight:"24px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"24px",letterSpacing:"-0.005em",fontWeight:"400"}],"body-md":["14px",{lineHeight:"20px",letterSpacing:"0em",fontWeight:"400"}],"display-lg":["36px",{lineHeight:"44px",letterSpacing:"-0.025em",fontWeight:"700"}],"label-md":["13px",{lineHeight:"18px",letterSpacing:"0.01em",fontWeight:"500"}],"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-md":["22px",{lineHeight:"28px",letterSpacing:"-0.015em",fontWeight:"600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col flex-1 overflow-y-auto"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="NexusGest Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UGL1TcrvgqQTS7P7tWRnC85nNZKFJclsBEgopGSeeW14oBzFdOSlVwjxxi3aa-Ko1tpQP_AoiK-bXTsGprM7WskQLtt-SPhCIpcpoUeTLN0WOLR4s2ZOMfxv0A7VMnyiC-AICHIV3kllLDzVwRv4s8jqxlWXDfn61jk-ujrh6M0Mxlp79quxVsegXJLp083DYTwipERIt2FGgUMoNw72Iow8kanV1oAKWU4HLWHN2Otwc08KbS-bzqGNw"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">NexusGest</span></div><span class="px-space-xs py-space-2xs bg-surface-container text-on-surface-variant font-label-sm text-label-sm rounded">v2.4 Pro</span></div><div class="px-space-md py-space-xs"><span class="px-space-sm font-label-sm text-label-sm text-outline uppercase tracking-wider">Gestión &amp; Operaciones</span></div><nav class="flex flex-col gap-space-2xs px-space-sm" data-active-classes="bg-secondary-container text-on-secondary-container font-label-md"><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="dashboard" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">grid_view</span><span>Dashboard</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="clientes" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">group</span><span>Clientes</span></div><span class="px-space-xs py-space-2xs bg-surface-container-high text-on-surface font-mono-data text-mono-data rounded-full">148</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="alta-ia-escaner" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl text-secondary">auto_awesome</span><span>Alta IA &amp; Escáner</span></div><span class="px-space-xs py-space-2xs bg-secondary text-on-secondary font-label-sm text-label-sm rounded">IA</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="tramites-servicios" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">business_center</span><span>Trámites &amp; Servicios</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="presupuestos" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">description</span><span>Presupuestos</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="facturacion" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">receipt_long</span><span>Facturación</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="agenda-citas" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">calendar_today</span><span>Agenda &amp; Citas</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="asistente-documentos" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-space-xl">document_scanner</span><span>Asistente Documentos</span></div></a></nav></div><div class="p-space-md flex flex-col gap-space-sm bg-surface-container-low"><div class="p-space-sm bg-surface-container-lowest rounded-lg flex flex-col gap-space-2xs shadow-[0_1px_3px_rgba(0,0,0,0.04)]"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-outline">Sistema Cloud</span><span class="flex h-2 w-2 rounded-full bg-secondary"></span></div><div class="flex flex-col font-mono-data text-mono-data text-on-surface-variant gap-space-2xs"><div class="flex items-center justify-between"><span>PostgreSQL</span><span class="text-secondary font-label-sm text-label-sm">Online</span></div><div class="flex items-center justify-between"><span>Storage S3</span><span class="text-secondary font-label-sm text-label-sm">99.9%</span></div></div></div><nav class="flex flex-col" data-active-classes="bg-secondary-container text-on-secondary-container font-label-md"><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="configuracion" href="#"><span class="material-symbols-outlined text-space-xl">settings</span><span>Configuración</span></a></nav></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 px-space-xl flex items-center justify-between gap-space-lg"><div class="flex-1 max-w-xl"><div class="relative flex items-center w-full"><span class="material-symbols-outlined absolute left-space-md text-outline pointer-events-none text-space-xl">search</span><input class="w-full h-9 pl-10 pr-space-md bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.02)] focus:outline-none" placeholder="Buscar cliente, BSN, factura, trámite o comando IA... (Cmd + K)" type="text"/></div></div><div class="flex items-center gap-space-lg"><button class="h-9 px-space-md bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-space-xs hover:bg-primary-container transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.08)]"><span class="material-symbols-outlined text-space-lg">add</span><span>Nuevo Trámite / IA</span></button><div class="flex items-center gap-space-xs"><button class="relative h-9 w-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Notificaciones"><span class="material-symbols-outlined text-space-xl">notifications</span><span class="absolute top-1 right-1 h-4 w-4 bg-error text-on-error font-label-sm text-label-sm rounded-full flex items-center justify-center">3</span></button><button class="h-9 w-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Soporte y Ayuda"><span class="material-symbols-outlined text-space-xl">help</span></button></div><div class="flex items-center gap-space-md pl-space-sm"><div class="flex items-center gap-space-sm cursor-pointer"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8Xeg7Vtga4Rzfh9r0LXBU67VuZUXAJxX6qLLQn86SqPw4hOk3SfSZzOSnKdGkvltdASdrKRfymem__Yfc9lfA0-pH3n-Nc94qp8Ax33ZegQRLmwwkEMqXPHQlkZ9mYUWt_u3Vd_FhjP42RtkJ8G_4KjC-qnGgoeVz9KamfPC1xMMLZIMJZQEoZQXYJgqL51QUdFbj8kuCzvQETrNbu0BI6MllUXSToUk8AinIUavxtbPBAeX0XsLx"/><div class="hidden xl:flex flex-col text-left"><span class="font-label-md text-label-md text-on-surface leading-tight">Elena Martínez</span><span class="font-label-sm text-label-sm text-outline">Gestora Principal / Admin</span></div><span class="material-symbols-outlined text-outline text-space-lg">expand_more</span></div></div></div></header><main class="w-full pt-16 px-gutter-lg pb-space-3xl bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Top Control Banner -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg mb-space-xl">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Asistente y Redactor Oficial IA</h1>
+<span class="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs bg-secondary-container text-on-secondary-container font-label-sm text-label-sm rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-space-md" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+          OpenAI GPT-4o Gestoría Edition
+        </span>
+<span class="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs bg-surface-container-high text-on-surface-variant font-mono-data text-mono-data rounded-lg">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          DocuEngine v4.2 • Sync Activo
+        </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Redacción jurídica automatizada, cruce dinámico de bases tributarias holandesas y generación de comunicaciones oficiales.
+      </p>
+</div>
+<!-- Header Actions & Language Switcher -->
+<div class="flex items-center gap-space-sm flex-wrap">
+<!-- Language Pill Switcher -->
+<div class="flex items-center bg-surface-container-low p-space-2xs rounded-lg shadow-sm">
+<button class="px-space-sm py-space-xs rounded font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" onclick="setLang('es', this)">
+          ES
+        </button>
+<button class="px-space-sm py-space-xs rounded bg-surface-container-lowest text-secondary font-label-sm text-label-sm shadow-sm transition-all" onclick="setLang('nl', this)">
+          NL (Oficial)
+        </button>
+<button class="px-space-sm py-space-xs rounded font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" onclick="setLang('en', this)">
+          EN
+        </button>
+</div>
+<button class="h-9 px-space-md bg-surface-container-lowest text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs shadow-sm hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-space-lg text-outline">history</span>
+<span>Historial Emitido</span>
+</button>
+<button class="h-9 px-space-md bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-space-xs shadow-sm hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-space-lg">bookmark_add</span>
+<span>Nueva Plantilla</span>
+</button>
+</div>
+</div>
+<!-- Main Workspace: 12-Column Layout -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-gutter-lg items-start">
+<!-- LEFT PANEL: IA Configuration, Client Context, Prompting (5 cols) -->
+<div class="xl:col-span-5 flex flex-col gap-space-lg">
+<!-- Card: Client Profile & Injected Variables Context -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-space-lg">person_pin</span>
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Cliente Vinculado al Trámite</span>
+</div>
+<span class="px-space-xs py-space-2xs bg-surface-container text-secondary font-mono-data text-mono-data rounded">Datos en caché S3</span>
+</div>
+<!-- Linked Client Card Item -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex items-start gap-space-md transition-all">
+<img class="w-11 h-11 rounded-full object-cover shadow-sm flex-shrink-0" data-alt="Professional studio portrait of Maria Popescu, mid-30s woman with calm confident expression, soft natural lighting against modern corporate navy and neutral slate background, wearing minimalist tailored blazer." src="https://lh3.googleusercontent.com/aida-public/AB6AXuArYYNS3K9-v79rkMyKuXFnLyl-67XPUKUzG-RYznB6syj-jIackY6a8FpQeR5D2uKqXO4A0cU7QAQIruP08uJUsWLSL_8yGek60MHZx_qIXmhp3oJ72Fe3uKv2al9HNRdKcRRDStQC6b9twrlfEUzqtWfFNlRtZfZePtUrdaFzKZQaANvPEuo2qp-TNv5-cYw0liBxA3tJRUmKvOopGGF6KFGbn2yj7TJQ8vjpNs10xwkvPvnJmbj3"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Maria Popescu</span>
+<span class="px-space-xs py-space-2xs bg-surface-container-lowest text-on-surface font-mono-data text-mono-data rounded shadow-sm">CLI-2026-089</span>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm mt-space-2xs">
+<span class="material-symbols-outlined text-space-md text-outline">location_on</span>
+<span class="truncate">Stratumsedijk 44-B, 5611 ND Eindhoven</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs mt-space-sm pt-space-xs bg-surface-container-lowest/80 p-space-xs rounded">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">BSN / Burgerservicenummer</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold">9821.44.110 (Verif.)</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Póliza HollandZorg ID</span>
+<span class="font-mono-data text-mono-data text-secondary font-semibold">HZ-889123-01</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
+<span class="flex items-center gap-space-2xs">
+<span class="material-symbols-outlined text-space-md text-secondary">verified_user</span>
+            Identidad DigiD / Pasaporte Rumano validado
+          </span>
+<button class="font-label-sm text-label-sm text-secondary hover:underline">Cambiar Sujeto</button>
+</div>
+</div>
+<!-- Card: Official Templates Quick Switcher -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-space-lg text-outline">folder_special</span>
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Plantillas Oficiales Homologadas</span>
+</div>
+<span class="font-mono-data text-mono-data text-outline">5 Disponibles</span>
+</div>
+<div class="flex flex-col gap-space-xs" id="template-pills">
+<!-- Active template -->
+<button class="w-full text-left p-space-sm rounded-lg bg-secondary text-on-secondary shadow-sm flex items-center justify-between transition-all group">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-space-lg">handshake</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md truncate">Fraccionamiento de Deuda (HollandZorg / CZ)</span>
+<span class="font-body-sm text-body-sm text-surface-variant truncate">Betalingsregeling Zorgverzekering Wet</span>
+</div>
+</div>
+<span class="px-space-xs py-space-2xs bg-on-secondary/20 rounded font-label-sm text-label-sm uppercase flex-shrink-0">Activa</span>
+</button>
+<!-- Other templates -->
+<button class="w-full text-left p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-space-lg text-outline">schedule</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md truncate">Petición de Prórroga Belastingdienst (Aangifte)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Uitstel aanvragen inkomstenbelasting</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-space-md text-outline">chevron_right</span>
+</button>
+<button class="w-full text-left p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-space-lg text-outline">assignment_ind</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md truncate">Autorización de Representación Tributaria (Machtiging)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Volmacht particulieren &amp; ZZP</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-space-md text-outline">chevron_right</span>
+</button>
+<button class="w-full text-left p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-space-lg text-outline">gavel</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md truncate">Recurso Subsidio Salud (Zorgtoeslag Bezwaarschrift)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Dienst Toeslagen correctie</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-space-md text-outline">chevron_right</span>
+</button>
+<button class="w-full text-left p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface transition-all flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-space-lg text-outline">home_pin</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md truncate">Certificado de Empadronamiento BRP (Gemeente)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Aanvraag uittreksel Basisregistratie</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-space-md text-outline">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Card: AI Natural Language Instruction & Fine Tuning Parameters -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-space-lg">neurology</span>
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Instrucción al Asistente IA</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary flex items-center gap-space-2xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+            Modo Jurídico Activo
+          </span>
+</div>
+<!-- Interactive Prompt Area -->
+<div class="flex flex-col gap-space-xs">
+<div class="relative">
+<textarea class="w-full p-space-md bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg focus:outline-none focus:bg-surface-container-lowest transition-all resize-none shadow-sm leading-relaxed" id="ai-prompt-input" placeholder="Escribe aquí las condiciones específicas del documento..." rows="4">Genera una carta oficial formal para HollandZorg solicitando pagar la deuda de 340,00 € en 4 cuotas mensuales consecutivas de 85,00 € a debitar el día 25 de cada mes. Motivo: reajuste presupuestario por inicio de contrato de trabajo. Incorpora cláusula de compromiso expreso e IBAN autorizado.</textarea>
+<div class="absolute right-space-sm bottom-space-sm flex items-center gap-space-xs">
+<span class="font-mono-data text-mono-data text-outline">284 car.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-label-sm text-label-sm text-outline">Sugerencias rápidas:</span>
+<button class="px-space-xs py-space-2xs bg-surface-container text-on-surface-variant rounded text-label-sm font-label-sm hover:bg-surface-container-high transition-colors" onclick="appendPrompt('Añadir solicitud de suspensión provisional de intereses.')">
+              + Suspender intereses
+            </button>
+<button class="px-space-xs py-space-2xs bg-surface-container text-on-surface-variant rounded text-label-sm font-label-sm hover:bg-surface-container-high transition-colors" onclick="appendPrompt('Adjuntar justificante bancario de nómina.')">
+              + Adjuntar nómina
+            </button>
+<button class="px-space-xs py-space-2xs bg-surface-container text-on-surface-variant rounded text-label-sm font-label-sm hover:bg-surface-container-high transition-colors" onclick="appendPrompt('Aclarar cambio de número de cuenta.')">
+              + Cambio cuenta IBAN
+            </button>
+</div>
+</div>
+<!-- Structured Parameters -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm pt-space-xs">
+<div class="flex flex-col gap-space-2xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Tono &amp; Protocolo Legal</label>
+<select class="h-9 px-space-sm bg-surface-container-low text-on-surface font-body-sm text-body-sm rounded-lg focus:outline-none shadow-sm">
+<option>Administrativo Neerlandés Estricto (Formeel)</option>
+<option>Conciliatorio / Mediación de Pago</option>
+<option>Urgente / Apelación Procesal</option>
+</select>
+</div>
+<div class="flex flex-col gap-space-2xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Salida Lingüística</label>
+<select class="h-9 px-space-sm bg-surface-container-low text-on-surface font-body-sm text-body-sm rounded-lg focus:outline-none shadow-sm">
+<option>Nederlands + Resumen Traducción ES</option>
+<option>Solo Nederlands Certificado</option>
+<option>Bilingüe Espejo (NL / ES Jurídico)</option>
+</select>
+</div>
+</div>
+<!-- Toggles -->
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<label class="flex items-center justify-between p-space-xs bg-surface-container-low rounded-lg cursor-pointer">
+<span class="flex items-center gap-space-xs font-body-sm text-body-sm text-on-surface">
+<span class="material-symbols-outlined text-space-md text-secondary">account_balance</span>
+              Cláusula de Autorización SEPA / Incasso
+            </span>
+<input checked="" class="w-4 h-4 rounded text-secondary" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-space-xs bg-surface-container-low rounded-lg cursor-pointer">
+<span class="flex items-center gap-space-xs font-body-sm text-body-sm text-on-surface">
+<span class="material-symbols-outlined text-space-md text-secondary">business</span>
+              Incluir Poder Notarial NexusGest B.V.
+            </span>
+<input checked="" class="w-4 h-4 rounded text-secondary" type="checkbox"/>
+</label>
+</div>
+<!-- Primary Generation Trigger -->
+<button class="w-full h-11 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md flex items-center justify-center gap-space-sm shadow-md hover:bg-secondary-container transition-all" id="generate-btn" onclick="simulateRegenerate()">
+<span class="material-symbols-outlined text-space-xl" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span>Regenerar y Re-inyectar Datos del Cliente</span>
+</button>
+</div>
+<!-- Advisory AI Card -->
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm flex items-start gap-space-md">
+<span class="material-symbols-outlined text-secondary text-space-xl flex-shrink-0">lightbulb</span>
+<div class="flex flex-col gap-space-2xs text-on-surface">
+<span class="font-label-md text-label-md">Recomendación Legal del Asistente</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            HollandZorg exige respuesta formal antes de 14 días naturales desde la fecha de notificación. El plazo del expediente HZ-889123 vence el <strong>02 de Mayo de 2026</strong>. La solicitud suspende automáticamente el recargo de cobranza CAK si se remite hoy.
+          </p>
+<div class="flex items-center gap-space-md mt-space-2xs">
+<button class="font-label-sm text-label-sm text-secondary font-semibold hover:underline">Aplicar cláusula de suspensión CAK</button>
+<button class="font-label-sm text-label-sm text-outline hover:text-on-surface">Ignorar</button>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANEL: Live Document Canvas & Official A4 Preview (7 cols) -->
+<div class="xl:col-span-7 flex flex-col gap-space-md">
+<!-- Preview Header & Actions Toolbar -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary flex-shrink-0">
+<span class="material-symbols-outlined text-space-xl">picture_as_pdf</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md text-on-surface truncate font-semibold">Brief_HollandZorg_Betalingsregeling_Popescu.pdf</span>
+<span class="px-space-xs py-space-2xs bg-surface-container text-secondary font-label-sm text-label-sm rounded">Borrador Listo</span>
+</div>
+<span class="font-mono-data text-mono-data text-outline">Formato: A4 NEN-norm • 1 Página • Hash: sha256:d89f...31a</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs flex-wrap w-full sm:w-auto justify-end">
+<button class="h-8 px-space-sm bg-surface-container text-on-surface rounded-lg font-label-sm text-label-sm flex items-center gap-space-2xs hover:bg-surface-container-high transition-colors" title="Firmar con certificado digital">
+<span class="material-symbols-outlined text-space-md">draw</span>
+<span>Firma Digital</span>
+</button>
+<button class="h-8 px-space-sm bg-surface-container text-on-surface rounded-lg font-label-sm text-label-sm flex items-center gap-space-2xs hover:bg-surface-container-high transition-colors" title="Guardar expediente">
+<span class="material-symbols-outlined text-space-md">save</span>
+<span>Expediente</span>
+</button>
+<button class="h-8 px-space-sm bg-surface-container text-on-surface rounded-lg font-label-sm text-label-sm flex items-center gap-space-2xs hover:bg-surface-container-high transition-colors" title="Enviar directamente">
+<span class="material-symbols-outlined text-space-md text-secondary">send</span>
+<span>Enviar Email</span>
+</button>
+<button class="h-8 px-space-md bg-primary text-on-primary rounded-lg font-label-sm text-label-sm flex items-center gap-space-2xs hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-space-md">download</span>
+<span>Descargar PDF</span>
+</button>
+</div>
+</div>
+<!-- Formal A4 Paper Sheet Simulation -->
+<div class="bg-surface-container-lowest rounded-xl p-space-2xl sm:p-space-3xl shadow-md min-h-[760px] flex flex-col justify-between relative overflow-hidden">
+<!-- Watermark / Official Pattern Accent -->
+<div class="absolute -right-16 -top-16 w-64 h-64 bg-surface-container-high/40 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col gap-space-xl relative z-10">
+<!-- Document Header: NexusGest Membrete & Registration Numbers -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md pb-space-lg bg-gradient-to-b from-transparent to-surface-container-low/20">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-display-lg text-headline-sm font-bold">
+                N
+              </div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold tracking-tight">NexusGest B.V.</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Legal &amp; Belastingadvies Holanda</span>
+</div>
+</div>
+<div class="flex flex-col text-left sm:text-right font-mono-data text-mono-data text-outline">
+<span>Keizersgracht 421, 1016 EK Amsterdam</span>
+<span>KVK: 84920194 • BTW: NL84920194B01</span>
+<span>dossier@nexusgest.nl • +31 (0) 20 894 3320</span>
+</div>
+</div>
+<!-- Recipient & Sender Metadata Columns -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xl pt-space-xs">
+<!-- Destinatario Oficial -->
+<div class="flex flex-col bg-surface-container-low p-space-md rounded-lg">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-space-2xs">Destinatario / Geadresseerde</span>
+<span class="font-headline-sm text-body-lg font-bold text-on-surface">HollandZorg</span>
+<span class="font-body-md text-body-md text-on-surface">Afdeling Debiteurenadministratie</span>
+<span class="font-body-md text-body-md text-on-surface">Postbus 1234</span>
+<span class="font-body-md text-body-md text-on-surface">7301 BM Apeldoorn</span>
+</div>
+<!-- Datos de Expediente y Fecha -->
+<div class="flex flex-col justify-between bg-surface-container-low p-space-md rounded-lg font-body-sm text-body-sm text-on-surface-variant">
+<div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-space-2xs block">Referencia Oficial</span>
+<div class="flex justify-between py-space-2xs">
+<span>Datum / Fecha:</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold" id="doc-date">24 april 2026</span>
+</div>
+<div class="flex justify-between py-space-2xs">
+<span>Uw kenmerk:</span>
+<span class="font-mono-data text-mono-data text-on-surface font-semibold">HZ-DEB-2026-991</span>
+</div>
+<div class="flex justify-between py-space-2xs">
+<span>Ons dossier:</span>
+<span class="font-mono-data text-mono-data text-secondary font-semibold">NX-POP-26/01</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Subject Line -->
+<div class="pt-space-sm">
+<div class="p-space-sm bg-surface-container rounded-lg">
+<span class="font-label-md text-label-md text-on-surface">
+<strong>Betreft:</strong> Verzoek tot minnelijke betalingsregeling — Polisnummer: 
+                <span class="bg-surface-container-highest px-space-xs py-space-2xs rounded font-mono-data text-secondary font-semibold" title="Campo Inyectado por IA: HollandZorg ID">
+                  HZ-889123-01
+                </span>
+                (Betrokkene: Maria Popescu)
+              </span>
+</div>
+</div>
+<!-- Body Letter (Dutch Legal Official) with Highlighted AI Injected Chips -->
+<div class="flex flex-col gap-space-md font-body-md text-body-md text-on-surface leading-relaxed pt-space-xs">
+<p>Geachte heer, mevrouw,</p>
+<p>
+              Namens onze cliënte, mevrouw 
+              <span class="inline-flex items-center px-space-xs py-space-2xs bg-surface-container-high rounded text-secondary font-semibold font-body-sm cursor-help shadow-sm" title="Variable inyectada: Nombre Completo">
+                Maria Popescu
+              </span>, 
+              geboren op 14 augustus 1991, BSN: 
+              <span class="inline-flex items-center px-space-xs py-space-2xs bg-surface-container-high rounded text-secondary font-semibold font-mono-data cursor-help shadow-sm" title="Variable inyectada: BSN Verificado">
+                9821.44.110
+              </span>, 
+              wonende aan de 
+              <span class="inline-flex items-center px-space-xs py-space-2xs bg-surface-container-high rounded text-secondary font-semibold font-body-sm cursor-help shadow-sm" title="Variable inyectada: Dirección Registrada">
+                Stratumsedijk 44-B, 5611 ND Eindhoven
+              </span>, 
+              wenden wij ons tot u aangaande de openstaande premieachterstand inzake bovengenoemd polisnummer ten bedrage van 
+              <span class="inline-flex items-center px-space-xs py-space-2xs bg-surface-container-high rounded text-secondary font-semibold font-mono-data cursor-help shadow-sm" title="Variable inyectada: Importe Total">
+                € 340,00
+              </span>.
+            </p>
+<p>
+              In navolging van een recente aanpassing in de gezinssituatie en de start van een nieuwe arbeidsovereenkomst per 1 april jl., verzoekt cliënte u vriendelijk doch dringend om een betalingsregeling te treffen. Cliënte is ten volle bereid haar verplichtingen na te komen en stelt voor het openstaande saldo te voldoen in 
+              <span class="inline-flex items-center px-space-xs py-space-2xs bg-surface-container-highest rounded text-secondary font-semibold font-mono-data cursor-help shadow-sm" title="Parámetro Generado por IA">
+                4 opeenvolgende maandelijkse termijnen van € 85,00
+              </span>.
+            </p>
+<p>
+              De eerste termijn zal worden overgemaakt op 
+              <span class="inline-flex items-center px-space-xs py-space-2xs bg-surface-container-highest rounded text-secondary font-semibold font-mono-data cursor-help shadow-sm" title="Fecha Cuota Calculada">
+                25 mei 2026
+              </span>, 
+              waarna de overige termijnen telkens omstreeks de 25e van de daaropvolgende maanden worden voldaan via automatische incasso of handmatige bankoverschrijving vanaf rekeningnummer 
+              <span class="inline-flex items-center px-space-xs py-space-2xs bg-surface-container-highest rounded text-secondary font-semibold font-mono-data cursor-help shadow-sm" title="IBAN Cliente Asociado">
+                NL42 INGB 0008 4123 99
+              </span>.
+            </p>
+<p>
+              Wij verzoeken u hierbij tevens om, hangende deze betalingsregeling, eventuele verdere incassomaatregelen en buitengerechtelijke inningskosten tijdelijk op te schorten. Een schriftelijke machtiging en kopie van het identiteitsbewijs van cliënte zijn als bijlage bijgevoegd.
+            </p>
+<p>
+              In afwachting van uw schriftelijke bevestiging en acceptatie van dit voorstel, verblijven wij,
+            </p>
+</div>
+<!-- Signatures & Mandate Footer -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xl pt-space-lg">
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-outline">Met vriendelijke groet,</span>
+<span class="font-headline-sm text-body-lg text-on-surface font-semibold">Elena Martínez</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Senior Fiscaal &amp; Juridisch Adviseur</span>
+<span class="font-mono-data text-mono-data text-secondary">NexusGest B.V. namens Maria Popescu</span>
+<!-- Digital signature stamp visual -->
+<div class="mt-space-xs inline-flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container-low rounded-lg w-max">
+<span class="material-symbols-outlined text-secondary text-space-lg">verified</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface">NexusGest eIDAS Validated</span>
+<span class="font-mono-data text-mono-data text-outline">24-04-2026 11:42 CET</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col justify-end items-start sm:items-end">
+<div class="p-space-sm bg-surface-container-low rounded-lg text-left sm:text-right max-w-xs">
+<span class="font-label-sm text-label-sm text-outline uppercase block mb-space-2xs">Bijlagen / Anexos (2)</span>
+<span class="font-body-sm text-body-sm text-on-surface block">1. Volmacht NexusGest (Machtiging)</span>
+<span class="font-body-sm text-body-sm text-on-surface block">2. Kopie Bewijs van Inkomen 2026</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Reference Line -->
+<div class="pt-space-xl text-center font-mono-data text-mono-data text-outline relative z-10">
+          Document gegenereerd door NexusGest AI Engine conform art. 7:400 BW (Overeenkomst van opdracht). Pagina 1 van 1.
+        </div>
+</div>
+<!-- Collapsible Translation & Legal Summary for the Spanish Gestor -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between cursor-pointer" onclick="toggleSummary()">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-space-lg">translate</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Traducción Explicativa y Resumen para el Gestor (Español)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Validación de contenido legal antes de trámite oficial</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-space-xl text-outline transition-transform duration-200" id="summary-chevron">expand_more</span>
+</div>
+<div class="flex flex-col gap-space-sm pt-space-xs bg-surface-container-low p-space-md rounded-lg" id="summary-content">
+<div class="flex items-center gap-space-xs text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-space-md">fact_check</span>
+<span>Resumen Sintético de la Petición:</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface leading-relaxed">
+            Se dirige al departamento de cobros de HollandZorg reconociendo la deuda de <strong>340,00 €</strong> de Maria Popescu. Se formula propuesta vinculante de pago aplazado en <strong>4 plazos de 85,00 €</strong> mensuales con cargo el 25 de cada mes a partir de mayo 2026. Se incluye expresamente solicitud de paralización de recargos de agencia y pase a CAK/CJIB.
+          </p>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm pt-space-xs font-mono-data text-mono-data">
+<div class="p-space-xs bg-surface-container-lowest rounded flex flex-col">
+<span class="text-outline">Importe Total:</span>
+<span class="text-on-surface font-semibold">€ 340,00</span>
+</div>
+<div class="p-space-xs bg-surface-container-lowest rounded flex flex-col">
+<span class="text-outline">Plan Propuesto:</span>
+<span class="text-on-surface font-semibold">4 x € 85,00 / mes</span>
+</div>
+<div class="p-space-xs bg-surface-container-lowest rounded flex flex-col">
+<span class="text-outline">Cuenta Origen:</span>
+<span class="text-on-surface font-semibold">INGB ... 4123 99</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Pre-submission Verification Checklist -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-lg flex-wrap">
+<label class="flex items-center gap-space-xs cursor-pointer">
+<input checked="" class="w-4 h-4 rounded text-secondary" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Datos cliente verificados</span>
+</label>
+<label class="flex items-center gap-space-xs cursor-pointer">
+<input checked="" class="w-4 h-4 rounded text-secondary" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">IBAN confirmado para adeudo</span>
+</label>
+<label class="flex items-center gap-space-xs cursor-pointer">
+<input checked="" class="w-4 h-4 rounded text-secondary" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Dirección HollandZorg validada</span>
+</label>
+</div>
+<button class="h-9 px-space-lg bg-secondary text-on-secondary rounded-lg font-label-md text-label-md flex items-center gap-space-xs shadow-sm hover:bg-secondary-container transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-space-lg">check_circle</span>
+<span>Aprobar y Expedir Carta</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function toggleSummary() {
+    const content = document.getElementById('summary-content');
+    const chevron = document.getElementById('summary-chevron');
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      chevron.style.transform = 'rotate(0deg)';
+    } else {
+      content.classList.add('hidden');
+      chevron.style.transform = 'rotate(180deg)';
+    }
+  }
+
+  function appendPrompt(extraText) {
+    const textarea = document.getElementById('ai-prompt-input');
+    if (!textarea.value.includes(extraText)) {
+      textarea.value = textarea.value.trim() + ' ' + extraText;
+      textarea.focus();
+    }
+  }
+
+  function setLang(lang, btn) {
+    const parent = btn.parentElement;
+    const buttons = parent.querySelectorAll('button');
+    buttons.forEach(b => {
+      b.className = 'px-space-sm py-space-xs rounded font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors';
+    });
+    btn.className = 'px-space-sm py-space-xs rounded bg-surface-container-lowest text-secondary font-label-sm text-label-sm shadow-sm transition-all';
+  }
+
+  function simulateRegenerate() {
+    const btn = document.getElementById('generate-btn');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-space-xl">sync</span><span>Sincronizando BSN y HollandZorg...</span>';
+    btn.disabled = true;
+
+    setTimeout(() => {
+      btn.innerHTML = originalHtml;
+      btn.disabled = false;
+    }, 1100);
+  }
+</script></main></div></body></html>

@@ -1,0 +1,38 @@
+# Node / npm
+node_modules/
+npm-debug.log*
+yarn.lock
+
+# Build artefacts
+.next/
+.next-demo/
+.next-live/
+.next-demo/
+public-dev.*
+out/
+dist/
+*.tsbuildinfo
+
+# Staging snapshots and preview archives (never part of source/build contexts)
+.staging/
+
+# Uploads locales de desarrollo (el volumen de Docker lo suple en prod)
+backend/uploads/
+
+# Dumps de la base de datos: pueden contener datos personales y bancarios.
+# NUNCA subirlos al repo.
+backups/
+
+# Ajustes locales del editor y del agente
+.vscode/
+.claude/
+
+# Environment
+.env
+.env.local
+.env.development
+.env.production
+
+# OS
+Thumbs.db
+.DS_Store

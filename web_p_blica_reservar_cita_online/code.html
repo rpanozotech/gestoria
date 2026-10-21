@@ -1,0 +1,639 @@
+<!DOCTYPE html><html lang="es" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error-container": "#ffdad6",
+          "on-primary-fixed": "#131b2e",
+          "on-secondary-container": "#fefcff",
+          "on-secondary-fixed": "#00174b",
+          "on-surface": "#0b1c30",
+          "on-background": "#0b1c30",
+          "primary-container": "#131b2e",
+          "on-tertiary-fixed-variant": "#2f2ebe",
+          "primary": "#000000",
+          "on-primary-fixed-variant": "#3f465c",
+          "secondary-fixed": "#dbe1ff",
+          "on-surface-variant": "#45464d",
+          "on-primary": "#ffffff",
+          "on-error": "#ffffff",
+          "inverse-surface": "#213145",
+          "secondary-fixed-dim": "#b4c5ff",
+          "surface-dim": "#cbdbf5",
+          "tertiary-fixed-dim": "#c0c1ff",
+          "tertiary-container": "#07006c",
+          "error": "#ba1a1a",
+          "outline": "#76777d",
+          "surface-container": "#e5eeff",
+          "surface-container-high": "#dce9ff",
+          "primary-fixed": "#dae2fd",
+          "surface-container-highest": "#d3e4fe",
+          "tertiary": "#000000",
+          "surface-tint": "#565e74",
+          "tertiary-fixed": "#e1e0ff",
+          "surface-variant": "#d3e4fe",
+          "on-tertiary": "#ffffff",
+          "surface-container-lowest": "#ffffff",
+          "surface-bright": "#f8f9ff",
+          "on-tertiary-container": "#7073ff",
+          "primary-fixed-dim": "#bec6e0",
+          "inverse-primary": "#bec6e0",
+          "secondary-container": "#316bf3",
+          "surface": "#f8f9ff",
+          "background": "#f8f9ff",
+          "on-secondary": "#ffffff",
+          "on-tertiary-fixed": "#07006c",
+          "on-error-container": "#93000a",
+          "secondary": "#0051d5",
+          "inverse-on-surface": "#eaf1ff",
+          "on-primary-container": "#7c839b",
+          "outline-variant": "#c6c6cd",
+          "surface-container-low": "#eff4ff",
+          "on-secondary-fixed-variant": "#003ea8"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "margin-lg": "2rem",
+          "space-2xs": "0.125rem",
+          "space-xs": "0.25rem",
+          "gutter": "1rem",
+          "space-md": "0.75rem",
+          "space-sm": "0.5rem",
+          "space-2xl": "2rem",
+          "margin-md": "1.5rem",
+          "space-xl": "1.5rem",
+          "space-lg": "1rem",
+          "margin": "1rem",
+          "gutter-lg": "1.5rem",
+          "space-3xl": "3rem"
+        },
+        "fontFamily": {
+          "label-sm": [
+            "Inter"
+          ],
+          "body-lg": [
+            "Inter"
+          ],
+          "headline-md": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "display-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "mono-data": [
+            "JetBrains Mono"
+          ],
+          "body-md": [
+            "Inter"
+          ],
+          "label-md": [
+            "Inter"
+          ],
+          "body-sm": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "label-sm": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.025em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-lg": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "-0.005em",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-md": [
+            "22px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "-0.015em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "28px",
+            {
+              "lineHeight": "36px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "600"
+            }
+          ],
+          "display-lg": [
+            "36px",
+            {
+              "lineHeight": "44px",
+              "letterSpacing": "-0.025em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "mono-data": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "500"
+            }
+          ],
+          "body-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "label-md": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "500"
+            }
+          ],
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.005em",
+              "fontWeight": "400"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased"><div class="fixed top-0 left-0 right-0 z-50"><aside class="w-full bg-primary-container text-on-primary border-b border-surface-tint/20"><div class="w-full px-gutter-lg h-9 flex items-center justify-between font-label-sm text-label-sm"><div class="flex items-center gap-space-sm overflow-hidden whitespace-nowrap"><span class="flex h-2 w-2 rounded-full bg-secondary-container animate-pulse"></span><span class="">🇳🇱 <strong>Campaña de Renta Holandesa 2025 abierta</strong> · Reserva tu cita antes del 30 de Abril · Plazas limitadas</span></div><div class="hidden md:flex items-center gap-space-lg"><a class="text-secondary-fixed hover:text-on-primary transition-colors flex items-center gap-space-xs font-semibold" data-path="reservar-cita-online" href="#">Reservar plaza renta<span class="material-symbols-outlined text-[14px]">arrow_forward</span></a></div></div></aside><header class="w-full bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30"><div class="w-full px-gutter-lg h-20 flex items-center justify-between gap-gutter"><div class="flex items-center gap-gutter"><a class="flex items-center gap-space-md focus:outline-none" data-path="inicio" href="#"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold leading-none">NexusGest</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-tight mt-space-2xs">Asesoría Legal &amp; Fiscal · NL</span></div></a><nav class="hidden xl:flex items-center gap-space-xs" data-active-classes="text-secondary font-semibold bg-surface-container-low"><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="inicio" href="#">Inicio</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="servicios-tarifas" href="#">Servicios &amp; Tarifas</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="como-funciona" href="#">Cómo Funciona</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="calculadora-fiscal" href="#">Calculadora Fiscal</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="opiniones" href="#">Opiniones</a><a class="px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" data-path="contacto" href="#">Contacto</a></nav></div><div class="flex items-center gap-space-md"><div class="hidden lg:flex items-center bg-surface-container px-space-xs py-space-2xs rounded-lg font-mono-data text-mono-data text-on-surface-variant"><button class="px-space-xs py-space-2xs rounded-lg bg-surface-container-lowest text-on-surface font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.05)]" type="button">ES</button><button class="px-space-xs py-space-2xs rounded-lg hover:text-on-surface transition-colors" type="button">NL</button><button class="px-space-xs py-space-2xs rounded-lg hover:text-on-surface transition-colors" type="button">EN</button></div><a class="hidden sm:inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors" data-path="area-clientes-login" href="#">Área Clientes</a><a class="inline-flex items-center justify-center px-space-lg py-space-sm rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-all shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" data-path="reservar-cita-online" href="#">Reservar Cita Online</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header></div><main class="w-full pt-[116px] bg-surface min-h-[calc(100vh-320px)]"><div class="flex flex-col w-full">
+<section class="relative w-full overflow-hidden bg-primary-container text-on-primary py-space-xl px-gutter-lg shadow-sm">
+<div class="absolute inset-0 opacity-10 bg-[radial-gradient(#bec6e0_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+<div class="relative max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="space-y-space-xs">
+<div class="inline-flex items-center gap-space-xs bg-surface-container/10 px-space-sm py-space-2xs rounded text-secondary-fixed font-mono-data text-mono-data">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="">SISTEMA DE AGENDAS EN TIEMPO REAL · KVK 84920194</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-primary font-bold tracking-tight">
+          Reserva tu Asesoría Fiscal o Legal</h1>
+<p class="font-body-md text-body-md text-on-primary-container max-w-3xl">
+          Confirmación inmediata, asignación de gestor y emisión automática del enlace seguro (Google Meet) o cita física.
+        </p>
+</div>
+<div class="flex items-center gap-space-md shrink-0 bg-surface-container-lowest/10 p-space-sm rounded-xl backdrop-blur-sm">
+<div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-on-secondary">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+</div>
+<div class="font-label-sm text-label-sm leading-tight text-on-primary">
+<span class="font-bold block text-surface-bright">Registro Oficial</span>
+<span class="text-on-primary-container">Belastingconsulent NL</span>
+</div>
+</div>
+</div>
+</section>
+<div class="w-full bg-surface-container-low py-space-md px-gutter-lg shadow-inner">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-space-sm font-label-md text-label-md">
+<div class="flex items-center gap-space-md overflow-x-auto w-full sm:w-auto py-space-2xs">
+<div class="flex items-center gap-space-xs text-secondary font-bold">
+<span class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-mono-data text-mono-data">1</span>
+<span class="">Modalidad &amp; Trámite</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[16px]">chevron_right</span>
+<div class="flex items-center gap-space-xs text-on-surface font-semibold">
+<span class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-mono-data text-mono-data">2</span>
+<span class="">Fecha &amp; Horario</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[16px]">chevron_right</span>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-mono-data text-mono-data">3</span>
+<span class="">Filiación &amp; Pago</span>
+</div>
+</div>
+<div class="hidden lg:flex items-center gap-space-xs text-on-surface-variant font-mono-data text-mono-data">
+<span class="material-symbols-outlined text-[15px] text-secondary">sync</span>
+<span class="">Agenda sincronizada: hace 42 seg</span>
+</div>
+</div>
+</div>
+<div class="w-full max-w-7xl mx-auto px-gutter-lg py-space-2xl">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-start">
+<div class="lg:col-span-7 flex flex-col gap-space-xl">
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">Paso 01</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Duración: 45 min estándar</span>
+</div>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">Selecciona la Modalidad de Atención</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm" id="modalityGroup">
+<button class="mod-card text-left p-space-md rounded-lg bg-surface-container text-on-surface transition-all shadow-sm" data-mod="online" onclick="selectModality(this, 'online')" type="button">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="material-symbols-outlined text-secondary text-[24px]">videocam</span>
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+</div>
+<p class="font-headline-sm text-headline-sm font-semibold text-on-surface">Online Meet</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">Video Google Meet. Recomendado para toda Holanda.</p>
+<span class="mt-space-sm inline-block font-mono-data text-mono-data text-secondary font-semibold">100% Digital</span>
+</button>
+<button class="mod-card text-left p-space-md rounded-lg bg-surface-container-low text-on-surface transition-all hover:bg-surface-container" data-mod="presencial" onclick="selectModality(this, 'presencial')" type="button">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-[24px]">domain</span>
+<span class="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</div>
+<p class="font-headline-sm text-headline-sm font-semibold text-on-surface">Presencial</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">Despacho Keizersgracht 421, Ámsterdam Centro.</p>
+<span class="mt-space-sm inline-block font-mono-data text-mono-data text-on-surface-variant">Con café &amp; parking</span>
+</button>
+<button class="mod-card text-left p-space-md rounded-lg bg-surface-container-low text-on-surface transition-all hover:bg-surface-container" data-mod="telefono" onclick="selectModality(this, 'telefono')" type="button">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-[24px]">call</span>
+<span class="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</div>
+<p class="font-headline-sm text-headline-sm font-semibold text-on-surface">Telefónica</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">Llamada técnica ágil (15-20 min) para dudas urgentes.</p>
+<span class="mt-space-sm inline-block font-mono-data text-mono-data text-on-surface-variant">Inmediata</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">Paso 02</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Belastingdienst Code: FY2025/26</span>
+</div>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">Motivo del Trámite o Consulta</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm" id="procedureGroup">
+<div class="proc-card cursor-pointer p-space-md rounded-lg bg-surface-container transition-all shadow-sm flex items-start gap-space-sm" onclick="selectProcedure(this, 'Declaración Renta 2025 (M-Form / Residentes)')">
+<span class="material-symbols-outlined text-secondary text-[20px] mt-0.5">description</span>
+<div>
+<p class="font-headline-sm text-headline-sm font-semibold text-on-surface">Declaración Renta 2025</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">M-Form (emigrados/retornados) o Formulario P habitual.</p>
+</div>
+</div>
+<div class="proc-card cursor-pointer p-space-md rounded-lg bg-surface-container-low transition-all hover:bg-surface-container flex items-start gap-space-sm" onclick="selectProcedure(this, 'Alta Autónomo ZZP &amp; KVK')">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mt-0.5">storefront</span>
+<div>
+<p class="font-headline-sm text-headline-sm font-semibold text-on-surface">Alta Autónomo ZZP</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Kamer van Koophandel, BTW-nummer y facturación.</p>
+</div>
+</div>
+<div class="proc-card cursor-pointer p-space-md rounded-lg bg-surface-container-low transition-all hover:bg-surface-container flex items-start gap-space-sm" onclick="selectProcedure(this, 'Régimen 30% Ruling &amp; Expatriados')">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mt-0.5">percent</span>
+<div>
+<p class="font-headline-sm text-headline-sm font-semibold text-on-surface">30% Ruling &amp; Expat</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Revisión de elegibilidad, addendum laboral y apelaciones.</p>
+</div>
+</div>
+<div class="proc-card cursor-pointer p-space-md rounded-lg bg-surface-container-low transition-all hover:bg-surface-container flex items-start gap-space-sm" onclick="selectProcedure(this, 'Gestión DigiD &amp; Seguro Médico Zorgtoeslag')">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mt-0.5">fingerprint</span>
+<div>
+<p class="font-headline-sm text-headline-sm font-semibold text-on-surface">DigiD &amp; Zorgtoeslag</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Subsidios sanitarios, deudas CAK y reactivación de acceso.</p>
+</div>
+</div>
+</div>
+<div class="mt-space-sm pt-space-sm bg-surface-container-low p-space-md rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div>
+<p class="font-label-md text-label-md font-semibold text-on-surface">Asignación de Especialista Fiscal:</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Selecciona tu gestor o el primer slot disponible</p>
+</div>
+<select class="h-9 px-space-sm rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm outline-none" id="advisorSelect" onchange="updateAdvisor(this.value)">
+<option value="Elena Martínez (Gestora Principal &amp; Fiscalista Senior)">Elena Martínez (Fiscalista Senior)</option>
+<option value="Lars van Dijk (Especialista KVK &amp; Corporativo)">Lars van Dijk (KVK &amp; ZZP)</option>
+<option selected="" value="Cualquier Asesor Disponible (Recomendado - Mayor Rapidez)">Cualquier Asesor Disponible (Rápido)</option>
+</select>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">Paso 03</span>
+<div class="flex items-center gap-space-xs font-mono-data text-mono-data text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">schedule</span>
+<span class="">Zona Horaria: Europe/Amsterdam (CET)</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">Marzo 2026</h2>
+<div class="flex items-center gap-space-xs">
+<button class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors" title="Mes anterior" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors" title="Mes siguiente" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-space-xs text-center font-label-sm text-label-sm text-on-surface-variant">
+<span class="py-space-2xs">LUN</span>
+<span class="py-space-2xs">MAR</span>
+<span class="py-space-2xs">MIÉ</span>
+<span class="py-space-2xs">JUE</span>
+<span class="py-space-2xs">VIE</span>
+<span class="py-space-2xs">SÁB</span>
+<span class="py-space-2xs">DOM</span>
+</div>
+<div class="grid grid-cols-7 gap-space-xs font-mono-data text-mono-data">
+<div class="h-10 flex items-center justify-center text-outline-variant opacity-40">23</div>
+<div class="h-10 flex items-center justify-center text-outline-variant opacity-40">24</div>
+<div class="h-10 flex items-center justify-center text-outline-variant opacity-40">25</div>
+<div class="h-10 flex items-center justify-center text-outline-variant opacity-40">26</div>
+<div class="h-10 flex items-center justify-center text-outline-variant opacity-40">27</div>
+<div class="h-10 flex items-center justify-center text-outline-variant opacity-40">28</div>
+<div class="h-10 flex items-center justify-center text-outline-variant opacity-40">1</div>
+<div class="h-10 flex items-center justify-center text-on-surface-variant/50">2</div>
+<div class="h-10 flex items-center justify-center text-on-surface-variant/50">3</div>
+<div class="h-10 flex items-center justify-center text-on-surface-variant/50">4</div>
+<div class="h-10 flex items-center justify-center text-on-surface-variant/50">5</div>
+<div class="h-10 flex items-center justify-center text-on-surface-variant/50">6</div>
+<div class="h-10 flex items-center justify-center text-outline-variant">7</div>
+<div class="h-10 flex items-center justify-center text-outline-variant">8</div>
+<div class="h-10 flex items-center justify-center text-on-surface-variant/50">9</div>
+<div class="h-10 flex items-center justify-center text-on-surface-variant/50">10</div>
+<button class="h-10 rounded-lg bg-surface-container-low hover:bg-secondary-fixed text-on-surface flex items-center justify-center font-bold" onclick="selectDate(this, 'Miércoles, 11 de Marzo')" type="button">11</button>
+<button class="h-10 rounded-lg bg-surface-container-low hover:bg-secondary-fixed text-on-surface flex items-center justify-center font-bold" onclick="selectDate(this, 'Jueves, 12 de Marzo')" type="button">12</button>
+<button class="cal-day h-10 rounded-lg bg-secondary text-on-secondary flex items-center justify-center font-bold shadow-sm" onclick="selectDate(this, 'Viernes, 13 de Marzo')" type="button">13</button>
+<div class="h-10 flex items-center justify-center text-outline-variant">14</div>
+<div class="h-10 flex items-center justify-center text-outline-variant">15</div>
+<button class="cal-day h-10 rounded-lg bg-surface-container-low hover:bg-secondary-fixed text-on-surface flex items-center justify-center font-bold" onclick="selectDate(this, 'Lunes, 16 de Marzo')" type="button">16</button>
+<button class="cal-day h-10 rounded-lg bg-surface-container-low hover:bg-secondary-fixed text-on-surface flex items-center justify-center font-bold" onclick="selectDate(this, 'Martes, 17 de Marzo')" type="button">17</button>
+<button class="cal-day h-10 rounded-lg bg-surface-container-low hover:bg-secondary-fixed text-on-surface flex items-center justify-center font-bold" onclick="selectDate(this, 'Miércoles, 18 de Marzo')" type="button">18</button>
+<button class="cal-day h-10 rounded-lg bg-surface-container-low hover:bg-secondary-fixed text-on-surface flex items-center justify-center font-bold" onclick="selectDate(this, 'Jueves, 19 de Marzo')" type="button">19</button>
+<button class="cal-day h-10 rounded-lg bg-surface-container-low hover:bg-secondary-fixed text-on-surface flex items-center justify-center font-bold" onclick="selectDate(this, 'Viernes, 20 de Marzo')" type="button">20</button>
+<div class="h-10 flex items-center justify-center text-outline-variant">21</div>
+<div class="h-10 flex items-center justify-center text-outline-variant">22</div>
+</div>
+<div class="pt-space-sm">
+<p class="font-label-md text-label-md font-semibold text-on-surface mb-space-sm flex items-center justify-between">
+<span class="">Franjas Horarias Disponibles</span>
+<span class="text-secondary font-mono-data text-mono-data" id="selectedDateLabel">Viernes, 13 de Marzo de 2026</span>
+</p>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-sm" id="slotsContainer">
+<button class="slot-btn p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-center font-mono-data text-mono-data transition-colors" onclick="selectSlot(this, '09:30 CET')" type="button">
+                09:30 CET
+              </button>
+<div class="p-space-sm rounded-lg bg-surface-container/40 text-outline text-center font-mono-data text-mono-data flex items-center justify-center gap-space-xs cursor-not-allowed">
+<span class="">10:00 CET</span>
+<span class="text-[10px] uppercase font-bold text-error">Ocupado</span>
+</div>
+<button class="slot-btn p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-center font-mono-data text-mono-data transition-colors" onclick="selectSlot(this, '11:30 CET')" type="button">
+                11:30 CET
+              </button>
+<button class="slot-btn p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-center font-mono-data text-mono-data transition-colors" onclick="selectSlot(this, '14:00 CET')" type="button">
+                14:00 CET
+              </button>
+<button class="slot-btn p-space-sm rounded-lg bg-secondary text-on-secondary text-center font-mono-data text-mono-data font-bold shadow-sm" onclick="selectSlot(this, '15:00 CET')" type="button">
+                15:00 CET · Seleccionado
+              </button>
+<button class="slot-btn p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-center font-mono-data text-mono-data transition-colors" onclick="selectSlot(this, '16:30 CET')" type="button">
+                16:30 CET
+              </button>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-5 flex flex-col gap-space-lg lg:sticky lg:top-28">
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-md flex flex-col gap-space-lg">
+<div class="flex items-center justify-between pb-space-sm border-b border-surface-container-high">
+<div class="flex items-center gap-space-xs">
+<span class="w-3 h-3 rounded-full bg-secondary-container"></span>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Resumen de Cita</h3>
+</div>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-mono-data text-mono-data px-space-xs py-space-2xs rounded">
+              SYNC CRM 2026
+            </span>
+</div>
+<div class="space-y-space-md font-body-sm text-body-sm">
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant">Modalidad:</span>
+<span class="font-semibold text-on-surface text-right" id="summaryModalidad">Videollamada Google Meet (45 min)</span>
+</div>
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant">Trámite:</span>
+<span class="font-semibold text-on-surface text-right max-w-[200px]" id="summaryTramite">Declaración Renta 2025</span>
+</div>
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant">Fecha y Hora:</span>
+<span class="font-semibold text-secondary text-right font-mono-data text-mono-data" id="summaryHorario">Vie, 13 Mar 2026 · 15:00 CET</span>
+</div>
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant">Asesor Asignado:</span>
+<span class="font-semibold text-on-surface text-right" id="summaryAsesor">Elena Martínez</span>
+</div>
+<div class="flex justify-between items-center p-space-sm bg-surface-container-low rounded-lg">
+<div>
+<span class="font-semibold text-on-surface block">Honorarios Diagnóstico:</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Reembolsable con el trámite</span>
+</div>
+<div class="text-right">
+<span class="font-display-lg text-display-lg font-bold text-on-surface">35,00 €</span>
+<span class="font-mono-data text-mono-data text-secondary block font-semibold">100% Deducible</span>
+</div>
+</div>
+</div>
+<div class="space-y-space-md pt-space-xs">
+<h4 class="font-label-md text-label-md font-bold uppercase tracking-wider text-on-surface-variant">Tus Datos de Contacto</h4>
+<div class="space-y-space-sm">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface font-semibold mb-space-2xs">Nombre y Apellidos *</label>
+<input class="w-full h-9 px-space-sm bg-surface-container-low rounded text-on-surface font-body-md text-body-md outline-none focus:bg-surface-container-lowest focus:shadow-sm" placeholder="Ej. Mateo Silva Fernández" type="text" value="Mateo Silva">
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface font-semibold mb-space-2xs">Correo Electrónico (Enlace de cita) *</label>
+<input class="w-full h-9 px-space-sm bg-surface-container-low rounded text-on-surface font-body-md text-body-md outline-none focus:bg-surface-container-lowest focus:shadow-sm" placeholder="ejemplo@correo.com" type="email" value="mateo.silva@example.com">
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface font-semibold mb-space-2xs">Teléfono / WhatsApp Móvil *</label>
+<div class="flex gap-space-xs">
+<select class="w-24 h-9 px-space-xs bg-surface-container-low rounded text-on-surface font-mono-data text-mono-data outline-none">
+<option value="+31">+31 (NL)</option>
+<option selected="" value="+34">+34 (ES)</option>
+<option value="+40">+40 (RO)</option>
+<option value="+44">+44 (UK)</option>
+</select>
+<input class="flex-1 h-9 px-space-sm bg-surface-container-low rounded text-on-surface font-body-md text-body-md outline-none focus:bg-surface-container-lowest focus:shadow-sm" placeholder="612 345 678" type="tel" value="654 987 321">
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface font-semibold mb-space-2xs">Detalles breves del caso (Opcional)</label>
+<textarea class="w-full p-space-sm bg-surface-container-low rounded text-on-surface font-body-sm text-body-sm outline-none resize-none focus:bg-surface-container-lowest focus:shadow-sm" placeholder="Ej. Mudanza en 2025, dudas con régimen 30% y declaración conjunta..." rows="2">Mudanza a Países Bajos en mayo 2025, dudas con aplicación del 30% ruling y declaración M-Form conjunta con mi cónyuge.</textarea>
+</div>
+<div class="pt-space-xs space-y-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<label class="flex items-start gap-space-xs cursor-pointer">
+<input checked="" class="mt-1 rounded text-secondary" type="checkbox">
+<span class="">Acepto recibir recordatorio de cita y enlace seguro vía WhatsApp/SMS.</span>
+</label>
+<label class="flex items-start gap-space-xs cursor-pointer">
+<input checked="" class="mt-1 rounded text-secondary" type="checkbox">
+<span class="">He leído y autorizo el tratamiento según la <a class="text-secondary underline" href="#">Política de Privacidad RGPD</a>.</span>
+</label>
+</div>
+</div>
+<button class="w-full py-space-md px-space-lg rounded-xl bg-primary text-on-primary hover:bg-primary-container transition-all font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-space-sm shadow-md" onclick="triggerConfirmation()" type="button">
+<span class="material-symbols-outlined text-[20px]">calendar_add_on</span>
+<span class="">Confirmar Reserva &amp; Generar Enlace</span>
+</button>
+<div class="hidden p-space-sm bg-secondary-fixed text-on-secondary-fixed rounded-lg text-center font-label-md text-label-md" id="confirmationNotice">
+<div class="flex items-center justify-center gap-space-xs font-bold text-secondary">
+<span class="material-symbols-outlined text-[18px]">task_alt</span>
+<span class="">¡Cita Bloqueada en Agenda!</span>
+</div>
+<p class="font-body-sm text-body-sm mt-space-2xs">Te hemos remitido la invitación Google Meet y la factura deducible a tu buzón.</p>
+</div>
+<div class="flex items-center justify-center gap-space-xs text-center font-mono-data text-mono-data text-on-surface-variant pt-space-xs">
+<span class="material-symbols-outlined text-[14px] text-secondary">lock</span>
+<span class="">Conexión cifrada TLS 1.3 con nodo Belastingdienst</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-xl space-y-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-space-xs text-on-surface font-semibold">
+<span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+<span class="">Garantías NexusGest</span>
+</div>
+<p class="">• <strong>Cancelación o cambio sin coste</strong> hasta 24 horas antes con 1 clic desde tu panel.</p>
+<p class="">• Los 35 € abonados se descuentan íntegramente del coste de tu declaración fiscal o gestión de autónomo.</p>
+</div>
+</div>
+</div>
+</div>
+<section class="w-full bg-surface-container py-space-xl px-gutter-lg mt-space-2xl">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container-lowest text-secondary flex items-center justify-center shadow-sm shrink-0">
+<span class="material-symbols-outlined text-[26px]">video_chat</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface">1. Sala Virtual Directa</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+            Sin descargas complejas. El enlace de Google Meet se activa en tu calendario de Outlook o Google Calendar al instante.
+          </p>
+</div>
+</div>
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container-lowest text-secondary flex items-center justify-center shadow-sm shrink-0">
+<span class="material-symbols-outlined text-[26px]">folder_shared</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface">2. Carga Segura de Papeles</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+            Sube tu Jaaropgaaf, nóminas o cartas azules de la Belastingdienst a través de nuestra pasarela protegida eIDAS.
+          </p>
+</div>
+</div>
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container-lowest text-secondary flex items-center justify-center shadow-sm shrink-0">
+<span class="material-symbols-outlined text-[26px]">credit_card</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface">3. Tarifa Deducible</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
+            La totalidad del importe de la consulta se descuenta del presupuesto del trámite legal o fiscal que decidas formalizar.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<script>
+    function selectModality(btn, type) {
+      document.querySelectorAll('#modalityGroup button').forEach(el => {
+        el.classList.remove('bg-surface-container', 'shadow-sm');
+        el.classList.add('bg-surface-container-low');
+        const dot = el.querySelector('span.rounded-full');
+        if (dot) dot.classList.replace('bg-secondary', 'bg-transparent');
+      });
+      btn.classList.add('bg-surface-container', 'shadow-sm');
+      btn.classList.remove('bg-surface-container-low');
+      const activeDot = btn.querySelector('span.rounded-full');
+      if (activeDot) activeDot.classList.replace('bg-transparent', 'bg-secondary');
+
+      const summary = document.getElementById('summaryModalidad');
+      if (type === 'online') summary.textContent = 'Videollamada Google Meet (45 min)';
+      if (type === 'presencial') summary.textContent = 'Presencial Ámsterdam (Keizersgracht 421)';
+      if (type === 'telefono') summary.textContent = 'Consulta Telefónica Rápida (15-20 min)';
+    }
+
+    function selectProcedure(card, title) {
+      document.querySelectorAll('#procedureGroup .proc-card').forEach(el => {
+        el.classList.remove('bg-surface-container', 'shadow-sm');
+        el.classList.add('bg-surface-container-low');
+        const icon = el.querySelector('.material-symbols-outlined');
+        if (icon) icon.classList.replace('text-secondary', 'text-on-surface-variant');
+      });
+      card.classList.add('bg-surface-container', 'shadow-sm');
+      card.classList.remove('bg-surface-container-low');
+      const activeIcon = card.querySelector('.material-symbols-outlined');
+      if (activeIcon) activeIcon.classList.replace('text-on-surface-variant', 'text-secondary');
+
+      document.getElementById('summaryTramite').textContent = title;
+    }
+
+    function selectDate(btn, dateText) {
+      document.querySelectorAll('.cal-day').forEach(el => {
+        el.classList.remove('bg-secondary', 'text-on-secondary', 'shadow-sm');
+        el.classList.add('bg-surface-container-low', 'text-on-surface');
+      });
+      btn.classList.add('bg-secondary', 'text-on-secondary', 'shadow-sm');
+      btn.classList.remove('bg-surface-container-low', 'text-on-surface');
+
+      document.getElementById('selectedDateLabel').textContent = dateText + ' de 2026';
+      const time = document.getElementById('summaryHorario').textContent.split('·')[1] || ' 15:00 CET';
+      document.getElementById('summaryHorario').textContent = dateText + ' ·' + time;
+    }
+
+    function selectSlot(btn, time) {
+      document.querySelectorAll('.slot-btn').forEach(el => {
+        el.classList.remove('bg-secondary', 'text-on-secondary', 'shadow-sm', 'font-bold');
+        el.classList.add('bg-surface-container-low', 'text-on-surface');
+        el.textContent = el.textContent.replace(' · Seleccionado', '');
+      });
+      btn.classList.add('bg-secondary', 'text-on-secondary', 'shadow-sm', 'font-bold');
+      btn.classList.remove('bg-surface-container-low', 'text-on-surface');
+      btn.textContent = time + ' · Seleccionado';
+
+      const datePart = document.getElementById('selectedDateLabel').textContent;
+      document.getElementById('summaryHorario').textContent = datePart + ' · ' + time;
+    }
+
+    function updateAdvisor(name) {
+      document.getElementById('summaryAsesor').textContent = name.split('(')[0].trim();
+    }
+
+    function triggerConfirmation() {
+      const notice = document.getElementById('confirmationNotice');
+      notice.classList.remove('hidden');
+      notice.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  </script>
+</div></main><footer class="w-full bg-surface-container-low border-t border-outline-variant/30 pt-space-3xl pb-space-2xl text-on-surface"><div class="w-full px-gutter-lg"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter-lg pb-space-2xl border-b border-outline-variant/30"><div class="space-y-space-md"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #0f172a
+- Font: plusJakartaSans
+- Mode: light
+- Roundness: rounded-sm
+" class="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vz3pJGSbVAHM0H-6XvdT8TOGr7z7XgDAYdBoSCJYAScGwIvi50COr-_JgK-niDV0v1FdYDeWquEW3opO7bmnk8sYM8enZWzV39DcwsNoyQUX9p0PY_CJHcTUevImvdDZQrJrLvnpGk9gDjyutdTtBU06sFZfnw5O6TacFzKDsKSQJ69oH9ArDuWRVE6D3QdDDGRm_49OIJBe630XvtcOrBbjWd7eUWaHca9rVpK_VgVv_ajrJ2tyMXwhQ"><span class="font-headline-sm text-headline-sm font-bold tracking-tight text-on-surface">NexusGest B.V.</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Gestoría, asesoría fiscal y jurídica de alta fidelidad en Países Bajos. Acompañamiento integral para expatriados, nómadas digitales y profesionales ZZP.</p><div class="pt-space-xs font-mono-data text-mono-data text-on-surface-variant space-y-space-2xs"><div class="">Keizersgracht 421-B, 1016 EK Amsterdam</div><div class="">KVK: 84920194 · BTW-id: NL863412098B01</div></div></div><div><h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface mb-space-md">Servicios Principales</h4><ul class="space-y-space-sm font-body-sm text-body-sm text-on-surface-variant"><li class=""><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Declaración de la Renta M-Form</a></li><li class=""><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Alta Autónomo ZZP &amp; KVK</a></li><li class=""><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Gestión y Recuperación DigiD</a></li><li class=""><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Seguros &amp; Subsidios Zorgtoeslag</a></li><li class=""><a class="hover:text-secondary transition-colors" data-path="servicios-tarifas" href="#">Aplicación Regla 30% Ruling</a></li></ul></div><div><h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface mb-space-md">Legal y Seguridad</h4><ul class="space-y-space-sm font-body-sm text-body-sm text-on-surface-variant"><li class=""><a class="hover:text-secondary transition-colors" data-path="aviso-legal" href="#">Aviso Legal &amp; Términos de Servicio</a></li><li class=""><a class="hover:text-secondary transition-colors" data-path="politica-privacidad" href="#">Política de Privacidad RGPD</a></li><li class=""><a class="hover:text-secondary transition-colors" data-path="cumplimiento-fiscal" href="#">Cumplimiento Belastingdienst</a></li><li class=""><a class="hover:text-secondary transition-colors" data-path="seguridad-datos" href="#">Certificación Criptográfica eIDAS</a></li><li class=""><a class="hover:text-secondary transition-colors" data-path="canal-denuncias" href="#">Canal Ético y Whistleblowing</a></li></ul></div><div><h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface mb-space-md">Contacto &amp; Urgencias</h4><div class="space-y-space-sm font-body-sm text-body-sm text-on-surface-variant"><div><span class="font-semibold text-on-surface block">WhatsApp Directo:</span><a class="hover:text-secondary transition-colors font-mono-data text-mono-data" href="https://wa.me/31208943320" target="_blank">+31 20 894 3320</a></div><div><span class="font-semibold text-on-surface block">Email Oficial:</span><a class="hover:text-secondary transition-colors font-mono-data text-mono-data" href="mailto:info@nexusgest.nl">info@nexusgest.nl</a></div><div><span class="font-semibold text-on-surface block">Atención al Cliente:</span><span class="">Lunes a Viernes: 09:00 - 18:00 CET</span></div><div class="pt-space-xs"><a class="inline-flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-lowest border border-outline-variant/60 rounded-lg text-on-surface font-label-sm text-label-sm font-semibold hover:border-secondary transition-all" data-path="reservar-cita-online" href="#"><span class="material-symbols-outlined text-[16px] text-secondary">calendar_month</span>Cita de Diagnóstico Gratis</a></div></div></div></div><div class="pt-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md font-body-sm text-body-sm text-on-surface-variant"><div class="flex items-center gap-space-sm"><span class="">© 2026 NexusGest B.V. · Todos los derechos reservados.</span></div><div class="flex items-center gap-space-lg font-label-sm text-label-sm"><span class="">Registrado en Países Bajos</span><span class="">·</span><span class="">Amsterdam Chamber of Commerce</span></div></div></div></footer>
+
+</body></html>
