@@ -69,6 +69,7 @@ export async function POST(request: Request) {
         ],
         max_tokens: 10,
         temperature: 0.1,
+        ...(esOllamaLocal ? { think: false } : {}),
       }),
     });
 

@@ -71,8 +71,8 @@ const AI_PRESETS = [
     name: 'Ollama Local (Sin clave / Privado)',
     badge: '100% Local',
     defaultUrl: 'http://ollama:11434/v1',
-    defaultModel: 'qwen2.5-coder:3b',
-    models: ['qwen2.5-coder:3b', 'openbmb/minicpm5-2b:latest'],
+    defaultModel: 'openbmb/minicpm5-2b:latest',
+    models: ['openbmb/minicpm5-2b:latest', 'qwen2.5-coder:3b'],
     keyHelp: 'Ejecuta Ollama en tu equipo local con ollama run llama3',
     keyPlaceholder: 'No se requiere clave (dejar en blanco o test)',
   },
@@ -99,7 +99,7 @@ const DEFAULT_CONFIG: AIConfig = {
   provider: 'ollama',
   apiUrl: 'http://ollama:11434/v1',
   apiKey: '',
-  model: 'qwen2.5-coder:3b',
+  model: 'openbmb/minicpm5-2b:latest',
 };
 
 function renderChatMarkdown(text: string) {
@@ -146,7 +146,7 @@ export default function ChatIAPage() {
       role: 'assistant',
       content: `¡Bienvenido al **Chat Asistente NexusGest**!
 
-Este chat está configurado para usar Ollama en este servidor, con el modelo local qwen2.5-coder:3b. Las respuestas se generan localmente; revisa siempre la información y los documentos antes de usarlos.
+Este chat está configurado para usar Ollama en este servidor, con el modelo local openbmb/minicpm5-2b:latest. Las respuestas se generan localmente; revisa siempre la información y los documentos antes de usarlos.
 
 Puedes consultar y editar clientes, tareas, citas, deudas y facturas en sus secciones del CRM. La creación de un pago debe registrarse solo después de verificar el cobro fuera de la aplicación.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -176,9 +176,9 @@ Puedes consultar y editar clientes, tareas, citas, deudas y facturas en sus secc
       if (savedConfig) {
         const parsed = JSON.parse(savedConfig);
         if (!parsed.apiKey && (parsed.provider === 'openai' || parsed.apiUrl === 'https://api.openai.com/v1')) {
-          setConfig({ provider: 'ollama', apiUrl: 'http://ollama:11434/v1', apiKey: '', model: 'qwen2.5-coder:3b' });
-        } else if (parsed.provider === 'ollama' && parsed.model === 'llama3.2:1b') {
-          const migrated = { ...parsed, apiUrl: 'http://ollama:11434/v1', model: 'qwen2.5-coder:3b' };
+          setConfig({ provider: 'ollama', apiUrl: 'http://ollama:11434/v1', apiKey: '', model: 'openbmb/minicpm5-2b:latest' });
+        } else if (parsed.provider === 'ollama' && ['llama3.2:1b', 'qwen2.5-coder:3b'].includes(parsed.model)) {
+          const migrated = { ...parsed, apiUrl: 'http://ollama:11434/v1', model: 'openbmb/minicpm5-2b:latest' };
           setConfig(migrated);
           localStorage.setItem('nexusgest_ai_config', JSON.stringify(migrated));
         } else {

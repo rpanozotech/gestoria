@@ -77,6 +77,7 @@ export async function POST(request: Request) {
             messages,
             temperature,
             max_tokens,
+            ...(isLocalOllama ? { think: false } : {}),
           }),
         });
 
