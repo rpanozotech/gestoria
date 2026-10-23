@@ -1461,7 +1461,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 {detectedClients.length === 1 && isReviewMode && (
                   <div className="mt-4 grid w-full xl:grid-cols-[minmax(0,1fr)_520px] gap-4 items-start">
                     <div className="min-w-0 space-y-3">
-                      <section className="rounded-2xl border border-outline-variant bg-white p-4 shadow-sm">
+                      <section className="rounded-2xl border border-outline-variant bg-white p-3 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="material-symbols-outlined text-secondary">person</span>
                           <h5 className="text-sm font-bold text-on-surface">Identidad</h5>
@@ -1477,7 +1477,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-outline-variant bg-white p-4 shadow-sm">
+                      <section className="rounded-2xl border border-outline-variant bg-white p-3 shadow-sm">
                         <div className="flex items-center gap-2 mb-3"><span className="material-symbols-outlined text-secondary">call</span><h5 className="text-sm font-bold text-on-surface">Contacto</h5></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                           <label className="text-[13px] font-semibold text-outline uppercase">Teléfono<div className="mt-1 flex h-8"><select aria-label="Prefijo telefónico" className="w-14 rounded-l border border-outline-variant bg-surface px-1 text-[13px]"><option>🇳🇱</option><option>🇪🇸</option></select><input type="tel" value={client.phone} onChange={e => handleUpdateClientField(client.id, 'phone', e.target.value)} placeholder="No detectado" className="min-w-0 flex-1 rounded-r border border-l-0 border-outline-variant bg-surface px-2.5 text-[13px] normal-case" /></div></label>
@@ -1486,7 +1486,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-outline-variant bg-white p-4 shadow-sm">
+                      <section className="rounded-2xl border border-outline-variant bg-white p-3 shadow-sm">
                         <div className="flex items-center gap-2 mb-3"><span className="material-symbols-outlined text-secondary">home</span><h5 className="text-sm font-bold text-on-surface">Domicilio en Países Bajos</h5></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                           <label className="text-[13px] font-semibold text-outline uppercase">Calle *<input value={client.address?.replace(/\s+\d+$/, '') || ''} onChange={e => handleUpdateClientField(client.id, 'address', `${e.target.value} ${client.street_number || ''}`.trim())} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
@@ -1500,7 +1500,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                         <label className="block text-[13px] font-semibold text-outline uppercase mt-3">Tipo de dirección<select value={client.address_type || 'Woonadres'} onChange={e => handleUpdateClientField(client.id, 'address_type', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case"><option>Woonadres</option><option>Correspondencia</option><option>Empresa</option></select></label>
                       </section>
 
-                      <section className="rounded-2xl border border-outline-variant bg-white p-4 shadow-sm">
+                      <section className="rounded-2xl border border-outline-variant bg-white p-3 shadow-sm">
                         <div className="flex items-center gap-2 mb-3"><span className="material-symbols-outlined text-secondary">description</span><h5 className="text-sm font-bold text-on-surface">Registro administrativo</h5></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                           <label className="text-[13px] font-semibold text-outline uppercase">Primera inscripción BRP<div className="mt-1 flex h-8"><input value={client.brp_first_registration || ''} onChange={e => handleUpdateClientField(client.id, 'brp_first_registration', e.target.value)} className="min-w-0 flex-1 rounded-l border border-outline-variant bg-surface px-2.5 text-[13px] normal-case" /><span className="flex w-8 items-center justify-center rounded-r border border-l-0 border-outline-variant bg-surface text-secondary"><span className="material-symbols-outlined text-[15px]">calendar_month</span></span></div></label>
