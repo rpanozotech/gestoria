@@ -87,7 +87,7 @@ export default function ClienteFichaPage() {
     <main data-active-tab={activeTab} className="h-full min-h-0 overflow-y-auto bg-[#f5f8fc] px-2 py-2 text-[#13234b] sm:px-3 lg:px-4">
       <style jsx global>{`
         /* La ficha 360 se presenta como un panel único, igual que la referencia. */
-        main.h-full.min-h-0.overflow-y-auto > div { zoom: 0.72; width: 138.89%; }
+        main.h-full.min-h-0.overflow-y-auto > div { zoom: 0.72; width: 100%; max-width: none; margin-left: 0; margin-right: 0; }
         main.h-full.min-h-0.overflow-y-auto[data-active-tab="resumen"] > div > div:last-child { display: none; }
         @media (max-width: 1023px) { main.h-full.min-h-0.overflow-y-auto > div { zoom: 1; width: auto; } }
       `}</style>
