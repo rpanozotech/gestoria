@@ -10,7 +10,7 @@ import { createPortalAccess } from '@/lib/portal';
 import { reviewOcrResult } from '@/lib/ocr-review';
 import { buildMultiClientAiConfig } from '@/lib/multi-client-ai-config';
 import { extractExplicitClients } from '@/lib/explicit-client-fields';
-import { startLocalOcrWorker } from '@/lib/local-ocr-worker';
+import { prepareImageForOcr, startLocalOcrWorker } from '@/lib/local-ocr-worker';
 import { CheckCircle2, LoaderCircle } from 'lucide-react';
 
 interface ExtractedClient {
@@ -198,7 +198,8 @@ async function extractLocalOcr(file: File | UploadedFileItem, onProgress: (messa
       };
     }
 
-    const result = await (await getWorker()).recognize(inputFile);
+    const imageInput = inputFile.type.startsWith('image/') ? await prepareImageForOcr(inputFile) : inputFile;
+    const result = await (await getWorker()).recognize(imageInput);
     return {
       text: result.data.text.trim(),
       confidence: Number(result.data.confidence) || 0,
