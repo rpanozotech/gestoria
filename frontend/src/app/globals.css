@@ -154,7 +154,25 @@
   .crm-primary-action { background: #004f9e; color: #fff; }
   .crm-primary-action:hover { background: #003d7a; }
   /* Densidad de trabajo: más información visible sin sacrificar las acciones. */
-  .crm-page { font-size: .92rem; }
+  .crm-page {
+    font-size: 13px;
+    min-width: 0;
+  }
+  .crm-page > :not(.fixed) {
+    min-width: 0;
+    max-width: none;
+  }
+  .crm-page > main,
+  .crm-page > section,
+  .crm-page > div:not(.fixed) {
+    width: 100%;
+  }
+  .crm-page input,
+  .crm-page select,
+  .crm-page textarea,
+  .crm-page button {
+    font-size: 13px;
+  }
   .crm-page h1.text-3xl { font-size: 1.7rem; line-height: 1.15; }
   .crm-page h1.text-2xl { font-size: 1.45rem; line-height: 1.15; }
   .crm-page h2.text-xl { font-size: 1.15rem; line-height: 1.25; }
