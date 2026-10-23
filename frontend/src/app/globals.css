@@ -173,6 +173,23 @@
   .crm-page button {
     font-size: 13px;
   }
+  .crm-new-client-page[data-review-mode="true"] > div:first-child {
+    width: min(100%, 1440px);
+    max-width: 1440px;
+    margin-inline: auto;
+  }
+  .crm-new-client-page[data-review-mode="true"] section.rounded-2xl {
+    padding: .65rem !important;
+  }
+  .crm-new-client-page[data-review-mode="true"] section.rounded-2xl .gap-3 {
+    gap: .5rem !important;
+  }
+  .crm-new-client-page[data-review-mode="true"] section.rounded-2xl .mb-3 {
+    margin-bottom: .5rem !important;
+  }
+  .crm-new-client-page[data-review-mode="true"] section.rounded-2xl .mt-3 {
+    margin-top: .5rem !important;
+  }
   .crm-page h1.text-3xl { font-size: 1.7rem; line-height: 1.15; }
   .crm-page h1.text-2xl { font-size: 1.45rem; line-height: 1.15; }
   .crm-page h2.text-xl { font-size: 1.15rem; line-height: 1.25; }
