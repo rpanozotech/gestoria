@@ -84,10 +84,16 @@ export default function ClienteFichaPage() {
   const email = client.email || 'Sin correo';
 
   return (
-    <main className="h-full overflow-y-auto bg-[#f5f8fc] px-3 py-3 text-[#13234b] sm:px-5 lg:px-6">
-      <div className="mx-auto max-w-[1440px] space-y-3">
-        <header className="flex flex-wrap items-end justify-between gap-3">
-          <div><div className="flex items-center gap-2 text-xs font-medium text-blue-700"><Link href="/crm/clientes" className="hover:underline">← Clientes</Link><span>/</span><span>{client.full_name}</span></div><div className="mt-2 flex flex-wrap items-center gap-3"><h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Ficha 360° del cliente</h1><span className="rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold uppercase text-amber-700">Datos ficticios de staging</span></div></div>
+    <main data-active-tab={activeTab} className="h-full min-h-0 overflow-y-auto bg-[#f5f8fc] px-2 py-2 text-[#13234b] sm:px-3 lg:px-4">
+      <style jsx global>{`
+        /* La ficha 360 se presenta como un panel único, igual que la referencia. */
+        main.h-full.min-h-0.overflow-y-auto > div { zoom: 0.72; width: 138.89%; }
+        main.h-full.min-h-0.overflow-y-auto[data-active-tab="resumen"] > div > div:last-child { display: none; }
+        @media (max-width: 1023px) { main.h-full.min-h-0.overflow-y-auto > div { zoom: 1; width: auto; } }
+      `}</style>
+      <div className="mx-auto max-w-[1440px] space-y-2">
+        <header className="flex flex-wrap items-end justify-between gap-2">
+          <div><div className="flex items-center gap-2 text-xs font-medium text-blue-700"><Link href="/crm/clientes" className="hover:underline">← Clientes</Link><span>/</span><span>{client.full_name}</span></div><div className="mt-1 flex flex-wrap items-center gap-2"><h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Ficha 360° del cliente</h1><span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">Datos ficticios de staging</span></div></div>
           <div className="relative flex items-center gap-2"><Link href={`/crm/clientes?client=${encodeURIComponent(client.full_name)}&from=ficha`} className="inline-flex h-10 items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 text-xs font-bold text-blue-700 hover:bg-blue-50"><span className="material-symbols-outlined text-[17px]">edit</span>Editar cliente</Link><button type="button" onClick={() => setActionOpen((value) => !value)} aria-expanded={actionOpen} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-800"><span className="material-symbols-outlined text-[17px]">add</span>Nueva acción<span className="material-symbols-outlined text-[17px]">{actionOpen ? 'expand_less' : 'expand_more'}</span></button>{actionOpen && <div className="absolute right-0 top-12 z-20 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"><button type="button" onClick={() => router.push('/crm/agenda')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-blue-50"><span className="material-symbols-outlined text-[16px]">calendar_add_on</span>Nueva cita</button><button type="button" onClick={() => router.push('/crm/facturacion')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-blue-50"><span className="material-symbols-outlined text-[16px]">receipt_long</span>Nueva factura</button><button type="button" onClick={() => router.push('/crm/tareas')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-blue-50"><span className="material-symbols-outlined text-[16px]">task_alt</span>Nueva tarea</button></div>}</div>
         </header>
 
