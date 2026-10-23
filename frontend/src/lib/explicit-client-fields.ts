@@ -31,12 +31,17 @@ function normalizeTableText(text: string): string {
 
 function parseOne(text: string): ExplicitClient {
   text = normalizeTableText(text);
+  const dutchTaxName = text.match(/Persoonlijke gegevens\s+Naam\s+(.+?)\s+Geboortedatum\b/i)?.[1]?.trim() || '';
+  const dutchBirthDate = text.match(/\bGeboortedatum\s+(\d{2}-\d{2}-\d{4})\b/i)?.[1] || '';
+  const dutchPhone = text.match(/\bTelefoonnummer\s+([+\d][\d\s().-]{7,18}?)(?=\s+Land waarin\b)/i)?.[1]?.trim() || '';
+  const dutchResidenceCountry = text.match(/\bLand waarin u op 1 januari\s+\d{4}\s+woonde\s+([A-Za-zÀ-ÿ-]+)/i)?.[1]?.trim() || '';
+  const dutchNationality = text.match(/\bNationaliteit\s*\(kies het land\)\s+([A-Za-zÀ-ÿ-]+)\s+Was u\b/i)?.[1]?.trim() || '';
   const email = text.match(/[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}/)?.[0] || '';
   const bsn = text.match(/(?:bsn|burgerservicenummer)\D{0,20}(\d{8,9})/i)?.[1] || text.match(/\b\d{9}\b/)?.[0] || '';
   const phone = text.match(/(?:\+31|\+34|0031|0034|06)[\d\s().-]{7,16}/)?.[0]?.trim() || '';
   const firstName = valueAfter(text, ['nombre de pila', 'nombre', 'first name', 'voornaam']);
   const lastName = valueAfter(text, ['apellidos', 'apellido', 'surname', 'last name', 'achternaam']);
-  const full_name = valueAfter(text, ['nombre completo', 'nombre y apellidos', 'full name', 'volledige naam', 'naam']) || [firstName, lastName].filter(Boolean).join(' ');
+  const full_name = dutchTaxName || valueAfter(text, ['nombre completo', 'nombre y apellidos', 'full name', 'volledige naam', 'naam']) || [firstName, lastName].filter(Boolean).join(' ');
   const street = valueAfter(text, ['calle', 'straat', 'street']);
   const number = valueAfter(text, ['número', 'numero', 'huisnummer', 'number']);
   const address = valueAfter(text, ['dirección completa', 'direccion completa', 'address', 'adres']) || [street, number].filter(Boolean).join(' ');
@@ -46,7 +51,7 @@ function parseOne(text: string): ExplicitClient {
   const dates = valueAfter(text, ['fecha de nacimiento', 'fecha nacimiento', 'date of birth', 'geboortedatum']);
   const country = valueAfter(text, ['país de residencia', 'pais de residencia', 'country', 'land']) || (/domicilio registrado en países bajos/i.test(text) ? 'Países Bajos' : valueAfter(text, ['país de nacimiento', 'pais de nacimiento']));
   const nationality = valueAfter(text, ['nacionalidad', 'nationality', 'nationaliteit']);
-  return { full_name, bsn, phone, email, address, city, postal_code, country, nationality, dates, id_document_number, notes: text.trim() };
+  return { full_name, bsn, phone: dutchPhone || phone, email, address, city, postal_code, country: dutchResidenceCountry || country, nationality: dutchNationality || nationality, dates: dutchBirthDate || dates, id_document_number, notes: text.trim() };
 }
 
 export function extractExplicitClients(sources: string[]): ExplicitClient[] {

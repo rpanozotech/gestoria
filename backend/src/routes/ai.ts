@@ -48,7 +48,7 @@ localPdfRouter.post('/extract', async (req: Request, res: Response) => {
 });
 
 function normalizeChatUrl(rawUrl?: string): string {
-  let url = (rawUrl || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').trim().replace(/\/+$/, '');
+  let url = (rawUrl || process.env.OLLAMA_BASE_URL || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').trim().replace(/\/+$/, '');
   if (url.endsWith('/chat/completions')) return url;
   return `${url}/chat/completions`;
 }
@@ -137,8 +137,12 @@ async function callOpenAIOrFallback(
   options?: { apiKey?: string; apiUrl?: string; model?: string; jsonResponse?: boolean; onFallback?: (reason: string) => void; signal?: AbortSignal }
 ) {
   const fail = (reason: string) => { options?.onFallback?.(reason); return fallbackFn(); };
-  const apiKey = aiCredential(options?.apiKey, options?.apiUrl);
-  const isLocalOllama = isLocalAi(options?.apiUrl);
+  const requestedApiUrl = options?.apiUrl?.trim() || '';
+  const configuredOllamaUrl = process.env.OLLAMA_BASE_URL?.trim() || '';
+  const useServerOllama = Boolean(configuredOllamaUrl && (!requestedApiUrl || (requestedApiUrl === 'https://api.openai.com/v1' && !options?.apiKey && !process.env.OPENAI_API_KEY)));
+  const configuredApiUrl = useServerOllama ? configuredOllamaUrl : requestedApiUrl || process.env.OPENAI_BASE_URL?.trim() || '';
+  const apiKey = aiCredential(options?.apiKey, configuredApiUrl);
+  const isLocalOllama = isLocalAi(configuredApiUrl);
 
   if ((!apiKey || apiKey === 'tu-api-key-de-openai-aqui') && !isLocalOllama) {
     return fail('provider_unavailable');
@@ -150,7 +154,7 @@ async function callOpenAIOrFallback(
   // aqui porque resolverChatUrl solo filtra lo que el cliente envia.
   let endpoint: string;
   try {
-    endpoint = await resolveChatUrl(options?.apiUrl);
+    endpoint = await resolveChatUrl(configuredApiUrl);
   } catch (error) {
     if (error instanceof EndpointNoPermitido) {
       console.warn('ai_provider_failure', JSON.stringify({ reasonCode: 'endpoint_rejected' }));
@@ -159,7 +163,7 @@ async function callOpenAIOrFallback(
     throw error;
   }
 
-  const model = options?.model?.trim() || process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const model = options?.model?.trim() || (isLocalOllama ? process.env.OLLAMA_MODEL : process.env.OPENAI_MODEL) || 'gpt-4o-mini';
 
   try {
     const headers: Record<string, string> = {
@@ -361,31 +365,50 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
       ${files ? JSON.stringify(files.map((f: any) => ({ name: f.name, type: f.type, summary: f.textContent || 'Documento adjunto' }))) : 'Ninguno'}
     `;
 
-    // OCR-ONLY MODE: IA desactivada por context overflow (6.8k > 4k tokens) y timeout.
-    // Usamos solo OCR local + extracción determinista de campos (regex/patrones) sobre texto OCR.
-    // 14 campos mapeados, idiomas ES/EN/NL, aiUsed=false, localOnly=true honesto.
     const startedAt = Date.now();
     const sources = [prompt || '', ...files.map((file: any) => file.textContent || '')];
     const explicitClients = extractExplicitClients(sources);
 
-    // Formato de respuesta consistente con el contrato del frontend
-    const finalClients = explicitClients.map((c: any, index: number) => ({
+    const fallbackClients = explicitClients.map((c: any, index: number) => ({
       ...c,
-      id: c.id || `ocr_client_${Date.now()}_${index}`,
-      extractionMethod: 'OCR + Extractor determinista',
+      id: c.id || `local_client_${Date.now()}_${index}`,
+      extractionMethod: 'Extractor local de PDF/OCR',
       selected: true,
-      confidence: 0, // sin IA: no hay confianza modelada; el gestor valida
+      confidence: 0,
     }));
 
-    const reasonCode = 'ocr_only';
-    const diagnostics = { reasonCode, durationMs: Date.now() - startedAt, sourceChars: sources.reduce((n, t) => n + t.length, 0), fileCount: files.length, clientsCount: finalClients.length, aiUsed: false, localOnly: true };
+    let aiUsed = false;
+    let reasonCode = 'local_extractor';
+    const fallback = () => {
+      reasonCode = 'local_extractor';
+      return { clients: fallbackClients };
+    };
+    const aiResult = useAI
+      ? await callOpenAIOrFallback(systemPrompt, userPrompt, fallback, {
+          apiKey,
+          apiUrl,
+          model,
+          jsonResponse: true,
+          onFallback: (reason) => { aiUsed = false; reasonCode = reason; },
+        })
+      : fallback();
+    const modelClients = Array.isArray((aiResult as any)?.clients) ? (aiResult as any).clients : [];
+    if (modelClients.length > 0 && reasonCode !== 'local_extractor') aiUsed = true;
+    const finalClients = (modelClients.length > 0 ? modelClients : fallbackClients).map((c: any, index: number) => ({
+      ...c,
+      id: c.id || `ai_client_${Date.now()}_${index}`,
+      extractionMethod: aiUsed ? 'Ollama · IA + texto PDF verificado' : 'Extractor local de PDF/OCR',
+      selected: true,
+      confidence: typeof c.confidence === 'number' ? c.confidence : (aiUsed ? 0.8 : 0),
+    }));
+    const diagnostics = { reasonCode, durationMs: Date.now() - startedAt, sourceChars: sources.reduce((n, t) => n + t.length, 0), fileCount: files.length, clientsCount: finalClients.length, aiUsed, localOnly: !aiUsed };
     console.info('ai_document_analysis', JSON.stringify(diagnostics));
     await query(
       `INSERT INTO ai_logs (action_type, input_text, output_data) VALUES ($1, $2, $3)`,
-      ['alta_multi_clientes', 'Análisis de documentos (OCR-only)', JSON.stringify(diagnostics)]
+      ['alta_multi_clientes', aiUsed ? 'Análisis con Ollama + texto PDF/OCR' : 'Análisis local de PDF/OCR', JSON.stringify(diagnostics)]
     );
 
-    res.json({ success: true, clients: finalClients, localOnly: true, aiUsed: false, reasonCode });
+    res.json({ success: true, clients: finalClients, localOnly: !aiUsed, aiUsed, reasonCode });
   } catch (error) {
     console.error('Error procesando multi-clientes con IA:', error);
     res.status(500).json({ error: 'Error procesando solicitud de IA' });
