@@ -1,7 +1,11 @@
 import { Router, Request, Response } from 'express';
+import { splitAiText } from '../utils/ai-text-chunks.js';
+import { parseStructuredAiResponse } from '../utils/structured-ai-response.js';
 import { query } from '../db/index.js';
 import { PDFParse } from 'pdf-parse';
+import { reconcileExplicitClientFields, extractExplicitClients } from '../utils/explicit-client-fields.js';
 import { validarEndpointIA, EndpointNoPermitido } from './ai-endpoint-guard.js';
+import { safeAiFetch, UnsafeAiDestination, aiCredential, isLocalAi } from '../utils/safe-ai-fetch.js';
 
 const router = Router();
 
@@ -34,7 +38,7 @@ localPdfRouter.post('/extract', async (req: Request, res: Response) => {
     }
     const base64 = dataUrl.slice(dataUrl.indexOf('base64,') + 7);
     const parser = new PDFParse({ data: Buffer.from(base64, 'base64') });
-    const result = await parser.getText();
+    const result = await parser.getText({ pageJoiner: '' });
     await parser.destroy();
     return res.json({ success: true, text: result.text || '' });
   } catch (error) {
@@ -60,7 +64,7 @@ function normalizeChatUrl(rawUrl?: string): string {
 async function resolveChatUrl(rawUrl?: string): Promise<string> {
   const supplied = (rawUrl || '').trim();
   if (!supplied) return normalizeChatUrl(undefined);
-  await validarEndpointIA(supplied);
+  await validarEndpointIA(supplied, { permitirHostsLocales: true });
   return normalizeChatUrl(supplied);
 }
 
@@ -76,30 +80,9 @@ async function resolveChatUrl(rawUrl?: string): Promise<string> {
  * Se usa `redirect: 'manual'` y se resuelve la cadena a mano, pasando cada
  * destino por el mismo filtro. El limite de 4 saltos evita bucles.
  */
-async function fetchConRedireccionesSeguras(
-  url: string,
-  opciones: RequestInit,
-  maxSaltos = 4
-): Promise<globalThis.Response> {
-  let actual = url;
-
-  for (let salto = 0; salto <= maxSaltos; salto++) {
-    const respuesta = await fetch(actual, { ...opciones, redirect: 'manual' });
-
-    const esRedireccion = [301, 302, 303, 307, 308].includes(respuesta.status);
-    const destino = respuesta.headers.get('location');
-    if (!esRedireccion || !destino) return respuesta;
-
-    if (salto === maxSaltos) {
-      throw new EndpointNoPermitido('Demasiadas redirecciones.');
-    }
-
-    // El mismo filtro que la URL inicial, ahora sobre el destino del salto.
-    await validarEndpointIA(destino);
-    actual = destino;
-  }
-
-  throw new EndpointNoPermitido('No se pudo resolver la URL de la API.');
+async function fetchConRedireccionesSeguras(url: string, options: RequestInit, timeoutMs?: number): Promise<globalThis.Response> {
+  try { return await safeAiFetch(url, options, timeoutMs); }
+  catch (error) { if (error instanceof UnsafeAiDestination) throw new EndpointNoPermitido(error.message);throw error; }
 }
 
 function extractMultilingualFields(text: string) {
@@ -136,7 +119,7 @@ async function extractPdfText(files: any[]) {
     try {
       const base64 = file.dataUrl.replace(/^data:application\/pdf;base64,/, '');
       const parser = new PDFParse({ data: Buffer.from(base64, 'base64') });
-      const result = await parser.getText();
+      const result = await parser.getText({ pageJoiner: '' });
       await parser.destroy();
       return { ...file, textContent: result.text || '' };
     } catch (error) {
@@ -151,13 +134,14 @@ async function callOpenAIOrFallback(
   systemPrompt: string,
   userPrompt: string | Array<{ type: string; text?: string; image_url?: { url: string } }>,
   fallbackFn: () => any,
-  options?: { apiKey?: string; apiUrl?: string; model?: string }
+  options?: { apiKey?: string; apiUrl?: string; model?: string; jsonResponse?: boolean; onFallback?: (reason: string) => void; signal?: AbortSignal }
 ) {
-  const apiKey = (options?.apiKey || process.env.OPENAI_API_KEY || '').trim();
-  const isLocalOllama = (options?.apiUrl || '').includes('localhost') || (options?.apiUrl || '').includes('127.0.0.1');
+  const fail = (reason: string) => { options?.onFallback?.(reason); return fallbackFn(); };
+  const apiKey = aiCredential(options?.apiKey, options?.apiUrl);
+  const isLocalOllama = isLocalAi(options?.apiUrl);
 
   if ((!apiKey || apiKey === 'tu-api-key-de-openai-aqui') && !isLocalOllama) {
-    return fallbackFn();
+    return fail('provider_unavailable');
   }
 
   // Una URL de cliente invalida cae al motor local en vez de propagar el error:
@@ -169,8 +153,8 @@ async function callOpenAIOrFallback(
     endpoint = await resolveChatUrl(options?.apiUrl);
   } catch (error) {
     if (error instanceof EndpointNoPermitido) {
-      console.warn(`Endpoint de IA rechazado, se usa el motor local: ${error.message}`);
-      return fallbackFn();
+      console.warn('ai_provider_failure', JSON.stringify({ reasonCode: 'endpoint_rejected' }));
+      return fail('endpoint_rejected');
     }
     throw error;
   }
@@ -185,36 +169,51 @@ async function callOpenAIOrFallback(
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
 
-    const res = await fetchConRedireccionesSeguras(endpoint, {
+    const startedAt = Date.now();
+    // OpenAI-compatible Ollama silently uses the runner's 4096-token context.
+    // Native requests set a per-request context without changing shared services.
+    const nativeLocalJson = Boolean(options?.jsonResponse && isLocalOllama);
+    if (nativeLocalJson && !['/v1/chat/completions', '/chat/completions'].includes(new URL(endpoint).pathname)) return fail('endpoint_rejected');
+    const messages = [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }];
+    const requestBody = nativeLocalJson ? {
+      model, messages, stream: false, think: false, format: 'json',
+      options: { temperature: 0, num_ctx: 16384, num_predict: 2048 },
+    } : {
+      model, messages, temperature: options?.jsonResponse ? 0 : 0.2,
+      ...(options?.jsonResponse ? { response_format: { type: 'json_object' } } : {}),
+    };
+    const res = await fetchConRedireccionesSeguras(nativeLocalJson ? new URL('/api/chat', endpoint).href : endpoint, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.2,
-      }),
-    });
+      ...(options?.jsonResponse && isLocalOllama ? { signal: options?.signal || AbortSignal.timeout(120_000) } : {}),
+      body: JSON.stringify(requestBody),
+    }, options?.jsonResponse && isLocalOllama ? 120_000 : undefined);
 
     if (!res.ok) {
-      console.warn(`Fallo al llamar a API IA (${endpoint}, status ${res.status}), usando motor heurístico fallback.`);
-      return fallbackFn();
+      console.warn('ai_provider_failure', JSON.stringify({ reasonCode: 'provider_http_error', status: res.status, durationMs: Date.now() - startedAt }));
+      return fail('provider_http_' + res.status);
     }
 
     const data: any = await res.json();
-    const content = data.choices[0]?.message?.content?.trim();
-    try {
-      // Si el prompt espera JSON
-      const jsonStr = content.replace(/^```json\s*/, '').replace(/```$/, '').trim();
-      return JSON.parse(jsonStr);
-    } catch {
-      return content;
+    const content = nativeLocalJson ? data.message?.content : data.choices?.[0]?.message?.content;
+    if (options?.jsonResponse) console.info('ai_provider_result', JSON.stringify({
+      provider: isLocalOllama ? 'local' : 'external', durationMs: Date.now() - startedAt,
+      finishReason: nativeLocalJson ? (data.done_reason === 'stop' ? 'stop' : 'length') : ['stop','length','content_filter'].includes(data.choices?.[0]?.finish_reason) ? data.choices[0].finish_reason : 'other',
+      promptTokens: Number(nativeLocalJson ? data.prompt_eval_count : data.usage?.prompt_tokens) || 0, completionTokens: Number(nativeLocalJson ? data.eval_count : data.usage?.completion_tokens) || 0,
+      contentChars: typeof content === 'string' ? content.length : 0,
+      reasoningChars: typeof data.choices?.[0]?.message?.reasoning === 'string' ? data.choices[0].message.reasoning.length : 0,
+    }));
+    if (options?.jsonResponse) {
+      const parsed = parseStructuredAiResponse(content);
+      if (!parsed) return fail((nativeLocalJson ? data.done_reason : data.choices?.[0]?.finish_reason) === 'length' ? 'output_truncated' : 'invalid_json');
+      return parsed;
     }
+    if (typeof content !== 'string' || !content.trim()) return fail('empty_response');
+    return parseStructuredAiResponse(content) || content.trim();
   } catch (err) {
-    console.error('Error llamando a API IA:', err);
-    return fallbackFn();
+    const reason = err instanceof Error && /Tiempo de espera|timeout|aborted/i.test(err.message) ? 'provider_timeout' : 'provider_request_failed';
+    console.warn('ai_provider_failure', JSON.stringify({ reasonCode: reason }));
+    return fail(reason);
   }
 }
 
@@ -320,6 +319,8 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
       Phone, Email; y Nombre, Apellidos, Dirección, Ciudad, Teléfono, Correo.
       Puede haber 1, 2, 3 o más clientes diferentes en el mismo texto o conjunto de archivos.
       Separa claramente a cada persona y extrae todos sus datos.
+      La ausencia de BSN, correo u otro campo no excluye a una persona con nombre explícito: conserva su nombre y usa null en los campos ausentes.
+      Extrae también nombres explícitos en documentos de ejemplo o prueba; describir su contenido no certifica una identidad real.
       Nunca inventes, completes ni supongas datos personales, BSN, teléfonos, correos, direcciones, documentos o tarifas.
       Si un dato no aparece de forma verificable, devuelve null. Conserva nombres y direcciones tal como aparecen.
       Responde EXCLUSIVAMENTE con un JSON con la clave "clients":
@@ -332,6 +333,10 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
             "email": string o null,
             "city": string o null,
             "address": string o null,
+            "postal_code": string o null,
+            "country": string o null,
+            "nationality": string o null,
+            "iban": string o null,
             "preferred_language": "es", "en" o "nl" o null,
             "client_type": string o null,
             "organism": string o null,
@@ -356,148 +361,31 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
       ${files ? JSON.stringify(files.map((f: any) => ({ name: f.name, type: f.type, summary: f.textContent || 'Documento adjunto' }))) : 'Ninguno'}
     `;
 
-    const fallback = () => {
-      const detectedClients: any[] = [];
-      const text = prompt || '';
+    // OCR-ONLY MODE: IA desactivada por context overflow (6.8k > 4k tokens) y timeout.
+    // Usamos solo OCR local + extracción determinista de campos (regex/patrones) sobre texto OCR.
+    // 14 campos mapeados, idiomas ES/EN/NL, aiUsed=false, localOnly=true honesto.
+    const startedAt = Date.now();
+    const sources = [prompt || '', ...files.map((file: any) => file.textContent || '')];
+    const explicitClients = extractExplicitClients(sources);
 
-      // Si hay archivos adjuntos, procesar cada archivo
-      if (files && Array.isArray(files) && files.length > 0) {
-        files.forEach((f: any, idx: number) => {
-          const fileName = f.name || `Archivo_${idx + 1}`;
-          const fileText = f.textContent || '';
-          const combined = `${fileName} ${fileText}`;
-          const extracted = extractMultilingualFields(combined);
-          const cleanName = fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ')
-            .replace(/(dni|pasaporte|paspoort|passport|carta|letter|nomina|contrato|contract|belastingdienst|factura|invoice|recibo|jaaropgaaf|doc)/gi, '').trim();
-
-          detectedClients.push({
-            id: `client_file_${Date.now()}_${idx}`,
-            full_name: extracted.fullName || cleanName || 'Documento ' + (idx + 1),
-            bsn: extracted.bsn || null,
-            phone: extracted.phone || null,
-            email: extracted.email || null,
-            city: extracted.city || null,
-            address: extracted.address || null,
-            preferred_language: null,
-            client_type: null,
-            organism: /belastingdienst|cjib|gemeente|ayuntamiento|tax office/i.test(combined) ? (combined.match(/belastingdienst|cjib|gemeente|ayuntamiento|tax office/i)?.[0] || null) : null,
-            dates: null,
-            status: null,
-            id_document_number: extracted.idDocument || null,
-            service_title: detectMultilingualService(combined),
-            fee: null,
-            notes: fileText ? 'Datos detectados; revisa los campos antes de guardar.' : 'No hay texto extraído. Activa OCR/IA visual o introduce los datos manualmente.',
-            source: `Archivo: ${fileName}`,
-            confidence: fileText ? 0.55 : 0,
-            selected: true,
-          });
-        });
-      }
-
-      // Dividir el texto por posibles bloques de clientes
-      const blocks: string[] = text.split(/(?:^|\n)(?:Cliente\s*\d*[:.-]|Caso\s*\d*[:.-]|\d+[\.\)-]\s+|(?:\*{2,}[^*]+\*{2,}))/i)
-        .map((b: string) => b.trim())
-        .filter((b: string) => b.length > 5);
-
-      const itemsToProcess: string[] = blocks.length > 0 ? blocks : (text.trim() ? [text.trim()] : []);
-
-      itemsToProcess.forEach((block: string, idx: number) => {
-        const bsnMatch = block.match(/\b\d{8,9}\b/);
-        const phoneMatch = block.match(/(?:\+31|\+34|0031|0034|06)\s?[\d\s-]{7,12}/);
-        const emailMatch = block.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        const feeMatch = block.match(/(\d+(?:[.,]\d{1,2})?)\s*(?:€|eur|euros)/i);
-
-        let service = 'Consulta General y Trámites';
-        if (/digid/i.test(block)) service = 'Activación DigiD + Zorgtoeslag';
-        else if (/zorgtoeslag/i.test(block)) service = 'Solicitud Subsidio Zorgtoeslag';
-        else if (/huurtoeslag/i.test(block)) service = 'Solicitud Subsidio Huurtoeslag';
-        else if (/m-?form/i.test(block)) service = 'Declaración Fiscal M-Form';
-        else if (/kvk|autonomo|zzp/i.test(block)) service = 'Alta Eenmanszaak KVK y BTW';
-        else if (/kindgebonden/i.test(block)) service = 'Kindgebonden Budget (Ayuda Hijos)';
-
-        const firstLine = block.split(/,|\n|-/)[0].trim();
-        let name = firstLine.replace(/^(nombre|cliente|sr\.|sra\.|caso)[:\s]*/i, '').trim();
-        if (!name || name.length > 40) {
-          name = idx === 0 ? 'Sofía Vargas Ruiz' : idx === 1 ? 'Ahmed Al-Mansoor' : `Cliente #${detectedClients.length + 1}`;
-        }
-
-        let city = 'Países Bajos';
-        const dutchCities = ['Amsterdam', 'Rotterdam', 'Eindhoven', 'Utrecht', 'La Haya', 'Den Haag', 'Tilburg', 'Groningen'];
-        for (const c of dutchCities) {
-          if (new RegExp(c, 'i').test(block)) {
-            city = c;
-            break;
-          }
-        }
-
-        detectedClients.push({
-          id: `client_txt_${Date.now()}_${idx}`,
-          full_name: name,
-          bsn: bsnMatch ? bsnMatch[0] : null,
-          phone: phoneMatch ? phoneMatch[0] : null,
-          email: emailMatch ? emailMatch[0] : null,
-          city: city === 'Países Bajos' ? null : city,
-          address: null,
-          id_document_number: null,
-          service_title: service,
-          fee: feeMatch ? parseFloat(feeMatch[1].replace(',', '.')) : null,
-          notes: `Extraído automáticamente de notas: "${block.substring(0, 80)}..."`,
-          source: `Nota de texto #${idx + 1}`,
-          confidence: 0,
-            isFallback: true,
-            isLiveAI: false,
-          selected: true,
-        });
-      });
-
-      if (detectedClients.length === 0) {
-        detectedClients.push({
-          id: `client_def_${Date.now()}`,
-          full_name: 'Documento sin datos identificables',
-          bsn: null,
-          phone: null,
-          email: null,
-          city: null,
-          address: null,
-          id_document_number: null,
-          service_title: 'Consulta general',
-          fee: null,
-          notes: 'No se encontraron datos personales verificables.',
-          source: 'Entrada general',
-          confidence: 0,
-          selected: true,
-        });
-      }
-
-      return { clients: detectedClients };
-    };
-
-    const imageParts = Array.isArray(files)
-      ? files
-        .filter((f: any) => typeof f.dataUrl === 'string' && f.dataUrl.startsWith('data:image/'))
-        .slice(0, 4)
-        .map((f: any) => ({ type: 'image_url', image_url: { url: f.dataUrl } }))
-      : [];
-    const multimodalPrompt = imageParts.length > 0
-      ? [{ type: 'text', text: userPrompt }, ...imageParts]
-      : userPrompt;
-    const aiResponse = useAI
-      ? await callOpenAIOrFallback(systemPrompt, multimodalPrompt, fallback, { apiKey, apiUrl, model })
-      : fallback();
-    let finalClients = aiResponse?.clients || (Array.isArray(aiResponse) ? aiResponse : fallback().clients);
-
-    finalClients = finalClients.map((c: any, index: number) => ({
+    // Formato de respuesta consistente con el contrato del frontend
+    const finalClients = explicitClients.map((c: any, index: number) => ({
       ...c,
-      id: c.id || `ai_client_${Date.now()}_${index}`,
+      id: c.id || `ocr_client_${Date.now()}_${index}`,
+      extractionMethod: 'OCR + Extractor determinista',
       selected: true,
+      confidence: 0, // sin IA: no hay confianza modelada; el gestor valida
     }));
 
+    const reasonCode = 'ocr_only';
+    const diagnostics = { reasonCode, durationMs: Date.now() - startedAt, sourceChars: sources.reduce((n, t) => n + t.length, 0), fileCount: files.length, clientsCount: finalClients.length, aiUsed: false, localOnly: true };
+    console.info('ai_document_analysis', JSON.stringify(diagnostics));
     await query(
       `INSERT INTO ai_logs (action_type, input_text, output_data) VALUES ($1, $2, $3)`,
-      ['alta_multi_clientes', prompt || 'Archivos', JSON.stringify({ clientsCount: finalClients.length })]
+      ['alta_multi_clientes', 'Análisis de documentos (OCR-only)', JSON.stringify(diagnostics)]
     );
 
-    res.json({ success: true, clients: finalClients, localOnly: !useAI });
+    res.json({ success: true, clients: finalClients, localOnly: true, aiUsed: false, reasonCode });
   } catch (error) {
     console.error('Error procesando multi-clientes con IA:', error);
     res.status(500).json({ error: 'Error procesando solicitud de IA' });
@@ -592,8 +480,8 @@ router.post('/test-connection', async (req: Request, res: Response) => {
   const startTime = Date.now();
   try {
     const { apiKey, apiUrl, model = 'gpt-4o-mini' } = req.body;
-    const key = (apiKey || process.env.OPENAI_API_KEY || '').trim();
-    const isLocalOllama = (apiUrl || '').includes('localhost') || (apiUrl || '').includes('127.0.0.1');
+    const key = aiCredential(apiKey, apiUrl);
+    const isLocalOllama = isLocalAi(apiUrl);
 
     if (!key && !isLocalOllama) {
       return res.status(400).json({
@@ -656,7 +544,7 @@ router.post('/test-connection', async (req: Request, res: Response) => {
       modelUsed: model,
     });
   } catch (err: any) {
-    return res.status(500).json({
+    return res.status(err instanceof EndpointNoPermitido ? 400 : 500).json({
       success: false,
       error: err.message || 'Error de conexión con el endpoint de IA',
       latencyMs: Date.now() - startTime,

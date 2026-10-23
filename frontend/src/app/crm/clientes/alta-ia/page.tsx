@@ -8,6 +8,10 @@ import { useRouter } from 'next/navigation';
 import { apiFetch, apiUrl } from '@/lib/api';
 import { createPortalAccess } from '@/lib/portal';
 import { reviewOcrResult } from '@/lib/ocr-review';
+import { buildMultiClientAiConfig } from '@/lib/multi-client-ai-config';
+import { extractExplicitClients } from '@/lib/explicit-client-fields';
+import { startLocalOcrWorker } from '@/lib/local-ocr-worker';
+import { CheckCircle2, LoaderCircle } from 'lucide-react';
 
 interface ExtractedClient {
   id: string;
@@ -17,6 +21,13 @@ interface ExtractedClient {
   email: string;
   city: string;
   address: string;
+  postal_code?: string;
+  country?: string;
+  nationality?: string;
+  iban?: string;
+  digid_status?: string;
+  verifiedFields?: string[];
+  fieldIssues?: Record<string, string>;
   preferred_language?: string;
   client_type?: string;
   organism?: string;
@@ -27,7 +38,7 @@ interface ExtractedClient {
   fee: number;
   notes: string;
   source: string;
-  extractionMethod?: 'OCR' | 'Extractor alternativo' | 'Texto pegado' | 'IA';
+  extractionMethod?: 'OCR' | 'Extractor alternativo' | 'Texto pegado' | 'IA' | 'IA + texto verificado';
   confidence: number;
   selected: boolean;
   sourceFileIds?: string[];
@@ -95,20 +106,22 @@ interface LocalOcrResult {
   method: 'OCR' | 'Extractor alternativo';
 }
 
-async function extractLocalOcr(file: File): Promise<LocalOcrResult> {
-  const { createWorker } = await import('tesseract.js');
-  const worker = await createWorker(['nld', 'eng', 'spa'], 1, {
-    workerPath: '/ocr-assets/worker.min.js',
-    corePath: '/ocr-assets/tesseract-core-lstm.wasm.js',
-    langPath: '/ocr-assets',
-    gzip: true,
-  });
+async function extractLocalOcr(file: File, onProgress: (message: string) => void): Promise<LocalOcrResult> {
+  let worker: Awaited<ReturnType<typeof startLocalOcrWorker>> | undefined;
+  const getWorker = async () => {
+    if (!worker) {
+      const { createWorker } = await import('tesseract.js');
+      worker = await startLocalOcrWorker(createWorker, onProgress);
+    }
+    return worker;
+  };
   let confidenceTotal = 0;
   let confidenceCount = 0;
 
   try {
     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
       const pdfjs: any = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).toString();
       const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
       const pages: string[] = [];
       const pageCount = Math.min(pdf.numPages, 5);
@@ -117,8 +130,8 @@ async function extractLocalOcr(file: File): Promise<LocalOcrResult> {
         const page = await pdf.getPage(pageNumber);
         const textContent = await page.getTextContent();
         const embeddedText = textContent.items
-          .map((item: any) => item.str || '')
-          .join(' ')
+          .map((item: any) => (item.str || '') + (item.hasEOL ? '\n' : ' '))
+          .join('')
           .trim();
         if (embeddedText) pages.push(embeddedText);
 
@@ -132,7 +145,7 @@ async function extractLocalOcr(file: File): Promise<LocalOcrResult> {
         const context = canvas.getContext('2d');
         if (!context) continue;
         await page.render({ canvasContext: context, viewport }).promise;
-        const result = await worker.recognize(canvas);
+        const result = await (await getWorker()).recognize(canvas);
         pages.push(result.data.text);
         confidenceTotal += Number(result.data.confidence) || 0;
         confidenceCount += 1;
@@ -145,14 +158,14 @@ async function extractLocalOcr(file: File): Promise<LocalOcrResult> {
       };
     }
 
-    const result = await worker.recognize(file);
+    const result = await (await getWorker()).recognize(file);
     return {
       text: result.data.text.trim(),
       confidence: Number(result.data.confidence) || 0,
       method: 'OCR',
     };
   } finally {
-    await worker.terminate();
+    await worker?.terminate();
   }
 }
 
@@ -169,6 +182,7 @@ export default function AltaIAEscaneerPage() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [ocrPending, setOcrPending] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState('Preparando OCR local...');
   const [nlpPrompt, setNlpPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -282,6 +296,7 @@ export default function AltaIAEscaneerPage() {
     setUploadedFiles((prev) => [...prev, ...newItems]);
 
     // OCR local para fotos y PDF escaneados. No usa API Key ni ningún modelo IA.
+    setOcrProgress('Preparando OCR local...');
     setOcrPending(true);
     void Promise.all(
       validFiles.map(async (file, index) => {
@@ -289,7 +304,7 @@ export default function AltaIAEscaneerPage() {
           return;
         }
         try {
-          const result = await extractLocalOcr(file);
+          const result = await extractLocalOcr(file, setOcrProgress);
           const review = reviewOcrResult({
             text: result.text,
             confidence: result.confidence,
@@ -304,7 +319,7 @@ export default function AltaIAEscaneerPage() {
           console.warn('OCR local no disponible para', file.name, error);
           const itemId = newItems[index].id;
           setUploadedFiles((prev) => prev.map((item) => (item.id === itemId
-            ? { ...item, textContent: '', ocrConfidence: 0, ocrMethod: 'OCR', ocrError: 'No hemos podido leer el documento. Revisa la imagen o introduce los datos manualmente.' }
+            ? { ...item, textContent: '', ocrConfidence: 0, ocrMethod: 'OCR', ocrError: 'No hemos podido leer el documento. Comprueba la conexión y vuelve a cargarlo, o introduce los datos manualmente.' }
             : item)));
         }
       })
@@ -313,6 +328,60 @@ export default function AltaIAEscaneerPage() {
 
   const handleRemoveFile = (fileId: string) => {
     setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+  };
+
+  // ==========================================
+  // SOLO OCR: extrae texto de archivos sin llamar a IA
+  // ==========================================
+  const handleProcessOcrOnly = async () => {
+    if (uploadedFiles.length === 0) return;
+    setIsProcessing(true);
+    setOcrProgress('Extrayendo texto con OCR...');
+    setOcrPending(true);
+
+    try {
+      // Ejecutar OCR local en todos los archivos que no tengan texto
+      const updatedFiles = await Promise.all(
+        uploadedFiles.map(async (file) => {
+          if (!file.type.startsWith('image/') && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+            return file;
+          }
+          if (file.textContent && file.textContent.trim().length > 0) {
+            return file; // Ya tiene texto
+          }
+          try {
+            const result = await extractLocalOcr(file, setOcrProgress);
+            const review = reviewOcrResult({
+              text: result.text,
+              confidence: result.confidence,
+              method: result.method,
+              fileName: file.name,
+            });
+            return {
+              ...file,
+              textContent: review.extractedText,
+              ocrConfidence: review.confidence,
+              ocrMethod: review.method,
+              ocrError: review.message,
+            };
+          } catch (error) {
+            console.warn('OCR local no disponible para', file.name, error);
+            return {
+              ...file,
+              textContent: '',
+              ocrConfidence: 0,
+              ocrMethod: 'OCR',
+              ocrError: 'No hemos podido leer el documento. Comprueba la conexión y vuelve a cargarlo, o introduce los datos manualmente.',
+            };
+          }
+        })
+      );
+      setUploadedFiles(updatedFiles);
+      showToast('OCR completado. Revisa el texto extraído en cada archivo.', 'info');
+    } finally {
+      setOcrPending(false);
+      setIsProcessing(false);
+    }
   };
 
   // Cargar archivos de prueba
@@ -368,10 +437,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     if (!nlpPrompt.trim() && uploadedFiles.length === 0) return;
     setIsProcessing(true);
 
-    // El modo documental es local: el navegador ya ha leído el PDF o la
-    // imagen mediante PDF.js/Tesseract. No requiere sesión API, Ollama ni IA.
+    // Recupera texto del PDF antes de enviarlo al modelo. Leerlo localmente
+    // no sustituye el análisis IA ni demuestra un fallo del proveedor.
+    let analysisFiles = uploadedFiles;
     if (uploadedFiles.length > 0) {
-      const localFiles = await Promise.all(uploadedFiles.map(async (file) => {
+      analysisFiles = await Promise.all(uploadedFiles.map(async (file) => {
         if (!file.dataUrl || !file.name.toLowerCase().endsWith('.pdf')) return file;
         try {
           const response = process.env.NODE_ENV === 'production'
@@ -386,35 +456,35 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               });
           if (!response.ok) return file;
           const data = await response.json();
-          return data.text ? { ...file, textContent: data.text } : file;
+          // El parser puede devolver solo separadores de página para un PDF escaneado.
+          // Nunca sustituir el OCR legible del navegador por ese texto vacío.
+          const pdfText = typeof data.text === 'string' ? data.text.replace(/--\s*\d+\s+of\s+\d+\s*--/g, '').trim() : '';
+          return pdfText ? { ...file, textContent: pdfText } : file;
         } catch {
           return file;
         }
       }));
-      setUploadedFiles(localFiles);
-      fallbackMultiParse(localFiles);
-      setExtraccionLocal(true);
-      setIsProcessing(false);
-      return;
+      setUploadedFiles(analysisFiles);
     }
 
     try {
       const savedConfig = typeof window !== 'undefined' ? localStorage.getItem('nexusgest_ai_config') : null;
-      const aiConfig = savedConfig ? JSON.parse(savedConfig) : {};
+      let aiConfig: Record<string, any> = {};
+      try { aiConfig = savedConfig ? JSON.parse(savedConfig) || {} : {}; } catch { /* Corrupt saved settings must not disable local analysis. */ }
+      const aiRequestConfig = buildMultiClientAiConfig(aiConfig);
       const res = await apiFetch('/ai/parse-multi-clients', {
         method: 'POST',
         body: JSON.stringify({
           prompt: nlpPrompt,
-          useAI: false,
+          ...aiRequestConfig,
           apiKey: aiConfig.apiKey || '',
-          apiUrl: aiConfig.apiUrl || '',
-          model: aiConfig.model || '',
-          files: uploadedFiles.map((f) => ({
+          files: analysisFiles.map((f) => ({
             name: f.name,
             type: f.type,
             size: f.size,
             textContent: f.textContent,
-            dataUrl: f.dataUrl,
+            // OCR/PDF text is sufficient for analysis; keep original bytes in UI for later review/upload.
+            dataUrl: f.textContent?.trim() ? undefined : f.dataUrl,
           })),
         }),
       });
@@ -428,23 +498,30 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
         setDetectedClients(
           data.clients.map((c: any, idx: number) => ({
             id: c.id || `ai_${Date.now()}_${idx}`,
-            full_name: c.full_name || `Cliente Detectado #${idx + 1}`,
+            full_name: c.full_name || '',
             bsn: c.bsn || '',
             phone: c.phone || '',
             email: c.email || '',
             city: c.city || '',
             address: c.address || '',
+            postal_code: c.postal_code || '',
+            country: c.country || '',
+            nationality: c.nationality || '',
+            iban: c.iban || '',
+            digid_status: c.digid_status || '',
+            verifiedFields: c.verifiedFields || [],
+            fieldIssues: c.fieldIssues || {},
             preferred_language: c.preferred_language || c.language || '',
             client_type: c.client_type || '',
             organism: c.organism || '',
             dates: c.dates || '',
             status: c.status || '',
             id_document_number: c.id_document_number || '',
-            service_title: c.service_title || 'Consulta general',
+            service_title: c.service_title || '',
             fee: typeof c.fee === 'number' ? c.fee : 0,
-            notes: c.notes || 'Datos extraídos mediante Inteligencia Artificial.',
+            notes: c.notes || '',
             source: c.source || 'Análisis IA',
-            extractionMethod: c.extractionMethod || 'IA',
+            extractionMethod: c.extractionMethod || (data.localOnly ? 'Extractor alternativo' : 'IA'),
             // Si la API no manda confianza, se asume la MAS BAJA posible.
             // Un dato ausente no es un dato fiable: mostrar 95 % inventa
             // una garantia que nadie ha medido.
@@ -453,14 +530,16 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           }))
         );
         setIsReviewMode(true);
-        setUsadoFallback(false);
-        setExtraccionLocal(Boolean(data.localOnly));
+        setUsadoFallback(Boolean(data.localOnly));
+        setExtraccionLocal(false);
       } else {
-        fallbackMultiParse();
+        fallbackMultiParse(analysisFiles);
+        setExtraccionLocal(false);
       }
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'No se pudo conectar con el motor IA.', 'error');
-      fallbackMultiParse();
+      fallbackMultiParse(analysisFiles);
+      setExtraccionLocal(false);
     } finally {
       setIsProcessing(false);
     }
@@ -471,175 +550,21 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     // Marca el resultado como coming del extractor local, no de la IA, para
     // que el gestor no confunda ambos en la pantalla de revision.
     setUsadoFallback(true);
-    const clients: ExtractedClient[] = [];
-
-    // 1. Extraer desde archivos si hay
-    if (sourceFiles.length > 0) {
-      sourceFiles.forEach((file, idx) => {
-        const ocr = file.textContent || '';
-        if (!ocr.trim()) return;
-        let name = 'Cliente detectado por OCR';
-        const readLine = (pattern: RegExp) => ocr.match(pattern)?.[1]?.trim() || '';
-        const bsn = ocr.match(/\b\d{9}\b/)?.[0] || '';
-        const email = ocr.match(/[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}/)?.[0] || '';
-        const phone = ocr.match(/(?:\+\d{1,3}|00\d{2,3}|06)[\s.-]?\d[\d\s().-]{7,15}/)?.[0]?.trim() || '';
-        const ocrName = readLine(/(?:naam|name|nombre|full\s*name)\s*[:.-]?\s*(.+)/im);
-        const ocrAddress = readLine(/(?:adres|address|direcci[oó]n)\s*[:.-]?\s*(.+)/im);
-        const ocrCity = readLine(/(?:woonplaats|city|ciudad|plaats)\s*[:.-]?\s*(.+)/im);
-        const ocrId = readLine(/(?:paspoort|passport|document(?:nummer|\s*number)?|dni)\s*[:.-]?\s*([A-Z0-9-]+)/im);
-        const birthDate = readLine(/(?:geboortedatum|date\s*of\s*birth|fecha\s*de\s*nacimiento)\s*[:.-]?\s*(\d{1,2}[-/]\d{1,2}[-/]\d{4})/im);
-        const country = readLine(/(?:land waarin u op 1 januari \d{4} woonde|nationaliteit|country|nacionalidad)\s*[:.-]?\s*([A-Za-zÀ-ÿ ]{3,40})/im);
-        const employers = Array.from(ocr.matchAll(/werkgever\s*:\s*([^\n]+)/gi)).map((m) => m[1].trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ');
-        const refund = ocr.match(/terug te krijgen[^€\n]*€\s*([\d.]+)/i)?.[1] || '';
-        if (ocrName) name = ocrName;
-
-        let serviceTitle = 'Consulta general';
-        let serviceFee = 0;
-        if (/aangifte|inkomstenbelasting|income tax|declaraci[oó]n fiscal/i.test(ocr)) {
-          serviceTitle = 'Declaración Fiscal M-Form';
-          serviceFee = catalogFee("Declaración Fiscal M-Form", 180);
-        } else if (/zorgtoeslag|digid/i.test(ocr)) {
-          serviceTitle = 'Activación DigiD + Zorgtoeslag';
-          serviceFee = catalogFee("Activación DigiD + Zorgtoeslag", 85);
-        } else if (/huurtoeslag/i.test(ocr)) {
-          serviceTitle = 'Solicitud Subsidio Huurtoeslag (Alquiler)';
-          serviceFee = catalogFee("Solicitud Subsidio Huurtoeslag (Alquiler)", 95);
-        }
-        const missing = [
-          !phone && 'teléfono',
-          !email && 'correo electrónico',
-          !ocrAddress && 'dirección',
-          !ocrId && 'documento de identidad',
-        ].filter(Boolean).join(', ');
-        const detectedExtra = [
-          birthDate && `Fecha de nacimiento: ${birthDate}`,
-          country && `País/nacionalidad: ${country}`,
-          employers && `Empleador(es): ${employers}`,
-          refund && `Devolución indicada: €${refund}`,
-        ].filter(Boolean).join(' · ');
-        clients.push({
-          id: `file_client_${Date.now()}_${idx}`,
-          full_name: name || `Documento ${idx + 1}`,
-          bsn,
-          phone,
-          email,
-          city: ocrCity,
-          address: ocrAddress,
-          id_document_number: ocrId,
-          service_title: serviceTitle,
-          fee: serviceFee,
-          notes: file.size === 0
-            ? `El archivo "${file.name}" llegó vacío (0 KB). Vuelve a seleccionarlo y comprueba que la carga termine antes de leerlo.`
-            : ocr
-              ? missing
-                ? `Texto leído localmente del archivo "${file.name}". ${detectedExtra ? `${detectedExtra}. ` : ''}No aparecen estos datos en el documento: ${missing}. Revisa antes de guardar.`
-                : `Texto leído localmente del archivo "${file.name}". ${detectedExtra ? `${detectedExtra}. ` : ''}Revisa todos los campos antes de guardar.`
-              : `No se encontró texto legible en "${file.name}". Puede ser un PDF escaneado; revisa que la imagen sea nítida o introduce los datos manualmente.`,
-          source: `Archivo: ${file.name} (${file.ocrMethod || 'Extractor alternativo'})`,
-          extractionMethod: file.ocrMethod || 'Extractor alternativo',
-          confidence: Math.max(0, Math.min(1, (file.ocrConfidence || 0) / 100)),
-          selected: true,
-          sourceFileIds: [file.id],
-        });
-      });
-    }
-
-    // 2. Extraer desde texto si hay
-    if (nlpPrompt.trim()) {
-      const blocks = nlpPrompt
-        .split(/(?:^|\n)(?:Cliente\s*\d*[:.-]|Caso\s*\d*[:.-]|\d+[\.\)-]\s+)/i)
-        .map((b) => b.trim())
-        .filter((b) => b.length > 10);
-
-      const items = blocks.length > 0 ? blocks : [nlpPrompt.trim()];
-
-      items.forEach((block, idx) => {
-        const bsnMatch = block.match(/\b\d{8,9}\b/);
-        const phoneMatch = block.match(/(?:\+31|\+34|0031|0034|06)\s?[\d\s-]{7,12}/);
-        const emailMatch = block.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        const feeMatch = block.match(/(\d+(?:[.,]\d{1,2})?)\s*(?:€|eur|euros)/i);
-
-        let service = 'Declaración Fiscal M-Form';
-        if (/digid/i.test(block)) service = 'Activación DigiD + Zorgtoeslag';
-        else if (/zorgtoeslag/i.test(block)) service = 'Solicitud Subsidio Zorgtoeslag';
-        else if (/huurtoeslag/i.test(block)) service = 'Solicitud Subsidio Huurtoeslag (Alquiler)';
-        else if (/kvk|autonomo|zzp/i.test(block)) service = 'Alta Eenmanszaak KVK y BTW';
-        else if (/kindgebonden/i.test(block)) service = 'Kindgebonden Budget (Ayuda Hijos)';
-
-        const firstLine = block.split(/,|\n|-/)[0].trim();
-        let name = firstLine.replace(/^(nombre|cliente|sr\.|sra\.|caso)[:\s]*/i, '').trim();
-        if (!name || name.length > 35) {
-          name = idx === 0 ? 'Mateo Fernández Gómez' : idx === 1 ? 'Sofía Vargas Ruiz' : `Cliente Detectado #${idx + 1}`;
-        }
-
-        let city = 'Amsterdam';
-        if (/rotterdam/i.test(block)) city = 'Rotterdam';
-        else if (/eindhoven/i.test(block)) city = 'Eindhoven';
-        else if (/utrecht/i.test(block)) city = 'Utrecht';
-        else if (/den haag|la haya/i.test(block)) city = 'Den Haag';
-
-        // Evitar duplicados de nombre si ya vino del archivo
-        if (!clients.some((c) => c.full_name.toLowerCase() === name.toLowerCase())) {
-          clients.push({
-            id: `txt_client_${Date.now()}_${idx}`,
-            full_name: name,
-            // Nunca inventar datos fiscales. Si no se extraen, se dejan
-            // vacios y el gestor los introduce antes de guardar.
-            bsn: bsnMatch ? bsnMatch[0] : '',
-            phone: phoneMatch ? phoneMatch[0] : '',
-            email: emailMatch ? emailMatch[0] : '',
-            city,
-            address: '',
-            id_document_number: '',
-            service_title: service,
-            fee: feeMatch ? parseFloat(feeMatch[1].replace(',', '.')) : 150.0,
-            notes: `Extraído de notas de texto: "${block.substring(0, 100)}..."`,
-            source: `Nota de texto #${idx + 1}`,
-            confidence: 0.95,
-            selected: true,
-          });
-        }
-      });
-    }
-
-    // Agrupar documentos del mismo lote: el BSN manda; si falta, usamos el
-    // nombre completo normalizado. Los datos no vacíos del segundo documento
-    // completan al primero y las notas conservan el origen de ambos.
-    const merged: ExtractedClient[] = [];
-    clients.forEach((candidate) => {
-      const candidateBsn = candidate.bsn.replace(/\s/g, '');
-      const candidateName = normalizeIdentity(candidate.full_name);
-      const existingIndex = merged.findIndex((current) => {
-        const currentBsn = current.bsn.replace(/\s/g, '');
-        return (candidateBsn && currentBsn && candidateBsn === currentBsn) ||
-          (candidateName.length > 3 && candidateName === normalizeIdentity(current.full_name) &&
-            (!candidateBsn || !currentBsn || candidateBsn === currentBsn));
-      });
-      if (existingIndex === -1) {
-        merged.push(candidate);
-        return;
-      }
-      const current = merged[existingIndex];
-      merged[existingIndex] = {
-        ...current,
-        full_name: current.full_name || candidate.full_name,
-        bsn: current.bsn || candidate.bsn,
-        phone: current.phone || candidate.phone,
-        email: current.email || candidate.email,
-        city: current.city || candidate.city,
-        address: current.address || candidate.address,
-        id_document_number: current.id_document_number || candidate.id_document_number,
-        service_title: current.service_title !== 'Consulta general' ? current.service_title : candidate.service_title,
-        fee: current.fee || candidate.fee,
-        source: `${current.source}; ${candidate.source}`,
-        notes: `${current.notes}\n${candidate.notes}`,
-        confidence: Math.max(current.confidence, candidate.confidence),
-        sourceFileIds: Array.from(new Set([...(current.sourceFileIds || []), ...(candidate.sourceFileIds || [])])),
-      };
-    });
-
-    setDetectedClients(merged);
+    const sources = [nlpPrompt, ...sourceFiles.map(file => file.textContent || '')];
+    const clients: ExtractedClient[] = extractExplicitClients(sources).filter(c => c.full_name).map((c, idx) => ({
+      id: `local_${Date.now()}_${idx}`, full_name: c.full_name || '',
+      bsn: c.bsn || '', phone: c.phone || '', email: c.email || '',
+      address: c.address || '', city: c.city || '', postal_code: c.postal_code || '',
+      nationality: c.nationality || '', country: c.country || '', iban: c.iban || '',
+      id_document_number: c.id_document_number || '', notes: c.notes || '',
+      verifiedFields: c.verifiedFields, fieldIssues: c.fieldIssues,
+      status: c.status || '', digid_status: c.digid_status || '',
+      service_title: '', fee: 0, confidence: 0, selected: true,
+      source: 'Texto explícito del documento · revisión obligatoria', extractionMethod: 'Extractor alternativo',
+    }));
+    setDetectedClients(clients);
     setIsReviewMode(true);
+    if (!clients.length) showToast('No se identificó un nombre completo inequívoco. Completa los datos manualmente.', 'error');
   };
 
   // ==========================================
@@ -657,7 +582,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
   const handleUpdateClientField = (id: string, field: keyof ExtractedClient, value: any) => {
     setDetectedClients((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
+      prev.map((c) => (c.id === id ? { ...c, [field]: value, verifiedFields: c.verifiedFields?.filter(name => name !== field), fieldIssues: { ...c.fieldIssues, [field]: 'Editado manualmente · revisar' } } : c))
     );
   };
 
@@ -668,11 +593,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
   const handleAddManualClientToBatch = () => {
     const newClient: ExtractedClient = {
       id: `manual_batch_${Date.now()}`,
-      full_name: 'Nuevo Cliente',
+      full_name: '',
       bsn: '',
-      phone: '+31 6 ',
+      phone: '',
       email: '',
-      city: 'Amsterdam',
+      city: '',
       address: '',
       id_document_number: '',
       service_title: servicesCatalog[0].title,
@@ -713,6 +638,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
         try {
           const matchRes = await apiFetch(`/clients/match?bsn=${encodeURIComponent(client.bsn.trim())}&full_name=${encodeURIComponent(client.full_name)}`);
           const matchData = await matchRes.json().catch(() => ({}));
+          if (!matchRes.ok) throw new Error(matchData.error || 'No se pudo resolver la identidad existente; revisa antes de crear otra ficha.');
           let clientData: any;
 
           if (matchRes.ok && matchData?.match?.id) {
@@ -737,12 +663,19 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 phone: client.phone || existing.phone || null,
                 bsn: client.bsn || existing.bsn || null,
                 id_document_number: client.id_document_number || existing.id_document_number || null,
+                postal_code: client.postal_code || existing.postal_code || null,
+                nationality: client.nationality || existing.nationality || null,
+                country: client.country || existing.country || null,
+                status: client.status || existing.status || null,
+                digid_status: client.digid_status || existing.digid_status || null,
+                iban: client.iban || existing.iban || null,
                 city: client.city || existing.city || null,
                 address: client.address || existing.address || null,
-                notes: [existing.notes, client.notes, originalImportText ? `Texto original de importación:\n${originalImportText}` : ''].filter(Boolean).join('\n'),
+                notes: [existing.notes, client.notes].filter(Boolean).join('\n'),
               }),
             });
-            clientData = updateRes.ok ? await updateRes.json() : { client: existing };
+            if (!updateRes.ok) throw new Error('No se pudo actualizar la ficha existente. No se ha confirmado el alta.');
+            clientData = await updateRes.json();
             clientData.client = clientData.client || existing;
             const accessRes = await apiFetch(`/clients/${clientData.client.id}/portal-access`, { method: 'POST' });
             clientData.portal_access = accessRes.ok ? (await accessRes.json()).portal_access : null;
@@ -757,11 +690,16 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               phone: client.phone,
               bsn: client.bsn,
               id_document_number: client.id_document_number,
+              postal_code: client.postal_code || null,
+              nationality: client.nationality || null,
+              country: client.country || null,
+              iban: client.iban || null,
+              document_review: true,
               city: client.city,
               address: client.address,
-              status: 'activo',
-              digid_status: 'pendiente_activar',
-              notes: [client.notes, originalImportText ? `Texto original de importación:\n${originalImportText}` : ''].filter(Boolean).join('\n'),
+              status: client.status || 'activo',
+              digid_status: client.digid_status || null,
+              notes: client.notes || null,
             }),
           });
           clientData = await clientRes.json();
@@ -775,6 +713,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             throw new Error('La API no devolvió el id del cliente resuelto');
           }
 
+          if (client.service_title) {
           const dossierRes = await apiFetch('/dossiers', {
             method: 'POST',
             body: JSON.stringify({
@@ -803,12 +742,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             if (!documentRes.ok) throw new Error(`No se pudo asociar el documento ${sourceFile.name}`);
           }
 
+          }
+
           // Solo entra en la lista de persistidos lo que la API confirmó.
           persistedClients.push({
             ...client,
             id: clientData.client.id,
-            digid_status: 'pendiente_activar',
-            status: 'activo',
+            digid_status: client.digid_status || null,
+            status: client.status || 'activo',
             portal_username: clientData.client.portal_username || clientData.portal_access?.username,
             portal_password: clientData.portal_access?.password,
           });
@@ -1190,14 +1131,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 </div>
               </div>
 
-              {/* Botón Principal de Procesamiento */}
+              {/* Botones de Procesamiento: OCR solo / OCR + IA */}
               <div className="pt-2 border-t border-surface-container flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="text-xs text-outline font-medium">
+                <div className="text-xs text-outline font-medium w-full sm:w-auto">
                   {uploadedFiles.length > 0 || nlpPrompt.trim() ? (
                     <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                      <span aria-hidden="true">{ocrPending ? <LoaderCircle size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}</span>
                       <span>
-                        {ocrPending ? 'Preparando OCR local...' : `Listo para leer: ${uploadedFiles.length} archivos · ${nlpPrompt.trim().length > 0 ? 'notas incluidas' : 'sin texto adicional'}`}
+                        {ocrPending ? ocrProgress : `Listo: ${uploadedFiles.length} archivos · ${nlpPrompt.trim().length > 0 ? 'notas incluidas' : 'sin texto adicional'}`}
                       </span>
                     </span>
                   ) : (
@@ -1205,19 +1146,33 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleProcessMultiAI}
-                  disabled={isProcessing || ocrPending || (uploadedFiles.length === 0 && !nlpPrompt.trim())}
-                  className="w-full sm:w-auto h-11 px-6 bg-secondary text-white text-xs font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className="material-symbols-outlined text-lg">
-                    {isProcessing ? 'hourglass_top' : 'auto_awesome'}
-                  </span>
-                  <span>
-                    {isProcessing ? 'Leyendo PDF/OCR local...' : ocrPending ? 'Preparando OCR local...' : uploadedFiles.length > 0 ? 'Analizar documentos con OCR e IA' : 'Analizar y preparar fichas'}
-                  </span>
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  {/* Botón Solo OCR */}
+                  <button
+                    type="button"
+                    onClick={handleProcessOcrOnly}
+                    disabled={ocrPending || isProcessing || uploadedFiles.length === 0}
+                    className="w-full sm:w-auto h-11 px-5 bg-green-600 text-white text-xs font-semibold rounded-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="material-symbols-outlined text-lg">text_snippet</span>
+                    <span>{ocrPending ? ocrProgress : 'Solo OCR (extraer texto)'}</span>
+                  </button>
+
+                  {/* Botón OCR + IA */}
+                  <button
+                    type="button"
+                    onClick={handleProcessMultiAI}
+                    disabled={isProcessing || ocrPending || (uploadedFiles.length === 0 && !nlpPrompt.trim())}
+                    className="w-full sm:w-auto h-11 px-6 bg-secondary text-white text-xs font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      {isProcessing ? 'hourglass_top' : 'auto_awesome'}
+                    </span>
+                    <span>
+                      {isProcessing ? 'Analizando con IA...' : 'OCR + IA (analizar y crear fichas)'}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1237,10 +1192,10 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                   El análisis IA no ha podido procesar los documentos.
                 </p>
                 <p>
-                  La aplicación ha usado el extractor local porque el servidor IA no
-                  respondió. <strong>El resultado no debe considerarse una extracción
-                  del contenido del PDF.</strong> Revisa la conexión de Ollama/API y
-                  contrasta siempre los datos con el documento original.
+                  La aplicación ha usado el extractor local al no obtener un resultado
+                  IA válido. Esto no demuestra que el servidor esté desconectado.
+                  Contrasta los campos con el documento original; si no hay texto
+                  legible, revisa el PDF mediante OCR o introduce los datos manualmente.
                 </p>
               </div>
             </div>
@@ -1249,8 +1204,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-3">
               <span className="material-symbols-outlined text-blue-600 text-xl shrink-0">verified_user</span>
               <div className="text-xs text-blue-900 leading-relaxed">
-                <p className="font-bold mb-1">Lectura local de PDF/OCR completada</p>
-                <p>No se ha utilizado IA ni se han enviado los documentos a ningún servidor. Revisa los datos detectados y completa los campos que estén vacíos.</p>
+                <p className="font-bold mb-1">Extracción local completada sin IA</p>
+                <p>No se utilizó un modelo de IA en este análisis. El extractor local puede omitir o confundir datos; revisa los campos con el texto original antes de continuar.</p>
               </div>
             </div>
           )}
@@ -1363,6 +1318,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       <p className="text-[11px] text-outline flex items-center gap-1.5 mt-0.5">
                         <span className="material-symbols-outlined text-[13px]">description</span>
                         <span>Origen: {client.source}</span>
+                        {client.extractionMethod && <span>· {client.extractionMethod}</span>}
                         <span>·</span>
                         <span
                           className={
@@ -1394,6 +1350,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
                   <strong>Revisión necesaria:</strong> los campos vacíos muestran <em>No detectado</em>. Confirma o corrige los datos antes de crear la ficha. La confianza es un indicador, no un bloqueo automático.
                   {client.confidence < 0.8 && <span className="block mt-1 font-semibold">Advertencia: revisa manualmente el texto y los datos detectados antes de confirmar.</span>}
+                  <span className="block mt-1">OCR: español, inglés y neerlandés. Solo se rellenan valores explícitos asociados a esta persona; los ausentes o ambiguos quedan vacíos.</span>
                   <span className="block mt-1">Campos pendientes: {[!client.full_name && 'nombre', !client.email && 'correo', !client.phone && 'teléfono', !client.city && 'ciudad', !client.address && 'dirección', !client.bsn && 'BSN', !client.service_title && 'trámite'].filter(Boolean).join(', ') || 'ninguno'}</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-4 text-xs">
@@ -1486,26 +1443,6 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                   </div>
 
                   <div>
-                    <label className="block text-outline uppercase text-[10px] font-semibold mb-1">Idioma preferido</label>
-                    <input type="text" value={client.preferred_language || ''} onChange={(e) => handleUpdateClientField(client.id, 'preferred_language', e.target.value)} placeholder="No detectado · ES / EN / NL" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none" />
-                  </div>
-
-                  <div>
-                    <label className="block text-outline uppercase text-[10px] font-semibold mb-1">Tipo de cliente</label>
-                    <input type="text" value={client.client_type || ''} onChange={(e) => handleUpdateClientField(client.id, 'client_type', e.target.value)} placeholder="No detectado" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none" />
-                  </div>
-
-                  <div>
-                    <label className="block text-outline uppercase text-[10px] font-semibold mb-1">Organismo relacionado</label>
-                    <input type="text" value={client.organism || ''} onChange={(e) => handleUpdateClientField(client.id, 'organism', e.target.value)} placeholder="No detectado" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none" />
-                  </div>
-
-                  <div>
-                    <label className="block text-outline uppercase text-[10px] font-semibold mb-1">Fechas / estado del trámite</label>
-                    <input type="text" value={[client.dates, client.status].filter(Boolean).join(' · ')} onChange={(e) => handleUpdateClientField(client.id, 'dates', e.target.value)} placeholder="No detectado" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none" />
-                  </div>
-
-                  <div>
                     <label className="block text-outline uppercase text-[10px] font-semibold mb-1">
                       Documento ID / Pasaporte
                     </label>
@@ -1532,6 +1469,29 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3 text-xs">
+                  {([['postal_code', 'Código postal'], ['country', 'País de residencia'], ['nationality', 'Nacionalidad'], ['iban', 'IBAN']] as const).map(([field, label]) => (
+                    <label key={field} className="block text-outline text-[10px] font-semibold">
+                      {label}
+                      <input aria-label={label} type="text" value={client[field] || ''} onChange={e => handleUpdateClientField(client.id, field, e.target.value)} placeholder="No detectado" className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-xs" />
+                      <span>{client.verifiedFields?.includes(field) ? 'Texto explícito · revisar' : client.fieldIssues?.[field] || 'Completar manualmente'}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-[10px] text-outline pt-2">Campos con evidencia explícita: {client.verifiedFields?.join(', ') || 'ninguno'}. Fecha de nacimiento: no es un campo de la ficha; si procede, añádela a notas.</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 text-xs">
+                  <label>Estado administrativo de la ficha
+                    <select aria-label="Estado del cliente" value={client.status || 'activo'} onChange={e => handleUpdateClientField(client.id, 'status', e.target.value)} className="w-full h-8 border border-outline-variant rounded bg-surface">
+                      <option value="activo">Activo (alta de ficha)</option><option value="inactivo">Inactivo</option><option value="prospecto">Prospecto</option>
+                    </select>
+                  </label>
+                  <label>Estado DigiD (no se deduce del trámite)
+                    <select aria-label="Estado DigiD" value={client.digid_status || ''} onChange={e => handleUpdateClientField(client.id, 'digid_status', e.target.value)} className="w-full h-8 border border-outline-variant rounded bg-surface">
+                      <option value="">No detectado</option><option value="sin_digid">Sin DigiD</option><option value="pendiente_activar">Pendiente de activar</option><option value="activo">Activo</option><option value="bloqueado">Bloqueado</option>
+                    </select>
+                  </label>
+                </div>
                 {/* Trámite y Notas */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 text-xs">
                   <div>
@@ -1554,6 +1514,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       }}
                       className="w-full h-8 px-2 border border-outline-variant rounded bg-surface text-xs focus:border-secondary focus:outline-none"
                     >
+                      <option value="">Sin expediente inicial · elegir trámite si procede</option>
                       {servicesCatalog.map((s) => (
                         <option key={s.title} value={s.title}>
                           {s.title} ({s.configured === false || s.defaultFee <= 0 ? 'Tarifa pendiente de configurar' : `€${s.defaultFee.toFixed(2)} · IVA incluido`})
@@ -1591,7 +1552,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 ¿Todo listo para dar de alta en NexusGest?
               </p>
               <p className="text-[11px] text-outline">
-                Nunca se crea una ficha sin confirmación. Se crearán {selectedCount} fichas completas de cliente con sus expedientes y presupuestos iniciales.
+                Nunca se crea una ficha sin confirmación. Se crearán {selectedCount} fichas de cliente. Solo se abrirá expediente si has elegido un trámite.
               </p>
             </div>
 
