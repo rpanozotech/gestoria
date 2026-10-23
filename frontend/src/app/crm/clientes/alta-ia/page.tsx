@@ -119,7 +119,7 @@ function ReviewStatus({ value, required = false }: { value?: string; required?: 
     pendiente: 'bg-slate-50 text-slate-500 border-slate-200',
   }[state];
   const labels = { detectado: 'Detectado', revisar: 'Revisar', pendiente: 'No detectado' };
-  return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${styles}`}>{labels[state]}</span>;
+  return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[13px] font-semibold ${styles}`}>{labels[state]}</span>;
 }
 
 interface UploadedFileItem {
@@ -1526,8 +1526,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                     </div>
 
                     <aside className="w-full max-w-none rounded-2xl border border-outline-variant bg-white p-4 shadow-sm xl:sticky xl:top-2 xl:-mt-[120px]">
-                      <div className="flex items-center gap-2 mb-3"><span className="material-symbols-outlined text-secondary">fact_check</span><div><h5 className="text-sm font-bold text-on-surface">Revisión de datos</h5><p className="text-[10px] text-outline">Estado de los datos extraídos y verificados automáticamente.</p></div></div>
-                      <div className="space-y-2">{([['Nombre y apellidos', client.full_name, true], ['BSN', client.bsn, true], ['Fecha de nacimiento', client.dates, true], ['Nacionalidad', client.nationality, false], ['País de nacimiento', client.birth_country, true], ['Documento de identidad', client.id_document_number, false], ['Teléfono', client.phone, false], ['Correo electrónico', client.email, false], ['Calle', client.address, true], ['Código postal', client.postal_code, true], ['Localidad', client.city, true], ['Municipio', client.municipality || client.city, true], ['Tipo de dirección', client.address_type, true], ['Primera inscripción BRP', client.brp_first_registration, false], ['Registro anterior', client.previous_registration, false], ['Procedencia', client.origin, false]] as [string, string | undefined, boolean][]).map(([label, value, required]) => <div key={label} className="flex items-center justify-between gap-2 border-b border-surface-container pb-2"><span className="text-[11px] text-on-surface-variant">{label}</span><ReviewStatus value={value} required={required} /></div>)}</div>
+                      <div className="flex items-center gap-2 mb-3"><span className="material-symbols-outlined text-secondary">fact_check</span><div><h5 className="text-[13px] font-bold text-on-surface">Revisión de datos</h5><p className="text-[13px] text-outline">Estado de los datos extraídos y verificados automáticamente.</p></div></div>
+                      <div className="space-y-2">{([['Nombre y apellidos', client.full_name, true], ['BSN', client.bsn, true], ['Fecha de nacimiento', client.dates, true], ['Nacionalidad', client.nationality, false], ['País de nacimiento', client.birth_country, true], ['Documento de identidad', client.id_document_number, false], ['Teléfono', client.phone, false], ['Correo electrónico', client.email, false], ['Calle', client.address, true], ['Código postal', client.postal_code, true], ['Localidad', client.city, true], ['Municipio', client.municipality || client.city, true], ['Tipo de dirección', client.address_type, true], ['Primera inscripción BRP', client.brp_first_registration, false], ['Registro anterior', client.previous_registration, false], ['Procedencia', client.origin, false]] as [string, string | undefined, boolean][]).map(([label, value, required]) => <div key={label} className="flex items-center justify-between gap-2 border-b border-surface-container pb-2"><span className="text-[13px] text-on-surface-variant">{label}</span><ReviewStatus value={value} required={required} /></div>)}</div>
                     </aside>
                   </div>
                 )}
