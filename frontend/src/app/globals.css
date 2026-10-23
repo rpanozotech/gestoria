@@ -174,8 +174,8 @@
     font-size: 13px;
   }
   .crm-new-client-page[data-review-mode="true"] > div:first-child {
-    width: min(100%, 1440px);
-    max-width: 1440px;
+    width: min(100%, 1500px);
+    max-width: 1500px;
     margin-inline: auto;
   }
   .crm-new-client-page[data-review-mode="true"] section.rounded-2xl {

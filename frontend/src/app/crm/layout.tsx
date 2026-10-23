@@ -533,7 +533,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content View: Adaptado a pantalla completa sin scrollbar visible a la derecha */}
-        <main className={`crm-page ${pathname === '/crm/tareas' ? 'crm-tareas-main' : ''} flex-1 h-[calc(100dvh-4.0625rem)] overflow-hidden px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex flex-col`}>
+        <main className={`crm-page ${pathname === '/crm/tareas' ? 'crm-tareas-main' : ''} flex-1 h-[calc(100dvh-4.0625rem)] overflow-hidden px-3 sm:px-5 lg:px-6 py-2 flex flex-col`}>
           {children}
         </main>
       </div>
