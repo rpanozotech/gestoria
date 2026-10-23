@@ -1719,7 +1719,7 @@ export default function CRMClientesPage() {
           </Link>
 
           <Link
-            href="/crm/clientes/nuevo"
+            href="/crm/clientes/alta-ia?mode=manual"
             className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-1"
           >
             <span className="material-symbols-outlined text-[15px]">person_add</span>

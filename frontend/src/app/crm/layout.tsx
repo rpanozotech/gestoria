@@ -22,14 +22,14 @@ function NavLink({ item, pathname, collapsed, onClick }: { item: NavItem; pathna
       onClick={onClick}
       title={collapsed ? item.label : undefined}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex items-center justify-between rounded-lg px-3 py-2 text-[13px] transition-all ${
+      className={`flex h-8 min-h-8 items-center justify-between rounded-lg px-3 py-1 text-[12px] transition-all ${
         isActive
           ? 'bg-[#0055D4] text-white shadow-xs font-semibold'
           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
       }`}
     >
       <span className="flex min-w-0 items-center gap-2.5">
-        <span className={`material-symbols-outlined text-[20px] ${isActive ? 'text-white' : 'text-slate-400'}`}>{item.icon}</span>
+        <span className={`material-symbols-outlined text-[18px] ${isActive ? 'text-white' : 'text-slate-400'}`}>{item.icon}</span>
         {!collapsed && <span className="truncate whitespace-nowrap">{item.label}</span>}
       </span>
       {!collapsed && item.badge && (
@@ -239,7 +239,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Brand header */}
           <div className={`brand-header h-[65px] min-h-[65px] shrink-0 ${sidebarCollapsed ? 'px-3' : 'px-4'} flex items-center justify-between border-b border-[#e2e8f0] bg-white`}>
             <Link href="/crm" className="flex items-center gap-2.5 min-w-0">
@@ -275,7 +275,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <nav aria-label="Navegación principal" className="flex flex-col gap-4 px-3 py-3">
+          <nav aria-label="Navegación principal" className="flex min-h-0 flex-1 flex-col gap-2 px-3 py-2 overflow-hidden">
             {navGroups.map((group) => {
               const isCollapsibleGroup = group.label === 'AUTOMATIZACIÓN' || group.label === 'CONFIGURACIÓN';
               const isOpen = openGroups[group.label] ?? true;
@@ -289,15 +289,15 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                         type="button"
                         onClick={() => setOpenGroups((groups) => ({ ...groups, [group.label]: !isOpen }))}
                         aria-expanded={isOpen}
-                        className="w-full flex items-center justify-between px-2.5 pb-1 text-left text-[11px] font-bold tracking-[0.14em] text-slate-500 uppercase hover:text-slate-800 transition-colors"
+                        className="flex h-6 w-full items-center justify-between px-2.5 text-left text-[10px] font-bold tracking-[0.14em] text-slate-500 uppercase hover:text-slate-800 transition-colors"
                       >
                         <span>{group.label}</span>
-                        <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
+                        <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
                           {isOpen ? 'expand_less' : 'expand_more'}
                         </span>
                       </button>
                     ) : (
-                      <p className="px-2.5 pb-1 text-[11px] font-bold tracking-[0.14em] text-slate-500 uppercase">{group.label}</p>
+                      <p className="flex h-6 items-center px-2.5 text-[10px] font-bold tracking-[0.14em] text-slate-500 uppercase">{group.label}</p>
                     )
                   )}
                   {showItems && group.items.map((item) => (
