@@ -629,7 +629,15 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       service_title: '', fee: 0, confidence: 0, selected: true,
       source: 'Texto explícito del documento · revisión obligatoria', extractionMethod: 'Extractor alternativo',
     }));
-    setDetectedClients(clients);
+    const reviewClients: ExtractedClient[] = clients.length > 0
+      ? clients
+      : [{
+          ...createBlankExtractedClient(servicesCatalog[0]?.title || '', servicesCatalog[0]?.defaultFee || 0),
+          source: 'Lectura OCR/IA sin datos identificables · completar manualmente',
+          extractionMethod: 'Extractor alternativo',
+          confidence: 0,
+        }];
+    setDetectedClients(reviewClients);
     setIsReviewMode(true);
     if (!clients.length) showToast('No se identificó un nombre completo inequívoco. Completa los datos manualmente.', 'error');
   };
