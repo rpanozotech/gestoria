@@ -59,7 +59,7 @@ export default function CRMDashboardPage() {
   ];
 
   return (
-    <main className="crm-dashboard w-full h-full max-h-[calc(100vh-4.6rem)] overflow-y-auto p-3 sm:p-5 space-y-4 text-slate-800" aria-busy={loading}>
+    <main className="crm-dashboard w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden p-3 sm:p-5 space-y-4 text-slate-800" aria-busy={loading}>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div><p className="text-xs font-bold tracking-[0.14em] text-[#0055D4] uppercase">GESTIÓN DIARIA</p><h1 className="text-xl font-bold text-slate-900">Mi trabajo de hoy</h1></div>
         <Link href="/crm/agenda" className="rounded-lg bg-[#0055D4] px-4 py-2 text-sm font-semibold text-white">Abrir agenda</Link>
@@ -100,7 +100,6 @@ export default function CRMDashboardPage() {
         </section>
       </div>
 
-      <section className="rounded-xl border border-blue-200 bg-blue-50 p-4"><h2 className="text-base font-bold text-slate-900">Asistente NexusGest AI</h2><p className="mt-1 text-sm text-slate-700">Las funciones de IA requieren una clave de proveedor configurada. No se muestran datos ni resultados de demostración.</p><Link className="mt-2 inline-block text-sm font-semibold text-blue-800" href="/crm/integraciones">Revisar integraciones →</Link></section>
     </main>
   );
 }
