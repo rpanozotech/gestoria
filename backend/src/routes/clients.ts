@@ -187,6 +187,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     // 4. Citas
     const appointments = await query('SELECT a.*, sp.title AS service_title FROM appointments a LEFT JOIN service_prices sp ON sp.id = a.service_id WHERE a.client_id = $1 ORDER BY appointment_date DESC, appointment_time DESC', [id]);
+    const debts = await query(`SELECT d.*, COALESCE(SUM(p.amount), 0)::numeric AS paid_total
+      FROM debts d LEFT JOIN debt_payments p ON p.debt_id = d.id
+      WHERE d.client_id = $1 GROUP BY d.id ORDER BY d.due_date ASC NULLS LAST`, [id]);
     const serviceRequests = await query('SELECT sr.*, sp.title AS service_title, sp.base_price AS service_price FROM service_requests sr LEFT JOIN service_prices sp ON sp.id = sr.service_id WHERE sr.client_id = $1 ORDER BY sr.created_at DESC', [id]);
 
     // 5. Documentos
@@ -201,6 +204,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       quotes: quotes.rows,
       invoices: invoices.rows,
       appointments: appointments.rows,
+      debts: debts.rows,
       service_requests: serviceRequests.rows,
       documents: documents.rows,
       messages: messages.rows,
