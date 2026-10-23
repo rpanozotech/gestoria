@@ -1924,7 +1924,9 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {/* ========================================================================= */}
       {/* VISTA 3: FORMULARIO MANUAL INDIVIDUAL */}
       {/* ========================================================================= */}
-      {activeTab === 'manual' && !isReviewMode && (
+      {/* El alta manual usa la misma ficha de revisión que el flujo IA.
+          Este formulario legacy queda solo como respaldo para estados sin cliente. */}
+      {activeTab === 'manual' && !isReviewMode && detectedClients.length !== 1 && (
         <>
         <form
           onSubmit={handleSaveSingleManual}
