@@ -183,7 +183,7 @@ export default function DeudasPage() {
                       <td className="px-4 py-2.5 font-mono-data font-bold text-on-surface text-sm sm:text-base">{money(pending)}</td>
                       <td className="px-4 py-2.5"><Badge value={debt.status} /></td>
                       <td className="px-4 py-2.5 text-on-surface-variant text-xs sm:text-sm">{dateLabel(debt.due_date)}</td>
-                      <td className="px-3 py-2.5 text-right text-secondary"><span className="material-symbols-outlined text-[18px]">chevron_right</span></td>
+                      <td className="px-3 py-2.5 text-right"><Link href={'/crm/deudas/' + debt.id} prefetch={false} onClick={(event) => event.stopPropagation()} className="inline-flex items-center gap-1 rounded-lg border border-outline-variant px-2.5 py-1.5 text-xs font-bold text-secondary hover:bg-blue-50" aria-label={`Abrir ficha de ${debt.client_name || 'cliente'}`}>Ficha nueva <span className="material-symbols-outlined text-[16px]">open_in_new</span></Link></td>
                     </tr>
                   );
                 })}
