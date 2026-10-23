@@ -1281,15 +1281,15 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {/* ========================================================================= */}
       {(activeTab === 'ia_multi' || activeTab === 'manual') && isReviewMode && (
         <div
-          className="h-full min-h-0 overflow-hidden space-y-3 animate-in fade-in zoom-in-95"
-          style={{ zoom: detectedClients.length === 1 ? 0.69 : 1 }}
+          className="-mt-4 h-full min-h-0 overflow-hidden space-y-3 animate-in fade-in zoom-in-95"
+          style={{ zoom: detectedClients.length === 1 ? 0.72 : 1 }}
         >
           {detectedClients.length === 1 && (
             <div className="flex items-end justify-between gap-4 pb-2 shrink-0">
               <div>
-                <p className="text-[12px] text-[#536987] mb-2">Clientes <span className="mx-2">›</span> Alta inteligente de cliente</p>
-                <h1 className="text-[28px] font-bold tracking-tight text-[#071b46]">Alta inteligente de cliente</h1>
-                <p className="text-[14px] text-[#536987]">Los datos se han precompletado automáticamente. Revísalos y confirma la información.</p>
+                <p className="text-[13px] text-[#536987] mb-2">Clientes <span className="mx-2">›</span> Alta inteligente de cliente</p>
+                <h1 className="text-[34px] font-bold tracking-tight text-[#071b46]">Alta inteligente de cliente</h1>
+                <p className="text-[16px] text-[#536987]">Los datos se han precompletado automáticamente. Revísalos y confirma la información.</p>
               </div>
             </div>
           )}
