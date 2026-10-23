@@ -88,6 +88,10 @@ export default function ClienteFichaPage() {
       <style jsx global>{`
         /* La ficha 360 se presenta como un panel único, igual que la referencia. */
         main.h-full.min-h-0.overflow-y-auto > div { zoom: 0.72; width: 100%; max-width: none; margin-left: 0; margin-right: 0; }
+        main.h-full.min-h-0.overflow-y-auto > div { font-size: 13px; }
+        main.h-full.min-h-0.overflow-y-auto > div .text-xs,
+        main.h-full.min-h-0.overflow-y-auto > div .text-\[10px\],
+        main.h-full.min-h-0.overflow-y-auto > div .text-\[11px\] { font-size: 13px; line-height: 1.15; }
         main.h-full.min-h-0.overflow-y-auto[data-active-tab="resumen"] > div > div:last-child { display: none; }
         @media (max-width: 1023px) { main.h-full.min-h-0.overflow-y-auto > div { zoom: 1; width: auto; } }
       `}</style>
