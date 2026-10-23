@@ -84,10 +84,10 @@ export default function ClienteFichaPage() {
   const email = client.email || 'Sin correo';
 
   return (
-    <main data-active-tab={activeTab} className="h-full min-h-0 overflow-y-auto bg-[#f5f8fc] px-2 py-2 text-[#13234b] sm:px-3 lg:px-4">
+    <main data-active-tab={activeTab} className="h-full min-h-0 overflow-y-auto bg-[#f5f8fc] px-0 py-1 text-[#13234b]">
       <style jsx global>{`
         /* La ficha 360 se presenta como un panel único, igual que la referencia. */
-        main.h-full.min-h-0.overflow-y-auto > div { zoom: 0.72; width: 100%; max-width: none; margin-left: 0; margin-right: 0; }
+        main.h-full.min-h-0.overflow-y-auto > div { zoom: 0.72; width: 101.9%; max-width: none; margin-left: 0; margin-right: 0; }
         main.h-full.min-h-0.overflow-y-auto > div { font-size: 13px; }
         main.h-full.min-h-0.overflow-y-auto > div .text-xs,
         main.h-full.min-h-0.overflow-y-auto > div .text-\[10px\],
