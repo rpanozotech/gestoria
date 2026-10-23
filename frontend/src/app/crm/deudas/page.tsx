@@ -26,6 +26,7 @@ export default function DeudasPage() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [selected, setSelected] = useState<Debt | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<{ payments: any[]; installments: any[]; documents: any[]; notes: any[] } | null>(null);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('Todos');
   const [creditor, setCreditor] = useState('Todos');
@@ -52,6 +53,17 @@ export default function DeudasPage() {
       setClients(Array.isArray(data.clients) ? data.clients : []);
     }).catch(() => setClients([]));
   }, []);
+
+  useEffect(() => {
+    if (!selected?.id) { setSelectedDetail(null); return; }
+    let active = true;
+    apiFetch('/finance/debts/' + encodeURIComponent(selected.id)).then(async (response) => {
+      if (!response.ok) return;
+      const detail = await response.json().catch(() => ({}));
+      if (active) setSelectedDetail(detail);
+    }).catch(() => { if (active) setSelectedDetail(null); });
+    return () => { active = false; };
+  }, [selected?.id]);
 
   const rows = useMemo(() => debts.filter((debt) => {
     const matchesText = (debt.client_name + ' ' + debt.creditor + ' ' + debt.reference).toLowerCase().includes(query.toLowerCase());
@@ -237,7 +249,10 @@ export default function DeudasPage() {
                   </div>
                 </>
               )}
-              {detailTab !== 'Resumen' && <p className="text-slate-400 py-6 text-center text-sm">Detalle de {detailTab}.</p>}
+              {detailTab !== 'Resumen' && (() => {
+                const rows = detailTab === 'Pagos' ? selectedDetail?.payments : detailTab === 'Documentos' ? selectedDetail?.documents : selectedDetail?.notes;
+                return rows?.length ? <ul className="divide-y divide-slate-100 rounded-xl border border-outline-variant bg-white">{rows.map((row: any, index: number) => <li key={row.id || index} className="flex items-center justify-between gap-3 p-3"><span className="min-w-0 truncate font-medium">{row.body || row.file_name || row.status || 'Registro'}</span><span className="shrink-0 text-right text-xs text-on-surface-variant">{row.amount != null ? money(Number(row.amount)) + ' · ' : ''}{row.paid_at || row.created_at || ''}</span></li>)}</ul> : <div className="rounded-xl border border-dashed border-outline-variant p-6 text-center text-sm text-on-surface-variant">{selectedDetail ? `No hay ${detailTab.toLowerCase()} registrados.` : 'Cargando información…'}</div>;
+              })()}
             </div>
             <div className="grid gap-2 border-t border-surface-container p-3 shrink-0">
               <button type="button" onClick={() => { setPaymentAmount(String(Math.max(0, selectedPending).toFixed(2))); setPaymentModalOpen(true); }} className="h-9 rounded-lg bg-secondary text-xs sm:text-sm font-bold text-white shadow-2xs hover:bg-blue-700 transition-colors">
