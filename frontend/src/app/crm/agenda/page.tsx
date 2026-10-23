@@ -66,6 +66,7 @@ export default function CRMAgendaPage() {
 
   const [meetModal, setMeetModal] = useState<string | null>(null);
   const [callModal, setCallModal] = useState<{ client: string; phone: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'delete' | 'cancel'; id: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastTipo, setToastTipo] = useState<'exito' | 'error'>('exito');
 
@@ -283,10 +284,6 @@ export default function CRMAgendaPage() {
   // Para conservar constancia de una cita que el cliente ya tenía, usar
   // "Marcar cancelada" en su lugar.
   const handleDeleteAppointment = async (id: string) => {
-    if (!confirm('¿Eliminar esta cita de la agenda?\n\nSe borrará del servidor. Si solo quieres dejar constancia de que se canceló, usa "Marcar cancelada".')) {
-      return;
-    }
-
     if (!isBackendAppointmentId(id)) {
       setAppointments((prev) => prev.filter((a) => a.id !== id));
       showToast('Cita eliminada de la agenda.');
@@ -312,10 +309,6 @@ export default function CRMAgendaPage() {
   // Marcar cancelada: conserva el registro en vez de borrarlo. Es lo
   // correcto cuando el cliente ya tenía la cita reservada.
   const handleCancelAppointment = async (id: string) => {
-    if (!confirm('¿Marcar esta cita como cancelada?\n\nSe conserva en el historial; no se elimina de la agenda.')) {
-      return;
-    }
-
     if (!isBackendAppointmentId(id)) {
       setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'cancelada' } : a)));
       showToast('Cita marcada como cancelada.');
@@ -847,7 +840,11 @@ export default function CRMAgendaPage() {
                       </div>
 
                       <div className="shrink-0">
-                        {apt.status === 'completada' ? (
+                        {apt.status === 'cancelada' ? (
+                          <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[9px] font-bold rounded-full">
+                            Cancelada
+                          </span>
+                        ) : apt.status === 'completada' ? (
                           <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded-full">
                             Completada
                           </span>
@@ -932,7 +929,7 @@ export default function CRMAgendaPage() {
                         {apt.status !== 'cancelada' && apt.status !== 'completada' && (
                           <button
                             type="button"
-                            onClick={() => handleCancelAppointment(apt.id)}
+                            onClick={() => setConfirmAction({ type: 'cancel', id: apt.id })}
                             className="h-6 px-2 rounded text-[10px] font-semibold transition-colors flex items-center gap-1 border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
                             title="Marcar como cancelada, conservando el registro"
                           >
@@ -943,7 +940,7 @@ export default function CRMAgendaPage() {
 
                         <button
                           type="button"
-                          onClick={() => handleDeleteAppointment(apt.id)}
+                          onClick={() => setConfirmAction({ type: 'delete', id: apt.id })}
                           className="h-6 w-6 rounded text-outline hover:text-error hover:bg-red-50 flex items-center justify-center transition-colors"
                           title="Eliminar cita"
                         >
@@ -1042,7 +1039,11 @@ export default function CRMAgendaPage() {
                     </div>
 
                     <div>
-                      {apt.status === 'completada' ? (
+                      {apt.status === 'cancelada' ? (
+                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 text-[9px] font-bold rounded">
+                          Cancelada
+                        </span>
+                      ) : apt.status === 'completada' ? (
                         <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded">
                           Completada
                         </span>
@@ -1101,19 +1102,42 @@ export default function CRMAgendaPage() {
                       )}
                     </div>
 
-                    <button type="button"
-                      onClick={() => handleToggleComplete(apt.id)}
-                      className={`h-6 px-2 rounded text-[10px] font-semibold transition-colors flex items-center gap-1 ${
-                        apt.status === 'completada'
-                          ? 'border border-outline-variant text-outline hover:bg-surface-container'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-[13px]">
-                        {apt.status === 'completada' ? 'undo' : 'check'}
-                      </span>
-                      <span>{apt.status === 'completada' ? 'Reabrir' : 'Completar'}</span>
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button type="button"
+                        onClick={() => handleToggleComplete(apt.id)}
+                        className={`h-6 px-2 rounded text-[10px] font-semibold transition-colors flex items-center gap-1 ${
+                          apt.status === 'completada'
+                            ? 'border border-outline-variant text-outline hover:bg-surface-container'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                        }`}
+                        title={apt.status === 'completada' ? 'Reabrir cita' : 'Marcar como completada'}
+                      >
+                        <span className="material-symbols-outlined text-[13px]">
+                          {apt.status === 'completada' ? 'undo' : 'check'}
+                        </span>
+                        <span>{apt.status === 'completada' ? 'Reabrir' : 'Completar'}</span>
+                      </button>
+
+                      {apt.status !== 'cancelada' && apt.status !== 'completada' && (
+                        <button type="button"
+                          onClick={() => setConfirmAction({ type: 'cancel', id: apt.id })}
+                          className="h-6 px-2 rounded text-[10px] font-semibold border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center gap-1"
+                          title="Marcar como cancelada, conservando el registro"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">event_busy</span>
+                          <span>Cancelar</span>
+                        </button>
+                      )}
+
+                      <button type="button"
+                        onClick={() => setConfirmAction({ type: 'delete', id: apt.id })}
+                        className="h-6 w-6 rounded text-outline hover:text-error hover:bg-red-50 flex items-center justify-center transition-colors"
+                        title="Eliminar cita"
+                        aria-label={`Eliminar cita de ${apt.client_name}`}
+                      >
+                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1122,6 +1146,43 @@ export default function CRMAgendaPage() {
       )}
 
       {/* MODAL NUEVA CITA CON LLAMADA POR DEFECTO */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="agenda-confirm-title">
+          <div className="bg-surface-container-lowest max-w-sm w-full rounded-2xl border border-outline-variant shadow-2xl p-5 space-y-3 animate-in fade-in zoom-in-95">
+            <div className="flex items-start gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${confirmAction.type === 'delete' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                <span className="material-symbols-outlined">{confirmAction.type === 'delete' ? 'delete' : 'event_busy'}</span>
+              </div>
+              <div>
+                <h3 id="agenda-confirm-title" className="font-bold text-sm text-on-surface">
+                  {confirmAction.type === 'delete' ? '¿Eliminar esta cita?' : '¿Marcar cita como cancelada?'}
+                </h3>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  {confirmAction.type === 'delete'
+                    ? 'Se borrará del servidor y no podrá recuperarse desde la agenda.'
+                    : 'La cita seguirá en el historial, pero quedará marcada como cancelada.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-surface-container">
+              <button type="button" onClick={() => setConfirmAction(null)} className="h-8 px-3 border border-outline-variant rounded text-xs font-semibold hover:bg-surface-container">Volver</button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const action = confirmAction;
+                  setConfirmAction(null);
+                  if (action.type === 'delete') await handleDeleteAppointment(action.id);
+                  else await handleCancelAppointment(action.id);
+                }}
+                className={`h-8 px-3 rounded text-xs font-semibold text-white shadow-xs ${confirmAction.type === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'}`}
+              >
+                {confirmAction.type === 'delete' ? 'Eliminar cita' : 'Marcar cancelada'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showNewAptModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <form
