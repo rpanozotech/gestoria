@@ -1282,7 +1282,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {(activeTab === 'ia_multi' || activeTab === 'manual') && isReviewMode && (
         <div
           className="-mt-8 h-full min-h-0 overflow-hidden space-y-3 animate-in fade-in zoom-in-95"
-          style={{ zoom: detectedClients.length === 1 ? 0.66 : 1 }}
+          style={{ zoom: detectedClients.length === 1 ? 0.78 : 1 }}
         >
           {detectedClients.length === 1 && (
             <div className="flex items-end justify-between gap-4 pb-2 shrink-0">
