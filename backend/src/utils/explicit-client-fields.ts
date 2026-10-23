@@ -35,13 +35,13 @@ function parseOne(text: string): ExplicitClient {
     postal_code: text.match(/\b\d{4}[ ]?[A-Z]{2}\b/i)?.[0] || null,
     country: dutchResidenceCountry || country, nationality: dutchNationality || nationality, iban: text.match(/\b[A-Z]{2}\d{2}(?:[ ]?\d{4}){3,6}\b/)?.[0] || null,
     preferred_language: 'nl', client_type: null, organism: 'Belastingdienst', dates: dutchBirthDate || dates, status: null,
-    id_document_number: valueAfter(text, ['dni', 'pasaporte', 'passport', 'id document']),
+    id_document_number: valueAfter(text, ['dni', 'pasaporte', 'passport', 'id document', 'documento registrado']),
     service_title: null, fee: null, notes: text.trim(), source: 'Extractor determinista',
   };
 }
 
 export function extractExplicitClients(sources: string[]): ExplicitClient[] {
-  return sources.flatMap((source) => source.split(/\n\s*\n|(?:^|\n)\s*(?:cliente|client|cliënt)\s*[:#-]/i))
+  return sources.flatMap((source) => source.split(/(?=(?:^|\n)\s*(?:cliente|client|cliënt)\s*[:#-])/i))
     .map(parseOne).filter((client) => client.full_name.length >= 3);
 }
 

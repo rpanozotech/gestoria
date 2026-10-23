@@ -574,6 +574,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             postal_code: c.postal_code || '',
             country: c.country || '',
             nationality: c.nationality || '',
+            birth_country: c.birth_country || '',
+            street_number: c.street_number || '',
+            municipality: c.municipality || '',
+            address_type: c.address_type || '',
+            brp_first_registration: c.brp_first_registration || '',
+            previous_registration: c.previous_registration || '',
+            origin: c.origin || '',
+            previous_registration_date: c.previous_registration_date || '',
             iban: c.iban || '',
             digid_status: c.digid_status || '',
             verifiedFields: c.verifiedFields || [],
@@ -622,7 +630,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       id: `local_${Date.now()}_${idx}`, full_name: c.full_name || '',
       bsn: c.bsn || '', phone: c.phone || '', email: c.email || '',
       address: c.address || '', city: c.city || '', postal_code: c.postal_code || '',
-      nationality: c.nationality || '', country: c.country || '', iban: c.iban || '', dates: c.dates || '',
+      nationality: c.nationality || '', birth_country: c.birth_country || '', country: c.country || '',
+      street_number: c.street_number || '', municipality: c.municipality || '', address_type: c.address_type || '',
+      brp_first_registration: c.brp_first_registration || '', previous_registration: c.previous_registration || '',
+      origin: c.origin || '', previous_registration_date: c.previous_registration_date || '',
+      iban: c.iban || '', dates: c.dates || '',
       id_document_number: c.id_document_number || '', notes: c.notes || '',
       verifiedFields: c.verifiedFields, fieldIssues: c.fieldIssues,
       status: c.status || '', digid_status: c.digid_status || '',
@@ -1485,7 +1497,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                           <label className="text-[13px] font-semibold text-outline uppercase">Nombre *<input required value={client.full_name.trim().split(/\s+/)[0] || ''} onChange={e => { const surname = client.full_name.trim().split(/\s+/).slice(1).join(' '); handleUpdateClientField(client.id, 'full_name', `${e.target.value} ${surname}`.trim()); }} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case font-semibold" /></label>
                           <label className="text-[13px] font-semibold text-outline uppercase">Apellidos *<input required value={client.full_name.trim().split(/\s+/).slice(1).join(' ')} onChange={e => { const firstName = client.full_name.trim().split(/\s+/)[0] || ''; handleUpdateClientField(client.id, 'full_name', `${firstName} ${e.target.value}`.trim()); }} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case font-semibold" /></label>
-                          <label className="text-[13px] font-semibold text-outline uppercase">BSN (Burgerservicenummer) *<input required type="password" inputMode="numeric" maxLength={11} value={client.bsn} onChange={e => handleUpdateClientField(client.id, 'bsn', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case font-mono-data" /></label>
+                          <label className="text-[13px] font-semibold text-outline uppercase">BSN (Burgerservicenummer) *<input required type="text" inputMode="numeric" autoComplete="off" maxLength={11} value={client.bsn} onChange={e => handleUpdateClientField(client.id, 'bsn', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case font-mono-data" /></label>
                           <label className="text-[13px] font-semibold text-outline uppercase">Fecha de nacimiento<input value={client.dates || ''} onChange={e => handleUpdateClientField(client.id, 'dates', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
                           <label className="text-[13px] font-semibold text-outline uppercase">Nacionalidad<input value={client.nationality || ''} onChange={e => handleUpdateClientField(client.id, 'nationality', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
                           <label className="text-[13px] font-semibold text-outline uppercase">País de nacimiento<input value={client.birth_country || ''} onChange={e => handleUpdateClientField(client.id, 'birth_country', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
@@ -1616,7 +1628,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       )}
                     </label>
                     <input
-                      type="password"
+                      type="text"
                       autoComplete="off"
                       value={client.bsn}
                       onChange={(e) => handleUpdateClientField(client.id, 'bsn', e.target.value)}

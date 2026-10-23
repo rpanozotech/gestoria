@@ -394,7 +394,12 @@ router.post('/parse-multi-clients', async (req: Request, res: Response) => {
       : fallback();
     const modelClients = Array.isArray((aiResult as any)?.clients) ? (aiResult as any).clients : [];
     if (modelClients.length > 0 && reasonCode !== 'local_extractor') aiUsed = true;
-    const finalClients = (modelClients.length > 0 ? modelClients : fallbackClients).map((c: any, index: number) => ({
+    // Conserva los valores explícitos del OCR/PDF aunque el modelo omita algún campo.
+    // La IA puede interpretar el documento, pero no debe borrar evidencia legible.
+    const enrichedModelClients = modelClients.length > 0
+      ? reconcileExplicitClientFields(modelClients, sources)
+      : modelClients;
+    const finalClients = (enrichedModelClients.length > 0 ? enrichedModelClients : fallbackClients).map((c: any, index: number) => ({
       ...c,
       id: c.id || `ai_client_${Date.now()}_${index}`,
       extractionMethod: aiUsed ? 'Ollama · IA + texto PDF verificado' : 'Extractor local de PDF/OCR',
