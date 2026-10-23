@@ -33,6 +33,14 @@ router.patch('/:id', async (req: Request, res: Response) => {
   } catch (error) { console.error('Error actualizando tarea:', error); res.status(500).json({ error: 'No se pudo actualizar la tarea' }); }
 });
 
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const result = await query('DELETE FROM crm_tasks WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Tarea no encontrada' });
+    res.json({ deleted: result.rows[0].id });
+  } catch (error) { console.error('Error eliminando tarea:', error); res.status(500).json({ error: 'No se pudo eliminar la tarea' }); }
+});
+
 router.post('/bulk', async (req: Request, res: Response) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id: unknown) => typeof id === 'string') : [];
   const action = typeof req.body?.action === 'string' ? req.body.action : '';
