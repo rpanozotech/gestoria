@@ -96,7 +96,19 @@ export async function previewApiResponse(path: string, init: RequestInit = {}): 
     return json({ [key]: [] });
   }
   if (path === '/auth/me') return json({ user: getStoredUser() || { id: 'demo-user', email: 'demo@example.test', full_name: 'Usuario de prueba', role: 'gestor' } });
-  if (path.startsWith('/clients/') && path !== '/clients/count') return json({ client: { ...demoClient, type: 'Particular', status: 'activo', responsible: 'Usuario de prueba', city: 'Eindhoven', address: 'Calle Demo 12', language: 'Español', notes: 'Cliente de demostración para staging.', created_at: '2026-04-10', last_activity: '2026-08-12' }, dossiers: demoDossiers, invoices: [{ number: 'FAC-DEMO-001', date: '05 nov 2026', concept: 'Consulta administrativa', total: 89, status: 'pagada' }], debts: demoDebts.filter((debt) => debt.client_id === demoClient.id), documents: [], appointments: demoAppointments });
+  if (path.startsWith('/clients/') && path !== '/clients/count') return json({
+    client: { ...demoClient, type: 'Particular', status: 'activo', responsible: 'Usuario de prueba', city: 'Eindhoven', address: 'Calle Demo 12', language: 'Español', notes: 'Cliente de demostración para staging.', created_at: '2026-04-10', last_activity: '2026-08-12' },
+    dossiers: demoDossiers,
+    service_requests: [],
+    invoices: [{ number: 'FAC-DEMO-001', date: '05 nov 2026', concept: 'Consulta administrativa', total: 89, status: 'pagada' }],
+    quotes: demoQuotes,
+    debts: demoDebts.filter((debt) => debt.client_id === demoClient.id),
+    documents: [],
+    appointments: demoAppointments.map((appointment) => ({ ...appointment, appointment_date: appointment.date, modality: appointment.type === 'videollamada' ? 'online_meet' : appointment.type })),
+    tasks: demoTasks,
+    messages: [],
+    audit: [],
+  });
   if (path === '/finance/debts') return json({ debts: demoDebts });
   if (path.match(/^\/finance\/debts\/[^/]+$/)) return json({ debt: demoDebts[0], payments: [{ id: 'demo-payment-1', amount: 120, paid_at: '2026-10-15', status: 'Registrado' }], installments: [{ id: 'demo-installment-1', installment_number: 1, amount: 120, due_date: '2026-10-15', status: 'Pagado' }, { id: 'demo-installment-2', installment_number: 2, amount: 120, due_date: '2026-11-15', status: 'Pendiente' }], documents: [], notes: [], history: [] });
   if (path === '/finance/obligations') return json({ obligations: [] });
