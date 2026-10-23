@@ -692,12 +692,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     const toSave = detectedClients.filter((c) => c.selected);
     if (toSave.length === 0) return;
 
-    // El BSN identifica con máxima seguridad. Si no aparece en el documento,
-    // permitimos el alta por nombre completo para poder enlazarlo después;
-    // nunca aceptamos un BSN presente con formato inválido.
-    const invalidIdentity = toSave.filter((c) => c.bsn && !/^\d{9}$/.test(c.bsn.trim()) || !c.full_name.trim());
+    // Para crear la ficha solo exigimos identidad mínima: nombre, apellidos y BSN.
+    // El resto de datos se puede completar posteriormente desde la ficha 360°.
+    const invalidIdentity = toSave.filter((c) => {
+      const nameParts = c.full_name.trim().split(/\s+/).filter(Boolean);
+      return nameParts.length < 2 || !isValidBsn(c.bsn);
+    });
     if (invalidIdentity.length > 0) {
-      showToast(`Revisa el BSN o el nombre completo en ${invalidIdentity.length} cliente(s) antes de guardar.`, 'error');
+      showToast(`Completa nombre, apellidos y un BSN válido de 9 dígitos en ${invalidIdentity.length} cliente(s). El resto de datos es opcional.`, 'error');
       return;
     }
 
@@ -920,6 +922,10 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       return;
     }
 
+    if (manualClient.full_name.trim().split(/\s+/).filter(Boolean).length < 2) {
+      showToast('Introduce nombre y apellidos antes de guardar.', 'error');
+      return;
+    }
     if (!isValidBsn(manualClient.bsn)) {
       showToast('El BSN debe tener 9 dígitos. Revísalo antes de guardar.', 'error');
       return;
@@ -976,7 +982,9 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
   };
 
   const selectedCount = detectedClients.filter((c) => c.selected).length;
-  const canSaveSelected = selectedCount > 0 && detectedClients.filter((c) => c.selected).every((c) => c.full_name.trim().length > 0);
+  const canSaveSelected = selectedCount > 0 && detectedClients
+    .filter((c) => c.selected)
+    .every((c) => c.full_name.trim().split(/\s+/).filter(Boolean).length >= 2 && isValidBsn(c.bsn));
   const totalFees = detectedClients
     .filter((c) => c.selected)
     .reduce((sum, c) => sum + (c.fee || 0), 0);
@@ -1297,7 +1305,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               <div>
                 <p className="text-[13px] text-[#536987] mb-2">Clientes <span className="mx-2">›</span> Alta inteligente de cliente</p>
                 <h1 className="text-[34px] font-bold tracking-tight text-[#071b46]">Alta inteligente de cliente</h1>
-                <p className="text-[16px] text-[#536987]">Los datos se han precompletado automáticamente. Revísalos y confirma la información.</p>
+                <p className="text-[16px] text-[#536987]">Los datos se han precompletado automáticamente. Para crear la ficha solo necesitas nombre, apellidos y BSN; el resto puedes completarlo después.</p>
               </div>
             </div>
           )}
@@ -1477,7 +1485,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                           <label className="text-[13px] font-semibold text-outline uppercase">Nombre *<input required value={client.full_name.trim().split(/\s+/)[0] || ''} onChange={e => { const surname = client.full_name.trim().split(/\s+/).slice(1).join(' '); handleUpdateClientField(client.id, 'full_name', `${e.target.value} ${surname}`.trim()); }} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case font-semibold" /></label>
                           <label className="text-[13px] font-semibold text-outline uppercase">Apellidos *<input required value={client.full_name.trim().split(/\s+/).slice(1).join(' ')} onChange={e => { const firstName = client.full_name.trim().split(/\s+/)[0] || ''; handleUpdateClientField(client.id, 'full_name', `${firstName} ${e.target.value}`.trim()); }} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case font-semibold" /></label>
-                          <label className="text-[13px] font-semibold text-outline uppercase">BSN (Burgerservicenummer)<input type="password" value={client.bsn} onChange={e => handleUpdateClientField(client.id, 'bsn', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case font-mono-data" /></label>
+                          <label className="text-[13px] font-semibold text-outline uppercase">BSN (Burgerservicenummer) *<input required type="password" inputMode="numeric" maxLength={11} value={client.bsn} onChange={e => handleUpdateClientField(client.id, 'bsn', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case font-mono-data" /></label>
                           <label className="text-[13px] font-semibold text-outline uppercase">Fecha de nacimiento<input value={client.dates || ''} onChange={e => handleUpdateClientField(client.id, 'dates', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
                           <label className="text-[13px] font-semibold text-outline uppercase">Nacionalidad<input value={client.nationality || ''} onChange={e => handleUpdateClientField(client.id, 'nationality', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
                           <label className="text-[13px] font-semibold text-outline uppercase">País de nacimiento<input value={client.birth_country || ''} onChange={e => handleUpdateClientField(client.id, 'birth_country', e.target.value)} className="mt-1 w-full h-7 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
@@ -1497,13 +1505,13 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       <section className="rounded-2xl border border-outline-variant bg-white p-3 shadow-sm">
                         <div className="flex items-center gap-2 mb-3"><span className="material-symbols-outlined text-secondary">home</span><h5 className="text-sm font-bold text-on-surface">Domicilio en Países Bajos</h5></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                          <label className="text-[13px] font-semibold text-outline uppercase">Calle *<input value={client.address?.replace(/\s+\d+$/, '') || ''} onChange={e => handleUpdateClientField(client.id, 'address', `${e.target.value} ${client.street_number || ''}`.trim())} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
-                          <label className="text-[13px] font-semibold text-outline uppercase">Número *<input value={client.street_number || ''} onChange={e => handleUpdateClientField(client.id, 'street_number', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
+                          <label className="text-[13px] font-semibold text-outline uppercase">Calle<input value={client.address?.replace(/\s+\d+$/, '') || ''} onChange={e => handleUpdateClientField(client.id, 'address', `${e.target.value} ${client.street_number || ''}`.trim())} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
+                          <label className="text-[13px] font-semibold text-outline uppercase">Número<input value={client.street_number || ''} onChange={e => handleUpdateClientField(client.id, 'street_number', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs mt-3">
-                          <label className="text-[13px] font-semibold text-outline uppercase">Código postal *<input value={client.postal_code || ''} onChange={e => handleUpdateClientField(client.id, 'postal_code', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
-                          <label className="text-[13px] font-semibold text-outline uppercase">Localidad *<input value={client.city || ''} onChange={e => handleUpdateClientField(client.id, 'city', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
-                          <label className="text-[13px] font-semibold text-outline uppercase">Municipio *<input value={client.municipality || client.city || ''} onChange={e => handleUpdateClientField(client.id, 'municipality', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
+                          <label className="text-[13px] font-semibold text-outline uppercase">Código postal<input value={client.postal_code || ''} onChange={e => handleUpdateClientField(client.id, 'postal_code', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
+                          <label className="text-[13px] font-semibold text-outline uppercase">Localidad<input value={client.city || ''} onChange={e => handleUpdateClientField(client.id, 'city', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
+                          <label className="text-[13px] font-semibold text-outline uppercase">Municipio<input value={client.municipality || client.city || ''} onChange={e => handleUpdateClientField(client.id, 'municipality', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case" /></label>
                         </div>
                         <label className="block text-[13px] font-semibold text-outline uppercase mt-3">Tipo de dirección<select value={client.address_type || 'Woonadres'} onChange={e => handleUpdateClientField(client.id, 'address_type', e.target.value)} className="mt-1 w-full h-8 px-2.5 border border-outline-variant rounded bg-surface text-[13px] normal-case"><option>Woonadres</option><option>Correspondencia</option><option>Empresa</option></select></label>
                       </section>
@@ -1535,7 +1543,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
                     <aside className="w-full max-w-none rounded-2xl border border-outline-variant bg-white p-4 shadow-sm xl:sticky xl:top-2 xl:-mt-[120px]">
                       <div className="flex items-center gap-2 mb-3"><span className="material-symbols-outlined text-secondary">fact_check</span><div><h5 className="text-[13px] font-bold text-on-surface">Revisión de datos</h5><p className="text-[13px] text-outline">Estado de los datos extraídos y verificados automáticamente.</p></div></div>
-                      <div className="space-y-2">{([['Nombre y apellidos', client.full_name, true], ['BSN', client.bsn, true], ['Fecha de nacimiento', client.dates, true], ['Nacionalidad', client.nationality, false], ['País de nacimiento', client.birth_country, true], ['Documento de identidad', client.id_document_number, false], ['Teléfono', client.phone, false], ['Correo electrónico', client.email, false], ['Calle', client.address, true], ['Código postal', client.postal_code, true], ['Localidad', client.city, true], ['Municipio', client.municipality || client.city, true], ['Tipo de dirección', client.address_type, true], ['Primera inscripción BRP', client.brp_first_registration, false], ['Registro anterior', client.previous_registration, false], ['Procedencia', client.origin, false]] as [string, string | undefined, boolean][]).map(([label, value, required]) => <div key={label} className="flex items-center justify-between gap-2 border-b border-surface-container pb-2"><span className="text-[13px] text-on-surface-variant">{label}</span><ReviewStatus value={value} required={required} /></div>)}</div>
+                      <div className="space-y-2">{([['Nombre y apellidos', client.full_name, true], ['BSN', client.bsn, true], ['Fecha de nacimiento', client.dates, false], ['Nacionalidad', client.nationality, false], ['País de nacimiento', client.birth_country, false], ['Documento de identidad', client.id_document_number, false], ['Teléfono', client.phone, false], ['Correo electrónico', client.email, false], ['Calle', client.address, false], ['Código postal', client.postal_code, false], ['Localidad', client.city, false], ['Municipio', client.municipality || client.city, false], ['Tipo de dirección', client.address_type, false], ['Primera inscripción BRP', client.brp_first_registration, false], ['Registro anterior', client.previous_registration, false], ['Procedencia', client.origin, false]] as [string, string | undefined, boolean][]).map(([label, value, required]) => <div key={label} className="flex items-center justify-between gap-2 border-b border-surface-container pb-2"><span className="text-[13px] text-on-surface-variant">{label}</span><ReviewStatus value={value} required={required} /></div>)}</div>
                     </aside>
                   </div>
                 )}
@@ -1860,7 +1868,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                       ['BSN', client.bsn, true],
                       ['Teléfono', client.phone, false],
                       ['Correo electrónico', client.email, false],
-                      ['Domicilio', client.address || client.city, true],
+                      ['Domicilio', client.address || client.city, false],
                       ['Código postal', client.postal_code, false],
                       ['Nacionalidad', client.nationality, false],
                       ['Trámite inicial', client.service_title, false],
