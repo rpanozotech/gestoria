@@ -314,7 +314,9 @@ router.post('/', async (req: Request, res: Response) => {
 
 // PUT /api/clients/:id - Actualizar datos del cliente
 router.put('/:id', async (req: Request, res: Response) => {
+  const db = await pool.connect();
   try {
+    await db.query('BEGIN');
     const { id } = req.params;
     const {
       full_name,
@@ -332,11 +334,11 @@ router.put('/:id', async (req: Request, res: Response) => {
       notes,
     } = req.body;
 
-    const previousResult = await query(
-      'SELECT full_name, email, phone, bsn, id_document_number, nationality, address, city, postal_code, iban, digid_status, status, notes FROM clients WHERE id = $1',
+    const previousResult = await db.query(
+      'SELECT full_name, email, phone, bsn, id_document_number, nationality, address, city, postal_code, iban, digid_status, status, notes FROM clients WHERE id = $1 FOR UPDATE',
       [id],
     );
-    if (previousResult.rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
+    if (previousResult.rows.length === 0) { await db.query('ROLLBACK'); return res.status(404).json({ error: 'Cliente no encontrado' }); }
 
     const sql = `
       UPDATE clients SET
@@ -358,7 +360,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       RETURNING *;
     `;
 
-    const result = await query(sql, [
+    const result = await db.query(sql, [
       full_name,
       email,
       phone,
@@ -376,24 +378,31 @@ router.put('/:id', async (req: Request, res: Response) => {
     ]);
 
     if (result.rows.length === 0) {
+      await db.query('ROLLBACK');
       return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    if (result.rows[0].status !== 'activo') {
+      await db.query("DELETE FROM auth_sessions s USING clients c, users u WHERE c.id=$1 AND s.user_id=c.user_id AND u.id=c.user_id AND u.role='cliente'", [id]);
     }
 
     const auditFields = ['full_name', 'email', 'phone', 'bsn', 'id_document_number', 'nationality', 'address', 'city', 'postal_code', 'iban', 'digid_status', 'status', 'notes'] as const;
     const changes = diffChangedFields(previousResult.rows[0], result.rows[0], auditFields);
     if (Object.keys(changes).length > 0) {
-      await query(
+      await db.query(
         `INSERT INTO client_audit_log (client_id, actor_user_id, actor_role, action, changes)
          VALUES ($1, $2, $3, 'client.updated', $4::jsonb)`,
         [id, req.user?.id || null, req.user?.role || null, JSON.stringify(changes)],
       );
     }
 
+    await db.query('COMMIT');
     res.json({ client: result.rows[0], message: 'Cliente actualizado correctamente' });
   } catch (error) {
+    await db.query('ROLLBACK').catch(() => undefined);
     console.error('Error al actualizar cliente:', error);
     res.status(500).json({ error: 'Error al actualizar datos' });
-  }
+  } finally { db.release(); }
 });
 
 // Revelación explícita de BSN para gestores autorizados. Nunca se guarda el valor en auditoría.
@@ -511,21 +520,24 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
 // POST /api/clients/:id/deactivate - Desactivar cliente (vía recomendada)
 //
-// Marca el cliente como 'inactivo' sin tocar ningun otro registro: el
-// historial permanece intacto y es reversible volviendo a ponerlo 'activo'.
+// Conserva historial y credenciales, pero revoca las sesiones del portal.
+// Reactivar permite un nuevo login; nunca recupera las sesiones revocadas.
 // Es la alternativa al borrado cuando el cliente ya tiene expediente.
 router.post('/:id/deactivate', async (req: Request, res: Response) => {
+  const db = await pool.connect();
   try {
+    await db.query('BEGIN');
     const { id } = req.params;
     const nuevoEstado = (req.body?.status || 'inactivo').trim();
 
     if (!['activo', 'inactivo', 'prospecto'].includes(nuevoEstado)) {
+      await db.query('ROLLBACK');
       return res.status(400).json({
         error: `Estado no válido: ${nuevoEstado}. Valores admitidos: activo, inactivo, prospecto.`,
       });
     }
 
-    const result = await query(
+    const result = await db.query(
       `UPDATE clients SET status = $1, updated_at = CURRENT_TIMESTAMP
        WHERE id = $2
        RETURNING id, full_name, status;`,
@@ -533,9 +545,16 @@ router.post('/:id/deactivate', async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
+      await db.query('ROLLBACK');
       return res.status(404).json({ error: 'Cliente no encontrado' });
     }
 
+    if (nuevoEstado !== 'activo') {
+      // Separate statement after the client lock: see sessions committed while
+      // the UPDATE waited, not the earlier statement snapshot.
+      await db.query("DELETE FROM auth_sessions s USING clients c, users u WHERE c.id=$1 AND s.user_id=c.user_id AND u.id=c.user_id AND u.role='cliente'", [id]);
+    }
+    await db.query('COMMIT');
     res.json({
       client: result.rows[0],
       message:
@@ -544,9 +563,10 @@ router.post('/:id/deactivate', async (req: Request, res: Response) => {
           : `Cliente marcado como "${nuevoEstado}".`,
     });
   } catch (error) {
+    await db.query('ROLLBACK').catch(() => undefined);
     console.error('Error al desactivar cliente:', error);
     res.status(500).json({ error: 'Error al cambiar el estado del cliente' });
-  }
+  } finally { db.release(); }
 });
 
 export default router;

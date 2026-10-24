@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
@@ -9,6 +9,15 @@ export default function Navbar() {
   const pathname = usePathname();
   const { lang, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMobileMenuOpen(false); menuButton.current?.focus(); }
+    };
+    if (mobileMenuOpen) document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [mobileMenuOpen]);
 
   const navLinks = lang === 'EN' ? [
     { href: '/', label: 'Home' },
@@ -26,13 +35,13 @@ export default function Navbar() {
 
   return (
     <>
-      <a href="#contenido-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-slate-900 focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-white">Ir al contenido principal</a>
+      <a href={pathname === '/' ? '#contenido-principal' : '#main-content'} className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-slate-900 focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-white">Ir al contenido principal</a>
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm w-full">
       <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
-        <div className="flex items-center gap-3 lg:gap-5 h-18 sm:h-20">
+        <div className="flex items-center justify-between gap-3 lg:gap-5 h-16 sm:h-20">
 
           {/* LOGO OFICIAL - RP GESTORÍA & ASESORÍA */}
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group lg:w-[265px] xl:w-[280px]">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group xl:w-[280px]">
             <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-sm border border-slate-200/90 group-hover:scale-105 transition-transform bg-slate-900 flex items-center justify-center shrink-0">
               <Image
                 src="/logo.png"
@@ -98,6 +107,7 @@ export default function Navbar() {
 
             {/* BOTÓN HAMBURGUESA MOBILE */}
             <button
+              ref={menuButton}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
               aria-controls="public-mobile-menu"
@@ -115,7 +125,7 @@ export default function Navbar() {
 
         {/* MENÚ MÓVIL DESPLEGABLE */}
         {mobileMenuOpen && (
-          <div id="public-mobile-menu" role="navigation" aria-label="Navegación móvil" className="lg:hidden py-4 border-t border-slate-100 bg-white/95 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-150">
+          <div id="public-mobile-menu" role="navigation" aria-label="Navegación móvil" className="max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain lg:hidden py-4 border-t border-slate-100 bg-white/95 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-150">
             <div className="flex flex-col space-y-2 pb-3">
               {navLinks.map((link) => (
                 <Link

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import { defaultPreferences as defaults, persistedPreferences, pushJson, persistPushSubscription, deletePushSubscription } from '@/lib/push-settings';
 
 const labels: Record<string, { title: string; desc: string; icon: string }> = {
   citas: {
@@ -42,87 +43,107 @@ const labels: Record<string, { title: string; desc: string; icon: string }> = {
   },
 };
 
-const defaults = {
-  citas: true,
-  deudas: true,
-  pagos: true,
-  documentos: true,
-  mensajes: true,
-  facturas: true,
-  tareas: true,
-};
-
 type Preferences = typeof defaults;
 
 export default function NotificationPreferencesPage() {
   const [preferences, setPreferences] = useState<Preferences>(defaults);
   const [subscribed, setSubscribed] = useState(false);
   const [notice, setNotice] = useState('');
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [provider, setProvider] = useState<'checking' | 'available' | 'unavailable' | 'error'>('checking');
+  const mutationPending = useRef(false);
+  const pushPending = useRef(false);
 
   useEffect(() => {
-    apiFetch('/push/preferences')
-      .then((res) => (res.ok ? res.json() : null))
+    let active = true;
+    pushJson<{ preferences: Preferences }>(apiFetch, '/push/preferences', 'No se pudieron cargar las preferencias de avisos.')
       .then((data) => {
-        if (data?.preferences) setPreferences({ ...defaults, ...data.preferences });
+        const saved = persistedPreferences(data);
+        if (active) { setPreferences(saved); setLoaded(true); }
       })
-      .catch(() => undefined);
+      .catch((error) => { if (active) setNotice(error instanceof Error ? error.message : 'No se pudieron cargar las preferencias. Recarga la página.'); });
+    pushJson<{ publicKey?: string; enabled?: boolean }>(apiFetch, '/push/public-key', 'No se pudo comprobar el proveedor Push.')
+      .then((data) => { if (active) setProvider(data.enabled === true && Boolean(data.publicKey) ? 'available' : 'unavailable'); })
+      .catch((error) => { if (active) { setProvider('error'); setNotice(error instanceof Error ? error.message : 'No se pudo comprobar el proveedor Push.'); } });
+    return () => { active = false; };
   }, []);
 
   const save = async (next: Preferences) => {
+    if (!loaded || mutationPending.current) return;
+    mutationPending.current = true;
+    setSaving(true);
+    const previous = preferences;
     setPreferences(next);
-    await apiFetch('/push/preferences', {
-      method: 'PUT',
-      body: JSON.stringify(next),
-    });
-    setNotice('Preferencias de avisos guardadas correctamente.');
-    window.setTimeout(() => setNotice(''), 3000);
+    setNotice('');
+    try {
+      const data = await pushJson<{ preferences: Preferences }>(apiFetch, '/push/preferences', 'No se pudieron guardar las preferencias.', {
+        method: 'PUT', body: JSON.stringify(next),
+      });
+      setPreferences(persistedPreferences(data));
+      setNotice('Preferencias de avisos guardadas correctamente.');
+    } catch (error) {
+      setPreferences(previous);
+      setNotice(error instanceof Error ? error.message : 'No se pudieron guardar las preferencias.');
+    } finally {
+      mutationPending.current = false;
+      setSaving(false);
+    }
   };
 
   const subscribe = async () => {
+    if (pushPending.current) return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !window.isSecureContext) {
-      setNotice('Las notificaciones push requieren un entorno seguro (HTTPS o localhost).');
+      setNotice('Las notificaciones push requieren un navegador compatible y HTTPS o localhost.');
       return;
     }
+    pushPending.current = true;
+    setPushBusy(true);
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const keyResponse = await apiFetch('/push/public-key');
-      const keyData = await keyResponse.json();
-      if (!keyData.publicKey) {
-        setNotice('El servidor Push está configurándose en este entorno.');
-        return;
+      const keyData = await pushJson<{ publicKey?: string; enabled?: boolean }>(apiFetch, '/push/public-key', 'No se pudo comprobar el proveedor Push.');
+      if (keyData.enabled !== true || !keyData.publicKey) {
+        setProvider('unavailable');
+        throw new Error('Push no disponible: el proveedor no está configurado. Tus preferencias sí pueden guardarse.');
       }
+      setProvider('available');
+      // ready puede no resolverse nunca si no hay worker registrado/activo.
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      if (!registration?.active) throw new Error('No hay un servicio de notificaciones activo. Recarga la página y vuelve a intentarlo.');
       const applicationServerKey = Uint8Array.from(
         atob(keyData.publicKey.replace(/-/g, '+').replace(/_/g, '/')),
         (char) => char.charCodeAt(0)
       );
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey,
-      });
-      await apiFetch('/push/subscription', {
-        method: 'POST',
-        body: JSON.stringify({ subscription }),
-      });
+      const existing = await registration.pushManager.getSubscription();
+      const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+      await persistPushSubscription(apiFetch, subscription, !existing);
       setSubscribed(true);
-      setNotice('Notificaciones web push activadas en este navegador.');
-    } catch {
-      setNotice('No se pudo completar la suscripción push en este navegador.');
+      setNotice('Suscripción push guardada para este navegador.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'No se pudo completar la suscripción push en este navegador.');
+    } finally {
+      pushPending.current = false;
+      setPushBusy(false);
     }
   };
 
   const unsubscribe = async () => {
+    if (pushPending.current) return;
+    pushPending.current = true;
+    setPushBusy(true);
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      await apiFetch('/push/subscription', {
-        method: 'DELETE',
-        body: JSON.stringify({ endpoint: subscription?.endpoint }),
-      });
-      await subscription?.unsubscribe();
+      if (!('serviceWorker' in navigator)) throw new Error('Este navegador no dispone de un servicio de notificaciones.');
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      const subscription = await registration?.pushManager.getSubscription();
+      // Nunca enviar un endpoint vacío: el backend borraría todos los dispositivos.
+      if (subscription) await deletePushSubscription(apiFetch, subscription);
       setSubscribed(false);
-      setNotice('Notificaciones desactivadas para este navegador.');
-    } catch {
-      setNotice('Error al cancelar la suscripción push.');
+      setNotice(subscription ? 'Notificaciones desactivadas para este navegador.' : 'No hay una suscripción push local en este navegador.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Error al cancelar la suscripción push.');
+    } finally {
+      pushPending.current = false;
+      setPushBusy(false);
     }
   };
 
@@ -196,9 +217,9 @@ export default function NotificationPreferencesPage() {
             <div className="p-3 bg-surface-container-low rounded-lg border border-surface-container space-y-2">
               <span className="text-[10.5px] uppercase font-bold text-outline tracking-wider block">Estado actual</span>
               <div className="flex items-center gap-2">
-                <span className={`w-2.5 h-2.5 rounded-full ${subscribed ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                <span className={`w-2.5 h-2.5 rounded-full ${subscribed && provider === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
                 <span className="text-xs font-semibold text-on-surface">
-                  {subscribed ? 'Activo en este dispositivo' : 'No confirmado en este navegador'}
+                  {provider === 'checking' ? 'Comprobando disponibilidad…' : provider === 'unavailable' ? 'Push no disponible: proveedor sin configurar' : provider === 'error' ? 'No se pudo comprobar el proveedor Push' : subscribed ? 'Suscripción guardada en este dispositivo' : 'Suscripción no confirmada en este navegador'}
                 </span>
               </div>
             </div>
@@ -208,6 +229,7 @@ export default function NotificationPreferencesPage() {
             <button
               type="button"
               onClick={subscribe}
+              disabled={pushBusy || provider !== 'available'}
               className="flex-1 h-9 rounded-md bg-secondary text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5"
             >
               <span className="material-symbols-outlined text-[15px]">check</span>
@@ -216,6 +238,7 @@ export default function NotificationPreferencesPage() {
             <button
               type="button"
               onClick={unsubscribe}
+              disabled={pushBusy}
               className="h-9 rounded-md border border-outline-variant px-3 text-xs font-semibold text-on-surface-variant hover:bg-surface transition-colors"
             >
               Desactivar
@@ -257,7 +280,8 @@ export default function NotificationPreferencesPage() {
 
                 <input
                   type="checkbox"
-                  checked={preferences[key as keyof Preferences]}
+                  checked={loaded && preferences[key as keyof Preferences]}
+                  disabled={!loaded || saving}
                   onChange={(e) => save({ ...preferences, [key]: e.target.checked })}
                   className="h-5 w-5 accent-secondary rounded cursor-pointer shrink-0"
                 />

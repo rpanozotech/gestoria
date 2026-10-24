@@ -1,0 +1,10 @@
+FROM nexusgest/backend:baseline-password-20261023
+COPY --chown=nextjs:nodejs dist/routes/dossiers.js dist/routes/service-requests.js dist/routes/appointments.js dist/routes/auth.js dist/routes/clients.js ./dist/routes/
+COPY --chown=nextjs:nodejs dist/middleware/auth.js ./dist/middleware/auth.js
+COPY --chown=nextjs:nodejs dist/utils/dossier-number.js dist/utils/auth-security.js ./dist/utils/
+
+# Keep fresh init and future opt-in migrations aligned with the targeted repair.
+COPY --chown=nextjs:nodejs dist/db/migrate.js dist/db/schema.sql ./dist/db/
+
+# Honor RUN_MIGRATIONS=false for every startup migration, not only security.
+COPY --chown=nextjs:nodejs dist/index.js ./dist/index.js

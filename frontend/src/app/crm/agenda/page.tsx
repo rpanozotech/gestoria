@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { appointmentClientHref } from '@/lib/agenda-context';
 
 interface Appointment {
   id: string;
   title: string;
+  client_id?: string;
   client_name: string;
   client_phone: string;
   appointment_date: string; // YYYY-MM-DD
@@ -39,6 +41,12 @@ function formatLongDate(dateStr: string): string {
 }
 
 export default function CRMAgendaPage() {
+  return <Suspense fallback={null}><AgendaContent /></Suspense>;
+}
+
+function AgendaContent() {
+  const searchParams = useSearchParams();
+  const requestedClientId = searchParams.get('client');
   const router = useRouter();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
@@ -56,6 +64,7 @@ export default function CRMAgendaPage() {
 
   // Modales
   const [showNewAptModal, setShowNewAptModal] = useState(false);
+  const [aptClientId, setAptClientId] = useState('');
   const [aptClientName, setAptClientName] = useState('');
   const [aptPhone, setAptPhone] = useState('');
   const [clientOptions, setClientOptions] = useState<any[]>([]);
@@ -64,7 +73,6 @@ export default function CRMAgendaPage() {
   const [aptTime, setAptTime] = useState('11:00');
   const [aptModality, setAptModality] = useState<'llamada' | 'presencial' | 'online_meet'>('llamada');
 
-  const [meetModal, setMeetModal] = useState<string | null>(null);
   const [callModal, setCallModal] = useState<{ client: string; phone: string } | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'delete' | 'cancel'; id: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -78,8 +86,34 @@ export default function CRMAgendaPage() {
   };
 
   useEffect(() => {
-    apiFetch('/clients').then((res) => res.ok ? res.json() : Promise.reject(new Error('clients'))).then((data) => setClientOptions(Array.isArray(data.clients) ? data.clients : [])).catch(() => setClientOptions([]));
+    apiFetch('/clients')
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error('clients')))
+      .then((data) => setClientOptions((options) => {
+        const clients = Array.isArray(data.clients) ? data.clients : [];
+        return [...clients, ...options.filter((option) => !clients.some((client: any) => client.id === option.id))];
+      }))
+      .catch(() => showToast('No se pudo cargar el directorio de clientes.', 'error'));
   }, []);
+
+  // La ficha transmite el ID, nunca se resuelve una identidad por nombre.
+  useEffect(() => {
+    if (!requestedClientId) return;
+    let active = true;
+    apiFetch(`/clients/${encodeURIComponent(requestedClientId)}`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data.client?.id) throw new Error(data.error || 'Cliente no encontrado.');
+        if (!active) return;
+        const client = data.client;
+        setClientOptions((options) => [...options.filter((option) => option.id !== client.id), client]);
+        setAptClientId(String(client.id));
+        setAptClientName(client.full_name || '');
+        setAptPhone(client.phone || '');
+        setShowNewAptModal(true);
+      })
+      .catch((error) => { if (active) showToast(error instanceof Error ? error.message : 'No se pudo cargar el cliente.', 'error'); });
+    return () => { active = false; };
+  }, [requestedClientId]);
 
   // Cargar citas reales de la API backend si está disponible
   useEffect(() => {
@@ -92,6 +126,7 @@ export default function CRMAgendaPage() {
         if (Array.isArray(data.appointments)) {
           const mapped: Appointment[] = data.appointments.map((a: any) => ({
             id: String(a.id),
+            client_id: a.client_id ? String(a.client_id) : undefined,
             title: a.title,
             client_name: a.client_name || a.full_name || 'Cliente',
             client_phone: a.client_phone || a.phone || '',
@@ -354,15 +389,11 @@ export default function CRMAgendaPage() {
 
     let newApt: Appointment | null = null;
     try {
-      const clientsResponse = await apiFetch(`/clients?search=${encodeURIComponent(aptClientName)}`);
-      const clientsData = clientsResponse.ok ? await clientsResponse.json() : {};
-      const matchedClient = (clientsData.clients || []).find((client: any) =>
-        String(client.full_name || '').trim().toLowerCase() === aptClientName.trim().toLowerCase()
-      );
+      if (!aptClientId) throw new Error('Selecciona un cliente del directorio.');
       const response = await apiFetch('/appointments', {
         method: 'POST',
         body: JSON.stringify({
-          client_id: matchedClient?.id,
+          client_id: aptClientId,
           full_name: aptClientName,
           phone: aptPhone,
           title: aptTitle,
@@ -378,6 +409,7 @@ export default function CRMAgendaPage() {
       const saved = data.appointment;
       newApt = {
         id: String(saved.id),
+        client_id: String(saved.client_id || aptClientId),
         title: saved.title,
         client_name: aptClientName,
         client_phone: aptPhone,
@@ -395,6 +427,7 @@ export default function CRMAgendaPage() {
       // El modo local permite probar la interfaz sin PostgreSQL.
       newApt = {
         id: String(Date.now()),
+        client_id: aptClientId,
         title: aptTitle,
         client_name: aptClientName,
         client_phone: aptPhone,
@@ -820,7 +853,7 @@ export default function CRMAgendaPage() {
                         <div className="min-w-0">
                           <button
                             type="button"
-                            onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+                            onClick={() => router.push(appointmentClientHref(apt))}
                             className="text-left font-bold text-xs sm:text-sm text-on-surface hover:text-secondary hover:underline flex items-center gap-1 group/cname transition-colors truncate max-w-full"
                             title={`Abrir Ficha 360° de ${apt.client_name}`}
                           >
@@ -869,7 +902,7 @@ export default function CRMAgendaPage() {
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+                          onClick={() => router.push(appointmentClientHref(apt))}
                           className="flex items-center gap-1 px-2 py-0.8 bg-secondary/10 hover:bg-secondary/20 text-secondary font-semibold rounded text-[10px] transition-colors border border-secondary/20 shadow-2xs"
                           title={`Abrir Ficha 360° de ${apt.client_name}`}
                         >
@@ -891,7 +924,7 @@ export default function CRMAgendaPage() {
                         {apt.modality === 'online_meet' && (
                           <button
                             type="button"
-                            onClick={() => setMeetModal(`meet.google.com/nxg-${apt.id}-asesoria`)}
+                            onClick={() => showToast('Enlace de videollamada pendiente: Google Meet no está conectado. Contacta con el cliente para acordar la conexión.', 'error')}
                             className="flex items-center gap-1 px-2 py-0.8 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-[10px] transition-colors shadow-xs"
                           >
                             <span className="material-symbols-outlined text-[13px]">videocam</span>
@@ -1024,7 +1057,7 @@ export default function CRMAgendaPage() {
                       <div>
                         <button
                           type="button"
-                          onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+                          onClick={() => router.push(appointmentClientHref(apt))}
                           className="text-left font-bold text-xs sm:text-sm text-on-surface hover:text-secondary hover:underline flex items-center gap-1 group/cname transition-colors"
                           title={`Abrir Ficha 360° de ${apt.client_name}`}
                         >
@@ -1066,7 +1099,7 @@ export default function CRMAgendaPage() {
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => router.push(`/crm/clientes?client=${encodeURIComponent(apt.client_name)}&from=agenda`)}
+                        onClick={() => router.push(appointmentClientHref(apt))}
                         className="flex items-center gap-1 px-2 py-0.8 bg-secondary/10 hover:bg-secondary/20 text-secondary font-semibold rounded text-[10px] transition-colors border border-secondary/20"
                         title={`Abrir Ficha 360° de ${apt.client_name}`}
                       >
@@ -1086,7 +1119,7 @@ export default function CRMAgendaPage() {
 
                       {apt.modality === 'online_meet' && (
                         <button type="button"
-                          onClick={() => setMeetModal(`meet.google.com/nxg-${apt.id}-asesoria`)}
+                          onClick={() => showToast('Enlace de videollamada pendiente: Google Meet no está conectado. Contacta con el cliente para acordar la conexión.', 'error')}
                           className="flex items-center gap-1 px-2 py-0.8 bg-blue-50 hover:bg-blue-100 text-blue-800 font-semibold rounded text-[10px] transition-colors"
                         >
                           <span className="material-symbols-outlined text-[13px] text-blue-600">videocam</span>
@@ -1270,16 +1303,18 @@ export default function CRMAgendaPage() {
               <div>
                 <label className="block text-outline uppercase font-semibold mb-1">Cliente</label>
                 <select
-                  value={aptClientName}
+                  value={aptClientId}
+                  required
                   onChange={(e) => {
-                    setAptClientName(e.target.value);
-                    const selected = clientOptions.find((client) => client.full_name === e.target.value);
+                    setAptClientId(e.target.value);
+                    const selected = clientOptions.find((client) => String(client.id) === e.target.value);
+                    setAptClientName(selected?.full_name || '');
                     setAptPhone(selected?.phone || '');
                   }}
                   className="w-full h-8 px-2.5 border border-outline-variant rounded bg-surface focus:border-secondary focus:outline-none"
                 >
                   <option value="">Selecciona un cliente</option>
-                  {clientOptions.map((client) => <option key={client.id} value={client.full_name}>{client.full_name}</option>)}
+                  {clientOptions.map((client) => <option key={client.id} value={client.id}>{client.full_name}</option>)}
                 </select>
               </div>
 
@@ -1383,36 +1418,7 @@ export default function CRMAgendaPage() {
         </div>
       )}
 
-      {/* MODAL SIMULACIÓN GOOGLE MEET */}
-      {meetModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 text-white max-w-sm w-full rounded-2xl p-5 text-center space-y-3.5 shadow-2xl">
-            <span className="material-symbols-outlined text-3xl text-emerald-400">videocam</span>
-            <h4 className="font-bold text-sm sm:text-base">Sala de Videollamada Google Meet</h4>
-            <p className="text-xs text-slate-300">
-              Enlace generado: <span className="font-mono-data font-bold text-secondary-fixed block mt-1">{meetModal}</span>
-            </p>
-            <div className="pt-2 flex justify-center gap-2">
-              <button type="button"
-                onClick={() => setMeetModal(null)}
-                className="h-8 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded"
-              >
-                Cerrar
-              </button>
-              <button type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(`https://${meetModal}`);
-                  showToast('¡Enlace de Google Meet copiado al portapapeles!');
-                  setMeetModal(null);
-                }}
-                className="h-8 px-4 bg-secondary hover:bg-blue-700 text-xs font-semibold rounded text-white"
-              >
-                Copiar Enlace
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

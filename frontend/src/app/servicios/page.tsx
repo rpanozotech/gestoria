@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
@@ -42,6 +42,24 @@ export default function ServiciosPage() {
       })) : []))
       .catch(() => setServicesList([]));
   }, []);
+  const serviceDialog = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!selectedService) return;
+    const opener = document.activeElement as HTMLElement | null;
+    const dialog = serviceDialog.current;
+    dialog?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedService(null);
+      if (event.key !== 'Tab' || !dialog) return;
+      const controls = Array.from(dialog.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea')).filter(el => !el.hasAttribute('disabled'));
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => { document.removeEventListener('keydown', onKeyDown); opener?.focus(); };
+  }, [selectedService]);
+
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formError, setFormError] = useState('');
   const [clientName, setClientName] = useState('');
@@ -72,7 +90,7 @@ export default function ServiciosPage() {
   };
 
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="public-site min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
         <PublishedContent pageKey="servicios" />
@@ -224,19 +242,19 @@ export default function ServiciosPage() {
 
         {/* MODAL INICIO TRÁMITE */}
         {selectedService && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl max-w-md w-full p-7 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div ref={serviceDialog} role="dialog" aria-modal="true" aria-labelledby="service-dialog-title" className="max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain bg-white rounded-3xl max-w-md w-full p-7 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                     <span className="material-symbols-outlined text-[20px]">{selectedService.icon}</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900">{selectedService.title}</h3>
+                    <h3 id="service-dialog-title" className="font-bold text-sm text-slate-900">{selectedService.title}</h3>
                     <span className="text-xs font-bold text-blue-600">{selectedService.price}</span>
                   </div>
                 </div>
-                <button onClick={() => setSelectedService(null)} className="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+                <button aria-label="Cerrar detalle del servicio" onClick={() => setSelectedService(null)} className="shrink-0 w-11 text-slate-400 hover:text-slate-600 text-sm">✕</button>
               </div>
 
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">

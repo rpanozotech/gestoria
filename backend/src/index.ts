@@ -29,6 +29,7 @@ import { publicContentRouter, contentAdminRouter } from './routes/content.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import { rateLimit, cabecerasSeguridad } from './middleware/rate-limit.js';
 import { query } from './db/index.js';
+import { migrateSecurity, assertSecurityReady } from './db/security.js';
 
 dotenv.config();
 
@@ -81,6 +82,8 @@ app.get('/health', (req: Request, res: Response) => {
 // si mismo, y el bucket por IP+email impide que un atacante agote el limite de
 // una victima concreta para dejarla sin poder entrar.
 app.use('/api/auth/login', rateLimit({ nombre: 'login', max: 10, ventanaMs: 15 * 60 * 1000, soloFallidos: true }));
+app.use('/api/auth/mfa', rateLimit({ nombre: 'mfa', max: 20, ventanaMs: 15 * 60 * 1000 }));
+app.use('/api/auth/reauth', rateLimit({ nombre: 'reauth', max: 10, ventanaMs: 15 * 60 * 1000, soloFallidos: true }));
 app.use('/api/auth/portal-login', rateLimit({ nombre: 'login', max: 10, ventanaMs: 15 * 60 * 1000, soloFallidos: true }));
 app.use('/api/contact', rateLimit({ nombre: 'contacto', max: 5, ventanaMs: 60 * 60 * 1000 }));
 
@@ -181,31 +184,36 @@ process.on('uncaughtException', (error) => {
 });
 
 async function start() {
-  // Migración idempotente para instalaciones existentes que ya tenían la
-  // tabla clients antes de activar el portal real.
-  try {
-    await query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS portal_username VARCHAR(80)');
-    await query('CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_portal_username ON clients(portal_username) WHERE portal_username IS NOT NULL');
-    await query(`CREATE TABLE IF NOT EXISTS service_prices (
-      id VARCHAR(80) PRIMARY KEY,
-      code VARCHAR(80) UNIQUE NOT NULL,
-      icon VARCHAR(80) NOT NULL DEFAULT 'receipt_long',
-      title VARCHAR(255) NOT NULL,
-      category VARCHAR(50) NOT NULL DEFAULT 'otros',
-      base_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-      btw_rate DECIMAL(5, 4) NOT NULL DEFAULT 0.2100,
-      badge VARCHAR(100) NOT NULL DEFAULT 'Servicio',
-      duration VARCHAR(100) NOT NULL DEFAULT 'Según caso',
-      active BOOLEAN NOT NULL DEFAULT TRUE,
-      description TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )`);
-    await query('CREATE INDEX IF NOT EXISTS idx_service_prices_active ON service_prices(active)');
-  } catch (error) {
-    console.warn('No se pudo aplicar la migración opcional del portal:', error instanceof Error ? error.message : error);
+  // Production schema changes are explicit operator actions; never run pending DDL/seeds on an ordinary restart.
+  if (process.env.RUN_MIGRATIONS === 'true' || process.env.NODE_ENV !== 'production') {
+    // Migración idempotente para instalaciones existentes que ya tenían la
+    // tabla clients antes de activar el portal real.
+    try {
+      await query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS portal_username VARCHAR(80)');
+      await query('CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_portal_username ON clients(portal_username) WHERE portal_username IS NOT NULL');
+      await query(`CREATE TABLE IF NOT EXISTS service_prices (
+        id VARCHAR(80) PRIMARY KEY,
+        code VARCHAR(80) UNIQUE NOT NULL,
+        icon VARCHAR(80) NOT NULL DEFAULT 'receipt_long',
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(50) NOT NULL DEFAULT 'otros',
+        base_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        btw_rate DECIMAL(5, 4) NOT NULL DEFAULT 0.2100,
+        badge VARCHAR(100) NOT NULL DEFAULT 'Servicio',
+        duration VARCHAR(100) NOT NULL DEFAULT 'Según caso',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        description TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await query('CREATE INDEX IF NOT EXISTS idx_service_prices_active ON service_prices(active)');
+    } catch (error) {
+      console.warn('No se pudo aplicar la migración opcional del portal:', error instanceof Error ? error.message : error);
+    }
+    await migrateDatabase();
+    await migrateSecurity();
   }
-  await migrateDatabase();
+  await assertSecurityReady();
   app.listen(PORT, () => {
     console.log(`🚀 NexusGest API corriendo en el puerto ${PORT}`);
     console.log(`🩺 Health check disponible en http://localhost:${PORT}/health`);

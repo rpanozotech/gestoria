@@ -69,7 +69,7 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
           <p>© {new Date().getFullYear()} RP Asesoría Todos los derechos reservados.</p>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
             <Link href="/privacidad" className="hover:text-slate-300">Privacidad</Link>
             <Link href="/cookies" className="hover:text-slate-300">Cookies</Link>
             <Link href="/condiciones" className="hover:text-slate-300">Condiciones generales</Link>

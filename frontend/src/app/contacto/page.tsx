@@ -41,7 +41,7 @@ export default function ContactoPage() {
   };
 
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="public-site min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
         <PublishedContent pageKey="contacto" />
@@ -91,7 +91,7 @@ export default function ContactoPage() {
                     <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                       <span className="material-symbols-outlined text-[24px]">chat</span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">WhatsApp Oficial</span>
                       <span className="text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">+31 6 8645 8008</span>
                       <span className="text-xs text-emerald-600 font-semibold block mt-0.5">● Respuesta inmediata</span>
@@ -102,9 +102,9 @@ export default function ContactoPage() {
                     <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-[24px]">mail</span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Correo Electrónico</span>
-                      <a href="mailto:infodocumentosrp@gmail.com" className="text-base font-bold text-slate-900 hover:text-primary">infodocumentosrp@gmail.com</a>
+                      <a href="mailto:infodocumentosrp@gmail.com" className="break-words text-base font-bold text-slate-900 hover:text-primary">infodocumentosrp@gmail.com</a>
                       <span className="text-xs text-slate-500 block mt-0.5">Gestión de expedientes y documentación</span>
                     </div>
                   </div>
@@ -113,7 +113,7 @@ export default function ContactoPage() {
                     <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-[24px]">schedule</span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Horario de Atención</span>
                       <span className="text-base font-bold text-slate-900">Lunes a Viernes: 09:00 – 19:00</span>
                       <span className="text-xs text-slate-500 block mt-0.5">Soporte online y acompañamiento administrativo</span>

@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db/index.js';
 
+import { nextDossierCode } from '../utils/dossier-number.js';
+
 const router = Router();
 
 router.post('/', async (req: Request, res: Response) => {
@@ -20,6 +22,9 @@ router.post('/', async (req: Request, res: Response) => {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'El servicio no existe o no está activo.' });
     }
+    // Take the shared numbering lock before locking a client: dossiers inserts
+    // acquire an FK key-share lock, so the opposite order can deadlock.
+    const dossierCode = await nextDossierCode(client);
     const found = await client.query(
       'SELECT id FROM clients WHERE lower(email) = lower($1) OR phone = $2 ORDER BY created_at DESC LIMIT 1 FOR UPDATE',
       [String(email).trim(), String(phone).trim()]
@@ -39,28 +44,7 @@ router.post('/', async (req: Request, res: Response) => {
       `INSERT INTO service_requests (client_id, service_id, source, status, notes, legal_consent, legal_consent_at, legal_terms_version) VALUES ($1,$2,$3,'pendiente',$4,$5,CURRENT_TIMESTAMP,$6) RETURNING *`,
       [clientId, service_id, source, notes || null, true, legal_terms_version || '2026-10-07']
     );
-    // Numeracion correlativa EXP del expediente.
-//
-// MAX y no COUNT, por el mismo motivo que dossiers.ts: `client_id` es
-// ON DELETE CASCADE, asi que al borrar un cliente quedan huecos en la
-// numeracion. COUNT sobre una tabla con huecos devuelve un numero ya usado —
-// se emitted EXP-0001..0050, se borran dos, COUNT da 48 y el siguiente alta
-// intenta EXP-0049, que ya existe -> 23505 -> 500. Y es pegajoso: cada
-// reintento vuelve a contar 48 y vuelve a colisionar, que es exactamente el
-// modo de fallo que inutiliza la numeracion.
-//
-// El advisory lock comparte nombre con dossiers.ts a proposito: ambos escriben
-// en la misma tabla y ambos deben serializarse contra el mismo contador.
-await client.query("SELECT pg_advisory_xact_lock(hashtext('nexusgest_dossiers_number'))");
-const dossierYear = new Date().getFullYear();
-const dossierMax = await client.query(
-  `SELECT COALESCE(MAX(NULLIF(regexp_replace(code, '^EXP-${dossierYear}-', ''), '')), 0) AS max_num
-     FROM dossiers WHERE code LIKE $1`,
-  [`EXP-${dossierYear}-%`]
-);
-const dossierCode = `EXP-${dossierYear}-${String(parseInt(dossierMax.rows[0].max_num, 10) + 1).padStart(4, '0')}`;
-
-const dossier = await client.query(
+    const dossier = await client.query(
       `INSERT INTO dossiers (code, client_id, title, category, description, fee, status, priority) VALUES ($1,$2,$3,'Solicitud web',$4,$5,'en_proceso','media') RETURNING *`,
       [dossierCode, clientId, service.rows[0].title, notes || 'Solicitud recibida desde la web', service.rows[0].base_price]
     );

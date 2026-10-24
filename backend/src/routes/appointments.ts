@@ -190,9 +190,9 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
       );
       await client.query(
         `INSERT INTO appointment_reminders (appointment_id, client_id, kind, scheduled_at)
-         SELECT $1, $2, reminder.kind, appointment_start - reminder.offset
+         SELECT $1, $2, reminder.kind, appointment_start - reminder.reminder_interval
          FROM (SELECT ($3::date + $4::time) AS appointment_start) AS appointment
-         CROSS JOIN (VALUES ('24h'::varchar, interval '24 hours'), ('1h'::varchar, interval '1 hour')) AS reminder(kind, offset)
+         CROSS JOIN (VALUES ('24h'::varchar, interval '24 hours'), ('1h'::varchar, interval '1 hour')) AS reminder(kind, reminder_interval)
          ON CONFLICT (appointment_id, kind) DO NOTHING`,
         [result.rows[0].id, client_id, appointment_date, appointment_time],
       );

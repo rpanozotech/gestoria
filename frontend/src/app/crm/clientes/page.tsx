@@ -2,9 +2,10 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { findContextClient, validateClientDetail } from '@/lib/client-ficha';
 import { apiFetch } from '@/lib/api';
 import { activableConTeclado, useEscapeKey } from '@/lib/a11y';
 
@@ -37,6 +38,10 @@ interface ClientAIMessage {
 }
 
 export default function CRMClientesPage() {
+  return <Suspense fallback={<main className="p-6" role="status">Cargando clientes…</main>}><CRMClientesContent /></Suspense>;
+}
+
+function CRMClientesContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'con_digid' | 'pendientes'>('todos');
 
@@ -65,7 +70,10 @@ export default function CRMClientesPage() {
 
   // Lista de clientes con sus datos, trámites, presupuestos, facturas, citas y documentos
   const [clients, setClients] = useState<any[]>([]);
-  const [clientStats, setClientStats] = useState({ total: 0, activos: 0, archivados: 0, nuevos_este_mes: 0, pendientes: 0 });
+  const [clientStats, setClientStats] = useState<{ total: number; activos: number; archivados: number; nuevos_este_mes: number; pendientes: number } | null>(null);
+  const [directoryLoading, setDirectoryLoading] = useState(true);
+  const [directoryError, setDirectoryError] = useState('');
+  const [statsError, setStatsError] = useState('');
   const importFileRef = useRef<HTMLInputElement>(null);
   // Copiar al portapapeles con feedback
   const copyToClipboard = (text: string, label: string) => {
@@ -136,16 +144,24 @@ export default function CRMClientesPage() {
   };
 
   useEffect(() => {
-    apiFetch('/clients/count').then((res) => res.ok ? res.json() : null).then((data) => data && setClientStats(data)).catch(() => undefined);
+    apiFetch('/clients/count').then(async (res) => {
+      if (!res.ok) throw new Error('No se pudieron cargar los totales de clientes.');
+      return res.json();
+    }).then(setClientStats).catch(() => setStatsError('No se pudieron cargar los totales de clientes.'));
     apiFetch('/clients')
-      .then((res) => (res.ok ? res.json() : null))
+      .then(async (res) => {
+        if (!res.ok) throw new Error('No se pudo cargar el directorio de clientes.');
+        return res.json();
+      })
       .then((data) => {
+        if (!Array.isArray(data?.clients)) throw new Error('El directorio recibido está incompleto.');
         if (Array.isArray(data?.clients)) {
           setClients(data.clients.map((c: any) => ({ ...c, dossiers: [], quotes: [], invoices: [], appointments: [], service_requests: [], documents: [] })));
     if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
         }
       })
-      .catch((error) => console.error('No se pudieron cargar los clientes:', error));
+      .catch(() => setDirectoryError('No se pudo cargar el directorio de clientes. Vuelve a intentarlo.'))
+      .finally(() => setDirectoryLoading(false));
   }, []);
 
   // El catálogo usado por expedientes y presupuestos debe ser el mismo que
@@ -174,7 +190,12 @@ export default function CRMClientesPage() {
 
   const router = useRouter();
   const [returnOrigin, setReturnOrigin] = useState<string | null>(null);
-  const hasAutoOpenedRef = useRef(false);
+  const searchParams = useSearchParams();
+  const contextQuery = searchParams.toString();
+  const consumedContextRef = useRef<string | null>(null);
+  const detailRequestRef = useRef(0);
+
+  useEffect(() => () => { ++detailRequestRef.current; }, []);
 
   // Cliente seleccionado para la Ficha 360°
   const [selectedClient, setSelectedClient] = useState<any>(null);
@@ -327,13 +348,14 @@ export default function CRMClientesPage() {
     }
   };
 
-  const handleOpenClient = (client: any) => {
-    // Los clientes demo usan la nueva ficha 360, no el panel histórico incrustado.
-    if (String(client.id) === 'demo-client-1') {
-      router.push('/crm/clientes/demo-client-1');
+  const handleOpenClient = (client: any, legacy = false) => {
+    if (!legacy) {
+      router.push(`/crm/clientes/${encodeURIComponent(String(client.id))}`);
       return;
     }
     // La lista y la ficha pueden devolver contadores, null u objetos parciales.
+    const requestId = ++detailRequestRef.current;
+    ++clientActivityRequestRef.current;
     const safeClient = normalizeClientForFicha(client);
     setSelectedClient(safeClient);
     setPortalAccess(null);
@@ -351,7 +373,7 @@ export default function CRMClientesPage() {
       {
         id: 'init-msg',
         role: 'assistant',
-        content: `👋 ¡Hola! Soy tu **Asistente IA especializado para ${safeClient.full_name}**.\n\nTengo acceso en tiempo real a todo su expediente:\n- **BSN Oficial:** \`${client.bsn || 'Sin registrar'}\` · **DigiD:** \`${client.digid_status}\`\n- **Expedientes activos:** ${client.dossiers?.length || 0} trámites\n- **Documentos en archivo:** ${client.documents?.length || 0} archivos\n- **Facturación:** ${client.quotes?.length || 0} presupuestos / ${client.invoices?.length || 0} facturas\n- **Citas agendadas:** ${client.appointments?.length || 0} citas\n\n¿En qué puedo ayudarte? Puedes pedirme que **emita una factura**, **genere un presupuesto**, **agende una cita**, **modifique sus datos** o **redacte y archive un documento** en su carpeta.`,
+        content: `👋 ¡Hola! Soy tu **Asistente IA especializado para ${safeClient.full_name}**.\n\nTengo acceso en tiempo real a todo su expediente:\n- **BSN Oficial:** \`${client.bsn || 'Sin registrar'}\` · **DigiD:** \`${client.digid_status}\`\n- **Expedientes activos:** ${client.dossiers_count ?? client.dossiers?.length ?? '—'} trámites\n- **Documentos en archivo:** ${client.documents_count ?? (client.documents?.length ? client.documents.length : '—')} archivos\n- **Facturación:** ${client.quotes?.length || 0} presupuestos / ${client.invoices?.length || 0} facturas\n- **Citas agendadas:** ${client.appointments?.length || 0} citas\n\n¿En qué puedo ayudarte? Puedes pedirme que **emita una factura**, **genere un presupuesto**, **agende una cita**, **modifique sus datos** o **redacte y archive un documento** en su carpeta.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
@@ -361,11 +383,20 @@ export default function CRMClientesPage() {
     // cliente real de PostgreSQL.
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(client.id))) {
       apiFetch(`/clients/${client.id}`)
-        .then((response) => (response.ok ? response.json() : null))
+        .then(async (response) => {
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || 'No se pudo cargar la ficha completa.');
+          return validateClientDetail(payload);
+        })
         .then((data) => {
-          if (!data?.client) return;
+          if (requestId !== detailRequestRef.current) return;
           const completeClient = normalizeClientForFicha({
             ...data.client,
+            dossiers_count: data.dossiers.length,
+            invoices_count: data.invoices.length,
+            documents_count: data.documents.length,
+            tasks: data.tasks,
+            service_requests: data.service_requests,
             dossiers: Array.isArray(data.dossiers) ? data.dossiers : [],
             quotes: Array.isArray(data.quotes) ? data.quotes : [],
             invoices: Array.isArray(data.invoices) ? data.invoices : [],
@@ -385,7 +416,11 @@ export default function CRMClientesPage() {
     if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
           loadClientActivity(String(client.id));
         })
-        .catch(() => showToast('No se pudo cargar la ficha completa desde PostgreSQL.'));
+        .catch(() => {
+          if (requestId !== detailRequestRef.current) return;
+          setSelectedClient(null);
+          showToast('No se pudo cargar la ficha completa desde PostgreSQL.', 'error');
+        });
     }
   };
 
@@ -409,61 +444,39 @@ export default function CRMClientesPage() {
     setPreviewDoc(null);
   };
 
-  // Auto-seleccionar cliente desde parámetro URL (ej: /crm/clientes?client=Maria+Popescu&from=agenda)
+  // Consume each URL context before opening: detail hydration updates the directory too.
   useEffect(() => {
-    if (typeof window !== 'undefined' && clients.length > 0 && !hasAutoOpenedRef.current) {
-      const params = new URLSearchParams(window.location.search);
-      const clientQuery = params.get('client') || params.get('nombre');
-      const idQuery = params.get('id');
-      const fromParam = params.get('from');
-      const tabQuery = params.get('tab');
-
-      if (fromParam) {
-        setReturnOrigin(fromParam);
-      }
-
-      if (clientQuery || idQuery) {
-        const found = clients.find((c) => {
-          if (idQuery && String(c.id) === String(idQuery)) return true;
-          if (clientQuery) {
-            const cleanQuery = clientQuery.trim().toLowerCase();
-            const cleanName = (c.full_name || '').trim().toLowerCase();
-            return cleanName === cleanQuery || cleanName.includes(cleanQuery) || cleanQuery.includes(cleanName);
-          }
-          return false;
-        });
-
-        if (found) {
-          hasAutoOpenedRef.current = true;
-          handleOpenClient(found);
-          if (
-            tabQuery &&
-            [
-              'resumen',
-              'personales',
-              'servicios',
-              'documentos',
-              'presupuestos',
-              'facturas',
-              'citas',
-              'tareas',
-              'historial',
-              'ia',
-            ].includes(tabQuery)
-          ) {
-            setActive360Tab(tabQuery as any);
-          }
-        }
-      }
+    if (!contextQuery) { consumedContextRef.current = null; return; }
+    if (!clients.length || consumedContextRef.current === contextQuery) return;
+    const query = new URLSearchParams(contextQuery);
+    if (!query.get('client') && !query.get('nombre') && !query.get('id')) return;
+    consumedContextRef.current = contextQuery;
+    const found = findContextClient(clients, query);
+    if (!found) {
+      showToast('No se encontró un cliente único para este enlace.', 'error');
+      return;
     }
-  }, [clients]);
+    const origin = query.get('from');
+    setReturnOrigin(origin);
+    // Only the explicit edit link opens the historical rich editor.
+    handleOpenClient(found, origin === 'ficha');
+    const tab = query.get('tab');
+    if (origin === 'ficha' && tab && ['resumen', 'personales', 'servicios', 'documentos', 'presupuestos', 'facturas', 'citas', 'mensajes', 'tareas', 'historial', 'ia'].includes(tab)) {
+      setActive360Tab(tab as any);
+    }
+  }, [clients, contextQuery]);
 
   // Cerrar Ficha 360° y retornar al origen o limpiar URL
   const handleCloseFicha = () => {
+    ++detailRequestRef.current;
+    ++clientActivityRequestRef.current;
+    const closingClientId = selectedClient?.id;
     setSelectedClient(null);
     setPortalAccess(null);
     setShowPortalPassword(false);
-    if (returnOrigin === 'agenda') {
+    if (returnOrigin === 'ficha' && closingClientId) {
+      router.push(`/crm/clientes/${encodeURIComponent(String(closingClientId))}`);
+    } else if (returnOrigin === 'agenda') {
       router.push('/crm/agenda');
     } else if (typeof window !== 'undefined') {
       const newUrl = window.location.pathname;
@@ -585,106 +598,60 @@ export default function CRMClientesPage() {
   };
 
   // Helper para obtener tareas del cliente
-  const getClientTasks = (client: any) => {
-    if (client.tasks && client.tasks.length > 0) {
-      return client.tasks;
-    }
-    return [
-      { id: 't1', title: `Verificar documentación fiscal y DigiD de ${client.full_name}`, completed: false, due: '2026-10-15', priority: 'alta' },
-      { id: 't2', title: 'Comprobar justificantes bancarios e IBAN para Belastingdienst', completed: false, due: '2026-10-18', priority: 'media' },
-      { id: 't3', title: 'Confirmar recepción del formulario en sede electrónica', completed: true, due: '2026-10-04', priority: 'baja' },
-    ];
+  const getClientTasks = (client: any) => (Array.isArray(client.tasks) ? client.tasks : []).map((task: any) => ({
+    ...task, completed: task.status ? task.status === 'completada' : !!task.completed,
+    due: task.due_date ? String(task.due_date).slice(0, 10) : task.due || 'Sin vencimiento',
+  }));
+
+  const getClientActivities = (_client: any) => clientAudit.map((entry: any) => ({
+    id: entry.id, time: new Date(entry.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    date: new Date(entry.created_at).toLocaleDateString('es-ES'), type: entry.actor_role === 'gestor' ? 'gestor' : 'sistema',
+    badge: entry.actor_name || entry.actor_role || 'Registro', title: entry.action,
+    desc: Object.keys(entry.changes || {}).join(', ') || 'Sin campos detallados',
+  }));
+
+  const saveClientTasks = (clientId: string, update: (tasks: any[]) => any[]) => {
+    setSelectedClient((current: any) => current?.id === clientId ? { ...current, tasks: update(current.tasks || []) } : current);
+    setClients(current => current.map(client => client.id === clientId ? { ...client, tasks: update(client.tasks || []) } : client));
   };
 
-  // Helper para obtener actividades del cliente
-  const getClientActivities = (client: any) => {
-    if (client.activity_log && client.activity_log.length > 0) {
-      return client.activity_log;
-    }
-    return [
-      {
-        id: 'act1',
-        time: '09:15',
-        date: 'Hoy',
-        type: 'ia',
-        badge: 'IA Registro',
-        title: `Expediente de ${client.full_name} sincronizado`,
-        desc: `Validación de identidad con BSN ${client.bsn || '—'} y comprobación de estado DigiD (${client.digid_status}).`,
-      },
-      {
-        id: 'act2',
-        time: '09:00',
-        date: 'Hoy',
-        type: 'sistema',
-        badge: 'Sistema',
-        title: 'Presupuesto y trámites en curso',
-        desc: `${client.dossiers?.length || 0} expediente(s) y ${client.quotes?.length || 0} presupuesto(s) activos en el CRM.`,
-      },
-      {
-        id: 'act3',
-        time: '08:45',
-        date: 'Hoy',
-        type: 'ia_audio',
-        badge: 'IA Audio',
-        title: 'Mensaje de WhatsApp procesado por IA',
-        desc: 'La IA extrajo la última consulta del cliente y estructuró las notas del gestor.',
-      },
-      {
-        id: 'act4',
-        time: '14:20',
-        date: 'Ayer',
-        type: 'gestor',
-        badge: 'Gestor',
-        title: 'Validación por Gestoría NexusGest',
-        desc: 'Elena Martínez revisó la documentación y comprobó los datos fiscales.',
-      },
-    ];
-  };
-
-  // Marcar o desmarcar tarea en Ficha 360°
-  const handleToggleTask = (taskId: string) => {
+  const handleToggleTask = async (taskId: string) => {
     if (!selectedClient) return;
-    const currentTasks = getClientTasks(selectedClient);
-    const updatedTasks = currentTasks.map((t: any) =>
-      t.id === taskId ? { ...t, completed: !t.completed } : t
-    );
-    const updatedClient = { ...selectedClient, tasks: updatedTasks };
-    setSelectedClient(updatedClient);
-    setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
-    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
+    const clientId = selectedClient.id;
+    const task = getClientTasks(selectedClient).find((row: any) => row.id === taskId);
+    if (!task) return;
+    try {
+      const response = await apiFetch(`/tasks/${encodeURIComponent(taskId)}`, { method: 'PATCH', body: JSON.stringify({ status: task.completed ? 'pendiente' : 'completada' }) });
+      const payload = await response.json();
+      if (!response.ok || !payload.task) throw new Error(payload.error || 'No se pudo actualizar la tarea.');
+      saveClientTasks(clientId, tasks => tasks.map(row => row.id === taskId ? payload.task : row));
+    } catch (error) { showToast(error instanceof Error ? error.message : 'No se pudo actualizar la tarea.', 'error'); }
   };
 
-  // Añadir nueva tarea en Ficha 360°
-  const handleAddNewTask = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddNewTask = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!selectedClient || !newTaskInput.trim()) return;
-    const currentTasks = getClientTasks(selectedClient);
-    const newTask = {
-      id: `task-${Date.now()}`,
-      title: newTaskInput.trim(),
-      completed: false,
-      due: 'Próxima semana',
-      priority: 'media',
-    };
-    const updatedTasks = [newTask, ...currentTasks];
-    const updatedClient = { ...selectedClient, tasks: updatedTasks };
-    setSelectedClient(updatedClient);
-    setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
-    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
-    setNewTaskInput('');
-    showToast('Nueva tarea añadida a la Ficha 360°');
+    const clientId = selectedClient.id;
+    try {
+      const response = await apiFetch('/tasks', { method: 'POST', body: JSON.stringify({ client_id: clientId, title: newTaskInput.trim() }) });
+      const payload = await response.json();
+      if (!response.ok || !payload.task) throw new Error(payload.error || 'No se pudo crear la tarea.');
+      saveClientTasks(clientId, tasks => [payload.task, ...tasks]);
+      setNewTaskInput('');
+      showToast('Tarea guardada');
+    } catch (error) { showToast(error instanceof Error ? error.message : 'No se pudo crear la tarea.', 'error'); }
   };
 
-  // Eliminar tarea en Ficha 360°
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = async (taskId: string) => {
     if (!selectedClient) return;
-    const currentTasks = getClientTasks(selectedClient);
-    const updatedTasks = currentTasks.filter((t: any) => t.id !== taskId);
-    const updatedClient = { ...selectedClient, tasks: updatedTasks };
-    setSelectedClient(updatedClient);
-    setClients((prev) => prev.map((c) => (c.id === selectedClient.id ? updatedClient : c)));
-    if (typeof window !== 'undefined') window.dispatchEvent(new Event('crm-client-count-updated'));
-    showToast('Tarea eliminada');
+    const clientId = selectedClient.id;
+    try {
+      const response = await apiFetch(`/tasks/${encodeURIComponent(taskId)}`, { method: 'DELETE' });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'No se pudo eliminar la tarea.');
+      saveClientTasks(clientId, tasks => tasks.filter(row => row.id !== taskId));
+      showToast('Tarea eliminada');
+    } catch (error) { showToast(error instanceof Error ? error.message : 'No se pudo eliminar la tarea.', 'error'); }
   };
 
   // GESTIÓN DE DOCUMENTOS: Subir archivo
@@ -1732,28 +1699,28 @@ export default function CRMClientesPage() {
         <article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-2.5 flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase font-bold text-on-surface-variant">Total clientes</p>
-            <p className="text-lg font-bold text-on-surface leading-tight">{clientStats.total}</p>
+            <p className="text-lg font-bold text-on-surface leading-tight">{clientStats?.total ?? '—'}</p>
           </div>
           <span className="material-symbols-outlined text-outline/50 text-2xl">groups</span>
         </article>
         <article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-2.5 flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase font-bold text-on-surface-variant">Activos</p>
-            <p className="text-lg font-bold text-emerald-700 leading-tight">{clientStats.activos}</p>
+            <p className="text-lg font-bold text-emerald-700 leading-tight">{clientStats?.activos ?? '—'}</p>
           </div>
           <span className="material-symbols-outlined text-emerald-600/40 text-2xl">check_circle</span>
         </article>
         <article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-2.5 flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase font-bold text-on-surface-variant">Archivados</p>
-            <p className="text-lg font-bold text-on-surface leading-tight">{clientStats.archivados}</p>
+            <p className="text-lg font-bold text-on-surface leading-tight">{clientStats?.archivados ?? '—'}</p>
           </div>
           <span className="material-symbols-outlined text-outline/50 text-2xl">archive</span>
         </article>
         <article className="rounded-lg border border-outline-variant bg-surface-container-lowest p-2.5 flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase font-bold text-on-surface-variant">Nuevos mes</p>
-            <p className="text-lg font-bold text-secondary leading-tight">{clientStats.nuevos_este_mes}</p>
+            <p className="text-lg font-bold text-secondary leading-tight">{clientStats?.nuevos_este_mes ?? '—'}</p>
           </div>
           <span className="material-symbols-outlined text-secondary/40 text-2xl">trending_up</span>
         </article>
@@ -1809,7 +1776,9 @@ export default function CRMClientesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container">
-              {filteredClients.length === 0 && (
+              {(directoryError || statsError) && <tr><td colSpan={7} className="p-4 text-red-700" role="alert">{directoryError || statsError}</td></tr>}
+              {directoryLoading && <tr><td colSpan={7} className="p-4" role="status">Cargando clientes…</td></tr>}
+              {!directoryLoading && !directoryError && filteredClients.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-16 text-center">
                     <div className="mx-auto flex max-w-md flex-col items-center">
@@ -1835,6 +1804,9 @@ export default function CRMClientesPage() {
                   key={client.id}
                   onClick={() => handleOpenClient(client)}
                   {...activableConTeclado(() => handleOpenClient(client))}
+                  onKeyDown={(event) => {
+                    if (event.target === event.currentTarget) activableConTeclado(() => handleOpenClient(client)).onKeyDown(event);
+                  }}
                   className="hover:bg-blue-50/50 cursor-pointer transition-colors group"
                   title="Pulsar para abrir Ficha 360° (Enter)"
                 >
@@ -1849,7 +1821,7 @@ export default function CRMClientesPage() {
                     {client.bsn || '—'}
                   </td>
                   <td className="px-5 py-3.5 text-on-surface-variant">
-                    <div className="font-semibold text-on-surface">{client.city || 'Países Bajos'}</div>
+                    <div className="font-semibold text-on-surface">{client.city || 'Sin dato'}</div>
                     <div className="text-[11px] text-outline">{client.address || '—'}</div>
                   </td>
                   <td className="px-5 py-3.5">
@@ -1869,13 +1841,13 @@ export default function CRMClientesPage() {
                   </td>
                   <td className="px-5 py-3.5 text-center">
                     <span className="px-2 py-0.5 bg-surface-container-high rounded-full font-mono-data font-bold text-[11px]">
-                      {client.dossiers?.length || 0}
+                      {client.dossiers_count ?? client.dossiers?.length ?? '—'}
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-center">
                     <span className="px-2 py-0.5 bg-blue-50 text-secondary border border-secondary/20 rounded-full font-mono-data font-bold text-[11px] inline-flex items-center gap-1">
                       <span className="material-symbols-outlined text-[13px]">description</span>
-                      <span>{client.documents?.length || 0}</span>
+                      <span>{client.documents_count ?? (client.documents?.length ? client.documents.length : '—')}</span>
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
@@ -1891,7 +1863,8 @@ export default function CRMClientesPage() {
                         <span className="material-symbols-outlined text-[15px]">visibility</span>
                         <span>Ficha 360°</span>
                       </button>
-                      <Link href={`/crm/clientes/${client.id}`} className="inline-flex h-8 items-center rounded border border-outline-variant px-2 text-[11px] font-semibold text-on-surface-variant hover:border-secondary hover:text-secondary" aria-label={`Abrir ficha completa de ${client.full_name}`}>Abrir</Link>
+                      <Link href={`/crm/clientes/${client.id}`} className="inline-flex h-8 items-center rounded border border-outline-variant px-2 text-[11px] font-semibold text-on-surface-variant hover:border-secondary hover:text-secondary" onClick={(event) => event.stopPropagation()} aria-label={`Abrir ficha completa de ${client.full_name}`}>Abrir</Link>
+                      <Link href={`/crm/clientes?client=${encodeURIComponent(String(client.id))}&from=ficha`} onClick={(event) => event.stopPropagation()} className="inline-flex h-8 items-center rounded border border-outline-variant px-2 text-[11px] font-semibold text-on-surface-variant hover:border-secondary hover:text-secondary">Editar ficha</Link>
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); void handleDeleteClient(client); }}
@@ -2385,7 +2358,7 @@ export default function CRMClientesPage() {
                           <span className="material-symbols-outlined text-secondary text-2xl">auto_awesome</span>
                           <h3 className="font-bold text-sm text-on-surface">Historial & Registro IA</h3>
                         </div>
-                        <span className="text-[10px] font-bold text-outline uppercase">Hoy</span>
+                        <span className="text-[10px] font-bold text-outline uppercase">Registro</span>
                       </div>
 
                       <div className="space-y-3 relative pl-4 before:content-[''] before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container-high">
@@ -3336,7 +3309,7 @@ export default function CRMClientesPage() {
                                   {task.priority || 'media'}
                                 </span>
                                 <span className="text-[10px] font-mono-data text-outline hidden sm:inline">
-                                  {task.due || 'Vence pronto'}
+                                  {task.due || 'Sin vencimiento'}
                                 </span>
                                 <button
                                   type="button"

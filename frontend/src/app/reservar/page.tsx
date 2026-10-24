@@ -31,13 +31,17 @@ export default function ReservarCitaPage() {
   const [bookPhone, setBookPhone] = useState('');
   const [bookService, setBookService] = useState('');
   const [services, setServices] = useState<any[]>([]);
-  const [bookDate, setBookDate] = useState('2026-10-15');
+  const today = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; };
+  const [bookDate, setBookDate] = useState(today);
   const [bookTime, setBookTime] = useState('11:00');
   const [bookModality, setBookModality] = useState<'meet' | 'phone' | 'office'>('meet');
   const [bookSuccess, setBookSuccess] = useState(false);
   const [bookLoading, setBookLoading] = useState(false);
   const [busyAppointments, setBusyAppointments] = useState<BusyAppointment[]>([]);
-  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [availabilityDate, setAvailabilityDate] = useState('');
+  const [availabilityRetry, setAvailabilityRetry] = useState(0);
   const [bookingError, setBookingError] = useState('');
   const [legalConsent, setLegalConsent] = useState(false);
 
@@ -68,13 +72,14 @@ export default function ReservarCitaPage() {
     });
   };
 
-  const availableSlots = BOOKING_SLOTS.filter((slot) => isSlotAvailable(slot));
+  const availableSlots = availabilityLoading || availabilityError || availabilityDate !== bookDate ? [] : BOOKING_SLOTS.filter((slot) => isSlotAvailable(slot));
 
   useEffect(() => {
     let cancelled = false;
 
     const loadAvailability = async () => {
       setAvailabilityLoading(true);
+      setAvailabilityError('');
       const localAppointments: BusyAppointment[] = [];
       if (process.env.NODE_ENV !== 'production') {
         try {
@@ -92,12 +97,18 @@ export default function ReservarCitaPage() {
 
       try {
         const response = await fetch(apiUrl(`/appointments/availability?date=${bookDate}`));
-        if (response.ok) {
-          const data = await response.json();
-          localAppointments.push(...(Array.isArray(data.appointments) ? data.appointments : []));
-        }
+        if (!response.ok) throw new Error('No se pudo consultar la disponibilidad.');
+        const data = await response.json();
+        if (!Array.isArray(data.appointments)) throw new Error('La disponibilidad recibida está incompleta.');
+        localAppointments.push(...data.appointments);
       } catch {
-        // Permitir reservar con la agenda local si el backend no está disponible.
+        if (!cancelled) {
+          setAvailabilityError('No se pudo consultar la disponibilidad. Vuelve a intentarlo.');
+          setBusyAppointments([]);
+          setBookTime('');
+          setAvailabilityLoading(false);
+        }
+        return;
       }
 
       if (!cancelled) {
@@ -107,14 +118,15 @@ export default function ReservarCitaPage() {
         });
         const nextBusy = Array.from(unique.values());
         setBusyAppointments(nextBusy);
-        setBookTime((current) => isSlotAvailable(current, nextBusy) ? current : (BOOKING_SLOTS.find((slot) => isSlotAvailable(slot, nextBusy)) || ''));
+        setAvailabilityDate(bookDate);
+        setBookTime((current) => BOOKING_SLOTS.includes(current) && isSlotAvailable(current, nextBusy) ? current : (BOOKING_SLOTS.find((slot) => isSlotAvailable(slot, nextBusy)) || ''));
         setAvailabilityLoading(false);
       }
     };
 
     loadAvailability();
     return () => { cancelled = true; };
-  }, [bookDate]);
+  }, [bookDate, availabilityRetry]);
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +136,10 @@ export default function ReservarCitaPage() {
     }
     if (!bookService) {
       setBookingError('Selecciona un servicio.');
+      return;
+    }
+    if (availabilityLoading || availabilityError || availabilityDate !== bookDate || bookDate < today()) {
+      setBookingError('Consulta una fecha vigente y espera a que se confirme la disponibilidad.');
       return;
     }
     if (!bookTime || !isSlotAvailable(bookTime)) {
@@ -204,7 +220,7 @@ export default function ReservarCitaPage() {
   };
 
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="public-site min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
 
@@ -322,6 +338,7 @@ export default function ReservarCitaPage() {
                       </label>
                       <input
                         id="booking-date"
+                        min={today()}
                         type="date"
                         value={bookDate}
                         onChange={(e) => setBookDate(e.target.value)}
@@ -342,7 +359,7 @@ export default function ReservarCitaPage() {
                         className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none"
                       >
                         {availableSlots.length === 0 ? (
-                          <option value="">No hay horarios libres</option>
+                          <option value="">{availabilityLoading ? 'Consultando disponibilidad…' : availabilityError ? 'Disponibilidad no confirmada' : 'No hay horarios libres'}</option>
                         ) : (
                           availableSlots.map((slot) => <option key={slot} value={slot}>{slot}</option>)
                         )}
@@ -395,6 +412,7 @@ export default function ReservarCitaPage() {
                     </div>
                   </div>
 
+                  {availabilityError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{availabilityError} <button type="button" onClick={() => setAvailabilityRetry(value => value + 1)} className="font-semibold underline">Reintentar</button></div>}
                   {bookingError && (
                     <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
                       {bookingError}

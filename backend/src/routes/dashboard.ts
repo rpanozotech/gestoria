@@ -44,7 +44,13 @@ router.get('/stats', async (req: Request, res: Response) => {
 
     // 5. Tendencia de facturación: últimos 6 meses desde PostgreSQL
     const monthlyFinance = await query(`SELECT to_char(months.month, 'Mon') AS month, COALESCE(SUM(i.total) FILTER (WHERE i.status <> 'cancelada'), 0)::numeric AS billed, COALESCE(SUM(i.total) FILTER (WHERE i.status = 'pagada'), 0)::numeric AS collected FROM generate_series(date_trunc('month', CURRENT_DATE) - interval '5 months', date_trunc('month', CURRENT_DATE), interval '1 month') AS months(month) LEFT JOIN invoices i ON date_trunc('month', i.created_at) = months.month GROUP BY months.month ORDER BY months.month`);
-    const debtStats = await query(`SELECT COUNT(*) FILTER (WHERE status NOT IN ('paid','pagada','cancelled','cancelada'))::int AS open_count, COALESCE(SUM(amount) FILTER (WHERE status NOT IN ('paid','pagada','cancelled','cancelada')), 0)::numeric AS open_amount, COUNT(*) FILTER (WHERE status NOT IN ('paid','pagada','cancelled','cancelada') AND due_date < CURRENT_DATE)::int AS overdue_count, COALESCE(SUM(amount) FILTER (WHERE status NOT IN ('paid','pagada','cancelled','cancelada') AND due_date < CURRENT_DATE), 0)::numeric AS overdue_amount FROM debts`);
+    const debtStats = await query(`
+      SELECT COUNT(*)::int AS open_count,
+             COALESCE(SUM(GREATEST(original_amount - paid_amount, 0)), 0)::numeric AS open_amount,
+             COUNT(*) FILTER (WHERE due_date < CURRENT_DATE)::int AS overdue_count,
+             COALESCE(SUM(GREATEST(original_amount - paid_amount, 0)) FILTER (WHERE due_date < CURRENT_DATE), 0)::numeric AS overdue_amount
+      FROM debts
+      WHERE status NOT IN ('paid', 'pagada', 'pagado', 'cancelled', 'cancelada', 'cancelado')`);
 
     // 6. Citas de hoy con datos de cliente
     const todayAppointmentsList = await query(

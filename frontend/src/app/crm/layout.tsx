@@ -11,18 +11,17 @@ import { apiFetch } from '@/lib/api';
 type NavItem = { href: string; label: string; icon: string; badge?: string; badgeColor?: string };
 
 function NavLink({ item, pathname, collapsed, onClick }: { item: NavItem; pathname: string; collapsed: boolean; onClick: () => void }) {
-  const isExact = pathname === item.href;
-  const isDebtDetail = item.href === '/crm/deudas/1' && pathname.startsWith('/crm/deudas/') && pathname !== '/crm/deudas';
-  const isClientDetail = item.href === '/crm/clientes/demo-client-1' && pathname.startsWith('/crm/clientes/') && pathname !== '/crm/clientes' && pathname !== '/crm/clientes/alta-ia' && pathname !== '/crm/clientes/nuevo' && pathname !== '/crm/clientes/importar';
-  const isIntegrations = item.href === '/crm/integraciones' && (pathname === '/crm/integraciones' || pathname === '/crm/preferencias-avisos');
-  const isActive = isExact || isDebtDetail || isClientDetail || isIntegrations;
+  const isActive = pathname === item.href || (
+    item.href !== '/crm' && pathname.startsWith(`${item.href}/`) &&
+    !(item.href === '/crm/clientes' && ['/crm/clientes/alta-ia', '/crm/clientes/nuevo', '/crm/clientes/importar'].includes(pathname))
+  );
   return (
     <Link
       href={item.href}
       onClick={onClick}
       title={collapsed ? item.label : undefined}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex h-8 min-h-8 items-center justify-between rounded-lg px-3 py-1 text-[12px] transition-all ${
+      className={`flex h-8 min-h-8 items-center justify-between rounded-lg px-3 py-1 text-sm transition-all ${
         isActive
           ? 'bg-[#0055D4] text-white shadow-xs font-semibold'
           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
@@ -34,7 +33,7 @@ function NavLink({ item, pathname, collapsed, onClick }: { item: NavItem; pathna
       </span>
       {!collapsed && item.badge && (
         <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-mono-data font-bold ${
+          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-mono-data font-bold ${
             item.badgeColor
               ? item.badgeColor
               : isActive
@@ -67,6 +66,27 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [clientSearchResults, setClientSearchResults] = useState<any[]>([]);
+  const [clientSearchError, setClientSearchError] = useState('');
+  const [clientSearchLoading, setClientSearchLoading] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const query = searchQuery.trim();
+    setClientSearchResults([]);
+    setClientSearchError('');
+    if (!showSearchModal || !query) { setClientSearchLoading(false); return; }
+    setClientSearchLoading(true);
+    const timer = window.setTimeout(() => {
+      apiFetch('/clients?search=' + encodeURIComponent(query)).then(async response => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !Array.isArray(data.clients)) throw new Error(data.error || 'No se pudo buscar en el directorio.');
+        if (active) setClientSearchResults(data.clients.slice(0, 15));
+      }).catch(reason => { if (active) setClientSearchError(reason instanceof Error ? reason.message : 'Búsqueda no disponible.'); })
+        .finally(() => { if (active) setClientSearchLoading(false); });
+    }, 300);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [searchQuery, showSearchModal]);
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     AUTOMATIZACIÓN: true,
     CONFIGURACIÓN: true,
@@ -138,7 +158,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const activeGroup = pathname.startsWith('/crm/documentos-ia') || pathname.startsWith('/crm/chat-ia')
       ? 'AUTOMATIZACIÓN'
-      : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
+      : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/preferencias-avisos') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
         ? 'CONFIGURACIÓN'
         : null;
     if (activeGroup) setOpenGroups((groups) => ({ ...groups, [activeGroup]: true }));
@@ -171,6 +191,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         { href: '/crm/clientes', label: 'Clientes', icon: 'groups', badge: clientCount === null ? undefined : String(clientCount) },
         { href: '/crm/expedientes', label: 'Expedientes', icon: 'folder_open' },
         { href: '/crm/agenda', label: 'Agenda y citas', icon: 'calendar_month' },
+        { href: '/crm/obligaciones', label: 'Obligaciones', icon: 'event_note' },
         { href: '/crm/contacto', label: 'Consultas web', icon: 'inbox' },
       ],
     },
@@ -187,7 +208,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       items: [
         { href: '/crm/clientes/alta-ia', label: 'Alta con IA', icon: 'auto_awesome', badge: 'IA', badgeColor: 'bg-purple-100 text-purple-700 border border-purple-200' },
         { href: '/crm/documentos-ia', label: 'Documentos IA', icon: 'description' },
-        { href: '/crm/chat-ia', label: 'Chat IA', icon: 'chat_bubble_outline', badge: '● En vivo', badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+        { href: '/crm/chat-ia', label: 'Chat IA', icon: 'chat_bubble_outline', badge: 'IA', badgeColor: 'bg-purple-50 text-purple-700 border border-purple-200' },
       ],
     },
     {
@@ -196,6 +217,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         { href: '/crm/ajustes-datos-empresa', label: 'Datos de empresa', icon: 'business' },
         { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
         { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
+        { href: '/crm/preferencias-avisos', label: 'Preferencias de avisos', icon: 'notifications' },
         { href: '/crm/contenido', label: 'CMS', icon: 'language' },
         { href: '/crm/backup', label: 'Copias de seguridad', icon: 'cloud_sync' },
       ],
@@ -248,11 +270,11 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               </div>
               <span className={`${sidebarCollapsed ? 'hidden' : 'inline-flex flex-col'} leading-tight min-w-0`}>
                 <span className="font-headline-sm text-sm font-bold text-slate-900 tracking-tight truncate">RP Asesoría</span>
-                <span className="mt-0.5 text-[8.5px] font-semibold uppercase tracking-[0.06em] text-slate-500 truncate">ASESORÍA &amp; GESTORÍA</span>
+                <span className="mt-0.5 text-xs font-semibold uppercase tracking-[0.06em] text-slate-500 truncate">ASESORÍA &amp; GESTORÍA</span>
               </span>
             </Link>
             <div className="flex items-center gap-1.5">
-              <span className="px-1.5 py-0.5 bg-blue-50 text-[#0055D4] font-mono-data text-[10px] font-bold rounded border border-blue-200">
+              <span className="px-1.5 py-0.5 bg-blue-50 text-[#0055D4] font-mono-data text-xs font-bold rounded border border-blue-200">
                 CRM
               </span>
               <button
@@ -289,7 +311,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                         type="button"
                         onClick={() => setOpenGroups((groups) => ({ ...groups, [group.label]: !isOpen }))}
                         aria-expanded={isOpen}
-                        className="flex h-6 w-full items-center justify-between px-2.5 text-left text-[10px] font-bold tracking-[0.14em] text-slate-500 uppercase hover:text-slate-800 transition-colors"
+                        className="flex h-6 w-full items-center justify-between px-2.5 text-left text-xs font-bold tracking-[0.14em] text-slate-500 uppercase hover:text-slate-800 transition-colors"
                       >
                         <span>{group.label}</span>
                         <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
@@ -297,7 +319,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                         </span>
                       </button>
                     ) : (
-                      <p className="flex h-6 items-center px-2.5 text-[10px] font-bold tracking-[0.14em] text-slate-500 uppercase">{group.label}</p>
+                      <p className="flex h-6 items-center px-2.5 text-xs font-bold tracking-[0.14em] text-slate-500 uppercase">{group.label}</p>
                     )
                   )}
                   {showItems && group.items.map((item) => (
@@ -312,27 +334,27 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         {/* Footer Sidebar: System Status & Portal Cliente */}
         <div className="p-3 bg-white border-t border-[#e2e8f0] space-y-2">
           {!sidebarCollapsed && (
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] space-y-1.5 font-medium">
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5 font-medium">
               <div className="flex items-center justify-between text-slate-600">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-slate-300"></span>
                   Servidor Coolify
                 </span>
-                <span className="text-[10px] font-semibold text-emerald-700">Online</span>
+                <span className="text-xs font-semibold text-slate-500">Sin verificar</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-slate-300"></span>
                   PostgreSQL
                 </span>
-                <span className="text-[10px] font-semibold text-emerald-700">Online</span>
+                <span className="text-xs font-semibold text-slate-500">Sin verificar</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                   Storage / OCR
                 </span>
-                <span className="text-[10px] font-semibold text-blue-700">Ready</span>
+                <span className="text-xs font-semibold text-slate-500">Sin verificar</span>
               </div>
             </div>
           )}
@@ -384,9 +406,9 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             >
               <div className="flex items-center gap-2.5 truncate">
                 <span className="material-symbols-outlined text-[19px] text-slate-400 shrink-0">search</span>
-                <span className="truncate text-slate-500 font-normal">Buscar cliente, expediente, BSN o trámite...</span>
+                <span className="truncate text-slate-500 font-normal">Buscar cliente, BSN o herramienta...</span>
               </div>
-              <span className="hidden sm:inline px-1.5 py-0.5 bg-[#f1f5f9] border border-[#e2e8f0] rounded text-[10px] font-mono-data text-slate-500 shrink-0">
+              <span className="hidden sm:inline px-1.5 py-0.5 bg-[#f1f5f9] border border-[#e2e8f0] rounded text-xs font-mono-data text-slate-500 shrink-0">
                 Ctrl + K
               </span>
             </button>
@@ -429,7 +451,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                     <span className="font-bold text-xs text-on-surface">Notificaciones ({unreadCount})</span>
                     <div className="flex items-center gap-2">
 
-                      <span className="text-[10px] text-slate-400 font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
+                      <span className="text-xs text-slate-400 font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
                         Cerrar
                       </span>
                     </div>
@@ -464,7 +486,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="hidden lg:flex flex-col text-left">
                   <span className="text-xs font-bold text-slate-900 leading-tight">{user?.full_name || 'Administrador RP Gestoría'}</span>
-                  <span className="text-[10px] text-slate-500 capitalize">{user?.role || 'Admin'}</span>
+                  <span className="text-xs text-slate-500 capitalize">{user?.role || 'Admin'}</span>
                 </div>
                 <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
               </button>
@@ -474,8 +496,13 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 <div className="absolute right-0 top-11 w-60 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl p-3 space-y-2 z-50 text-xs">
                   <div className="px-2 py-1.5 border-b border-surface-container">
                     <p className="font-bold text-on-surface">{user?.full_name || 'Gestor'}</p>
-                    <p className="text-[11px] text-slate-400 font-mono-data">{user?.email}</p>
+                    <p className="text-xs text-slate-400 font-mono-data">{user?.email}</p>
                   </div>
+
+                  <Link href="/crm/cuenta" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors">
+                    <span className="material-symbols-outlined text-[16px]">manage_accounts</span>
+                    <span>Mi cuenta y contraseña</span>
+                  </Link>
 
                   <Link
                     href="/crm/backup"
@@ -547,7 +574,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               <input
                 autoFocus
                 type="text"
-                placeholder="Escribe para buscar cliente, BSN o trámite..."
+                placeholder="Buscar cliente, BSN o herramienta..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-slate-400"
@@ -558,6 +585,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="max-h-72 overflow-y-auto p-2 divide-y divide-surface-container">
+              {clientSearchLoading && <p role="status" className="p-3 text-xs text-slate-500">Buscando clientes…</p>}
+              {clientSearchError && <p role="alert" className="p-3 text-xs text-red-700">{clientSearchError}</p>}
+              {clientSearchResults.map(client => <Link key={client.id} href={'/crm/clientes/' + encodeURIComponent(String(client.id))} onClick={() => setShowSearchModal(false)} className="block rounded-lg p-3 text-xs hover:bg-surface-container"><p className="font-semibold text-on-surface">{client.full_name}</p><span className="text-xs text-slate-400">Cliente</span></Link>)}
+
               {quickSearchResults.length > 0 ? (
                 quickSearchResults.map((res, i) => (
                   <Link
@@ -568,19 +599,19 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                   >
                     <div>
                       <p className="font-semibold text-on-surface">{res.title}</p>
-                      <span className="text-[10px] text-slate-400 uppercase font-mono-data">{res.category}</span>
+                      <span className="text-xs text-slate-400 uppercase font-mono-data">{res.category}</span>
                     </div>
                     <span className="material-symbols-outlined text-[16px] text-slate-400">arrow_forward</span>
                   </Link>
                 ))
               ) : (
                 <div className="p-6 text-center text-xs text-slate-400">
-                  No se encontraron resultados para &quot;{searchQuery}&quot;
+                  {clientSearchResults.length || clientSearchLoading ? 'Herramientas sin coincidencias' : <>No se encontraron resultados para &quot;{searchQuery}&quot;</>}
                 </div>
               )}
             </div>
 
-            <div className="p-2.5 bg-surface-container-low border-t border-surface-container text-[11px] text-slate-400 flex justify-between">
+            <div className="p-2.5 bg-surface-container-low border-t border-surface-container text-xs text-slate-400 flex justify-between">
               <span>Navega con las flechas o ratón</span>
               <span>ESC para cerrar</span>
             </div>

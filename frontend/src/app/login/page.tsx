@@ -14,6 +14,15 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [code, setCode] = useState('');
+  const [needMfa, setNeedMfa] = useState(false);
+  const [enrollmentToken, setEnrollmentToken] = useState('');
+  const [secret, setSecret] = useState('');
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const continueToCrm = () => {
+    const next = searchParams.get('next');
+    router.replace(next && /^\/crm(?:\/|$)/.test(next) ? next : '/crm');
+  };
 
   // Si ya hay sesion, no mostrar el login
   useEffect(() => {
@@ -42,25 +51,33 @@ function LoginForm() {
     }
 
     try {
-      const res = await fetch('/api/backend/auth/login', {
+      const res = await fetch(enrollmentToken ? '/api/backend/auth/mfa/confirm' : '/api/backend/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'application/json', ...(enrollmentToken ? { Authorization: 'Bearer ' + enrollmentToken } : {}) },
+        body: JSON.stringify(enrollmentToken ? { code } : { email, password, code }),
       });
-
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        const data = await res.json();
+        if (data.mfaEnrollmentRequired) {
+          setEnrollmentToken(data.enrollmentToken);
+          const setup = await fetch('/api/backend/auth/mfa/setup', { method: 'POST', headers: { Authorization: 'Bearer ' + data.enrollmentToken } });
+          const enrollment = await setup.json();
+          if (!setup.ok) throw new Error(enrollment.error || 'No se pudo preparar la verificación.');
+          setSecret(enrollment.secret);setNeedMfa(true);setLoading(false);return;
+        }
+        if (data.mfaRequired) { setNeedMfa(true);setLoading(false);return; }
         saveSession(data.token, data.user as SessionUser);
-        const next = searchParams.get('next');
-        router.replace(next && next.startsWith('/') ? next : '/crm');
+        setPassword('');setCode('');
+        if (data.recoveryCodes) { setRecoveryCodes(data.recoveryCodes);setLoading(false);return; }
+        continueToCrm();
         return;
       }
-    } catch {
-      // Backend offline o proxy no disponible: pasar a modo local transparente
+      throw new Error(data.error || 'No se pudo validar el acceso.');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo validar el acceso.');
     }
 
     setLoading(false);
-    setError('No se pudo validar el acceso. Comprueba el servidor y tus credenciales.');
   };
 
   return (
@@ -87,7 +104,12 @@ function LoginForm() {
             <div className="flex-grow border-t border-outline-variant/60"></div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {recoveryCodes.length > 0 ? <section className="space-y-4" aria-label="Códigos de recuperación">
+            <h2 className="font-bold">Guarda tus códigos de recuperación</h2>
+            <p className="text-sm">Cada código se puede usar una sola vez si pierdes acceso a tu aplicación de autenticación. Guárdalos en un lugar privado; no se volverán a mostrar.</p>
+            <pre className="overflow-x-auto rounded-lg bg-slate-100 p-3 text-xs">{recoveryCodes.join('\n')}</pre>
+            <button type="button" onClick={continueToCrm} className="min-h-11 w-full rounded-lg bg-slate-900 px-4 text-white">He guardado los códigos. Entrar al CRM</button>
+          </section> : <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <div className="flex justify-between items-center mb-1.5">
                 <label htmlFor="email" className="block text-xs font-semibold text-on-surface">
@@ -100,6 +122,7 @@ function LoginForm() {
                 required
                 autoComplete="username"
                 value={email}
+                readOnly={needMfa}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm text-on-surface focus:outline-none focus:border-secondary transition-colors"
                 placeholder="tu@dominio.com"
@@ -118,11 +141,22 @@ function LoginForm() {
                 required
                 autoComplete="current-password"
                 value={password}
+                readOnly={needMfa}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm text-on-surface focus:outline-none focus:border-secondary transition-colors"
                 placeholder="••••••••"
               />
             </div>
+
+            {secret && <section className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm" aria-label="Configurar verificación en dos pasos">
+              <h2 className="font-bold">Activa la verificación en dos pasos</h2>
+              <p>En tu aplicación de autenticación, añade una cuenta con clave manual: RP Asesoría, basada en tiempo, 6 dígitos.</p>
+              <p className="break-all rounded bg-white p-2 font-mono text-xs select-all">{secret}</p>
+              <p>Introduce el código generado. Esta clave es privada y solo se muestra durante la configuración.</p>
+            </section>}
+            {needMfa && <div><label htmlFor="mfa-code" className="mb-1.5 block text-xs font-semibold">{secret ? 'Código de 6 dígitos' : 'Código de autenticación o recuperación'}</label>
+              <input id="mfa-code" required autoComplete="one-time-code" value={code} onChange={event => setCode(event.target.value)} className="min-h-11 w-full rounded-lg border border-slate-300 px-3 text-sm" />
+            </div>}
 
             {error && (
               <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-900">
@@ -136,9 +170,9 @@ function LoginForm() {
               disabled={loading}
               className="w-full py-2.5 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? 'Verificando...' : needMfa ? 'Verificar y entrar' : 'Iniciar Sesión'}
             </button>
-          </form>
+          </form>}
 
         </div>
 
