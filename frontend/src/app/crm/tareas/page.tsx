@@ -4,7 +4,6 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
-import Link from 'next/link';
 
 type Task = { id: string; client_id?: string; client_name?: string; dossier_id?: string; dossier_code?: string; dossier_title?: string; title: string; description?: string; due_date?: string; status: string; priority: string; assigned_to_name?: string };
 const labels: Record<string,string> = { pendiente:'Pendiente', documentacion:'Documentación', en_espera_cliente:'En espera del cliente', revision:'Revisión', seguimiento:'Seguimiento', mensaje:'Mensaje', cita:'Cita', completada:'Completada' };

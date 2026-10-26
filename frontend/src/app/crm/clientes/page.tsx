@@ -193,6 +193,7 @@ function CRMClientesContent() {
   const searchParams = useSearchParams();
   const contextQuery = searchParams.toString();
   const consumedContextRef = useRef<string | null>(null);
+  const hasAutoOpenedRef = useRef(false);
   const detailRequestRef = useRef(0);
 
   useEffect(() => () => { ++detailRequestRef.current; }, []);
@@ -494,14 +495,6 @@ function CRMClientesContent() {
           }
         }
       }
-    }
-    const origin = query.get('from');
-    setReturnOrigin(origin);
-    // Only the explicit edit link opens the historical rich editor.
-    handleOpenClient(found, origin === 'ficha');
-    const tab = query.get('tab');
-    if (origin === 'ficha' && tab && ['resumen', 'personales', 'servicios', 'documentos', 'presupuestos', 'facturas', 'citas', 'mensajes', 'tareas', 'historial', 'ia'].includes(tab)) {
-      setActive360Tab(tab as any);
     }
   }, [clients, contextQuery]);
 

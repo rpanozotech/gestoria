@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
@@ -35,6 +35,7 @@ export default function ClienteFichaPage() {
   const [isGeneratingPortalAccess, setIsGeneratingPortalAccess] = useState(false);
   const [portalAccessNotice, setPortalAccessNotice] = useState<{ username: string; password: string } | null>(null);
   const [isCompletingTask, setIsCompletingTask] = useState(false);
+  const [activeTab, setActiveTab] = useState<typeof tabs[number][0]>('resumen');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
@@ -72,13 +73,20 @@ export default function ClienteFichaPage() {
   const messages = Array.isArray(data.messages) ? data.messages : [];
   const audit = Array.isArray(data.audit) ? data.audit : [];
   const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+  const serviceRequests = Array.isArray(data.service_requests) ? data.service_requests : [];
   const nextTask = tasks.find((task: any) => !['completada', 'completed', 'cancelada', 'cancelled'].includes(String(task.status || '').toLowerCase())) || tasks[0];
   const billed = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
   const pendingInvoices = invoices.filter((invoice) => !['pagada', 'paid', 'cobrada'].includes(String(invoice.status || '').toLowerCase()));
   const debt = debts[0];
   const nextAppointment = appointments[0];
+  const nextAction = nextAppointment
+    ? { title: nextAppointment.title || 'Cita programada', kind: 'Cita', date: nextAppointment.appointment_date || nextAppointment.date, notes: nextAppointment.notes }
+    : nextTask
+      ? { title: nextTask.title || 'Tarea pendiente', kind: 'Tarea', date: nextTask.due_date, notes: nextTask.description }
+      : null;
   // Las pestañas cambian el contenido de la ficha; no son anclas de scroll.
-  const scrollTo = (key: string) => { setActiveTab(key); };
+  const scrollTo = (key: string) => { setActiveTab(key as typeof tabs[number][0]); };
+  const open = (key: PanelKey) => { setActiveTab(key); };
   const statusLabel = client.status === 'activo' ? 'Activo' : client.status || 'Activo';
   const phone = client.phone || 'Sin teléfono';
   const email = client.email || 'Sin correo';
