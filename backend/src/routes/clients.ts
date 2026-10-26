@@ -242,8 +242,13 @@ router.post('/', async (req: Request, res: Response) => {
       notes,
     } = req.body;
 
-    if (!full_name) {
-      return res.status(400).json({ error: 'El nombre completo es obligatorio' });
+    const normalizedName = typeof full_name === 'string' ? full_name.trim() : '';
+    const normalizedBsn = typeof bsn === 'string' ? bsn.replace(/\s/g, '') : '';
+    if (normalizedName.split(/\s+/).filter(Boolean).length < 2) {
+      return res.status(400).json({ error: 'El nombre y los apellidos son obligatorios' });
+    }
+    if (!/^\d{9}$/.test(normalizedBsn)) {
+      return res.status(400).json({ error: 'El BSN es obligatorio y debe tener 9 dígitos' });
     }
 
     const insertSql = `
@@ -254,10 +259,10 @@ router.post('/', async (req: Request, res: Response) => {
     `;
 
     const values = [
-      full_name.trim(),
+      normalizedName,
       email ? email.trim().toLowerCase() : null,
       phone ? phone.trim() : null,
-      bsn ? bsn.trim() : null,
+      normalizedBsn,
       id_document_number || null,
       nationality || 'España',
       address || null,

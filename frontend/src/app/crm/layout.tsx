@@ -9,27 +9,29 @@ import { getToken, getStoredUser, saveSession, clearSession, SessionUser } from 
 import { apiFetch } from '@/lib/api';
 
 type NavItem = { href: string; label: string; icon: string; badge?: string; badgeColor?: string };
+type NavGroup = { label: string; leading?: NavItem; items: NavItem[]; collapsible?: boolean; featured?: boolean };
 
-function NavLink({ item, pathname, collapsed, onClick }: { item: NavItem; pathname: string; collapsed: boolean; onClick: () => void }) {
-  const isExact = pathname === item.href;
+function NavLink({ item, pathname, collapsed, onClick, featured = false }: { item: NavItem; pathname: string; collapsed: boolean; onClick: () => void; featured?: boolean }) {
+  const isExact = pathname === item.href && item.label !== 'Dashboard';
   const isDebtDetail = item.href === '/crm/deudas/1' && pathname.startsWith('/crm/deudas/') && pathname !== '/crm/deudas';
   const isClientDetail = item.href === '/crm/clientes/demo-client-1' && pathname.startsWith('/crm/clientes/') && pathname !== '/crm/clientes' && pathname !== '/crm/clientes/alta-ia' && pathname !== '/crm/clientes/nuevo' && pathname !== '/crm/clientes/importar';
   const isIntegrations = item.href === '/crm/integraciones' && (pathname === '/crm/integraciones' || pathname === '/crm/preferencias-avisos');
-  const isActive = isExact || isDebtDetail || isClientDetail || isIntegrations;
+  const isFinance = item.href === '/crm/facturacion' && (pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas'));
+  const isActive = isExact || isDebtDetail || isClientDetail || isIntegrations || isFinance;
   return (
     <Link
       href={item.href}
       onClick={onClick}
       title={collapsed ? item.label : undefined}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex h-8 min-h-8 items-center justify-between rounded-lg px-3 py-1 text-[12px] transition-all ${
-        isActive
-          ? 'bg-[#0055D4] text-white shadow-xs font-semibold'
-          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
+    className={`flex h-11 min-h-11 items-center justify-between rounded-[10px] px-3 py-1.5 text-[14px] transition-all ${
+        isActive || featured
+          ? 'bg-[#0568E8] text-white shadow-sm font-semibold'
+          : 'text-white/85 hover:bg-white/10 hover:text-white font-medium'
       }`}
     >
       <span className="flex min-w-0 items-center gap-2.5">
-        <span className={`material-symbols-outlined text-[18px] ${isActive ? 'text-white' : 'text-slate-400'}`}>{item.icon}</span>
+        <span className={`material-symbols-outlined text-[20px] ${isActive || featured ? 'text-white' : 'text-white/75'}`}>{item.icon}</span>
         {!collapsed && <span className="truncate whitespace-nowrap">{item.label}</span>}
       </span>
       {!collapsed && item.badge && (
@@ -39,7 +41,7 @@ function NavLink({ item, pathname, collapsed, onClick }: { item: NavItem; pathna
               ? item.badgeColor
               : isActive
               ? 'bg-white/20 text-white'
-              : 'bg-slate-100 text-slate-600 border border-slate-200'
+              : 'bg-white/10 text-white/80 border border-white/10'
           }`}
         >
           {item.badge}
@@ -60,16 +62,18 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   // Estados interactivos para Topbar y Responsive Drawer
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [financeOpen, setFinanceOpen] = useState(pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas'));
-  const [clientsOpen, setClientsOpen] = useState(pathname.startsWith('/crm/clientes'));
   const [showNotifications, setShowNotifications] = useState(false);
   const unreadCount = 0;
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    AUTOMATIZACIÓN: true,
-    CONFIGURACIÓN: true,
+    INICIO: false,
+    AGENDA: false,
+    CLIENTES: false,
+    FINANZAS: false,
+    AUTOMATIZACIÓN: false,
+    CONFIGURACIÓN: false,
   });
 
   useEffect(() => {
@@ -136,13 +140,35 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   // Si el usuario entra directamente en una herramienta, mantenemos visible
   // el grupo para que la sección activa no desaparezca del menú.
   useEffect(() => {
-    const activeGroup = pathname.startsWith('/crm/documentos-ia') || pathname.startsWith('/crm/chat-ia')
+    const activeGroup = pathname.startsWith('/crm/clientes/alta-ia') || pathname.startsWith('/crm/documentos-ia') || pathname.startsWith('/crm/chat-ia')
       ? 'AUTOMATIZACIÓN'
-      : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
-        ? 'CONFIGURACIÓN'
-        : null;
-    if (activeGroup) setOpenGroups((groups) => ({ ...groups, [activeGroup]: true }));
+      : pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') || pathname.startsWith('/crm/tarifas')
+        ? 'FINANZAS'
+        : pathname.startsWith('/crm/agenda') || pathname.startsWith('/crm/tareas')
+          ? 'AGENDA'
+          : pathname === '/crm' || pathname.startsWith('/crm/expedientes')
+            ? 'INICIO'
+            : pathname === '/crm/clientes' || pathname.startsWith('/crm/clientes/demo-client-1') || pathname.startsWith('/crm/contacto')
+              ? 'CLIENTES'
+              : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
+                ? 'CONFIGURACIÓN'
+                : null;
+    if (activeGroup) {
+      setOpenGroups((groups) => ({
+        ...Object.fromEntries(Object.keys(groups).map((key) => [key, key === activeGroup])),
+        [activeGroup]: true,
+      }));
+    }
   }, [pathname]);
+
+  // En ventanas bajas la navegación lateral puede desplazarse internamente,
+  // pero la opción activa siempre debe quedar visible al cambiar de sección.
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>('#crm-sidebar a[aria-current="page"]')?.scrollIntoView({ block: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname, openGroups]);
 
   // Atajo de teclado Cmd+K / Ctrl+K
   useEffect(() => {
@@ -162,44 +188,32 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const navGroups = [
-    {
-      label: 'OPERACIÓN',
-      items: [
-        { href: '/crm', label: 'Dashboard', icon: 'dashboard' },
-        { href: '/crm/tareas', label: 'Mi trabajo de hoy', icon: 'checklist' },
-        { href: '/crm/clientes', label: 'Clientes', icon: 'groups', badge: clientCount === null ? undefined : String(clientCount) },
-        { href: '/crm/expedientes', label: 'Expedientes', icon: 'folder_open' },
-        { href: '/crm/agenda', label: 'Agenda y citas', icon: 'calendar_month' },
-        { href: '/crm/contacto', label: 'Consultas web', icon: 'inbox' },
-      ],
-    },
-    {
-      label: 'FINANZAS',
-      items: [
-        { href: '/crm/facturacion', label: 'Facturación', icon: 'receipt_long' },
-        { href: '/crm/deudas', label: 'Cobros y deudas', icon: 'payments' },
-        { href: '/crm/tarifas', label: 'Tarifas', icon: 'sell' },
-      ],
-    },
-    {
-      label: 'AUTOMATIZACIÓN',
-      items: [
-        { href: '/crm/clientes/alta-ia', label: 'Alta con IA', icon: 'auto_awesome', badge: 'IA', badgeColor: 'bg-purple-100 text-purple-700 border border-purple-200' },
-        { href: '/crm/documentos-ia', label: 'Documentos IA', icon: 'description' },
-        { href: '/crm/chat-ia', label: 'Chat IA', icon: 'chat_bubble_outline', badge: '● En vivo', badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
-      ],
-    },
-    {
-      label: 'CONFIGURACIÓN',
-      items: [
-        { href: '/crm/ajustes-datos-empresa', label: 'Datos de empresa', icon: 'business' },
-        { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
-        { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
-        { href: '/crm/contenido', label: 'CMS', icon: 'language' },
-        { href: '/crm/backup', label: 'Copias de seguridad', icon: 'cloud_sync' },
-      ],
-    },
+  const navGroups: NavGroup[] = [
+    { label: 'INICIO', leading: { href: '/crm', label: 'Inicio', icon: 'home' }, collapsible: true, items: [
+      { href: '/crm/expedientes', label: 'Expedientes', icon: 'folder_open' },
+    ] },
+    { label: 'AGENDA', leading: { href: '/crm/agenda', label: 'Agenda', icon: 'calendar_month' }, collapsible: true, items: [
+      { href: '/crm/tareas', label: 'Tareas', icon: 'check_circle' },
+    ] },
+    { label: 'CLIENTES', leading: { href: '/crm/clientes', label: 'Clientes', icon: 'groups', badge: clientCount === null ? undefined : String(clientCount) }, collapsible: true, items: [
+      { href: '/crm/contacto?view=messages', label: 'Comunicación', icon: 'chat_bubble_outline' },
+      { href: '/crm/contacto?view=web', label: 'Consultas web', icon: 'inbox' },
+    ] },
+    { label: 'FINANZAS', leading: { href: '/crm/facturacion', label: 'Finanzas', icon: 'account_balance_wallet' }, collapsible: true, items: [
+      { href: '/crm/deudas', label: 'Cobros y deudas', icon: 'account_balance_wallet' },
+      { href: '/crm/tarifas', label: 'Tarifas', icon: 'sell' },
+    ] },
+    { label: 'AUTOMATIZACIÓN', leading: { href: '/crm/clientes/alta-ia', label: 'Automatización', icon: 'auto_awesome' }, collapsible: true, items: [
+      { href: '/crm/clientes/alta-ia', label: 'Alta con IA', icon: 'auto_awesome' },
+      { href: '/crm/documentos-ia', label: 'Documentos IA', icon: 'description' },
+      { href: '/crm/chat-ia', label: 'Chat IA', icon: 'chat_bubble_outline', badge: '● En vivo', badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+    ] },
+    { label: 'CONFIGURACIÓN', leading: { href: '/crm/ajustes-datos-empresa', label: 'Configuración', icon: 'settings' }, collapsible: true, items: [
+      { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
+      { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
+      { href: '/crm/contenido', label: 'CMS', icon: 'language' },
+      { href: '/faq', label: 'Centro de ayuda', icon: 'help' },
+    ] },
   ];
 
   const quickSearchResults = [
@@ -229,40 +243,37 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="h-screen h-[100dvh] w-full bg-[#f4f6fa] flex overflow-hidden">
+    <div className="crm-shell h-screen h-[100dvh] w-full bg-[#eef3fb] flex overflow-hidden">
       <title>RP Asesoría | CRM</title>
       {/* Sidebar fijo a la izquierda en desktop, desplegable como cajón en tablet/móvil */}
       <aside
         id="crm-sidebar"
         aria-label="Navegación principal del CRM"
-        className={`crm-sidebar fixed left-0 top-0 h-full ${sidebarCollapsed ? 'w-[76px]' : 'w-64'} bg-white border-r border-[#e2e8f0] z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
+        className={`crm-sidebar fixed left-0 top-0 h-full ${sidebarCollapsed ? 'w-[72px]' : 'w-[240px]'} bg-[#062653] border-r border-[#062653] z-50 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Brand header */}
-          <div className={`brand-header h-[65px] min-h-[65px] shrink-0 ${sidebarCollapsed ? 'px-3' : 'px-4'} flex items-center justify-between border-b border-[#e2e8f0] bg-white`}>
+          <div className={`brand-header h-[72px] min-h-[72px] shrink-0 ${sidebarCollapsed ? 'px-3' : 'px-4'} flex items-center justify-between border-b border-white/10 bg-[#062653]`}>
             <Link href="/crm" className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-lg overflow-hidden bg-blue-50 border border-blue-200 flex items-center justify-center shrink-0 shadow-xs">
-                <img src="/logo.png" alt="RP Gestoría" className="w-full h-full object-cover" />
+                <img src="/logo.png" alt="RP Gestoría" className="crm-brand-logo w-full h-full object-cover" />
               </div>
               <span className={`${sidebarCollapsed ? 'hidden' : 'inline-flex flex-col'} leading-tight min-w-0`}>
-                <span className="font-headline-sm text-sm font-bold text-slate-900 tracking-tight truncate">RP Asesoría</span>
-                <span className="mt-0.5 text-[8.5px] font-semibold uppercase tracking-[0.06em] text-slate-500 truncate">ASESORÍA &amp; GESTORÍA</span>
+                <span className="font-headline-sm text-base font-bold text-white tracking-tight truncate">RP Asesoría</span>
+                <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.06em] text-white/65 truncate">ASESORÍA &amp; GESTORÍA</span>
               </span>
             </Link>
             <div className="flex items-center gap-1.5">
-              <span className="px-1.5 py-0.5 bg-blue-50 text-[#0055D4] font-mono-data text-[10px] font-bold rounded border border-blue-200">
-                CRM
-              </span>
               <button
                 type="button"
                 onClick={() => setSidebarCollapsed((value) => !value)}
                 aria-label={sidebarCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
                 title={sidebarCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
-                className="hidden lg:flex min-h-7 min-w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                className="hidden lg:flex min-h-7 min-w-7 items-center justify-center rounded-md text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">{sidebarCollapsed ? 'menu_open' : 'menu'}</span>
+                <span className="material-symbols-outlined text-[18px] text-white/80">{sidebarCollapsed ? 'menu_open' : 'menu'}</span>
               </button>
               <button
                 type="button"
@@ -275,34 +286,88 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <nav aria-label="Navegación principal" className="flex min-h-0 flex-1 flex-col gap-2 px-3 py-2 overflow-hidden">
+          <nav aria-label="Navegación principal" className="no-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden px-3 pb-2 pt-6">
             {navGroups.map((group) => {
-              const isCollapsibleGroup = group.label === 'AUTOMATIZACIÓN' || group.label === 'CONFIGURACIÓN';
-              const isOpen = openGroups[group.label] ?? true;
-              const showItems = !isCollapsibleGroup || isOpen || sidebarCollapsed;
+              const leadingItem = group.leading;
+              if (!leadingItem) return null;
+
+              const isOpen = openGroups[group.label] ?? false;
+              const isFinanceGroup = group.label === 'FINANZAS';
+              const isActivePath = (href: string) => (
+                href === '/crm'
+                  ? pathname === '/crm'
+                  : pathname === href || pathname.startsWith(`${href}/`)
+              );
+              const isGroupActive = group.label === 'INICIO'
+                ? pathname === '/crm' || pathname.startsWith('/crm/expedientes')
+                : group.label === 'AGENDA'
+                  ? pathname.startsWith('/crm/agenda') || pathname.startsWith('/crm/tareas')
+                  : group.label === 'CLIENTES'
+                    ? pathname === '/crm/clientes' || pathname.startsWith('/crm/clientes/demo-client-1') || pathname.startsWith('/crm/contacto')
+                    : isFinanceGroup
+                      ? pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') || pathname.startsWith('/crm/tarifas')
+                      : group.label === 'AUTOMATIZACIÓN'
+                        ? pathname.startsWith('/crm/clientes/alta-ia') || pathname.startsWith('/crm/documentos-ia') || pathname.startsWith('/crm/chat-ia')
+                        : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
+                          || isActivePath(leadingItem.href) || group.items.some((item) => isActivePath(item.href));
+
+              const toggleGroup = () => {
+                setOpenGroups((groups) => Object.fromEntries(
+                  Object.keys(groups).map((key) => [key, key === group.label ? !isOpen : false]),
+                ));
+              };
 
               return (
-                <div key={group.label} className="space-y-0.5">
-                  {!sidebarCollapsed && (
-                    isCollapsibleGroup ? (
-                      <button
-                        type="button"
-                        onClick={() => setOpenGroups((groups) => ({ ...groups, [group.label]: !isOpen }))}
-                        aria-expanded={isOpen}
-                        className="flex h-6 w-full items-center justify-between px-2.5 text-left text-[10px] font-bold tracking-[0.14em] text-slate-500 uppercase hover:text-slate-800 transition-colors"
-                      >
-                        <span>{group.label}</span>
-                        <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
-                          {isOpen ? 'expand_less' : 'expand_more'}
+                <div key={group.label} className="relative">
+                  <div className={`flex h-11 min-h-11 items-center overflow-hidden rounded-[10px] transition-all ${isGroupActive ? 'bg-[#0568E8] text-white shadow-sm' : 'text-white/85 hover:bg-white/10 hover:text-white'}`}>
+                    <Link
+                      href={leadingItem.href}
+                      onClick={() => {
+                        setOpenGroups((groups) => Object.fromEntries(
+                          Object.keys(groups).map((key) => [key, key === group.label]),
+                        ));
+                        setMobileMenuOpen(false);
+                      }}
+                      aria-current={isGroupActive ? 'page' : undefined}
+                      title={sidebarCollapsed ? leadingItem.label : undefined}
+                      className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-1.5 text-[14px] font-semibold"
+                    >
+                      <span className={`material-symbols-outlined shrink-0 text-[20px] ${isGroupActive ? 'text-white' : 'text-white/75'}`}>
+                        {leadingItem.icon}
+                      </span>
+                      {!sidebarCollapsed && <span className="truncate whitespace-nowrap">{leadingItem.label}</span>}
+                      {!sidebarCollapsed && leadingItem.badge && (
+                        <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[11px] font-mono-data font-bold ${leadingItem.badgeColor || (isGroupActive ? 'bg-white/20 text-white' : 'bg-white/10 text-white/80 border border-white/10')}`}>
+                          {leadingItem.badge}
                         </span>
-                      </button>
-                    ) : (
-                      <p className="flex h-6 items-center px-2.5 text-[10px] font-bold tracking-[0.14em] text-slate-500 uppercase">{group.label}</p>
-                    )
+                      )}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={toggleGroup}
+                      aria-label={`${isOpen ? 'Cerrar' : 'Abrir'} módulo ${leadingItem.label}`}
+                      aria-expanded={isOpen}
+                      className="flex h-full w-9 shrink-0 items-center justify-center text-white/70 hover:bg-white/10 hover:text-white"
+                    >
+                      <span className="material-symbols-outlined text-[17px]" aria-hidden="true">
+                        {isOpen ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {isOpen && (
+                    <div className={`${sidebarCollapsed ? 'absolute left-[calc(100%+8px)] top-0 z-[60] w-56 rounded-xl border border-white/10 bg-[#062653] p-2 shadow-2xl' : 'ml-3 mt-1 space-y-0.5 border-l border-white/20 pl-2'}`}>
+                      {group.items.map((item) => (
+                        <NavLink
+                          key={`${group.label}-${item.label}`}
+                          item={item}
+                          pathname={pathname}
+                          collapsed={false}
+                          onClick={() => setMobileMenuOpen(false)}
+                        />
+                      ))}
+                    </div>
                   )}
-                  {showItems && group.items.map((item) => (
-                    <NavLink key={item.href} item={item} pathname={pathname} collapsed={sidebarCollapsed} onClick={() => setMobileMenuOpen(false)} />
-                  ))}
                 </div>
               );
             })}
@@ -310,8 +375,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Footer Sidebar: System Status & Portal Cliente */}
-        <div className="p-3 bg-white border-t border-[#e2e8f0] space-y-2">
-          {!sidebarCollapsed && (
+        <div className="p-3 bg-[#062653] border-t border-white/10 space-y-2">
+          {!sidebarCollapsed && pathname !== '/crm' && (
             <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] space-y-1.5 font-medium">
               <div className="flex items-center justify-between text-slate-600">
                 <span className="flex items-center gap-1.5">
@@ -339,13 +404,13 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between px-1 pt-0.5 text-xs">
             <Link
               href="https://rp-gestoria.tech/"
-              className="text-slate-500 hover:text-slate-900 font-medium transition-colors flex items-center gap-1"
+              className="text-white/70 hover:text-white font-medium transition-colors flex items-center gap-1"
             >
               <span>← Web Pública</span>
             </Link>
             <Link
               href="https://portal.rp-gestoria.tech/portal/login"
-              className="text-slate-500 hover:text-slate-900 font-medium transition-colors flex items-center gap-1"
+              className="text-white/70 hover:text-white font-medium transition-colors flex items-center gap-1"
             >
               <span>Portal Cliente ↗</span>
             </Link>
@@ -362,11 +427,11 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main Area (Responsive: pl-0 en móvil/tablet, lg:pl-64 en desktop, adaptado a pantalla completa) */}
-      <div className={`${sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-64'} pl-0 flex-1 flex flex-col h-full min-w-0 w-full transition-all overflow-hidden`}>
+      <div className={`${sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[240px]'} pl-0 flex-1 flex flex-col h-full min-w-0 w-full transition-all overflow-hidden`}>
         {/* Top Header del CRM general */}
-        <header className="crm-topbar h-[4.0625rem] shrink-0 bg-white border-b border-[#e2e8f0] z-30 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-6 shadow-xs">
+        <header className="crm-topbar h-[4.5rem] shrink-0 bg-white border-b border-[#e2e8f0] z-30 px-3 sm:px-6 lg:px-6 flex items-center justify-between gap-3 sm:gap-6 shadow-xs">
           {/* Botón Hamburguesa Móvil + Interactive Search Bar */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-[710px]">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
@@ -394,11 +459,11 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-2 sm:gap-4 relative shrink-0">
             <Link
-              href={pathname === '/crm/tareas' ? '/crm/agenda' : '/crm/clientes/alta-ia'}
+              href={pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') ? '/crm/facturacion' : pathname === '/crm/tareas' ? '/crm/agenda' : '/crm/clientes/alta-ia'}
               className="h-10 px-4 rounded-lg text-xs font-semibold flex items-center gap-2 bg-[#0969e8] hover:bg-[#0858c4] text-white transition-colors shadow-sm"
             >
-              <span className="material-symbols-outlined text-[17px]">{pathname === '/crm/tareas' ? 'add' : 'auto_awesome'}</span>
-              <span className="hidden sm:inline">{pathname === '/crm/tareas' ? '+ Nuevo trámite' : '+ Nuevo con IA'}</span>
+              <span className="material-symbols-outlined text-[17px]">{pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') || pathname === '/crm/tareas' || pathname === '/crm' ? 'add' : 'auto_awesome'}</span>
+              <span className="hidden sm:inline">{pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') ? '+ Nuevo presupuesto' : pathname === '/crm/tareas' ? '+ Nuevo trámite' : pathname === '/crm' ? '+ Nuevo' : '+ Nuevo con IA'}</span>
               <span className="sm:hidden">+ Nuevo</span>
             </Link>
 
@@ -533,7 +598,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content View: Adaptado a pantalla completa sin scrollbar visible a la derecha */}
-        <main className={`crm-page ${pathname === '/crm/tareas' ? 'crm-tareas-main' : ''} flex-1 h-[calc(100dvh-4.0625rem)] overflow-hidden px-3 sm:px-5 lg:px-6 py-2 flex flex-col`}>
+        <main className={`crm-page ${pathname === '/crm/tareas' ? 'crm-tareas-main' : ''} flex-1 h-[calc(100dvh-4.5rem)] overflow-auto px-3 sm:px-5 lg:px-6 py-3 lg:py-5 flex flex-col`}>
           {children}
         </main>
       </div>

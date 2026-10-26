@@ -327,9 +327,10 @@ export default function CRMClientesPage() {
     }
   };
 
-  const handleOpenClient = (client: any) => {
+  const handleOpenClient = (client: any, options?: { preferEmbedded?: boolean }) => {
     // Los clientes demo usan la nueva ficha 360, no el panel histórico incrustado.
-    if (String(client.id) === 'demo-client-1') {
+    // La edición desde la ficha permanece aquí para abrir el editor existente.
+    if (String(client.id) === 'demo-client-1' && !options?.preferEmbedded) {
       router.push('/crm/clientes/demo-client-1');
       return;
     }
@@ -415,6 +416,7 @@ export default function CRMClientesPage() {
       const params = new URLSearchParams(window.location.search);
       const clientQuery = params.get('client') || params.get('nombre');
       const idQuery = params.get('id');
+      const editQuery = params.get('edit') === '1';
       const fromParam = params.get('from');
       const tabQuery = params.get('tab');
 
@@ -435,7 +437,8 @@ export default function CRMClientesPage() {
 
         if (found) {
           hasAutoOpenedRef.current = true;
-          handleOpenClient(found);
+          handleOpenClient(found, { preferEmbedded: editQuery });
+          if (editQuery) handleOpenEditClient(found);
           if (
             tabQuery &&
             [
@@ -1634,7 +1637,7 @@ export default function CRMClientesPage() {
   });
 
   return (
-    <div className="w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
+    <div className="crm-clientes-reference w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
       {/* Toast de Notificaciones */}
       {toastMessage && (
         <div
@@ -1795,7 +1798,7 @@ export default function CRMClientesPage() {
 
       {/* Grid: Clients Directory Table (CLICK EN FILA ABRE CLIENTE) */}
       <div className="flex-1 min-h-0 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+        <div className="crm-clientes-list flex-1 min-h-0 overflow-auto">
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 z-10 bg-surface-container-low text-outline font-semibold uppercase tracking-wider border-b border-surface-container shadow-xs">
               <tr>

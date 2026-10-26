@@ -4,6 +4,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useEscapeKey } from '@/lib/a11y';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiFetch, apiUrl } from '@/lib/api';
 import { createPortalAccess } from '@/lib/portal';
@@ -1014,33 +1015,30 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     showToast('Datos confirmados. Ya puedes crear la ficha del cliente.', 'info');
   };
 
+  const previewClient = detectedClients[0];
+  const previewNameParts = (previewClient?.full_name || '').trim().split(/\s+/).filter(Boolean);
+  const previewFirstName = previewNameParts[0] || '';
+  const previewLastName = previewNameParts.slice(1).join(' ');
+
   return (
     <div data-review-mode={isReviewMode} className="crm-new-client-page w-full h-full max-h-[calc(100vh-4.3rem)] overflow-hidden flex flex-col gap-2.5">
       {!isReviewMode && <>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-surface-container shrink-0">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-on-surface flex items-center gap-2">
-            <span>Alta Inteligente de Clientes con IA</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-secondary/10 text-secondary">
-              Multi-Cliente
-            </span>
-          </h1>
-          <p className="text-[11px] text-on-surface-variant">
-            Sube archivos (PDF, fotos, DNI, cartas) o notas de texto/WhatsApp. La IA extrae los datos automáticamente.
-          </p>
+          <p className="mb-1 text-[13px] font-medium text-[#536987]">Clientes <span className="mx-2">›</span> Alta con IA</p>
+          <h1 className="text-[34px] font-bold tracking-tight text-[#071b46]">Alta inteligente de clientes</h1>
+          <p className="text-[16px] text-[#536987]">Sube documentos de identidad y la IA extraerá los datos automáticamente para crear la ficha del cliente.</p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-secondary rounded-lg border border-secondary/20 flex items-center gap-1.5 shadow-xs">
-            <span className="material-symbols-outlined text-[15px]">psychology</span>
-            <span>Motor IA Multi-Cliente Activo</span>
-          </span>
+        <div className="hidden xl:flex items-center gap-2 rounded-xl border border-[#dce6f3] bg-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,.05)]">
+          <span className="material-symbols-outlined text-[28px] text-[#536d93]">calendar_month</span>
+          <div><p className="text-[13px] font-bold text-[#10264c]">Domingo, 25 de octubre de 2026</p><p className="text-[12px] text-[#6b82a5]">Semana 43 · Quedan 67 días para finalizar el año</p></div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-surface-container gap-2 overflow-x-auto whitespace-nowrap scrollbar-none shrink-0">
+      <div className="hidden border-b border-surface-container gap-2 overflow-x-auto whitespace-nowrap scrollbar-none shrink-0">
         <button
           type="button"
           onClick={() => {
@@ -1080,12 +1078,76 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       </div>
       </>}
 
-      <div className={`flex-1 min-h-0 pr-1 ${isReviewMode ? 'overflow-hidden pl-3 pr-[45px]' : 'overflow-y-auto no-scrollbar space-y-4'}`}>
+      <div className={`flex-1 min-h-0 pr-1 ${isReviewMode ? 'overflow-hidden pl-3 pr-[45px]' : 'overflow-hidden no-scrollbar'}`}>
+        {activeTab === 'ia_multi' && !isReviewMode && (
+          <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_158px] gap-3">
+            <div className="grid min-h-0 gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+              <section className="min-h-0 overflow-hidden rounded-2xl border border-[#dce6f3] bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,.06)] flex flex-col">
+                <div className="flex items-start justify-between gap-3 shrink-0">
+                  <div className="flex items-start gap-3">
+                    <span className="material-symbols-outlined rounded-xl bg-[#eaf3ff] p-2 text-[27px] text-[#0568e8]">picture_as_pdf</span>
+                    <div><h2 className="text-[20px] font-extrabold text-[#10264c]">1. Carga de documentos</h2><p className="text-[15px] text-[#6b82a5]">Sube el DNI, pasaporte u otros documentos del cliente</p></div>
+                  </div>
+                  {process.env.NEXT_PUBLIC_CRM_PREVIEW === 'true' && <button type="button" onClick={handleLoadSampleFiles} className="text-[12px] font-bold text-[#0568e8] hover:underline">+ Cargar archivos demo</button>}
+                </div>
+                <div
+                  onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(event) => { event.preventDefault(); setIsDragging(false); handleFilesSelected(event.dataTransfer.files); }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`mt-5 flex min-h-[190px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-5 text-center transition-colors ${isDragging ? 'border-[#0568e8] bg-[#eef6ff]' : 'border-[#8bb8ee] bg-[#fbfdff] hover:bg-[#f3f8ff]'}`}
+                >
+                  <input ref={fileInputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx" aria-label="Subir documentos para analizar" onChange={(event) => handleFilesSelected(event.target.files)} className="hidden" />
+                  <span className="material-symbols-outlined text-[52px] text-[#0568e8]">cloud_upload</span>
+                  <p className="mt-2 text-[17px] font-extrabold text-[#10264c]">Arrastra y suelta aquí tus archivos</p>
+                  <p className="text-[16px] font-semibold text-[#0568e8]">o haz clic para seleccionar</p>
+                  <p className="mt-2 text-[13px] text-[#6b82a5]">PDF, JPG o PNG. Tamaño máximo 10 MB por archivo.</p>
+                </div>
+                <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+                  <div className="flex items-center justify-between border-b border-[#e4ebf4] pb-2"><h3 className="text-[17px] font-extrabold text-[#10264c]">Documentos cargados <span className="font-medium text-[#536d93]">({uploadedFiles.length})</span></h3>{uploadedFiles.length > 0 && <button type="button" onClick={() => setUploadedFiles([])} className="text-[12px] font-semibold text-[#6b82a5] hover:text-red-600">Quitar todos</button>}</div>
+                  <div className="divide-y divide-[#e4ebf4]">
+                    {uploadedFiles.length ? uploadedFiles.map((file) => {
+                      const done = Boolean(file.textContent?.trim());
+                      const failed = Boolean(file.ocrError);
+                      return <div key={file.id} className="flex items-center justify-between gap-3 py-2.5"><div className="flex min-w-0 items-center gap-3"><div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${file.name.toLowerCase().endsWith('.pdf') ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}><span className="material-symbols-outlined text-[23px]">{file.name.toLowerCase().endsWith('.pdf') ? 'picture_as_pdf' : 'image'}</span></div><div className="min-w-0"><p className="truncate text-[14px] font-bold text-[#10264c]">{file.name}</p><p className="text-[12px] text-[#6b82a5]">{(file.size / 1024).toFixed(0)} KB · 25 oct 2026 · {done ? 'OCR completado' : failed ? 'Error de OCR' : 'Pendiente de OCR'}</p></div></div><div className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-bold ${done ? 'bg-emerald-50 text-emerald-700' : failed ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-[#536d93]'}`}>{done ? '✓ OCR completado' : failed ? 'Revisar' : 'Pendiente de OCR'}</div><button type="button" aria-label={`Eliminar archivo ${file.name}`} onClick={(event) => { event.stopPropagation(); handleRemoveFile(file.id); }} className="text-[#536d93] hover:text-red-600"><span className="material-symbols-outlined text-[18px]">more_horiz</span></button></div>;
+                    }) : <div className="py-7 text-center text-[13px] text-[#6b82a5]">Todavía no has cargado documentos.</div>}
+                  </div>
+                </div>
+              </section>
+
+              <section className="min-h-0 overflow-hidden rounded-2xl border border-[#dce6f3] bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,.06)] flex flex-col">
+                <div className="flex items-start gap-3 shrink-0"><span className="material-symbols-outlined rounded-xl bg-[#eaf3ff] p-2 text-[27px] text-[#0568e8]">description</span><div><h2 className="text-[20px] font-extrabold text-[#10264c]">2. Datos extraídos con IA</h2><p className="text-[15px] text-[#6b82a5]">Revisa la información y corrige lo necesario antes de crear la ficha.</p></div></div>
+                <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-hidden pr-1">
+                  {([
+                    ['Nombre', previewFirstName, 'full_name'],
+                    ['Apellidos', previewLastName, 'full_name'],
+                    ['BSN', previewClient?.bsn || '', 'bsn'],
+                    ['Fecha de nacimiento', previewClient?.dates || '', 'dates'],
+                    ['Dirección', previewClient?.address || '', 'address'],
+                    ['Nacionalidad', previewClient?.nationality || '', 'nationality'],
+                  ] as [string, string, keyof ExtractedClient][]).map(([label, value, field]) => {
+                    const detected = Boolean(value.trim());
+                    return <div key={label} className="flex items-center gap-2 rounded-xl border border-[#e0e8f2] px-3 py-1.5"><label className="w-[118px] shrink-0 text-[13px] font-bold text-[#10264c]">{label}</label><input value={value} onChange={(event) => { const next = event.target.value; if (!previewClient) return; if (field === 'full_name') handleUpdateClientField(previewClient.id, 'full_name', label === 'Nombre' ? `${next} ${previewLastName}`.trim() : `${previewFirstName} ${next}`.trim()); else handleUpdateClientField(previewClient.id, field, next); }} className="h-8 min-w-0 flex-1 rounded-lg border border-[#cbd9e8] bg-white px-3 text-[14px] text-[#10264c] outline-none focus:border-[#0568e8]" /><span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ${detected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{detected ? '✓ Detectado' : '! Revisar'}</span><span className="material-symbols-outlined text-[17px] text-[#536d93]">expand_more</span></div>;
+                  })}
+                </div>
+              </section>
+            </div>
+
+            <section className="min-h-0 overflow-hidden rounded-2xl border border-[#dce6f3] bg-white p-3 shadow-[0_1px_3px_rgba(15,23,42,.06)]">
+              <div className="flex items-start justify-between gap-3"><div className="flex items-start gap-2"><span className="material-symbols-outlined text-[24px] text-[#0568e8]">person</span><div><h2 className="text-[17px] font-extrabold text-[#10264c]">3. Vista previa de la ficha de cliente</h2><p className="text-[12px] text-[#6b82a5]">Así se creará el cliente en el sistema.</p></div></div><div className="rounded-lg bg-[#eaf3ff] px-3 py-1 text-[10px] font-semibold text-[#0568e8]">ⓘ Revisa que la información sea correcta antes de crear la ficha.</div></div>
+              <div className="mt-1 grid min-h-0 gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(440px,0.9fr)]">
+                <div className="flex min-w-0 items-center gap-3 rounded-xl border border-[#e0e8f2] p-2"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#4a83dd] text-[17px] font-extrabold text-white">{(previewClient?.full_name || 'CL').split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate text-[16px] font-extrabold text-[#10264c]">{previewClient?.full_name || 'Cliente pendiente de identificar'}</h3><span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Particular</span></div><div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-[#536987]"><span><span className="material-symbols-outlined mr-1 align-middle text-[14px]">person</span>BSN: {previewClient?.bsn || 'Pendiente'}</span><span><span className="material-symbols-outlined mr-1 align-middle text-[14px]">calendar_month</span>{previewClient?.dates || 'Fecha pendiente'}</span><span><span className="material-symbols-outlined mr-1 align-middle text-[14px]">location_on</span>{[previewClient?.address, previewClient?.postal_code, previewClient?.city].filter(Boolean).join(', ') || 'Dirección pendiente'}</span><span><span className="material-symbols-outlined mr-1 align-middle text-[14px]">flag</span>{previewClient?.nationality || 'Nacionalidad pendiente'}</span></div></div></div>
+                <div className="grid grid-cols-3 gap-2"><button type="button" onClick={handleProcessOcrOnly} disabled={ocrPending || isProcessing} className="flex min-h-[54px] flex-col items-center justify-center rounded-xl border-2 border-[#6fa5ee] text-[11px] font-bold text-[#0568e8] hover:bg-[#f1f7ff] disabled:opacity-50"><span className="material-symbols-outlined text-[20px]">description</span>Leer documento<span className="mt-0.5 text-[9px] font-medium text-[#6b82a5]">Volver a procesar con OCR</span></button><button type="button" onClick={() => { setActiveTab('ia_multi'); setIsReviewMode(true); }} className="flex min-h-[54px] flex-col items-center justify-center rounded-xl border-2 border-[#6fa5ee] text-[11px] font-bold text-[#0568e8] hover:bg-[#f1f7ff]"><span className="material-symbols-outlined text-[20px]">edit</span>Revisar datos<span className="mt-0.5 text-[9px] font-medium text-[#6b82a5]">Editar manualmente</span></button><button type="button" onClick={handleSaveSelectedClients} disabled={isSaving || !canSaveSelected} className="flex min-h-[54px] flex-col items-center justify-center rounded-xl bg-[#0568e8] text-[11px] font-bold text-white hover:bg-blue-700 disabled:opacity-50"><span className="material-symbols-outlined text-[21px]">person_add</span>Crear ficha<span className="mt-0.5 text-[9px] font-medium text-blue-100">Guardar en el CRM</span></button></div>
+              </div>
+            </section>
+          </div>
+        )}
+
         {/* ========================================================================= */}
         {/* VISTA 1: ENTRADA DE ARCHIVOS Y NOTAS (MULTI-CLIENTE) */}
         {/* ========================================================================= */}
         {activeTab === 'ia_multi' && !isReviewMode && (
-        <div className="space-y-6">
+        <div className="hidden space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Panel Izquierdo: Subida de Archivos (PDFs, Fotos, Cartas) */}
             <div className="lg:col-span-6 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm space-y-4">
@@ -1307,7 +1369,119 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       {/* ========================================================================= */}
       {/* VISTA 2: PANTALLA DE REVISIÓN Y VALIDACIÓN MULTI-CLIENTE (PASO OBLIGATORIO) */}
       {/* ========================================================================= */}
-      {(activeTab === 'ia_multi' || activeTab === 'manual') && isReviewMode && (
+      {activeTab === 'manual' && isReviewMode && (
+        <div className="crm-manual-reference-layout flex h-full min-h-0 flex-col gap-2 overflow-hidden px-3 pb-1 animate-in fade-in zoom-in-95">
+          <header className="flex shrink-0 items-start justify-between gap-4">
+            <div>
+              <Link href="/crm/clientes" className="inline-flex items-center gap-1 text-[14px] font-semibold text-[#0568e8] hover:underline">
+                <span aria-hidden="true">←</span> Volver a clientes
+              </Link>
+              <h1 className="mt-1 text-[28px] font-extrabold leading-none tracking-tight text-[#071b46]">Nuevo cliente</h1>
+              <p className="mt-1 text-[13px] text-[#536987]">Introduce la información del cliente. Sólo los campos marcados con <span className="font-bold text-rose-600">*</span> son obligatorios.</p>
+            </div>
+            <div className="hidden shrink-0 items-center gap-3 rounded-xl border border-[#dce6f3] bg-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,.05)] xl:flex">
+              <span className="material-symbols-outlined text-[29px] text-[#536d93]">calendar_month</span>
+              <div><p className="text-[13px] font-bold text-[#10264c]">Domingo, 25 de octubre de 2026</p><p className="text-[12px] text-[#6b82a5]">Semana 43 · Quedan 67 días para finalizar el año</p></div>
+            </div>
+          </header>
+
+          <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(0,1.62fr)_minmax(360px,.88fr)]">
+            <div className="flex min-h-0 flex-col gap-2">
+              <section className="shrink-0 overflow-visible rounded-2xl border border-[#e0e8f2] bg-white px-4 py-2 shadow-[0_1px_3px_rgba(15,23,42,.06)]">
+                <div className="mb-2 flex items-center gap-2 border-b border-[#edf1f6] pb-1">
+                  <span className="material-symbols-outlined text-[22px] text-[#0568e8]">person</span>
+                  <div><h2 className="text-[16px] font-extrabold text-[#10264c]">Identidad</h2><p className="hidden text-[13px] text-[#6b82a5]">Datos personales o de la entidad.</p></div>
+                </div>
+                <div className="grid grid-cols-2 gap-x-5 gap-y-1 text-[13px]">
+                  <label className="col-span-1 font-semibold text-[#10264c]">Tipo de cliente
+                    <select value={previewClient?.client_type || 'Persona física'} onChange={(event) => handleUpdateClientField(previewClient.id, 'client_type', event.target.value)} className="mt-1 h-9 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[14px] font-normal text-[#10264c] outline-none focus:border-[#0568e8]"><option>Persona física</option><option>Empresa</option></select>
+                  </label>
+                  <label className="font-semibold text-[#10264c]">BSN <span className="text-rose-600">*</span>
+                    <input required inputMode="numeric" maxLength={11} value={previewClient?.bsn || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'bsn', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[13px] font-normal text-[#10264c] outline-none focus:border-[#0568e8]" />
+                  </label>
+                  <label className="font-semibold text-[#10264c]">Nombre <span className="text-rose-600">*</span>
+                    <input required value={previewFirstName} onChange={(event) => handleUpdateClientField(previewClient.id, 'full_name', `${event.target.value} ${previewLastName}`.trim())} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[13px] font-normal text-[#10264c] outline-none focus:border-[#0568e8]" />
+                  </label>
+                  <label className="font-semibold text-[#10264c]">Apellidos <span className="text-rose-600">*</span>
+                    <input required value={previewLastName} onChange={(event) => handleUpdateClientField(previewClient.id, 'full_name', `${previewFirstName} ${event.target.value}`.trim())} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[13px] font-normal text-[#10264c] outline-none focus:border-[#0568e8]" />
+                  </label>
+                  <label className="font-semibold text-[#10264c]">Fecha de nacimiento
+                    <input value={previewClient?.dates || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'dates', event.target.value)} placeholder="dd/mm/aaaa" className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[13px] font-normal text-[#10264c] outline-none focus:border-[#0568e8]" />
+                  </label>
+                  <label className="font-semibold text-[#10264c]">Nacionalidad
+                    <select value={previewClient?.nationality || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'nationality', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[13px] font-normal text-[#10264c] outline-none focus:border-[#0568e8]"><option value="">Selecciona una nacionalidad</option><option>Española</option><option>Neerlandesa</option><option>Mauritania</option><option>Pendiente de confirmar</option></select>
+                  </label>
+                  <label className="hidden">País de nacimiento<input value={previewClient?.birth_country || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'birth_country', event.target.value)} /></label>
+                  <label className="hidden">Documento de identidad<select value={previewClient?.id_document_number || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'id_document_number', event.target.value)}><option value="">Seleccionar tipo de documento</option><option>DNI</option><option>Pasaporte</option><option>Documento de viaje español</option></select></label>
+                </div>
+              </section>
+
+              <section className="shrink-0 overflow-visible rounded-2xl border border-[#e0e8f2] bg-white px-4 py-2 shadow-[0_1px_3px_rgba(15,23,42,.06)]">
+                <div className="mb-2 flex items-center gap-2 border-b border-[#edf1f6] pb-1"><span className="material-symbols-outlined text-[22px] text-[#0568e8]">call</span><div><h2 className="text-[16px] font-extrabold text-[#10264c]">Contacto</h2><p className="hidden text-[13px] text-[#6b82a5]">Formas de contacto con el cliente.</p></div></div>
+                <div className="grid grid-cols-2 gap-x-5 gap-y-1 text-[13px]">
+                  <label className="font-semibold text-[#10264c]">Teléfono móvil<input value={previewClient?.phone || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'phone', event.target.value)} placeholder="No detectado" className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]" /></label>
+                  <label className="font-semibold text-[#10264c]">Correo electrónico<input type="email" value={previewClient?.email || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'email', event.target.value)} placeholder="No detectado" className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]" /></label>
+                  <label className="hidden">Teléfono fijo<input placeholder="Opcional" /></label>
+                  <label className="hidden">Correo electrónico alternativo<input placeholder="ej. trabajo@empresa.es" /></label>
+                </div>
+              </section>
+
+              <section className="shrink-0 overflow-visible rounded-2xl border border-[#e0e8f2] bg-white px-4 py-2 shadow-[0_1px_3px_rgba(15,23,42,.06)]">
+                <div className="mb-2 flex items-center gap-2 border-b border-[#edf1f6] pb-1"><span className="material-symbols-outlined text-[22px] text-[#0568e8]">location_on</span><div><h2 className="text-[16px] font-extrabold text-[#10264c]">Domicilio</h2><p className="hidden text-[13px] text-[#6b82a5]">Dirección de residencia fiscal.</p></div></div>
+                <div className="grid grid-cols-[1.35fr_.55fr_.55fr] gap-x-4 gap-y-1 text-[13px]">
+                  <label className="font-semibold text-[#10264c]">Dirección<input value={previewClient?.address || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'address', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]" /></label>
+                  <label className="font-semibold text-[#10264c]">Número<input value={previewClient?.street_number || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'street_number', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]" /></label>
+                  <label className="hidden">Piso / Puerta<input placeholder="Opcional" /></label>
+                  <label className="font-semibold text-[#10264c]">Código postal<input value={previewClient?.postal_code || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'postal_code', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]" /></label>
+                  <label className="col-span-2 font-semibold text-[#10264c]">Localidad<input value={previewClient?.city || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'city', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]" /></label>
+                  <label className="font-semibold text-[#10264c]">Provincia<input value={previewClient?.municipality || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'municipality', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]" /></label>
+                  <label className="col-span-2 font-semibold text-[#10264c]">País<select value={previewClient?.country || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'country', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]"><option value="">Selecciona un país</option><option>España</option><option>Países Bajos</option><option>Mauritania</option></select></label>
+                </div>
+              </section>
+
+              <section className="shrink-0 overflow-visible rounded-2xl border border-[#e0e8f2] bg-white px-4 py-2 shadow-[0_1px_3px_rgba(15,23,42,.06)]">
+                <div className="mb-2 flex items-center gap-2 border-b border-[#edf1f6] pb-1"><span className="material-symbols-outlined text-[22px] text-[#0568e8]">description</span><div><h2 className="text-[16px] font-extrabold text-[#10264c]">Registro administrativo</h2><p className="hidden text-[13px] text-[#6b82a5]">Información interna para la gestión.</p></div></div>
+                <div className="grid grid-cols-2 gap-x-5 gap-y-1 text-[13px]">
+                  <label className="font-semibold text-[#10264c]">Tipo de cliente interno<select value={previewClient?.client_type || 'Particular'} onChange={(event) => handleUpdateClientField(previewClient.id, 'client_type', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]"><option>Particular</option><option>Empresa</option></select></label>
+                  <label className="font-semibold text-[#10264c]">Origen del cliente<select value={previewClient?.source || 'Web'} onChange={(event) => handleUpdateClientField(previewClient.id, 'source', event.target.value)} className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-white px-3 text-[13px] font-normal outline-none focus:border-[#0568e8]"><option>Web</option><option>Referido</option><option>Oficina</option><option>Importación</option></select></label>
+                  <label className="font-semibold text-[#10264c]">Asesor asignado<input value="Usuario de prueba" readOnly className="mt-1 h-8 w-full rounded-lg border border-[#cbd8e8] bg-[#f8fafc] px-3 text-[13px] font-normal outline-none" /></label>
+                  <label className="hidden">Etiquetas<input placeholder="Selecciona etiquetas..." /></label>
+                  <label className="hidden">Observaciones<textarea value={previewClient?.notes || ''} onChange={(event) => handleUpdateClientField(previewClient.id, 'notes', event.target.value)} maxLength={500} placeholder="Añade información relevante sobre el cliente..." /></label>
+                </div>
+              </section>
+            </div>
+
+            <aside className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0e8f2] bg-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,.06)]">
+              <div className="flex items-center gap-2 border-b border-[#edf1f6] pb-2"><span className="material-symbols-outlined text-[22px] text-[#0568e8]">search</span><div><h2 className="text-[18px] font-extrabold text-[#10264c]">Revisión de datos</h2><p className="hidden text-[13px] text-[#6b82a5]">Comprobamos la información en múltiples fuentes.</p></div></div>
+              <div className="mt-2 rounded-xl bg-[#eaf3ff] p-2 text-[12px] font-semibold leading-4 text-[#0568e8]"><span className="material-symbols-outlined mr-1 align-middle text-[17px]">info</span>La verificación se completa al crear el cliente.</div>
+              <div className="mt-2 divide-y divide-[#edf1f6]">
+                {[
+                  ['BSN', 'Comprobación en registros oficiales', previewClient?.bsn, true],
+                  ['Nombre y apellidos', 'Coincidencia con registros', previewClient?.full_name, true],
+                  ['Fecha de nacimiento', 'Verificación en base de datos', previewClient?.dates, false],
+                  ['Dirección', 'Comprobación de residencia', previewClient?.address, false],
+                  ['Correo electrónico', 'Validación de formato y dominio', previewClient?.email, false],
+                  ['Teléfono móvil', 'Comprobación de operadora', previewClient?.phone, false],
+                ].map(([label, detail, value, required]) => {
+                  const detected = Boolean(String(value || '').trim());
+                  const status = detected ? (label === 'Listas internas' ? 'No duplicado' : 'Detectado') : required ? 'Revisar' : 'No detectado';
+                  const icon = detected ? 'check_circle' : required ? 'priority_high' : 'remove_circle';
+                  const tone = detected ? 'text-emerald-600 bg-emerald-50' : required ? 'text-amber-600 bg-amber-50' : 'text-slate-500 bg-slate-100';
+                  return <div key={label as string} className="flex items-center gap-2 py-2"><span className={`material-symbols-outlined rounded-full p-1 text-[15px] ${tone}`}>{icon}</span><div className="min-w-0 flex-1"><p className="text-[13px] font-bold text-[#10264c]">{label as string}</p><p className="truncate text-[11px] text-[#6b82a5]">{detail as string}</p></div><span className={`shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold ${tone}`}>{status}</span><span className="material-symbols-outlined text-[18px] text-[#0568e8]">chevron_right</span></div>;
+                })}
+              </div>
+              <div className="mt-2 flex items-center gap-2 rounded-xl bg-emerald-50 p-2 text-[12px] font-semibold leading-4 text-emerald-700"><span className="material-symbols-outlined text-[17px]">check_circle</span><div>No se han detectado coincidencias<p className="font-normal">El BSN no está duplicado.</p></div></div>
+              <div className="mt-auto grid shrink-0 grid-cols-2 gap-2 border-t border-[#dce6f3] pt-3">
+                <button type="button" onClick={handleSaveDraft} className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg border-2 border-[#0568e8] bg-white px-2 text-[12px] font-bold text-[#0568e8] hover:bg-[#f1f7ff]"><span className="material-symbols-outlined text-[16px]">save</span>Guardar borrador</button>
+                <button type="button" onClick={handleConfirmData} className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg bg-[#eaf3ff] px-2 text-[12px] font-bold text-[#0568e8] hover:bg-[#dbeeff]"><span className="material-symbols-outlined text-[16px]">check</span>Confirmar datos</button>
+                <button type="button" onClick={handleSaveSelectedClients} disabled={isSaving || !canSaveSelected} className="col-span-2 inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg bg-[#0568e8] px-3 text-[12px] font-bold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"><span className="material-symbols-outlined text-[16px]">person_add</span>{isSaving ? 'Guardando...' : 'Crear ficha de cliente'}</button>
+              </div>
+            </aside>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'ia_multi' && isReviewMode && (
         <div
           className="-mt-10 h-full min-h-0 overflow-visible space-y-3 animate-in fade-in zoom-in-95"
           style={{ zoom: detectedClients.length === 1 ? 0.78 : 1 }}
@@ -1967,24 +2141,30 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 text-xs">
             <div>
-              <label className="block text-outline uppercase font-semibold mb-1">Nombre Completo *</label>
+              <label className="block text-outline uppercase font-semibold mb-1">Nombre y apellidos *</label>
               <input
                 required
                 type="text"
                 value={manualClient.full_name}
                 onChange={(e) => setManualClient({ ...manualClient, full_name: e.target.value })}
                 placeholder="Ej. Juan Pérez"
+                title="Introduce nombre y apellidos"
                 className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface focus:border-secondary focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-outline uppercase font-semibold mb-1">BSN (Países Bajos)</label>
+              <label className="block text-outline uppercase font-semibold mb-1">BSN (Países Bajos) *</label>
               <input
+                required
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9 ]{9,11}"
+                maxLength={11}
                 value={manualClient.bsn}
                 onChange={(e) => setManualClient({ ...manualClient, bsn: e.target.value })}
                 placeholder="Ej. 982145672"
+                title="Introduce un BSN de 9 dígitos"
                 className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface font-mono-data focus:border-secondary focus:outline-none"
               />
             </div>
@@ -2128,7 +2308,11 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             </div>
           </div>
 
-          <div className="flex justify-end pt-3 border-t border-surface-container">
+          <p className="text-[11px] text-outline border-t border-surface-container pt-3">
+            Para crear el cliente solo necesitas nombre, apellidos y BSN. El resto de datos es opcional y podrás completarlo desde su ficha.
+          </p>
+
+          <div className="flex justify-end">
             <button
               type="submit"
               className="h-10 px-6 bg-secondary text-white rounded-lg text-xs font-semibold hover:bg-blue-700 shadow-sm"

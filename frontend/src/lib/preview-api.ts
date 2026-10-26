@@ -1,6 +1,6 @@
 import { getStoredUser } from './session';
 
-const demoClient = { id: 'demo-client-1', full_name: 'María Ejemplo', email: 'demo@example.test', bsn: '••••••••', status: 'activo' };
+const demoClient = { id: 'demo-client-1', full_name: 'María Ejemplo', email: 'demo@example.test', bsn: '••••••••', status: 'activo', portal_username: 'maria.ejemplo-demo' };
 const demoServices = [
   { id: 'demo-service-1', title: 'Declaración de la renta (M-Form)', category: 'Impuestos', priceFinal: 89 },
   { id: 'demo-service-2', title: 'DigiD y trámites de llegada', category: 'Llegada', priceFinal: 29 },
@@ -96,6 +96,9 @@ export async function previewApiResponse(path: string, init: RequestInit = {}): 
     return json({ [key]: [] });
   }
   if (path === '/auth/me') return json({ user: getStoredUser() || { id: 'demo-user', email: 'demo@example.test', full_name: 'Usuario de prueba', role: 'gestor' } });
+  if (method === 'POST' && path.match(/^\/clients\/[^/]+\/portal-access$/)) {
+    return json({ portal_access: { username: demoClient.portal_username, password: `RP-DEMO-${Date.now().toString(36).toUpperCase()}` }, message: 'Acceso demo regenerado' });
+  }
   if (path.startsWith('/clients/') && path !== '/clients/count') return json({
     client: { ...demoClient, type: 'Particular', status: 'activo', responsible: 'Usuario de prueba', city: 'Eindhoven', address: 'Calle Demo 12', language: 'Español', notes: 'Cliente de demostración para staging.', created_at: '2026-04-10', last_activity: '2026-08-12' },
     dossiers: demoDossiers,
@@ -161,6 +164,12 @@ export async function previewApiResponse(path: string, init: RequestInit = {}): 
   ] });
   if (path === '/dossiers') return json({ dossiers: demoDossiers });
   if (path === '/tasks') return json({ tasks: demoTasks });
+  if (method === 'PATCH' && path.match(/^\/tasks\/[^/]+$/)) {
+    const taskId = path.split('/')[2];
+    const body = JSON.parse(String(init.body || '{}')) as { status?: string };
+    const task = demoTasks.find((item: any) => String(item.id) === taskId) || demoTasks[0];
+    return json({ task: { ...task, status: body.status || task.status, completed_at: body.status === 'completada' ? new Date().toISOString() : null } });
+  }
   if (method !== 'GET') return json({ ok: true, invoice: {}, quote: {}, profile: {} });
   return json({});
 }

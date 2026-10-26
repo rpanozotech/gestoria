@@ -68,9 +68,12 @@ router.get('/', gestorOnly, async (req: Request, res: Response) => {
   try {
     const { date, status } = req.query;
     let sql = `
-      SELECT a.*, c.full_name as client_name, c.email as client_email, c.phone as client_phone, s.title as service_title
+      SELECT a.*, COALESCE(c.full_name, a.requester_name) AS client_name,
+             COALESCE(c.email, a.email) AS client_email,
+             COALESCE(c.phone, a.phone) AS client_phone,
+             s.title as service_title
       FROM appointments a
-      JOIN clients c ON a.client_id = c.id
+      LEFT JOIN clients c ON a.client_id = c.id
       LEFT JOIN service_prices s ON s.id = a.service_id
       WHERE 1=1
     `;
@@ -105,6 +108,7 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
     if (!appointment_date || !appointment_time || (!client_id && (!String(full_name || '').trim() || (!email && !phone)))) {
       return res.status(400).json({ error: 'Faltan campos obligatorios para agendar la cita' });
     }
+    client_id = client_id || null;
 
     const requestedDuration = Number(duration_minutes ?? 30);
     if (!Number.isInteger(requestedDuration) || requestedDuration < 1 || requestedDuration > 480) {
@@ -147,33 +151,20 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
         const service = await client.query('SELECT id FROM service_prices WHERE id = $1 AND active = TRUE', [service_id]);
         if (service.rows.length === 0) throw new Error('El servicio seleccionado no existe o no está activo.');
       }
-      if (!client_id) {
-        const existing = await client.query(
-          'SELECT id FROM clients WHERE ($1::text IS NOT NULL AND lower(email) = lower($1)) OR ($2::text IS NOT NULL AND phone = $2) ORDER BY created_at DESC LIMIT 1 FOR UPDATE',
-          [email || null, phone || null]
-        );
-        if (existing.rows.length > 0) {
-          client_id = existing.rows[0].id;
-        } else {
-          const newClient = await client.query(
-            'INSERT INTO clients (full_name, email, phone, status, notes) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-            [String(full_name).trim(), email || null, phone || null, 'prospecto', 'Cliente registrado mediante reserva web pública']
-          );
-          client_id = newClient.rows[0].id;
-        }
-      } else {
+      if (client_id) {
         const existing = await client.query('SELECT id FROM clients WHERE id = $1', [client_id]);
         if (existing.rows.length === 0) throw new Error('El cliente seleccionado no existe.');
       }
 
       result = await client.query(
         `
-          INSERT INTO appointments (client_id, service_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes, source, email, phone, legal_consent, legal_consent_at, legal_terms_version)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, 'pendiente', $8, $9, $10, $11, $12, CASE WHEN $12 THEN CURRENT_TIMESTAMP ELSE NULL END, $13)
+          INSERT INTO appointments (client_id, requester_name, service_id, title, appointment_date, appointment_time, duration_minutes, modality, status, notes, source, email, phone, legal_consent, legal_consent_at, legal_terms_version)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente', $9, $10, $11, $12, $13, CASE WHEN $13 THEN CURRENT_TIMESTAMP ELSE NULL END, $14)
           RETURNING *
         `,
         [
           client_id,
+          client_id ? null : String(full_name).trim(),
           service_id || null,
           title || 'Asesoría y Trámites Gestoría',
           appointment_date,
@@ -188,14 +179,16 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
           legal_terms_version || '2026-10-07',
         ]
       );
-      await client.query(
-        `INSERT INTO appointment_reminders (appointment_id, client_id, kind, scheduled_at)
-         SELECT $1, $2, reminder.kind, appointment_start - reminder.offset
-         FROM (SELECT ($3::date + $4::time) AS appointment_start) AS appointment
-         CROSS JOIN (VALUES ('24h'::varchar, interval '24 hours'), ('1h'::varchar, interval '1 hour')) AS reminder(kind, offset)
-         ON CONFLICT (appointment_id, kind) DO NOTHING`,
-        [result.rows[0].id, client_id, appointment_date, appointment_time],
-      );
+      if (client_id) {
+        await client.query(
+          `INSERT INTO appointment_reminders (appointment_id, client_id, kind, scheduled_at)
+           SELECT $1, $2, reminder.kind, appointment_start - reminder.offset
+           FROM (SELECT ($3::date + $4::time) AS appointment_start) AS appointment
+           CROSS JOIN (VALUES ('24h'::varchar, interval '24 hours'), ('1h'::varchar, interval '1 hour')) AS reminder(kind, offset)
+           ON CONFLICT (appointment_id, kind) DO NOTHING`,
+          [result.rows[0].id, client_id, appointment_date, appointment_time],
+        );
+      }
       await client.query('COMMIT');
       transactionOpen = false;
     } catch (error) {

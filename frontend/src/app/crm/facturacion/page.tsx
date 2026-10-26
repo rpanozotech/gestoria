@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { activableConTeclado } from '@/lib/a11y';
 
@@ -61,11 +62,17 @@ function normalizarPresupuesto(quote: any) {
 }
 
 export default function CRMFacturacionPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isDocumentsPanel = searchParams.get('view') === 'documents';
   const [tab, setTab] = useState<'facturas' | 'presupuestos'>('facturas');
 
   const [quotes, setQuotes] = useState<any[]>([]);
 
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [debts, setDebts] = useState<any[]>([]);
+  const [debtQuery, setDebtQuery] = useState('');
+  const [invoiceQuery, setInvoiceQuery] = useState('');
 
   // Las facturas vienen del backend. Antes esta pagina usaba un array fijo
   // escrito en el codigo, asi que los botones de eliminar no tenian contra
@@ -116,6 +123,10 @@ export default function CRMFacturacionPage() {
 
   useEffect(() => {
     apiFetch('/clients').then((res) => res.ok ? res.json() : Promise.reject(new Error('clients'))).then((data) => setClients(Array.isArray(data.clients) ? data.clients : [])).catch(() => setClients([]));
+  }, []);
+
+  useEffect(() => {
+    apiFetch('/finance/debts').then((res) => res.ok ? res.json() : Promise.reject(new Error('debts'))).then((data) => setDebts(Array.isArray(data.debts) ? data.debts : [])).catch(() => setDebts([]));
   }, []);
 
   useEffect(() => {
@@ -396,9 +407,20 @@ export default function CRMFacturacionPage() {
     else summary.pending += total;
     return summary;
   }, { billed: 0, collected: 0, pending: 0 });
+  const filteredDebts = debts.filter((debt) => `${debt.creditor || ''} ${debt.client_name || ''} ${debt.reference || ''}`.toLowerCase().includes(debtQuery.toLowerCase()));
+  const visibleInvoices = invoices.filter((invoice) => `${invoice.code || ''} ${invoice.client_name || ''} ${invoice.items?.[0]?.description || ''}`.toLowerCase().includes(invoiceQuery.toLowerCase()));
+  const debtSummary = debts.reduce((summary, debt) => {
+    const total = Number(debt.original_amount || 0);
+    const paid = Number(debt.paid_total ?? debt.paid_amount ?? 0);
+    const pending = Math.max(0, total - paid);
+    summary.pending += pending;
+    if (String(debt.status || '').toLowerCase().includes('pagad')) summary.paid += total;
+    if (String(debt.status || '').toLowerCase().includes('venc')) summary.overdue += pending;
+    return summary;
+  }, { pending: 0, paid: 0, overdue: 0 });
 
   return (
-    <div className="w-full flex-1 h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
+    <div className="crm-finanzas-reference w-full flex-1 h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
       {/* Toast de Notificaciones */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-[200] bg-slate-900 text-white px-4 py-2 rounded-xl shadow-2xl flex items-center gap-3 border border-secondary/40 animate-in fade-in duration-200">
@@ -414,16 +436,39 @@ export default function CRMFacturacionPage() {
         </div>
       )}
 
+      {isDocumentsPanel && (
+        <div className="flex flex-col gap-2 border-b border-[#dce6f3] pb-3 shrink-0">
+          <Link href="/crm/facturacion" className="inline-flex w-fit items-center gap-1 text-xs font-bold text-[#0568e8] hover:underline">
+            <span className="material-symbols-outlined text-[17px]">arrow_back</span>
+            Volver a Finanzas
+          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold text-[#6b82a5]">Finanzas · Gestión documental</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#10264c]">Facturas y presupuestos</h1>
+              <p className="text-sm text-[#6b82a5]">Consulta, crea y gestiona toda la facturación de tus clientes.</p>
+            </div>
+            <button type="button" onClick={openQuoteModal} className="inline-flex h-9 w-fit items-center gap-1.5 rounded-lg bg-[#0568e8] px-3 text-xs font-bold text-white hover:bg-blue-700">
+              <span className="material-symbols-outlined text-[16px]">add</span>
+              Nuevo presupuesto
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-surface-container shrink-0">
+      <div className={`crm-finanzas-header flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-surface-container shrink-0 ${isDocumentsPanel ? 'hidden' : ''}`}>
         <div>
-          <h1 className="text-base sm:text-lg font-bold tracking-tight text-on-surface">Presupuestos y Facturación</h1>
-          <p className="text-[11px] text-on-surface-variant">
-            Numeración correlativa legal PRE-2026 y FAC-2026 · precios finales IVA incluido
-          </p>
+          <p className="text-xs font-semibold text-[#6b82a5]">Buenos días, Usuario</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#10264c]">Finanzas</h1>
+          <p className="text-sm text-[#6b82a5]">Controla la facturación, los cobros y las deudas de tu asesoría.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <div className="hidden xl:flex items-center gap-2 rounded-xl border border-[#dce6f3] bg-white px-4 py-2 shadow-[0_1px_3px_rgba(15,23,42,.05)]">
+            <span className="material-symbols-outlined text-[25px] text-[#536d93]">calendar_month</span>
+            <div><p className="text-xs font-bold text-[#10264c]">Domingo, 25 de octubre de 2026</p><p className="text-[11px] text-[#6b82a5]">Semana 43 · Quedan 67 días para finalizar el año</p></div>
+          </div>
           <button
             type="button"
             onClick={handleExportCsv}
@@ -448,48 +493,24 @@ export default function CRMFacturacionPage() {
             className="h-8 px-3 bg-secondary text-white text-xs font-semibold rounded-lg shadow-2xs hover:bg-blue-700 transition-colors flex items-center gap-1.5"
           >
             <span className="material-symbols-outlined text-[15px]">add</span>
-            <span>+ Nuevo Presupuesto</span>
+            <span>+ Nuevo presupuesto</span>
           </button>
         </div>
       </div>
 
-      {/* Tabs & Compact 3 KPIs in single row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
-        <div className="flex border-b border-surface-container gap-4">
-          <button type="button"
-            onClick={() => setTab('facturas')}
-            className={`pb-2 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 ${
-              tab === 'facturas' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-            <span>Facturas Oficiales ({invoices.length})</span>
-          </button>
-          <button type="button"
-            onClick={() => setTab('presupuestos')}
-            className={`pb-2 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 ${
-              tab === 'presupuestos' ? 'border-secondary text-secondary' : 'border-transparent text-outline hover:text-on-surface'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">description</span>
-            <span>Presupuestos ({quotes.length})</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1.5 rounded-lg border border-surface-container bg-surface-container-lowest text-xs sm:text-sm flex items-center gap-2">
-            <span className="text-xs text-on-surface-variant font-medium">Facturado:</span>
-            <strong className="font-mono-data text-on-surface font-bold text-xs sm:text-sm">€ {Number(billingSummary.billed).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong>
-          </div>
-          <div className="px-3 py-1.5 rounded-lg border border-surface-container bg-surface-container-lowest text-xs sm:text-sm flex items-center gap-2">
-            <span className="text-xs text-emerald-600 font-medium">Cobrado:</span>
-            <strong className="font-mono-data text-emerald-600 font-bold text-xs sm:text-sm">€ {Number(billingSummary.collected).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong>
-          </div>
-          <div className="px-3 py-1.5 rounded-lg border border-surface-container bg-surface-container-lowest text-xs sm:text-sm flex items-center gap-2">
-            <span className="text-xs text-amber-600 font-medium">Pendiente:</span>
-            <strong className="font-mono-data text-amber-600 font-bold text-xs sm:text-sm">€ {Number(billingSummary.pending).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong>
-          </div>
-        </div>
+      {/* KPIs principales */}
+      <div className={`${isDocumentsPanel ? 'hidden ' : ''}grid grid-cols-2 gap-2.5 xl:grid-cols-4 shrink-0`}>
+        {[
+          ['Facturado', billingSummary.billed, 'description', 'text-[#0568e8]', 'bg-[#eaf3ff]'],
+          ['Cobrado', billingSummary.collected, 'euro', 'text-emerald-600', 'bg-emerald-50'],
+          ['Pendiente', billingSummary.pending, 'schedule', 'text-amber-600', 'bg-amber-50'],
+          ['Vencido', debtSummary.overdue, 'error', 'text-rose-600', 'bg-rose-50'],
+        ].map(([label, value, icon, tone, bg]) => (
+          <article key={String(label)} className="flex items-center justify-between gap-3 rounded-xl border border-[#dce6f3] bg-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,.06)]">
+            <div className="flex min-w-0 items-center gap-3"><span className={`material-symbols-outlined rounded-xl p-2.5 text-[24px] ${tone} ${bg}`}>{icon}</span><div><p className="text-xs font-medium text-[#6b82a5]">{label}</p><p className="mt-1 text-xl font-extrabold text-[#10264c]">€ {Number(value).toLocaleString('es-ES', { minimumFractionDigits: 0 })}</p><p className="text-[11px] text-[#6b82a5]">vs. mes anterior</p></div></div>
+            <span className="material-symbols-outlined text-[22px] text-[#7e98bd]">chevron_right</span>
+          </article>
+        ))}
       </div>
 
       {errorCarga && (
@@ -501,9 +522,15 @@ export default function CRMFacturacionPage() {
         </div>
       )}
 
+      <div className={`crm-finanzas-panels grid flex-1 min-h-0 gap-3 ${isDocumentsPanel ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,1fr)]'}`}>
       {/* TAB FACTURAS CON SCROLL INTERNO */}
       {tab === 'facturas' && (
-        <div className="flex-1 min-h-0 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-2xs overflow-hidden flex flex-col">
+        <div className="crm-finanzas-panel min-h-0 bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-2xs overflow-hidden flex flex-col">
+          <div className="shrink-0 border-b border-[#e4ebf4] px-4 py-3">
+            <div className="flex items-start justify-between gap-3"><div className="flex items-start gap-3"><span className="material-symbols-outlined rounded-xl bg-[#eaf3ff] p-2 text-[25px] text-[#0568e8]">description</span><div><h2 className="text-lg font-extrabold text-[#10264c]"><Link href="/crm/facturacion?view=documents" className="hover:text-[#0568e8]">Facturas</Link></h2><p className="text-xs text-[#6b82a5]">Facturación emitida a tus clientes. Pulsa una factura para ver su detalle.</p></div></div><div className="flex items-center gap-2"><button type="button" onClick={() => setTab('presupuestos')} className="hidden sm:inline-flex h-9 items-center gap-1 rounded-lg border border-[#dce6f3] px-3 text-xs font-bold text-[#536d93] hover:border-[#8bb8ee] hover:text-[#0568e8]">Presupuestos ({quotes.length})</button><button type="button" onClick={openQuoteModal} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border border-[#8bb8ee] px-3 text-xs font-bold text-[#0568e8]"><span className="material-symbols-outlined text-[16px]">add</span>Nueva factura</button></div></div>
+            <div className="mt-3 flex gap-1.5 text-xs font-semibold"><span className="rounded-lg bg-[#eaf3ff] px-3 py-2 text-[#0568e8]">Todas <b>{invoices.length}</b></span><span className="rounded-lg bg-[#f4f7fb] px-3 py-2 text-[#536d93]">Pendientes <b>{invoices.filter((invoice) => invoice.status !== 'pagada').length}</b></span><span className="rounded-lg bg-[#f4f7fb] px-3 py-2 text-[#536d93]">Cobrada <b>{invoices.filter((invoice) => invoice.status === 'pagada').length}</b></span><span className="rounded-lg bg-rose-50 px-3 py-2 text-rose-600">Vencidas <b>{invoices.filter((invoice) => String(invoice.status || '').toLowerCase().includes('venc')).length}</b></span></div>
+            <div className="mt-2 flex items-center gap-2"><div className="relative min-w-0 flex-1"><span className="material-symbols-outlined absolute left-3 top-2 text-[18px] text-[#6b82a5]">search</span><input value={invoiceQuery} onChange={(event) => setInvoiceQuery(event.target.value)} className="h-9 w-full rounded-lg border border-[#cbd9e8] pl-9 pr-3 text-xs outline-none focus:border-[#0568e8]" placeholder="Buscar factura, cliente o concepto..." aria-label="Buscar facturas" /></div><button type="button" onClick={() => setInvoiceQuery('')} className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#8bb8ee] px-3 text-xs font-bold text-[#0568e8]"><span className="material-symbols-outlined text-[17px]">filter_alt</span>Filtrar</button></div>
+          </div>
           <div className="flex-1 overflow-y-auto overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-surface-container-low text-on-surface-variant font-bold uppercase tracking-wider border-b border-surface-container sticky top-0 z-10 text-xs">
@@ -518,7 +545,7 @@ export default function CRMFacturacionPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container">
-                {invoices.map((inv) => (
+                {visibleInvoices.map((inv) => (
                   <tr
                     key={inv.id}
                     onClick={() => setSelectedDoc({ type: 'invoice', data: inv })}
@@ -541,7 +568,7 @@ export default function CRMFacturacionPage() {
                       </button>
                     </td>
                     <td className="px-5 py-3.5">
-                      <div className="font-semibold text-on-surface">{inv.client_name}</div>
+                      <Link href={inv.client_id ? `/crm/clientes/${inv.client_id}` : '/crm/clientes'} prefetch={false} onClick={(event) => event.stopPropagation()} className="block font-semibold text-on-surface hover:text-secondary hover:underline" aria-label={`Abrir ficha de ${inv.client_name || 'cliente'}`}>{inv.client_name}</Link>
                       <div className="text-xs text-outline font-mono-data">BSN: {inv.client_bsn}</div>
                     </td>
                     <td className="px-5 py-3.5 text-on-surface-variant font-medium">
@@ -622,8 +649,9 @@ export default function CRMFacturacionPage() {
 
       {/* TAB PRESUPUESTOS */}
       {tab === 'presupuestos' && (
-        <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="crm-finanzas-panel min-h-0 bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+          <div className="shrink-0 flex items-center justify-between border-b border-[#e4ebf4] px-4 py-3"><div><h2 className="text-lg font-extrabold text-[#10264c]">Presupuestos</h2><p className="text-xs text-[#6b82a5]">Propuestas económicas enviadas a tus clientes.</p></div><button type="button" onClick={() => setTab('facturas')} className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#dce6f3] px-3 text-xs font-bold text-[#536d93] hover:border-[#8bb8ee] hover:text-[#0568e8]"><span className="material-symbols-outlined text-[16px]">receipt_long</span>Facturas ({invoices.length})</button></div>
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-surface-container-low text-on-surface-variant font-bold uppercase tracking-wider border-b border-surface-container text-xs">
                 <tr>
@@ -663,7 +691,7 @@ export default function CRMFacturacionPage() {
                       </button>
                     </td>
                     <td className="px-5 py-3.5 font-semibold text-on-surface">
-                      {q.client_name}
+                      <Link href={q.client_id ? `/crm/clientes/${q.client_id}` : '/crm/clientes'} prefetch={false} onClick={(event) => event.stopPropagation()} className="hover:text-secondary hover:underline" aria-label={`Abrir ficha de ${q.client_name || 'cliente'}`}>{q.client_name}</Link>
                     </td>
                     <td className="px-5 py-3.5 text-on-surface-variant font-medium">
                       {q.items && q.items.length > 1 ? (
@@ -744,6 +772,24 @@ export default function CRMFacturacionPage() {
           </div>
         </div>
       )}
+
+      {!isDocumentsPanel && <section className="crm-finanzas-panel min-h-0 rounded-2xl border border-[#dce6f3] bg-white shadow-[0_1px_3px_rgba(15,23,42,.06)] overflow-hidden flex flex-col">
+          <div className="flex items-start justify-between gap-3 border-b border-[#e4ebf4] px-4 py-3">
+          <div className="flex items-start gap-3"><span className="material-symbols-outlined rounded-xl bg-[#eaf3ff] p-2 text-[25px] text-[#0568e8]">database</span><div><h2 className="text-lg font-extrabold text-[#10264c]"><Link href="/crm/deudas" className="hover:text-[#0568e8]">Cobros y deudas</Link></h2><p className="text-xs text-[#6b82a5]">Controla las deudas pendientes y registra los pagos. <Link href="/crm/deudas" className="font-bold text-[#0568e8] hover:underline">Abrir panel completo →</Link></p></div></div>
+          <Link href="/crm/deudas" className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-[#0568e8] px-3 text-xs font-bold text-white hover:bg-blue-700"><span className="material-symbols-outlined text-[16px]">add</span>Nueva deuda</Link>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5 px-4 pt-3 text-xs font-semibold">
+          <span className="rounded-lg bg-[#eaf3ff] px-2 py-2 text-center text-[#0568e8]">Todas <b>{debts.length}</b></span>
+          <span className="rounded-lg bg-[#f4f7fb] px-2 py-2 text-center text-[#536d93]">Pendientes <b>{debts.filter((d) => !String(d.status || '').toLowerCase().includes('pagad')).length}</b></span>
+          <span className="rounded-lg bg-[#f4f7fb] px-2 py-2 text-center text-[#536d93]">En plazo <b>{debts.filter((d) => String(d.status || '').toLowerCase().includes('plazo')).length}</b></span>
+          <span className="rounded-lg bg-rose-50 px-2 py-2 text-center text-rose-600">Vencidas <b>{debts.filter((d) => String(d.status || '').toLowerCase().includes('venc')).length}</b></span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-3"><div className="relative min-w-0 flex-1"><span className="material-symbols-outlined absolute left-3 top-2 text-[18px] text-[#6b82a5]">search</span><input value={debtQuery} onChange={(event) => setDebtQuery(event.target.value)} className="h-9 w-full rounded-lg border border-[#cbd9e8] pl-9 pr-3 text-xs outline-none focus:border-[#0568e8]" placeholder="Buscar proveedor, concepto o referencia..." aria-label="Buscar deudas" /></div><Link href="/crm/deudas" className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#8bb8ee] px-3 text-xs font-bold text-[#0568e8]"><span className="material-symbols-outlined text-[17px]">filter_alt</span>Filtrar</Link></div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+          <table className="w-full text-left text-xs"><thead className="sticky top-0 z-10 bg-[#f1f5fa] text-[11px] font-bold text-[#536d93]"><tr><th className="px-2 py-2">Cliente</th><th className="px-2 py-2">Acreedor</th><th className="px-2 py-2">Pagado</th><th className="px-2 py-2">Total</th><th className="px-2 py-2">Próximo venc.</th><th className="px-2 py-2">Estado</th><th></th></tr></thead><tbody className="divide-y divide-[#e4ebf4]">{filteredDebts.map((debt) => { const total = Number(debt.original_amount || 0); const paid = Number(debt.paid_total ?? debt.paid_amount ?? 0); const pct = total ? Math.min(100, Math.round(paid / total * 100)) : 0; const lower = String(debt.status || '').toLowerCase(); const tone = lower.includes('venc') ? 'bg-rose-50 text-rose-600' : lower.includes('pagad') ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-[#0568e8]'; const openDebt = () => router.push(`/crm/deudas/${debt.id}`); return <tr key={debt.id} onClick={openDebt} {...activableConTeclado(openDebt)} className="cursor-pointer hover:bg-[#edf5ff]" title="Abrir ficha de la deuda"><td className="px-2 py-2 font-semibold text-[#10264c]"><Link href={debt.client_id ? `/crm/clientes/${debt.client_id}` : '/crm/clientes'} prefetch={false} onClick={(event) => event.stopPropagation()} className="hover:text-[#0568e8] hover:underline" aria-label={`Abrir ficha de ${debt.client_name || 'cliente'}`}>{debt.client_name || 'Cliente'}</Link></td><td className="px-2 py-2 text-[#6b82a5]"><span className="font-semibold text-[#10264c]">{debt.creditor || 'Acreedor'}</span><span className="block">{debt.reference || 'Deuda registrada'}</span></td><td className="px-2 py-2"><div className="flex items-center gap-1"><span className="h-2 w-10 overflow-hidden rounded-full bg-slate-200"><span className="block h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} /></span><span className="text-[10px] text-[#6b82a5]">{pct}%</span></div></td><td className="px-2 py-2 font-bold text-[#10264c]">€ {total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</td><td className="px-2 py-2 text-[#6b82a5]">{formatInvoiceDate(debt.due_date)}</td><td className="px-2 py-2"><span className={`rounded-lg px-2 py-1 text-[10px] font-bold ${tone}`}>{debt.status || 'Pendiente'}</span></td><td className="px-2 py-2 text-right"><Link href={`/crm/deudas/${debt.id}?action=payment`} onClick={(event) => event.stopPropagation()} className="crm-finanzas-pay-link inline-flex h-7 items-center rounded-lg border border-[#8bb8ee] px-2 text-[10px] font-bold text-[#0568e8]">Registrar pago</Link></td></tr>; })}</tbody></table>{!filteredDebts.length && <div className="p-8 text-center text-sm text-[#6b82a5]">No hay deudas registradas.</div>}
+        </div>
+      </section>}
+      </div>
 
       {/* Modal Nuevo Presupuesto Multi-trámite */}
       {showNewQuoteModal && (

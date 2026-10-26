@@ -113,7 +113,7 @@ const RESTORE_TABLES = {
   dossiers: ['id', 'code', 'client_id', 'title', 'category', 'description', 'status', 'priority', 'progress_percentage', 'fee', 'deadline', 'created_at', 'updated_at'],
   quotes: ['id', 'code', 'client_id', 'dossier_id', 'items', 'subtotal', 'tax_rate', 'tax_amount', 'total', 'status', 'valid_until', 'notes', 'created_at', 'updated_at'],
   invoices: ['id', 'code', 'quote_id', 'client_id', 'dossier_id', 'items', 'subtotal', 'tax_rate', 'tax_amount', 'total', 'status', 'payment_method', 'payment_reference', 'paid_at', 'due_date', 'notes', 'created_at', 'updated_at'],
-  appointments: ['id', 'client_id', 'title', 'appointment_date', 'appointment_time', 'duration_minutes', 'modality', 'status', 'notes', 'created_at', 'updated_at'],
+  appointments: ['id', 'client_id', 'requester_name', 'title', 'appointment_date', 'appointment_time', 'duration_minutes', 'modality', 'status', 'notes', 'email', 'phone', 'source', 'created_at', 'updated_at'],
 } as const;
 
 /**

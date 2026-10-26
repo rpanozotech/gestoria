@@ -73,7 +73,7 @@ app.get('/health', (req: Request, res: Response) => {
 // Limites sobre las rutas publicas. Estas son las que accepts peticiones sin
 // token, y por tanto las que permitirian a alguien:
 //   - forzar bruta el login hasta colocar un JWT de 7 dias en su poder, o
-//   - rellenar clients y dossiers de produccion con miles de filas basura.
+//   - rellenar solicitudes y citas de produccion con miles de filas basura.
 // El resto de rutas ya exige un rol gestor/admin, asi que no las limita esto.
 
 // Login: 10 intentos fallidos por IP+email cada 15 minutos. `soloFallidos`

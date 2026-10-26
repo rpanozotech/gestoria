@@ -118,7 +118,8 @@ CREATE TABLE IF NOT EXISTS invoices (
 -- 7. Citas y Agenda
 CREATE TABLE IF NOT EXISTS appointments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+    requester_name VARCHAR(255),
     gestor_id UUID REFERENCES users(id) ON DELETE SET NULL,
     title VARCHAR(200) NOT NULL,
     appointment_date DATE NOT NULL,

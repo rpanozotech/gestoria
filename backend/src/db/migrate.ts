@@ -27,6 +27,10 @@ export async function migrateDatabase() {
     ALTER TABLE service_prices ADD COLUMN IF NOT EXISTS visible_web BOOLEAN NOT NULL DEFAULT TRUE;
     ALTER TABLE service_prices ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE appointments ADD COLUMN IF NOT EXISTS service_id VARCHAR(80) REFERENCES service_prices(id) ON DELETE SET NULL;
+    ALTER TABLE appointments ALTER COLUMN client_id DROP NOT NULL;
+    ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_client_id_fkey;
+    ALTER TABLE appointments ADD CONSTRAINT appointments_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL;
+    ALTER TABLE appointments ADD COLUMN IF NOT EXISTS requester_name VARCHAR(255);
     ALTER TABLE appointments ADD COLUMN IF NOT EXISTS source VARCHAR(40) NOT NULL DEFAULT 'crm';
     ALTER TABLE appointments ADD COLUMN IF NOT EXISTS email VARCHAR(255);
     ALTER TABLE appointments ADD COLUMN IF NOT EXISTS phone VARCHAR(50);

@@ -124,6 +124,10 @@ export default function DeudasPage() {
     <div className="w-full flex-1 h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5 crm-debts-reference">
       <header className="flex flex-wrap items-center justify-between gap-2 shrink-0 pb-1 border-b border-surface-container">
         <div>
+          <Link href="/crm/facturacion" className="mb-1 inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline">
+            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            Volver a Finanzas
+          </Link>
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-on-surface">Deudas y pagos</h1>
           <p className="text-xs text-on-surface-variant">Controla las deudas de tus clientes, registra pagos y gestiona aplazamientos.</p>
         </div>
@@ -224,7 +228,7 @@ export default function DeudasPage() {
                 </button>
               ))}
             </div>
-            <div className="flex-1 overflow-y-auto p-3.5 space-y-3 text-xs sm:text-sm no-scrollbar">
+            <div className="flex-1 min-h-0 overflow-hidden p-3.5 space-y-3 text-xs sm:text-sm">
               {detailTab === 'Resumen' && (
                 <>
                   <div className="rounded-xl border border-outline-variant p-3 space-y-2 bg-[#fafcff]">
@@ -243,9 +247,6 @@ export default function DeudasPage() {
                     <div className="h-2 rounded-full bg-surface-container overflow-hidden">
                       <div className="h-full bg-secondary" style={{ width: progress + '%' }} />
                     </div>
-                  </div>
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs sm:text-sm text-amber-900 leading-relaxed">
-                    Consulta el estado y el historial de pagos registrados para esta deuda.
                   </div>
                 </>
               )}
