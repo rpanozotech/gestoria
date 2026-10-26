@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { query, pool } from '../db/index.js';
 
+import { nextDossierCode } from '../utils/dossier-number.js';
+
 const router = Router();
 
 // GET /api/dossiers - Lista de expedientes y trámites
@@ -81,7 +83,7 @@ router.post('/:id/notes', async (req: Request, res: Response) => {
 router.patch('/:id/steps/:stepId', async (req: Request, res: Response) => {
   const status = req.body?.status === 'completed' ? 'completed' : 'pending';
   try {
-    const result = await query(`UPDATE dossier_steps SET status=$1, completed_at=CASE WHEN $1='completed' THEN CURRENT_TIMESTAMP ELSE NULL END WHERE id=$2 AND dossier_id=$3 RETURNING *`, [status, req.params.stepId, req.params.id]);
+    const result = await query(`UPDATE dossier_steps SET status=$1::varchar, completed_at=CASE WHEN $1::varchar='completed' THEN CURRENT_TIMESTAMP ELSE NULL END WHERE id=$2 AND dossier_id=$3 RETURNING *`, [status, req.params.stepId, req.params.id]);
     if (!result.rows.length) return res.status(404).json({ error: 'Paso no encontrado' });
     await query('INSERT INTO dossier_activity (dossier_id, actor_user_id, action, detail) VALUES ($1,$2,$3,$4)', [req.params.id, req.user?.id, 'step_updated', result.rows[0].title]);
     res.json({ step: result.rows[0] });
@@ -98,34 +100,9 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Cliente, título y categoría son campos obligatorios' });
     }
 
-    // Codigo correlativo EXP-YYYY-XXXX.
-    //
-    // Tres cosas importan aqui y las tres importaban que no estuvieran:
-    //
-    // 1. MAX, no COUNT. COUNT sobre una tabla con huecos (borrados en cascada
-    //    al eliminar un cliente) devuelve un numero que ya se uso: se creaban
-    //    EXP-0001..0003, se borraba el 0002 y el siguiente alta calculaba
-    //    COUNT=2 -> EXP-0003 -> colision con el UNIQUE -> 500. Y como el
-    //    siguiente COUNT daba 2 otra vez, cada reintento fallaba igual: la
-    //    numeracion quedaba inutilizada. MAX da el ultimo codigo realmente
-    //    emitido, asi que un hueco se rellena sin volver a colisionar.
-    //
-    // 2. Filtrar por anio, no contar la tabla entera. Con COUNT global, el
-    //    primer expediente de 2027 saldria EXP-2027-0017.
-    //
-    // 3. pg_advisory_xact_lock, como ya hacen quotes e invoices. Sin el, dos
-    //    altas simultaneas leen el mismo MAX y la segunda choca con el UNIQUE.
-    const year = new Date().getFullYear();
     client = await pool.connect();
     await client.query('BEGIN');
-    await client.query("SELECT pg_advisory_xact_lock(hashtext('nexusgest_dossiers_number'))");
-    const maxRes = await client.query(
-      `SELECT COALESCE(MAX(NULLIF(regexp_replace(code, '^EXP-${year}-', ''), '')), 0) AS max_num
-         FROM dossiers WHERE code LIKE $1`,
-      [`EXP-${year}-%`]
-    );
-    const nextNum = parseInt(maxRes.rows[0].max_num, 10) + 1;
-    const code = `EXP-${year}-${String(nextNum).padStart(4, '0')}`;
+    const code = await nextDossierCode(client);
 
     const sql = `
       INSERT INTO dossiers (code, client_id, title, category, description, fee, deadline, priority, status, progress_percentage)

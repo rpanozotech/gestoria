@@ -72,7 +72,12 @@ CREATE TABLE IF NOT EXISTS dossier_steps (
     description TEXT,
     is_completed BOOLEAN DEFAULT FALSE,
     order_index INTEGER DEFAULT 0,
-    completed_at TIMESTAMP WITH TIME ZONE
+    completed_at TIMESTAMP WITH TIME ZONE,
+    due_date DATE,
+    required BOOLEAN NOT NULL DEFAULT TRUE,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    position INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 5. Presupuestos (Quotes) con numeración correlativa PRE-2026-XXXX

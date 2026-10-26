@@ -36,7 +36,7 @@ function NavLink({ item, pathname, collapsed, onClick, featured = false }: { ite
       </span>
       {!collapsed && item.badge && (
         <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-mono-data font-bold ${
+          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-mono-data font-bold ${
             item.badgeColor
               ? item.badgeColor
               : isActive
@@ -67,6 +67,27 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [clientSearchResults, setClientSearchResults] = useState<any[]>([]);
+  const [clientSearchError, setClientSearchError] = useState('');
+  const [clientSearchLoading, setClientSearchLoading] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const query = searchQuery.trim();
+    setClientSearchResults([]);
+    setClientSearchError('');
+    if (!showSearchModal || !query) { setClientSearchLoading(false); return; }
+    setClientSearchLoading(true);
+    const timer = window.setTimeout(() => {
+      apiFetch('/clients?search=' + encodeURIComponent(query)).then(async response => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !Array.isArray(data.clients)) throw new Error(data.error || 'No se pudo buscar en el directorio.');
+        if (active) setClientSearchResults(data.clients.slice(0, 15));
+      }).catch(reason => { if (active) setClientSearchError(reason instanceof Error ? reason.message : 'Búsqueda no disponible.'); })
+        .finally(() => { if (active) setClientSearchLoading(false); });
+    }, 300);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [searchQuery, showSearchModal]);
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     INICIO: false,
     AGENDA: false,
@@ -380,24 +401,24 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] space-y-1.5 font-medium">
               <div className="flex items-center justify-between text-slate-600">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-slate-300"></span>
                   Servidor Coolify
                 </span>
-                <span className="text-[10px] font-semibold text-emerald-700">Online</span>
+                <span className="text-xs font-semibold text-slate-500">Sin verificar</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-slate-300"></span>
                   PostgreSQL
                 </span>
-                <span className="text-[10px] font-semibold text-emerald-700">Online</span>
+                <span className="text-xs font-semibold text-slate-500">Sin verificar</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                   Storage / OCR
                 </span>
-                <span className="text-[10px] font-semibold text-blue-700">Ready</span>
+                <span className="text-xs font-semibold text-slate-500">Sin verificar</span>
               </div>
             </div>
           )}
@@ -449,9 +470,9 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             >
               <div className="flex items-center gap-2.5 truncate">
                 <span className="material-symbols-outlined text-[19px] text-slate-400 shrink-0">search</span>
-                <span className="truncate text-slate-500 font-normal">Buscar cliente, expediente, BSN o trámite...</span>
+                <span className="truncate text-slate-500 font-normal">Buscar cliente, BSN o herramienta...</span>
               </div>
-              <span className="hidden sm:inline px-1.5 py-0.5 bg-[#f1f5f9] border border-[#e2e8f0] rounded text-[10px] font-mono-data text-slate-500 shrink-0">
+              <span className="hidden sm:inline px-1.5 py-0.5 bg-[#f1f5f9] border border-[#e2e8f0] rounded text-xs font-mono-data text-slate-500 shrink-0">
                 Ctrl + K
               </span>
             </button>
@@ -494,7 +515,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                     <span className="font-bold text-xs text-on-surface">Notificaciones ({unreadCount})</span>
                     <div className="flex items-center gap-2">
 
-                      <span className="text-[10px] text-slate-400 font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
+                      <span className="text-xs text-slate-400 font-semibold cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
                         Cerrar
                       </span>
                     </div>
@@ -529,7 +550,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="hidden lg:flex flex-col text-left">
                   <span className="text-xs font-bold text-slate-900 leading-tight">{user?.full_name || 'Administrador RP Gestoría'}</span>
-                  <span className="text-[10px] text-slate-500 capitalize">{user?.role || 'Admin'}</span>
+                  <span className="text-xs text-slate-500 capitalize">{user?.role || 'Admin'}</span>
                 </div>
                 <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
               </button>
@@ -539,8 +560,13 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 <div className="absolute right-0 top-11 w-60 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl p-3 space-y-2 z-50 text-xs">
                   <div className="px-2 py-1.5 border-b border-surface-container">
                     <p className="font-bold text-on-surface">{user?.full_name || 'Gestor'}</p>
-                    <p className="text-[11px] text-slate-400 font-mono-data">{user?.email}</p>
+                    <p className="text-xs text-slate-400 font-mono-data">{user?.email}</p>
                   </div>
+
+                  <Link href="/crm/cuenta" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-container text-on-surface transition-colors">
+                    <span className="material-symbols-outlined text-[16px]">manage_accounts</span>
+                    <span>Mi cuenta y contraseña</span>
+                  </Link>
 
                   <Link
                     href="/crm/backup"
@@ -612,7 +638,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               <input
                 autoFocus
                 type="text"
-                placeholder="Escribe para buscar cliente, BSN o trámite..."
+                placeholder="Buscar cliente, BSN o herramienta..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-slate-400"
@@ -623,6 +649,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="max-h-72 overflow-y-auto p-2 divide-y divide-surface-container">
+              {clientSearchLoading && <p role="status" className="p-3 text-xs text-slate-500">Buscando clientes…</p>}
+              {clientSearchError && <p role="alert" className="p-3 text-xs text-red-700">{clientSearchError}</p>}
+              {clientSearchResults.map(client => <Link key={client.id} href={'/crm/clientes/' + encodeURIComponent(String(client.id))} onClick={() => setShowSearchModal(false)} className="block rounded-lg p-3 text-xs hover:bg-surface-container"><p className="font-semibold text-on-surface">{client.full_name}</p><span className="text-xs text-slate-400">Cliente</span></Link>)}
+
               {quickSearchResults.length > 0 ? (
                 quickSearchResults.map((res, i) => (
                   <Link
@@ -633,19 +663,19 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                   >
                     <div>
                       <p className="font-semibold text-on-surface">{res.title}</p>
-                      <span className="text-[10px] text-slate-400 uppercase font-mono-data">{res.category}</span>
+                      <span className="text-xs text-slate-400 uppercase font-mono-data">{res.category}</span>
                     </div>
                     <span className="material-symbols-outlined text-[16px] text-slate-400">arrow_forward</span>
                   </Link>
                 ))
               ) : (
                 <div className="p-6 text-center text-xs text-slate-400">
-                  No se encontraron resultados para &quot;{searchQuery}&quot;
+                  {clientSearchResults.length || clientSearchLoading ? 'Herramientas sin coincidencias' : <>No se encontraron resultados para &quot;{searchQuery}&quot;</>}
                 </div>
               )}
             </div>
 
-            <div className="p-2.5 bg-surface-container-low border-t border-surface-container text-[11px] text-slate-400 flex justify-between">
+            <div className="p-2.5 bg-surface-container-low border-t border-surface-container text-xs text-slate-400 flex justify-between">
               <span>Navega con las flechas o ratón</span>
               <span>ESC para cerrar</span>
             </div>

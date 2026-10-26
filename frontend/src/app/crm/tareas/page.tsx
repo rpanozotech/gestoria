@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import Link from 'next/link';
 
 type Task = { id: string; client_id?: string; client_name?: string; dossier_id?: string; dossier_code?: string; dossier_title?: string; title: string; description?: string; due_date?: string; status: string; priority: string; assigned_to_name?: string };
 const labels: Record<string,string> = { pendiente:'Pendiente', documentacion:'Documentación', en_espera_cliente:'En espera del cliente', revision:'Revisión', seguimiento:'Seguimiento', mensaje:'Mensaje', cita:'Cita', completada:'Completada' };
@@ -13,6 +14,21 @@ export default function TareasPage() {
   const contextClient = searchParams.get('client') || '';
   const contextClientId = searchParams.get('client_id') || '';
   const [tasks,setTasks]=useState<Task[]>([]); const [selected,setSelected]=useState<string[]>([]); const [filter,setFilter]=useState('todos'); const [error,setError]=useState(''); const [loading,setLoading]=useState(true); const [title,setTitle]=useState(''); const [description,setDescription]=useState(''); const [dueDate,setDueDate]=useState(''); const [priority,setPriority]=useState('normal'); const [saving,setSaving]=useState(false);
+  const [clientContext, setClientContext] = useState<{ id: string; full_name: string } | null>(null);
+  const [clientContextError, setClientContextError] = useState('');
+  const [contextLoading, setContextLoading] = useState(true);
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('client');
+    if (!requested) { setContextLoading(false); return; }
+    let active = true;
+    apiFetch('/clients/' + encodeURIComponent(requested)).then(async response => {
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.client?.id) throw new Error(payload.error || 'No se pudo cargar el cliente de esta tarea.');
+      if (active) setClientContext({ id: payload.client.id, full_name: payload.client.full_name });
+    }).catch(reason => { if (active) setClientContextError(reason instanceof Error ? reason.message : 'Cliente no disponible.'); })
+      .finally(() => { if (active) setContextLoading(false); });
+    return () => { active = false; };
+  }, []);
   const load=useCallback(async()=>{setLoading(true);setError('');try{const r=await apiFetch('/tasks');const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'No se pudieron cargar las tareas.');setTasks(Array.isArray(d.tasks)?d.tasks:[]);setSelected([]);}catch(e){setError(e instanceof Error?e.message:'Error cargando tareas.');}finally{setLoading(false);}},[]);
   useEffect(()=>{void load();},[load]);
   const visible=tasks.filter(t=>(filter==='todos'||t.status===filter) && (!contextClient || String(t.client_name || '').toLowerCase().includes(contextClient.toLowerCase())));

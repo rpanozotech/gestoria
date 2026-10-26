@@ -229,6 +229,17 @@ export default function CRMFacturacionPage() {
   const [manualQuoteAmount, setManualQuoteAmount] = useState(0);
   const [isConceptManuallyEdited, setIsConceptManuallyEdited] = useState(false);
   const [quoteValidUntil, setQuoteValidUntil] = useState('');
+  // La ficha transmite la identidad persistida, nunca el nombre (puede repetirse).
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('client');
+    if (!requested || !clients.length) return;
+    const client = clients.find((item) => String(item.id) === requested);
+    if (!client) { setErrorCarga('El cliente solicitado no está disponible para esta operación.'); return; }
+    setNewQuoteClient(String(client.id));
+    setTab('presupuestos');
+    if (new URLSearchParams(window.location.search).get('new') === '1') setShowNewQuoteModal(true);
+  }, [clients]);
+
 
   // Helpers para presupuestos multi-trámite
   const getSelectedQuoteItems = () => {
@@ -300,7 +311,7 @@ export default function CRMFacturacionPage() {
   const handleCreateQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     const items = getSelectedQuoteItems();
-    const client = clients.find((item) => item.full_name === newQuoteClient);
+    const client = clients.find((item) => String(item.id) === newQuoteClient);
     if (!client?.id) { showToast('Selecciona un cliente real de PostgreSQL.'); return; }
     if (items.length === 0 && !quoteConcept.trim()) { showToast('Selecciona un servicio o indica un concepto.'); return; }
     const response = await apiFetch('/quotes', { method: 'POST', body: JSON.stringify({ client_id: client.id, items: items.length ? items.map((item) => ({ service_id: item.id, description: item.title, quantity: item.quantity, unit_price: item.fee, manual_price: customQuoteFees[item.id] !== undefined })) : [{ description: quoteConcept.trim(), quantity: 1, unit_price: quoteTotal, manual_price: true }], valid_until: quoteValidUntil || null, notes: quoteConcept.trim() || null }) });
@@ -830,7 +841,7 @@ export default function CRMFacturacionPage() {
                   className="w-full h-9 px-3 border border-outline-variant rounded-lg bg-surface font-medium focus:border-secondary focus:outline-none"
                 >
                   <option value="">Selecciona un cliente</option>
-                  {clients.map((client) => <option key={client.id} value={client.full_name}>{client.full_name}</option>)}
+                  {clients.map((client) => <option key={client.id} value={String(client.id)}>{client.full_name}</option>)}
                 </select>
               </div>
 

@@ -158,7 +158,7 @@ async function extractLocalOcr(file: File | UploadedFileItem, onProgress: (messa
     const inputFile = file instanceof File
       ? file
       : file.dataUrl
-        ? new File([await (await fetch(file.dataUrl)).blob()], file.name, { type: file.type })
+        ? new File([Uint8Array.from(atob(file.dataUrl.slice(file.dataUrl.indexOf(',') + 1)), (char) => char.charCodeAt(0))], file.name, { type: file.type })
         : new File([], file.name, { type: file.type });
     if (inputFile.type === 'application/pdf' || inputFile.name.toLowerCase().endsWith('.pdf')) {
       const pdfjs: any = await import('pdfjs-dist/legacy/build/pdf.mjs');
@@ -251,7 +251,8 @@ export default function AltaIAEscaneerPage() {
   // Escape cierra el modal de resultado.
   useEscapeKey(!!saveSuccessModal, () => {
     setSaveSuccessModal(null);
-    if (saveSuccessModal?.count > 0) router.push('/crm/clientes');
+    if (saveSuccessModal?.count > 0 && !saveSuccessModal.failed?.length) router.push('/crm/clientes');
+    else setIsReviewMode(true);
   });
 
   // Aviso local. Los errores van en rojo: un fallo de guardado nunca debe
@@ -701,6 +702,9 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
   // ==========================================
   // GUARDAR CLIENTES SELECCIONADOS EN DB / CRM
   // ==========================================
+  // Keep confirmed stages in memory for retries; never persist one-time passwords
+  // in browser storage. Failed dossiers/uploads must not recreate client accounts.
+  const savedStages = useRef(new Map<string, { clientData: any; dossierData?: any; uploaded: Set<string>; signature: string }>());
   const handleSaveSelectedClients = async () => {
     const toSave = detectedClients.filter((c) => c.selected);
     if (toSave.length === 0) return;
@@ -726,10 +730,14 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       // 1. Intentar persistir en PostgreSQL mediante API Backend
       for (const client of toSave) {
         try {
+          const signature = JSON.stringify({ ...client, selected: undefined });
+          let stage = savedStages.current.get(client.id);
+          if (stage && stage.signature !== signature) throw new Error('La ficha ya está guardada con los datos anteriores. Restaura esos datos para continuar o edítala desde el Directorio.');
+          let clientData: any = stage?.clientData;
+          if (!clientData) {
           const matchRes = await apiFetch(`/clients/match?bsn=${encodeURIComponent(client.bsn.trim())}&full_name=${encodeURIComponent(client.full_name)}`);
           const matchData = await matchRes.json().catch(() => ({}));
           if (!matchRes.ok) throw new Error(matchData.error || 'No se pudo resolver la identidad existente; revisa antes de crear otra ficha.');
-          let clientData: any;
 
           if (matchRes.ok && matchData?.match?.id) {
             // Nunca actualizar ni crear un duplicado en silencio: el gestor decide.
@@ -799,11 +807,19 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           }
           }
 
+          }
+
           if (!clientData?.client?.id) {
             throw new Error('La API no devolvió el id del cliente resuelto');
           }
 
+          if (!stage) {
+            stage = { clientData, uploaded: new Set(), signature };
+            savedStages.current.set(client.id, stage);
+          }
+
           if (client.service_title) {
+          if (!stage.dossierData) {
           const dossierRes = await apiFetch('/dossiers', {
             method: 'POST',
             body: JSON.stringify({
@@ -814,12 +830,15 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               priority: 'alta',
             }),
           });
-          if (!dossierRes.ok) throw new Error('La ficha existe, pero no se pudo crear el nuevo expediente');
-          const dossierData = await dossierRes.json().catch(() => ({}));
+          if (!dossierRes.ok) throw new Error('Ficha guardada; expediente pendiente. Reintenta para continuar sin crear otra ficha.');
+          stage.dossierData = await dossierRes.json();
+          }
+          const dossierData = stage.dossierData;
 
           // Asociar también los PDFs que formaron este registro al cliente y
           // al expediente recién creado. El archivo nunca se envía a la IA.
           for (const fileId of client.sourceFileIds || []) {
+            if (stage.uploaded.has(fileId)) continue;
             const sourceFile = uploadedFiles.find((file) => file.id === fileId);
             if (!sourceFile?.dataUrl) continue;
             const blob = await (await fetch(sourceFile.dataUrl)).blob();
@@ -829,7 +848,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             if (dossierData?.dossier?.id) form.append('dossier_id', dossierData.dossier.id);
             form.append('category', 'Documento importado');
             const documentRes = await apiFetch('/documents/upload', { method: 'POST', body: form });
-            if (!documentRes.ok) throw new Error(`No se pudo asociar el documento ${sourceFile.name}`);
+            if (!documentRes.ok) throw new Error(`Ficha y expediente guardados; documento pendiente: ${sourceFile.name}. Reintenta para continuar.`);
+            stage.uploaded.add(fileId);
           }
 
           }
@@ -923,8 +943,10 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
     });
   }, [servicesCatalog]);
 
+  const manualSavedStage = useRef<{ clientData: any; dossierSaved: boolean; signature: string } | null>(null);
   const handleSaveSingleManual = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
 
     if (!selectedManualService || configuredManualFee === null) {
       showToast('Tarifa pendiente de configurar. Introduce un precio final manualmente.', 'error');
@@ -944,7 +966,16 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
       return;
     }
 
+    const signature = JSON.stringify(manualClient);
+    const saved = manualSavedStage.current;
+    if (saved && saved.signature !== signature) {
+      if (saved.dossierSaved && saved.clientData.client.bsn !== manualClient.bsn.replace(/\s/g, '')) manualSavedStage.current = null;
+      else { showToast('La ficha ya está guardada con los datos anteriores. Restaura esos datos para continuar o edítala desde el Directorio.', 'error'); return; }
+    }
+    setIsSaving(true);
     try {
+      let clientData = manualSavedStage.current?.clientData;
+      if (!clientData) {
       const clientRes = await apiFetch('/clients', {
         method: 'POST',
         body: JSON.stringify({
@@ -964,11 +995,15 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           notes: 'Alta manual directa.',
         }),
       });
-      const clientData = await clientRes.json().catch(() => ({}));
+      clientData = await clientRes.json().catch(() => ({}));
       if (!clientRes.ok || !clientData?.client?.id) {
         throw new Error(clientData?.error || 'No se pudo guardar el cliente en la base de datos.');
       }
 
+      manualSavedStage.current = { clientData, dossierSaved: false, signature };
+      }
+
+      if (!manualSavedStage.current!.dossierSaved) {
       const dossierRes = await apiFetch('/dossiers', {
         method: 'POST',
         body: JSON.stringify({
@@ -980,18 +1015,19 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
         }),
       });
       if (!dossierRes.ok) {
-        throw new Error('El cliente se guardó, pero no se pudo crear su expediente inicial.');
+        throw new Error('Ficha guardada; expediente inicial pendiente. Reintenta para continuar sin crear otra ficha.');
       }
 
-      const accessRes = await apiFetch(`/clients/${clientData.client.id}/portal-access`, { method: 'POST' });
-      const accessData = accessRes.ok ? await accessRes.json().catch(() => ({})) : {};
-      setManualPortalAccess(accessData.portal_access || null);
+      manualSavedStage.current!.dossierSaved = true;
+      }
+      const access = clientData.portal_access;
+      setManualPortalAccess(access ? { portal_username: access.username, portal_password: access.password } : null);
       showToast('Cliente, expediente y acceso al portal guardados en la base de datos.');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'No se pudo guardar el cliente.', 'error');
+    } finally {
+      setIsSaving(false);
     }
-
-    showToast('Cliente creado y credenciales de portal generadas.');
   };
 
   const selectedCount = detectedClients.filter((c) => c.selected).length;
@@ -2409,8 +2445,8 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               </h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 {saveSuccessModal.failed?.length
-                  ? 'Solo los clientes guardados están en la base de datos. Los que fallaron no se han creado.'
-                  : 'Se han creado los perfiles en la base de datos con sus respectivos expedientes y presupuestos iniciales.'}
+                  ? 'Hay operaciones pendientes. Algunas fichas ya existen: revisa cada mensaje y continúa sin duplicarlas.'
+                  : 'Fichas y expedientes confirmados en la base de datos.'}
               </p>
             </div>
 
@@ -2430,7 +2466,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             {saveSuccessModal.failed?.length > 0 && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-left space-y-1.5 max-h-32 overflow-y-auto text-xs">
                 <p className="font-semibold text-amber-900 text-[11px] mb-1">
-                  No guardados — vuelve a intentarlo:
+                  Pendientes — continúa la operación:
                 </p>
                 {saveSuccessModal.failed.map((f: any, i: number) => (
                   <div key={i} className="text-amber-900">
@@ -2446,16 +2482,16 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 type="button"
                 onClick={() => {
                   setSaveSuccessModal(null);
-                  if (saveSuccessModal.count > 0) {
+                  if (saveSuccessModal.count > 0 && !saveSuccessModal.failed?.length) {
                     router.push('/crm/clientes');
                   } else {
-                    setIsReviewMode(false);
+                    setIsReviewMode(true);
                   }
                 }}
                 className="w-full h-10 bg-secondary text-white text-xs font-semibold rounded-xl hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5"
               >
                 <span>
-                  {saveSuccessModal.count > 0
+                  {saveSuccessModal.count > 0 && !saveSuccessModal.failed?.length
                     ? 'Ir al Directorio de Clientes (Ficha 360°)'
                     : 'Volver a la revisión'}
                 </span>

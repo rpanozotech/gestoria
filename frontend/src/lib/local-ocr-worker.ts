@@ -32,6 +32,10 @@ export async function prepareImageForOcr(file: File): Promise<HTMLCanvasElement>
 
 export async function startLocalOcrWorker(createWorker: WorkerFactory, onProgress: (message: string) => void) {
   const worker = await createWorker('spa+eng+nld', 1, {
+    // Same-origin assets keep OCR compatible with the production CSP.
+    workerPath: '/ocr-assets/worker.min.js',
+    corePath: '/ocr-assets/tesseract-core-lstm.wasm.js',
+    langPath: '/ocr-assets',
     logger: (event: { status?: string; progress?: number }) => {
       if (event?.status) {
         const progress = typeof event.progress === 'number' ? ` ${Math.round(event.progress * 100)}%` : '';

@@ -1,172 +1,152 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { query } from '../db/index.js';
-import { tokenFromRequest } from '../middleware/auth.js';
+import { pool, query } from '../db/index.js';
+import { requireAuth, requireRole, tokenFromRequest } from '../middleware/auth.js';
+import { signingKey, sealSecret, openSecret, newMfaSecret, totp, recoveryHash, consumeMfa, issueSession } from '../utils/auth-security.js';
+
+import { passwordChangeGuard } from '../middleware/password-change.js';
 
 const router = Router();
+const secureCookie = () => process.env.NODE_ENV === 'production' ? '; Secure' : '';
+const sessionCookie = (name: string, token: string, seconds: number) => `${name}=${encodeURIComponent(token)}; Path=/; Max-Age=${seconds}; HttpOnly; SameSite=Strict${secureCookie()}`;
+const publicUser = (u: any) => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role, ...(u.client_id ? { client_id: u.client_id } : {}) });
 
-// Leido por peticion (no al cargar el modulo): los imports de ESM se evaluan
-// antes de que dotenv.config() corra, asi que un top-level ignoraria el .env.
-// Sin valor por defecto a proposito.
-const jwtSecret = (): string => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET no esta definido');
-  }
-  return secret;
-};
-const secureCookie = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-const setSessionCookie = (name: string, token: string, maxAge = 604800) => name + '=' + encodeURIComponent(token) + '; Path=/; Max-Age=' + maxAge + '; HttpOnly; SameSite=Strict' + secureCookie;
-const clearSessionCookies = () => [
-  'nexusgest_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict' + secureCookie,
-  'nexusgest_portal_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict' + secureCookie,
-];
+async function completeLogin(user: any, res: any) {
+  const session = await issueSession(user);
+  if (!session) return res.status(401).json({ error: 'Vuelve a iniciar sesión.' });
+  const { token, seconds } = session;
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Set-Cookie', sessionCookie(user.role === 'cliente' ? 'nexusgest_portal_token' : 'nexusgest_token', token, seconds));
+  return res.json({ token, user: publicUser(user) });
+}
 
-// Iniciar Sesión (Gestor o Cliente)
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Debes proporcionar email y contraseña' });
+    const email = String(req.body?.email || '').trim().toLowerCase();const password = String(req.body?.password || '');
+    if (!email || email.length > 320 || !password || password.length > 1024) return res.status(400).json({ error: 'Revisa tus credenciales.' });
+    const user = (await query("SELECT * FROM users WHERE lower(email)=$1 AND is_active=true AND role IN ('admin','gestor')", [email])).rows[0];
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json({ error: 'Credenciales inválidas.' });
+    res.setHeader('Cache-Control', 'no-store');
+    if (!user.mfa_secret) {
+      const nonce = crypto.randomUUID();
+      await query('UPDATE users SET mfa_nonce=$1,mfa_pending_secret=NULL WHERE id=$2', [nonce, user.id]);
+      const enrollmentToken = jwt.sign({ id: user.id, purpose: 'mfa-enroll', nonce }, signingKey(), { expiresIn: '5m', algorithm: 'HS256' });
+      return res.json({ mfaEnrollmentRequired: true, enrollmentToken });
     }
-
-    const result = await query('SELECT * FROM users WHERE email = $1 AND is_active = true', [email.toLowerCase().trim()]);
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
-    }
-
-    const user = result.rows[0];
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
-    }
-
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-        role: user.role,
-      },
-      jwtSecret(),
-      { expiresIn: '7d' }
-    );
-
-    res.setHeader('Set-Cookie', setSessionCookie('nexusgest_token', token));
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-        role: user.role,
-        avatar_url: user.avatar_url,
-      },
-    });
-  } catch (error) {
-    console.error('Error en /login:', error);
-    res.status(500).json({ error: 'Error interno del servidor al autenticar' });
-  }
+    const code = String(req.body?.code || '').trim();
+    if (!code) return res.json({ mfaRequired: true });
+    if (!(await consumeMfa(user.id, code))) return res.status(401).json({ error: 'Código no válido o ya utilizado.' });
+    return completeLogin(user, res);
+  } catch (error) { next(error); }
 });
 
-// Acceso separado del portal: acepta el usuario visible al cliente o su email
-// y solo emite un JWT con rol cliente y el client_id asociado.
-router.post('/portal-login', async (req: Request, res: Response) => {
+async function enrollmentUser(req: any) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  let grant: any;
+  try { grant = jwt.verify(token, signingKey(), { algorithms: ['HS256'] }); } catch { return null; }
+  if (grant.purpose !== 'mfa-enroll' || !grant.nonce) return null;
+  return (await query("SELECT * FROM users WHERE id=$1 AND mfa_nonce=$2 AND mfa_secret IS NULL AND is_active=true AND role IN ('admin','gestor')", [grant.id, grant.nonce])).rows[0] || null;
+}
+
+router.post('/mfa/setup', async (req, res, next) => {
   try {
-    const identifier = String(req.body?.identifier || '').trim().toLowerCase();
-    const password = String(req.body?.password || '');
-    if (!identifier || !password) return res.status(400).json({ error: 'Debes proporcionar usuario y contraseña' });
-
-    const result = await query(
-      `SELECT u.*, c.id AS client_id, c.portal_username
-       FROM users u
-       JOIN clients c ON c.user_id = u.id
-       WHERE u.role = 'cliente' AND u.is_active = true
-         AND (lower(u.email) = $1 OR lower(c.portal_username) = $1)
-       LIMIT 1`,
-      [identifier]
-    );
-    if (result.rows.length === 0 || !(await bcrypt.compare(password, result.rows[0].password_hash))) {
-      return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
-    }
-
-    const user = result.rows[0];
-    const token = jwt.sign(
-      { id: user.id, email: user.email, full_name: user.full_name, role: 'cliente', client_id: user.client_id },
-      jwtSecret(),
-      { expiresIn: '7d' }
-    );
-    res.setHeader('Set-Cookie', setSessionCookie('nexusgest_portal_token', token));
-    res.json({
-      token,
-      user: { id: user.id, client_id: user.client_id, email: user.email, full_name: user.full_name, role: 'cliente' },
-    });
-  } catch (error) {
-    console.error('Error en /portal-login:', error);
-    res.status(500).json({ error: 'Error interno al autenticar el portal' });
-  }
+    const user = await enrollmentUser(req);if (!user) return res.status(401).json({ error: 'Vuelve a iniciar la configuración.' });
+    const secret = user.mfa_pending_secret ? openSecret(user.mfa_pending_secret) : newMfaSecret();
+    if (!user.mfa_pending_secret) await query('UPDATE users SET mfa_pending_secret=$1 WHERE id=$2 AND mfa_nonce=$3', [sealSecret(secret), user.id, user.mfa_nonce]);
+    res.setHeader('Cache-Control', 'no-store');res.json({ secret, uri: totp(secret, user.email).toString() });
+  } catch (error) { next(error); }
 });
 
-// Sesión temporal exclusiva de QA staging.
-// Desactivada por defecto y no disponible si QA_SESSION_ENABLED no es true.
-const usedQaGrants = new Set<string>();
-router.post('/qa-session', async (req: Request, res: Response) => {
+router.post('/mfa/confirm', async (req, res, next) => {
   try {
-    if (process.env.QA_SESSION_ENABLED !== 'true') return res.status(404).json({ error: 'No encontrado' });
-    const grant = String(req.body?.grant || '');
-    const role = String(req.body?.role || '');
-    const origin = String(req.body?.origin || req.headers.origin || '');
-    const expectedGrant = process.env.QA_SESSION_GRANT || '';
-    const expectedOrigin = role === 'crm' ? process.env.QA_CRM_ORIGIN : process.env.QA_PORTAL_ORIGIN;
-    if (!grant || !expectedGrant || grant !== expectedGrant || usedQaGrants.has(`${grant}:${role}`) || !expectedOrigin || origin !== expectedOrigin) {
-      return res.status(403).json({ error: 'Sesión QA no autorizada' });
-    }
-    const emailByRole: Record<string, string | undefined> = {
-      crm: process.env.QA_CRM_USER_EMAIL,
-      'client-a': process.env.QA_CLIENT_A_EMAIL,
-      'client-b': process.env.QA_CLIENT_B_EMAIL,
-    };
-    const email = emailByRole[role]?.toLowerCase().trim();
-    if (!email || (role !== 'crm' && !['client-a', 'client-b'].includes(role))) return res.status(400).json({ error: 'Rol QA inválido' });
-    const result = role === 'crm'
-      ? await query(`SELECT * FROM users WHERE lower(email) = $1 AND is_active = true AND role IN ('admin', 'gestor') LIMIT 1`, [email])
-      : await query(`SELECT u.*, c.id AS client_id FROM users u JOIN clients c ON c.user_id = u.id WHERE lower(u.email) = $1 AND u.role = 'cliente' AND u.is_active = true LIMIT 1`, [email]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Usuario QA no encontrado' });
-    const user = result.rows[0];
-    const payload = role === 'crm'
-      ? { id: user.id, email: user.email, full_name: user.full_name, role: user.role }
-      : { id: user.id, email: user.email, full_name: user.full_name, role: 'cliente', client_id: user.client_id };
-    const token = jwt.sign(payload, jwtSecret(), { expiresIn: '20m' });
-    usedQaGrants.add(`${grant}:${role}`);
-    res.setHeader('Set-Cookie', setSessionCookie(role === 'crm' ? 'nexusgest_token' : 'nexusgest_portal_token', token, 1200));
-    return res.json({ ok: true, role, expiresIn: 1200 });
-  } catch (error) {
-    console.error('Error en /qa-session:', error);
-    return res.status(500).json({ error: 'Error interno de sesión QA' });
-  }
+    const user = await enrollmentUser(req);if (!user?.mfa_pending_secret) return res.status(401).json({ error: 'Vuelve a iniciar la configuración.' });
+    const timestamp = Date.now();
+    const delta = totp(openSecret(user.mfa_pending_secret)).validate({ token: String(req.body?.code || '').trim(), timestamp, window: 1 });
+    if (delta === null) return res.status(401).json({ error: 'El código no es válido.' });
+    const recoveryCodes = Array.from({ length: 10 }, () => crypto.randomBytes(12).toString('hex').match(/.{1,6}/g)!.join('-'));
+    const changed = await query(`UPDATE users SET mfa_secret=mfa_pending_secret,mfa_pending_secret=NULL,mfa_nonce=NULL,mfa_last_counter=$1,mfa_recovery_hashes=$2::jsonb
+      WHERE id=$3 AND mfa_nonce=$4 AND mfa_secret IS NULL RETURNING id`, [Math.floor(timestamp / 30_000) + delta, JSON.stringify(recoveryCodes.map(recoveryHash)), user.id, user.mfa_nonce]);
+    if (!changed.rows.length) return res.status(409).json({ error: 'La configuración ha caducado.' });
+    const session = await issueSession(user);
+  if (!session) return res.status(401).json({ error: 'Vuelve a iniciar sesión.' });
+  const { token, seconds } = session;
+    res.setHeader('Cache-Control', 'no-store');res.setHeader('Set-Cookie', sessionCookie('nexusgest_token', token, seconds));
+    return res.json({ token, user: publicUser(user), recoveryCodes });
+  } catch (error) { next(error); }
 });
 
-// Obtener perfil actual
-router.get('/me', async (req: Request, res: Response) => {
-  const token = tokenFromRequest(req);
-  if (!token) return res.status(401).json({ error: 'No autorizado' });
+router.post('/portal-login', async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, jwtSecret()) as any;
-    const result = await query('SELECT id, email, full_name, role, phone, avatar_url FROM users WHERE id = $1 AND is_active = true', [decoded.id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
-    }
-    res.json({ user: result.rows[0] });
-  } catch (error) {
-    res.status(401).json({ error: 'Token inválido o expirado' });
+    const identifier = String(req.body?.identifier || '').trim().toLowerCase();const password = String(req.body?.password || '');
+    if (!identifier || identifier.length > 320 || !password || password.length > 1024) return res.status(400).json({ error: 'Revisa tus credenciales.' });
+    const user = (await query(`SELECT u.*,c.id AS client_id FROM users u JOIN clients c ON c.user_id=u.id
+      WHERE u.role='cliente' AND u.is_active=true AND c.status='activo' AND (lower(u.email)=$1 OR lower(c.portal_username)=$1) LIMIT 1`, [identifier])).rows[0];
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
+    return completeLogin(user, res);
+  } catch (error) { next(error); }
+});
+
+router.post('/qa-session', (_req, res) => res.status(404).json({ error: 'No encontrado.' }));
+router.get('/me', requireAuth, (req, res) => { res.setHeader('Cache-Control', 'no-store');res.json({ user: req.user }); });
+router.post('/reauth', requireAuth, async (req, res, next) => {
+  try {
+    const user = (await query('SELECT password_hash,mfa_secret FROM users WHERE id=$1', [req.user!.id])).rows[0];
+    if (!(await bcrypt.compare(String(req.body?.password || ''), user.password_hash))) return res.status(401).json({ error: 'No se pudo verificar el acceso.' });
+    if (req.user!.role !== 'cliente' && !(await consumeMfa(req.user!.id, String(req.body?.code || '').trim()))) return res.status(401).json({ error: 'Código no válido o ya utilizado.' });
+    await query('UPDATE auth_sessions SET password_verified_at=CURRENT_TIMESTAMP WHERE id=$1', [req.sessionId]);
+    res.json({ ok: true });
+  } catch (error) { next(error); }
+});
+
+// Self-service only: account identity and session always come from requireAuth.
+router.post('/change-password', requireAuth, requireRole('admin', 'gestor'), passwordChangeGuard, async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword, code } = req.body || {};
+  if (typeof currentPassword !== 'string' || !currentPassword || currentPassword.length > 1024 ||
+      typeof newPassword !== 'string' || [...newPassword].length < 12 || Buffer.byteLength(newPassword, 'utf8') > 72 ||
+      newPassword !== confirmPassword || newPassword === currentPassword || typeof code !== 'string' || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({ error: 'Revisa los campos: usa una contraseña distinta de al menos 12 caracteres y un máximo de 72 bytes, repítela exactamente e introduce el código de 6 dígitos.' });
   }
+  const db = await pool.connect().catch(() => null);
+  if (!db) return res.status(500).json({ error: 'No se pudo cambiar la contraseña. Inténtalo de nuevo.' });
+  try {
+    await db.query('BEGIN');
+    const user = (await db.query("SELECT * FROM users WHERE id=$1 AND is_active=true AND role IN ('admin','gestor') FOR UPDATE", [req.user!.id])).rows[0];
+    const session = await db.query('SELECT id FROM auth_sessions WHERE id=$1 AND user_id=$2 AND expires_at>CURRENT_TIMESTAMP', [req.sessionId, req.user!.id]);
+    if (!user?.mfa_secret || !session.rows.length) { await db.query('ROLLBACK');return res.status(401).json({ error: 'Vuelve a iniciar sesión.' }); }
+    if (!(await bcrypt.compare(currentPassword, user.password_hash))) { await db.query('ROLLBACK');return res.status(403).json({ error: 'No se pudo confirmar la contraseña actual y el código. Revisa ambos.' }); }
+    // TOTP only, not recovery codes. Counter consumption, hash update and session
+    // revocation share this row lock and commit; failed checks mutate nothing.
+    const timestamp = Date.now();
+    const delta = totp(openSecret(user.mfa_secret)).validate({ token: code, timestamp, window: 1 });
+    const counter = delta === null ? null : Math.floor(timestamp / 30_000) + delta;
+    if (counter === null || (user.mfa_last_counter !== null && counter <= Number(user.mfa_last_counter))) {
+      await db.query('ROLLBACK');return res.status(403).json({ error: 'No se pudo confirmar la contraseña actual y el código. Usa un código nuevo.' });
+    }
+    const hash = await bcrypt.hash(newPassword, 12);
+    await db.query('UPDATE users SET password_hash=$1,mfa_last_counter=$2 WHERE id=$3', [hash, counter, req.user!.id]);
+    await db.query('DELETE FROM auth_sessions WHERE user_id=$1', [req.user!.id]);
+    await db.query('COMMIT');
+    res.setHeader('Set-Cookie', sessionCookie('nexusgest_token', '', 0));
+    return res.json({ ok: true });
+  } catch {
+    await db.query('ROLLBACK').catch(() => undefined);
+    // Never forward SQL/error objects that could contain parameter values.
+    return res.status(500).json({ error: 'No se pudo cambiar la contraseña. Inténtalo de nuevo.' });
+  } finally { db.release(); }
 });
 
-router.post('/logout', (_req: Request, res: Response) => {
-  res.setHeader('Set-Cookie', clearSessionCookies());
-  res.json({ ok: true });
+router.post('/logout', async (req, res, next) => {
+  try {
+    const values = [tokenFromRequest(req), ...(req.headers.cookie || '').split(';').filter(part => /^\s*nexusgest_(?:portal_)?token=/.test(part)).map(part => part.slice(part.indexOf('=') + 1))];
+    for (const token of values) {
+      let claim: any;
+      try { claim = jwt.verify(decodeURIComponent(token || ''), signingKey(), { algorithms: ['HS256'] }); } catch { continue; }
+      if (claim.sid) await query('DELETE FROM auth_sessions WHERE id=$1 AND user_id=$2', [claim.sid, claim.id]);
+    }
+    res.setHeader('Set-Cookie', ['nexusgest_token', 'nexusgest_portal_token'].map(name => sessionCookie(name, '', 0)));res.json({ ok: true });
+  } catch (error) { next(error); }
 });
-
 export default router;

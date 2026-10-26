@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { apiUrl } from '@/lib/api';
 import { formatThousands } from '@/lib/format';
+import { HUURTOESLAG_REQUEST, hasHuurtoeslagRequest, internalStatus, localDate, meetingUrl, nextWorkingDates, persistPortalMessage, portalRecords, type SavedPortalMessage } from './portal-state';
 
 /**
  * Pago del portal del cliente.
@@ -18,7 +19,7 @@ import { formatThousands } from '@/lib/format';
  *
  * Número oficial de RP Asesoría en formato internacional, sin símbolos.
  */
-const WHATSAPP_PAGO = '31685291402';
+const WHATSAPP_PAGO = '31686458008';
 
 interface ClientMessage {
   id: string;
@@ -44,6 +45,7 @@ interface PortalAppointment {
   advisor: string;
   notes?: string;
   created_at?: string;
+  meeting_url?: string;
 }
 
 export default function PortalClientePage() {
@@ -57,10 +59,10 @@ export default function PortalClientePage() {
   const [advisorProfile, setAdvisorProfile] = useState<any>(null);
   const [publicServices, setPublicServices] = useState<any[]>([]);
   const [portalLoading, setPortalLoading] = useState(true);
-  const [portalMessages, setPortalMessages] = useState<Array<{ id: string; body: string; author_name?: string; created_at: string }>>([]);
+  const [portalMessages, setPortalMessages] = useState<SavedPortalMessage[]>([]);
   const [portalMessageDraft, setPortalMessageDraft] = useState('');
   const [portalMessageSending, setPortalMessageSending] = useState(false);
-  const [currentClientIndex] = useState(0);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
   const [showFullBsn, setShowFullBsn] = useState(false);
 
   useEffect(() => {
@@ -90,6 +92,7 @@ export default function PortalClientePage() {
         if (messagesResponse.ok) {
           const messagesData = await messagesResponse.json();
           setPortalMessages(Array.isArray(messagesData.messages) ? messagesData.messages : []);
+          setMessagesLoaded(true);
         }
       } catch {
         setPortalClientData(null);
@@ -113,9 +116,11 @@ export default function PortalClientePage() {
 
   const baseClient = {
     id: '', full_name: '', email: '', phone: '', bsn: '', city: '', address: '', iban: '',
-    digid_status: 'sin_digid', dossier_code: '', dossier_title: '', dossier_status: 'en_preparacion',
-    dossier_progress: 0, refund_amount: 0, monthly_zorg: 0, monthly_huur: 0, advisor: 'Tu gestor',
+    digid_status: '', dossier_code: '', dossier_title: '', dossier_status: '',
+    dossier_progress: null, refund_amount: null, monthly_zorg: null, monthly_huur: null, advisor: 'Tu gestor',
   };
+  const records = portalRecords(portalClientData);
+  const amountLabel = (amount: number | null) => amount === null ? 'Sin importe registrado' : `€ ${formatThousands(amount)}`;
   const firstDossier = portalClientData?.dossiers?.[0];
   const portalRecord = portalClientData?.client || portalClientData;
   const client = portalClientData
@@ -166,14 +171,8 @@ export default function PortalClientePage() {
     if (!body || portalMessageSending) return;
     setPortalMessageSending(true);
     try {
-      const response = await fetch(apiUrl('/portal/messages'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body }),
-      });
-      if (!response.ok) throw new Error('No se pudo enviar el mensaje.');
-      const data = await response.json();
-      setPortalMessages((current) => [...current, data.message]);
+      const message = await persistPortalMessage(apiUrl('/portal/messages'), body);
+      setPortalMessages((current) => [...current, message]);
       setPortalMessageDraft('');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'No se pudo enviar el mensaje.');
@@ -184,26 +183,28 @@ export default function PortalClientePage() {
 
   // Estado de Notificaciones
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationsList, setNotificationsList] = useState([
-    {
-      id: 'n1',
-      title: 'Belastingdienst en Proceso',
-      date: 'Hoy',
-      text: 'Expediente remitido para validación de subsidio Zorgtoeslag.',
-      type: 'info',
-    },
-    {
-      id: 'n2',
-      title: 'Asesor Asignado',
-      date: 'Ayer',
-      text: 'Rony P. ha revisado tu documentación y preparado tu borrador fiscal.',
-      type: 'success',
-    },
-  ]);
-  const [unreadNotifications, setUnreadNotifications] = useState(2);
+  const notificationsList = records.notifications;
+  const [notificationsSeen, setNotificationsSeen] = useState(false);
+  const unreadNotifications = notificationsSeen ? 0 : notificationsList.length;
 
-  // Subsidios interactivos
-  const [huurtoeslagRequested, setHuurtoeslagRequested] = useState(false);
+  const huurtoeslagRequested = hasHuurtoeslagRequest(portalMessages);
+  const [huurtoeslagSending, setHuurtoeslagSending] = useState(false);
+  const huurtoeslagLock = useRef(false);
+  const requestHuurtoeslag = async () => {
+    if (huurtoeslagLock.current || huurtoeslagRequested || !messagesLoaded) return;
+    huurtoeslagLock.current = true;
+    setHuurtoeslagSending(true);
+    try {
+      const message = await persistPortalMessage(apiUrl('/portal/messages'), HUURTOESLAG_REQUEST);
+      setPortalMessages(current => [...current, message]);
+      showToast('Petición guardada para tu gestor. Puedes verla en Mensajes; no es una solicitud oficial.');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'No se pudo guardar la petición.');
+    } finally {
+      huurtoeslagLock.current = false;
+      setHuurtoeslagSending(false);
+    }
+  };
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -306,30 +307,34 @@ export default function PortalClientePage() {
     })));
   }, [portalClientData, displayClientName, client.phone, client.advisor]);
 
-  // Citas pertenecientes al cliente actualmente seleccionado
-  const clientAppointments = allAppointments.filter((a) => {
-    const cleanApt = (a.client_name || '').trim().toLowerCase();
-    const cleanClient = displayClientName.trim().toLowerCase();
-    return cleanApt === cleanClient || cleanApt.includes(cleanClient) || cleanClient.includes(cleanApt);
-  });
+  // /portal/me ya limita las citas al cliente autenticado; no filtrar por nombre mutable.
+  const clientAppointments = allAppointments;
 
   // Próxima cita del cliente (la más cercana no completada)
   const nextClientAppointment =
     clientAppointments
-      .filter((a) => a.status !== 'completada')
-      .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date))[0] || null;
+      .filter((a) => ['pendiente', 'confirmada'].includes(a.status) && `${a.appointment_date}T${a.appointment_time}` >= `${localDate()}T${new Date().toTimeString().slice(0, 8)}`)
+      .sort((a, b) => `${a.appointment_date}T${a.appointment_time}`.localeCompare(`${b.appointment_date}T${b.appointment_time}`))[0] || null;
 
   // MODAL PARA SOLICITAR CITA
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [bookingTopic, setBookingTopic] = useState('Revisión y Firma de Declaración M-Form 2026');
-  const [bookingDate, setBookingDate] = useState('2026-10-16');
-  const [bookingTime, setBookingTime] = useState('11:00');
+  const [bookingTopic, setBookingTopic] = useState('Consulta con mi gestor');
+  const [bookingDate, setBookingDate] = useState(() => nextWorkingDates()[0]);
+  const [bookingTime, setBookingTime] = useState('11:30');
   const [bookingModality, setBookingModality] = useState<'online_meet' | 'llamada' | 'presencial'>('online_meet');
   const [bookingNotes, setBookingNotes] = useState('');
   const [isSubmittingApt, setIsSubmittingApt] = useState(false);
 
+  useEffect(() => {
+    if (showBookingModal && bookingDate < localDate()) setBookingDate(nextWorkingDates()[0]);
+  }, [showBookingModal, bookingDate]);
+
   const handleCreateClientAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (bookingDate < localDate()) {
+      showToast('Elige una fecha actual o futura.');
+      return;
+    }
     setIsSubmittingApt(true);
     try {
       const response = await fetch(apiUrl('/portal/appointments'), {
@@ -360,15 +365,6 @@ export default function PortalClientePage() {
         ? { ...previous, appointments: [data.appointment, ...(previous.appointments || [])] }
         : previous);
 
-      setNotificationsList((prev) => [{
-        id: String(Date.now()),
-        title: 'Solicitud de cita registrada',
-        date: 'Ahora',
-        text: `${bookingTopic} · ${bookingDate} a las ${bookingTime}. Pendiente de revisión por tu gestor.`,
-        type: 'info',
-      }, ...prev]);
-      setUnreadNotifications((count) => count + 1);
-
       setChatMessages((prev) => [...prev, {
         id: String(Date.now()),
         sender: 'ia',
@@ -390,14 +386,7 @@ export default function PortalClientePage() {
   };
 
   // CHAT DEL ASISTENTE VIRTUAL IA DEL CLIENTE
-  const [chatMessages, setChatMessages] = useState<ClientMessage[]>([
-    {
-      id: 'm1',
-      sender: 'ia',
-      text: english ? `👋 Hello ${displayClientName.split(' ')[0]}! I am your **NexusGest Virtual Assistant 24/7**.\n\nI can access your active case **${displayDossierCode}** and answer questions about your **tax refund**, **Zorgtoeslag**, booking an **appointment with your advisor** or Dutch government letters.\n\nHow can I help?` : `👋 ¡Hola ${displayClientName.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest 24/7**.\n\nTengo acceso a tu expediente activo **${displayDossierCode}** y puedo responder cualquier duda sobre tu **devolución de impuestos**, el cobro de tu **Zorgtoeslag**, agendar una **cita con tu gestor** o descifrar las cartas de la **Belastingdienst**.\n\n¿En qué puedo ayudarte?`,
-      time: '10:00',
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState<ClientMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isAiTyping, setIsAiTyping] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -415,11 +404,11 @@ export default function PortalClientePage() {
       {
         id: `m-init-${client.id}`,
         sender: 'ia',
-        text: english ? `👋 Hello ${displayClientName.split(' ')[0]}! I am your **NexusGest Virtual Assistant**.\n\nI have your case **${displayDossierCode}** (*${displayDossierTitle}*) open. Your estimated refund balance is **€ ${formatThousands(client.refund_amount)}** and your next monthly allowance is **€ ${formatThousands(client.monthly_zorg)}/month**.\n\nHow can I advise you?` : `👋 ¡Hola ${displayClientName.split(' ')[0]}! Soy tu **Asistente Virtual NexusGest**.\n\nTengo en pantalla tu expediente **${displayDossierCode}** (*${displayDossierTitle}*). Tu saldo estimado a devolver es de **€ ${formatThousands(client.refund_amount)}** y tu próximo subsidio mensual es de **€ ${formatThousands(client.monthly_zorg)}/mes**.\n\n¿En qué te puedo asesorar?`,
+        text: english ? `Hello ${displayClientName.split(' ')[0]}! This is local guidance, not a live AI service. This chat is not saved or sent to your advisor. Use Messages to contact them. Official decisions and payment dates must be verified with your advisor.` : `¡Hola ${displayClientName.split(' ')[0]}! Esta es una guía local, no un servicio de IA conectado. Este chat no se guarda ni se envía a tu gestor. Usa Mensajes para contactarle. Las decisiones oficiales y fechas de pago deben verificarse con tu gestor.`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
-  }, [currentClientIndex]);
+  }, [client.id, displayClientName, english]);
 
   const handleSendChatMessage = (textToSend?: string) => {
     const message = (textToSend || chatInput).trim();
@@ -436,53 +425,32 @@ export default function PortalClientePage() {
     if (!textToSend) setChatInput('');
     setIsAiTyping(true);
 
-    // Lógica inteligente de respuesta según palabras clave
-    setTimeout(() => {
-      let reply = '';
-      let action: any = undefined;
-      const lower = message.toLowerCase();
-
-      if (lower.includes('pedir cita') || lower.includes('solicitar cita') || lower.includes('agendar') || lower.includes('reunión')) {
-        reply = `¡Por supuesto! Puedes solicitar una sesión individual con tu asesor **Rony P.** eligiendo fecha, hora y modalidad (Google Meet, llamada telefónica o presencial).\n\nHe preparado el formulario para que selecciones el horario que mejor te convenga.`;
-        action = { label: 'Abrir Formulario de Cita', tab: 'citas', action: 'open_booking' };
-        setShowBookingModal(true);
-      } else if (lower.includes('zorgtoeslag') || lower.includes('subsidio') || lower.includes('cobro') || lower.includes('dinero')) {
-        reply = `El subsidio de salud (**Zorgtoeslag**) de **€ ${client.monthly_zorg || 154},00 al mes** lo abona directamente la Belastingdienst en tu cuenta bancaria (**${client.iban}**) el **día 20 de cada mes**.\n\nComo tu solicitud se tramitó en octubre, el primer ingreso incluirá además los meses atrasados que te correspondan con efecto retroactivo.`;
-        action = { label: 'Ver Estado de Subsidios', tab: 'toeslagen' };
-      } else if (lower.includes('carta') || lower.includes('digid') || lower.includes('código') || lower.includes('sms')) {
-        reply = `Cuando te llegue la carta física de la Belastingdienst con el código de activación DigiD a tu dirección (**${displayAddress}**):\n\n1. Entra a la pestaña **Subir Cartas**.\n2. Hazle una foto con tu móvil o sube el archivo PDF.\n3. Nuestro sistema OCR extraerá el código al instante y tu gestor completará la activación en menos de 24 horas.`;
-        action = { label: 'Ir a Subir Cartas', tab: 'documentos' };
-      } else if (lower.includes('devolución') || lower.includes('mform') || lower.includes('m-form') || lower.includes('renta')) {
-        reply = `Tu declaración **M-Form 2026** tiene un saldo estimado a tu favor de **€ ${formatThousands(client.refund_amount)}** gracias a las deducciones por relocalización internacional.\n\nEl expediente se encuentra formalmente presentado ante la oficina fiscal de Heerlen y el plazo medio habitual de resolución oscila entre **3 y 6 semanas**.`;
-        action = { label: 'Consultar Expediente', tab: 'resumen' };
-      } else if (lower.includes('cita') || lower.includes('asesor') || lower.includes('hablar')) {
-        const nextApt = nextClientAppointment;
-        if (nextApt) {
-          reply = `Tienes programada tu próxima sesión con **${nextApt.advisor}** para el día **${nextApt.appointment_date} a las ${nextApt.appointment_time.slice(0, 5)}** (${nextApt.modality === 'online_meet' ? 'Videollamada Google Meet' : nextApt.modality === 'llamada' ? 'Llamada telefónica' : 'Presencial'}).\n\n¿Deseas solicitar otra cita adicional o reprogramarla?`;
-          action = { label: 'Gestionar Mis Citas', tab: 'citas' };
-        } else {
-          reply = `Actualmente no tienes ninguna cita futura agendada. ¿Quieres que agendemos una llamada o videollamada con tu gestor **Rony P.**?`;
-          action = { label: 'Solicitar Nueva Cita', tab: 'citas', action: 'open_booking' };
-        }
-      } else if (lower.includes('factura') || lower.includes('pagar') || lower.includes('ideal')) {
-        reply = `Puedes coordinar el pago de tu factura directamente con tu gestor por **WhatsApp**. Abre la pestaña de facturas para iniciar la conversación con el número y la referencia preparados.`;
-        action = { label: 'Ver Facturas y Pago', tab: 'facturas' };
-      } else {
-        reply = `He registrado tu consulta sobre *"${message}"*. Tu asesor personal **Rony P.** tiene visibilidad de este chat en su CRM y revisará cualquier detalle específico en tu expediente **${displayDossierCode}**.\n\n¿Deseas que te oriente sobre tus **subsidios**, tu **declaración M-Form** o **agendar una cita** directa?`;
-      }
-
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: String(Date.now() + 1),
-          sender: 'ia',
-          text: reply,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          suggestedAction: action,
-        },
-      ]);
-      setIsAiTyping(false);
-    }, 900);
+    let reply = 'Esta consulta permanece solo en esta pantalla. Para enviarla y guardarla para tu gestor, utiliza la pestaña Mensajes.';
+    let action: ClientMessage['suggestedAction'];
+    const lower = message.toLowerCase();
+    if (/cita|agendar|reunión/.test(lower)) {
+      reply = nextClientAppointment
+        ? `Tu próxima cita registrada es el ${nextClientAppointment.appointment_date} a las ${nextClientAppointment.appointment_time.slice(0, 5)}. Estado: ${nextClientAppointment.status}. Una solicitud pendiente no es una cita confirmada.`
+        : 'No consta una cita futura. Puedes solicitarla en el formulario; tu gestor deberá confirmarla.';
+      action = { label: 'Gestionar Mis Citas', tab: 'citas' };
+    } else if (/zorg|huur|subsidio|cobro|dinero|kindgebonden/.test(lower)) {
+      reply = `Importe mensual de Zorgtoeslag registrado: ${amountLabel(records.zorg)}. Importe de Huurtoeslag registrado: ${amountLabel(records.huur)}. No consta una fecha de pago confirmada ni se acredita una concesión oficial desde este chat. Consulta a tu gestor mediante Mensajes.`;
+      action = { label: 'Ver datos de Subsidios', tab: 'toeslagen' };
+    } else if (/carta|digid|código|sms/.test(lower)) {
+      reply = 'Puedes subir la carta o documento en la bóveda para que tu gestor lo revise. La subida no garantiza extracción automática, activación de DigiD ni un plazo de respuesta.';
+      action = { label: 'Subir documento', tab: 'documentos' };
+    } else if (/devolución|mform|m-form|renta/.test(lower)) {
+      reply = `Estimación de devolución registrada: ${amountLabel(records.refund)}. Estado interno: ${internalStatus(client.dossier_status)}. El estado del CRM no acredita una presentación o resolución de la autoridad. Consulta a tu gestor para confirmarlo.`;
+      action = { label: 'Consultar Expediente', tab: 'resumen' };
+    } else if (/factura|pagar|ideal/.test(lower)) {
+      reply = 'Puedes coordinar el pago manual de tu factura con tu gestor por WhatsApp desde Facturas. No se cobra desde la web.';
+      action = { label: 'Ver Facturas y Pago', tab: 'facturas' };
+    }
+    setChatMessages(prev => [...prev, {
+      id: `${Date.now()}-reply`, sender: 'ia', text: reply,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), suggestedAction: action,
+    }]);
+    setIsAiTyping(false);
   };
 
   if (portalLoading) {
@@ -520,7 +488,7 @@ export default function PortalClientePage() {
     if (pendingDocument) return { label: 'Subir documentación pendiente', detail: `Revisa y completa: ${pendingDocument.file_name}`, tab: 'documentos' as const, icon: 'upload_file' };
     if (nextClientAppointment && nextClientAppointment.status === 'pendiente') return { label: 'Confirmar tu cita', detail: `${nextClientAppointment.appointment_date} · ${nextClientAppointment.appointment_time.slice(0, 5)}`, tab: 'citas' as const, icon: 'event_available' };
     if (latestInvoice && latestInvoice.status !== 'pagada') return { label: 'Revisar tu factura', detail: `Referencia ${portalInvoiceRef || 'pendiente'}`, tab: 'facturas' as const, icon: 'receipt_long' };
-    if (client.dossier_status === 'completado' || client.dossier_status === 'aprobado') return { label: 'Expediente completado', detail: 'No tienes acciones pendientes ahora mismo.', tab: 'resumen' as const, icon: 'check_circle' };
+    if (client.dossier_status === 'completado' || client.dossier_status === 'aprobado') return { label: 'Expediente completado en CRM', detail: 'Consulta al gestor para confirmar si quedan acciones pendientes.', tab: 'resumen' as const, icon: 'check_circle' };
     return { label: 'Revisar el estado de tu expediente', detail: 'Consulta el progreso y los próximos pasos con tu gestor.', tab: 'resumen' as const, icon: 'arrow_forward' };
   })();
 
@@ -578,10 +546,10 @@ export default function PortalClientePage() {
               type="button"
               onClick={() => {
                 setShowNotifications(!showNotifications);
-                setUnreadNotifications(0);
+                setNotificationsSeen(true);
               }}
               className="w-9 h-9 rounded-lg border border-slate-800 bg-primary-dark hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition-colors relative"
-              title="Notificaciones oficiales"
+              title="Avisos de registros del gestor"
             >
               <span className="material-symbols-outlined text-[19px]">notifications</span>
               {unreadNotifications > 0 && (
@@ -599,6 +567,7 @@ export default function PortalClientePage() {
                   <button type="button" aria-label="Cerrar notificaciones" onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-white">✕</button>
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {notificationsList.length === 0 && <p className="text-slate-400">No hay avisos de expedientes registrados.</p>}
                   {notificationsList.map((notif) => (
                     <div
                       key={notif.id}
@@ -631,7 +600,7 @@ export default function PortalClientePage() {
           {/* Avatar del Cliente */}
           <div className="flex items-center gap-2.5 border-l border-slate-800 pl-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-mono-data font-bold text-xs flex items-center justify-center shadow-md">
-              {displayClientName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+              {displayClientName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
             </div>
             <div className="flex min-w-0 flex-col text-left">
               <span className="text-xs font-bold text-white truncate max-w-[150px]">{displayClientName}</span>
@@ -684,7 +653,7 @@ export default function PortalClientePage() {
               {english ? `Hello, ${displayClientName.split(' ')[0]}!` : `¡Hola, ${displayClientName.split(' ')[0]}!`}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Tu expediente <strong>{displayDossierTitle}</strong> se encuentra activo y cuenta con acompañamiento administrativo de <strong>{client.advisor}</strong>. La decisión final corresponde siempre a la autoridad competente.
+              Tu expediente <strong>{displayDossierTitle}</strong> muestra el estado interno <strong>{internalStatus(client.dossier_status)}</strong> y cuenta con acompañamiento administrativo de <strong>{client.advisor}</strong>. La decisión final corresponde siempre a la autoridad competente.
             </p>
           </div>
 
@@ -720,26 +689,26 @@ export default function PortalClientePage() {
               <span className="material-symbols-outlined text-blue-400 text-lg">account_balance</span>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono-data text-emerald-400">
-              {client.refund_amount > 0 ? `€ ${formatThousands(client.refund_amount)}` : '€ 0,00'}
+              {amountLabel(records.refund)}
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
-              <span className="text-slate-400">M-Form 2026</span>
-              <span className="text-blue-400 font-semibold">En revisión oficial</span>
+              <span className="text-slate-400">Estimación registrada</span>
+              <span className="text-blue-400 font-semibold">Sin resolución oficial verificada</span>
             </div>
           </div>
 
           {/* Card 2: Subsidios Mensuales Toeslagen */}
           <div className="bg-primary-dark/90 p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span className="font-semibold uppercase tracking-wider text-[10px]">Subsidio Mensual Activo</span>
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Subsidio Mensual Registrado</span>
               <span className="material-symbols-outlined text-emerald-400 text-lg">health_and_safety</span>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono-data text-blue-400">
-              € {client.monthly_zorg + client.monthly_huur},00 <span className="text-xs font-normal text-slate-400">/ mes</span>
+              {amountLabel(records.zorg !== null && records.huur !== null ? records.zorg + records.huur : null)} <span className="text-xs font-normal text-slate-400">/ mes</span>
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
               <span className="text-slate-400">{english ? 'Next payment' : 'Próximo ingreso'}</span>
-              <span className="text-emerald-400 font-semibold font-mono-data">20 de Octubre</span>
+              <span className="text-emerald-400 font-semibold font-mono-data">Sin fecha confirmada</span>
             </div>
           </div>
 
@@ -751,7 +720,7 @@ export default function PortalClientePage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-base sm:text-lg font-bold text-white font-mono-data">
-                {client.digid_status === 'activo' ? '✓ Activo y Operativo' : '⏳ Carta en Tránsito'}
+                {client.digid_status === 'activo' ? 'Activo según registro' : client.digid_status === 'pendiente_activar' ? 'Pendiente de activar' : client.digid_status === 'sin_digid' ? 'Sin DigiD registrado' : 'Sin estado registrado'}
               </span>
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
@@ -902,7 +871,7 @@ export default function PortalClientePage() {
             <div className="space-y-3.5">
               {clientAppointments
                 .filter((apt) => {
-                  if (aptFilter === 'proximas') return apt.status !== 'completada';
+                  if (aptFilter === 'proximas') return ['pendiente', 'confirmada'].includes(apt.status) && `${apt.appointment_date}T${apt.appointment_time}` >= `${localDate()}T${new Date().toTimeString().slice(0, 8)}`;
                   if (aptFilter === 'completadas') return apt.status === 'completada';
                   return true;
                 })
@@ -948,7 +917,7 @@ export default function PortalClientePage() {
                                 ? 'Completada'
                                 : apt.status === 'pendiente'
                                 ? 'Pendiente de confirmación'
-                                : 'Confirmada'}
+                                : apt.status === 'cancelada' ? 'Cancelada' : 'Confirmada'}
                             </span>
                           </div>
 
@@ -973,14 +942,15 @@ export default function PortalClientePage() {
 
                       {/* Acciones directas de la cita */}
                       <div className="flex items-center gap-2 shrink-0">
-                        {apt.modality === 'online_meet' && apt.status !== 'completada' && (
+                        {apt.modality === 'online_meet' && !['completada', 'cancelada'].includes(apt.status) && (
                           <button
                             type="button"
-                            onClick={() => window.open('https://meet.google.com', '_blank')}
+                            disabled={apt.status !== 'confirmada' || !meetingUrl(apt.meeting_url)}
+                            onClick={() => { const url = meetingUrl(apt.meeting_url); if (apt.status === 'confirmada' && url) window.open(url, '_blank', 'noopener,noreferrer'); }}
                             className="h-9 px-3.5 bg-accent hover:bg-accent-dark text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
                           >
                             <span className="material-symbols-outlined text-[16px]">video_call</span>
-                            <span>Unirse a Google Meet</span>
+                            <span>{apt.status === 'confirmada' && meetingUrl(apt.meeting_url) ? 'Unirse a Google Meet' : 'Enlace pendiente del gestor'}</span>
                           </button>
                         )}
 
@@ -1039,96 +1009,44 @@ export default function PortalClientePage() {
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-sm text-white">{english ? 'Case progress:' : 'Progreso de Tramitación:'} {displayDossierCode}</h3>
                     <span className="px-2 py-0.5 rounded bg-accent/20 text-blue-300 font-mono-data text-[10px] font-bold">
-                      {client.dossier_progress}% completado
+                      {records.progress === null ? 'Progreso sin registrar' : `${records.progress}% interno`}
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400">Resolución estimada: 3-5 semanas</span>
+                  <span className="text-xs text-slate-400">Seguimiento interno; sin plazo oficial</span>
                 </div>
                 <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
                   <div
                     className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${client.dossier_progress}%` }}
+                    style={{ width: `${records.progress ?? 0}%` }}
                   ></div>
                 </div>
               </div>
 
               {/* Timeline de Hitos */}
               <div className="space-y-4 pt-2">
-                {/* Hito 1 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-                    <span className="material-symbols-outlined text-[16px]">check</span>
-                  </div>
-                  <div className="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60 flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-bold text-xs sm:text-sm text-white">1. Recopilación de Documentos y BSN Oficial</h5>
-                      <span className="text-[10px] font-mono-data text-emerald-400 font-semibold">Completado</span>
+                {records.steps.length === 0 && <p className="text-xs text-slate-400">No hay hitos del expediente disponibles en el portal. Consulta a tu gestor; esto no indica una presentación ni resolución oficial.</p>}
+                {records.steps.map((step: any) => (
+                  <div key={step.id} className="flex items-start gap-3.5">
+                    <div className={`w-7 h-7 rounded-full ${step.status === 'completed' || (!step.status && step.is_completed) ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-400'} flex items-center justify-center shrink-0 shadow-sm`}>
+                      <span className="material-symbols-outlined text-[16px]">{step.status === 'completed' || (!step.status && step.is_completed) ? 'check' : 'hourglass_top'}</span>
                     </div>
-                    <p className="text-slate-300 text-xs">
-                      Documentación de identidad y certificado de empadronamiento validados por el asesor Rony P.
-                    </p>
+                    <div className="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60 flex-1 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h5 className="font-bold text-xs sm:text-sm text-white">{step.title}</h5>
+                        <span className="text-[10px] font-mono-data text-slate-400">{step.status === 'completed' || (!step.status && step.is_completed) ? 'Completado en CRM' : 'Pendiente en CRM'}</span>
+                      </div>
+                      {step.completed_at && <p className="text-slate-300 text-xs">Registro: {String(step.completed_at).slice(0, 10)}</p>}
+                    </div>
                   </div>
-                </div>
+                ))}
+                {records.dossiers.map((dossier: any) => (
+                  <div key={dossier.id} className="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60 space-y-1">
+                    <h5 className="font-bold text-xs sm:text-sm text-white">{dossier.code} · {dossier.title}</h5>
+                    <p className="text-slate-300 text-xs">{internalStatus(dossier.status)} · {dossier.updated_at || dossier.created_at ? String(dossier.updated_at || dossier.created_at).slice(0, 10) : 'Sin fecha registrada'}</p>
+                    <p className="text-xs text-slate-400">Seguimiento del gestor; no acredita una decisión de la autoridad.</p>
+                  </div>
+                ))}
 
-                {/* Hito 2 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-                    <span className="material-symbols-outlined text-[16px]">check</span>
-                  </div>
-                  <div className="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60 flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-bold text-xs sm:text-sm text-white">2. Presentación telemática a la Belastingdienst</h5>
-                      <span className="text-[10px] font-mono-data text-emerald-400 font-semibold">Completado</span>
-                    </div>
-                    <p className="text-slate-300 text-xs">
-                      Expediente remitido a la oficina fiscal con el certificado tributario oficial de la gestoría.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Hito 3 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center shrink-0 animate-pulse shadow-md">
-                    <span className="material-symbols-outlined text-[16px]">hourglass_top</span>
-                  </div>
-                  <div className="bg-accent/10 p-3.5 rounded-xl border border-blue-500/30 flex-1 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-bold text-xs sm:text-sm text-blue-300">
-                        3. Espera de carta física postal con código DigiD
-                      </h5>
-                      <span className="text-[10px] font-mono-data text-blue-400 font-bold">En curso</span>
-                    </div>
-                    <p className="text-slate-200 text-xs">
-                      Recibirás una carta física por correo en tu buzón de <strong>{displayAddress}</strong>. Cuando la recibas, hazle una foto y súbela en la pestaña &quot;Bóveda de Documentos&quot; para que activemos tu clave en 1 hora.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('documentos')}
-                      className="px-3 py-1 bg-accent hover:bg-accent-dark text-white text-[11px] font-bold rounded-lg transition-colors inline-flex items-center gap-1 shadow-2xs"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">upload</span>
-                      <span>Subir Carta Ahora</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Hito 4 */}
-                <div className="flex items-start gap-3.5 opacity-50">
-                  <div className="w-7 h-7 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center shrink-0 border border-slate-700">
-                    <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
-                  </div>
-                  <div className="bg-slate-800/30 p-3.5 rounded-xl border border-slate-800 flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-bold text-xs sm:text-sm text-slate-400">
-                        4. Resolución definitiva y abono mensual en tu cuenta
-                      </h5>
-                      <span className="text-[10px] font-mono-data text-slate-500">Pendiente</span>
-                    </div>
-                    <p className="text-slate-500 text-xs">
-                      Ingreso mensual del subsidio en tu cuenta bancaria ({client.iban}) y confirmación oficial en PDF.
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -1139,7 +1057,7 @@ export default function PortalClientePage() {
                   <h3 className="font-bold text-sm text-white">{english ? 'Your assigned personal advisor' : 'Tu Asesor Personal Asignado'}</h3>
                   <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span>EN LÍNEA</span>
+                    <span>CONTACTO</span>
                   </span>
                 </div>
 
@@ -1235,10 +1153,10 @@ export default function PortalClientePage() {
                     <h3 className="font-bold text-sm text-white">{english ? 'NexusGest Information Assistant' : 'Asistente informativo NexusGest'}</h3>
                     <span className="px-2 py-0.2 bg-emerald-500/20 text-emerald-400 font-bold text-[9px] rounded-full flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                      <span>EN VIVO</span>
+                      <span>GUÍA LOCAL</span>
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400">Conectado a tu expediente <span className="font-mono-data text-blue-300 font-semibold">{displayDossierCode}</span> y base de datos Belastingdienst</p><p className="mt-1 text-[10px] leading-relaxed text-amber-200/80">Asistente automático: ofrece orientación general y no sustituye la revisión de un profesional ni una decisión oficial.</p>
+                  <p className="text-[11px] text-slate-400">Conectado a tu expediente <span className="font-mono-data text-blue-300 font-semibold">{displayDossierCode}</span> · datos guardados en el portal</p><p className="mt-1 text-[10px] leading-relaxed text-amber-200/80">Guía local: este chat no se guarda ni se envía al gestor. Usa Mensajes para enviar una consulta. No está conectado a la Belastingdienst.</p>
                 </div>
               </div>
 
@@ -1388,20 +1306,20 @@ export default function PortalClientePage() {
                     <span className="material-symbols-outlined text-2xl">medical_services</span>
                   </div>
                   <span className="px-2.5 py-1 bg-accent/20 text-blue-300 text-[10px] font-bold rounded-full border border-blue-400/30">
-                    EN TRÁMITE OFICIAL
+                    {internalStatus(records.dossiers.find((dossier: any) => dossier.category === 'Zorgtoeslag')?.status)}
                   </span>
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-white">Zorgtoeslag (Seguro Médico)</h3>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    Compensación mensual obligatoria del gobierno holandés para sufragar tu póliza de salud en Países Bajos.
+                    Ayuda mensual sujeta a requisitos del gobierno holandés para sufragar tu póliza de salud en Países Bajos.
                   </p>
                 </div>
                 <div className="pt-3 border-t border-slate-800">
-                  <span className="text-[10px] text-slate-400 uppercase font-mono-data">Abono mensual en tu cuenta:</span>
-                  <div className="text-2xl font-extrabold font-mono-data text-blue-400 mt-0.5">€ 154,00 / mes</div>
+                  <span className="text-[10px] text-slate-400 uppercase font-mono-data">Importe mensual registrado:</span>
+                  <div className="text-2xl font-extrabold font-mono-data text-blue-400 mt-0.5">{amountLabel(records.zorg)}</div>
                   <span className="text-[11px] text-emerald-400 font-semibold block mt-1">
-                    ✓ Retroactivo desde el primer mes de empadronamiento
+                    Concesión y retroactividad pendientes de confirmación oficial
                   </span>
                 </div>
               </div>
@@ -1419,28 +1337,25 @@ export default function PortalClientePage() {
                         : 'bg-slate-800 text-slate-400 border-slate-700'
                     }`}
                   >
-                    {huurtoeslagRequested ? 'SOLICITUD ENVIADA' : 'DISPONIBLE PARA SOLICITAR'}
+                    {huurtoeslagRequested ? 'PETICIÓN GUARDADA AL GESTOR' : 'CONSULTAR CON EL GESTOR'}
                   </span>
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-white">Huurtoeslag (Alquiler de Vivienda)</h3>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    Ayuda mensual del gobierno para personas o familias que viven en régimen de alquiler independiente.
+                    Ayuda sujeta a requisitos. Esta petición solicita revisión al gestor, no presenta una solicitud oficial ante la autoridad.
                   </p>
                 </div>
                 <div className="pt-3 border-t border-slate-800">
                   <span className="text-[10px] text-slate-400 uppercase font-mono-data">Estimación mensual:</span>
-                  <div className="text-2xl font-extrabold font-mono-data text-emerald-400 mt-0.5">Hasta € 450,00 / mes</div>
+                  <div className="text-2xl font-extrabold font-mono-data text-emerald-400 mt-0.5">{amountLabel(records.huur)}</div>
                   <button
                     type="button"
-                    onClick={() => {
-                      setHuurtoeslagRequested(true);
-                      showToast('Solicitud de Huurtoeslag enviada al gestor Rony P. para su tramitación.');
-                    }}
-                    disabled={huurtoeslagRequested}
+                    onClick={requestHuurtoeslag}
+                    disabled={huurtoeslagRequested || huurtoeslagSending || !messagesLoaded}
                     className="w-full h-9 mt-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold text-xs rounded-xl transition-colors shadow-2xs"
                   >
-                    {huurtoeslagRequested ? '✓ Solicitado ante el Gestor' : 'Solicitar Este Subsidio Ahora'}
+                    {huurtoeslagSending ? 'Guardando petición…' : huurtoeslagRequested ? '✓ Petición guardada en Mensajes' : !messagesLoaded ? 'Mensajes no disponibles' : 'Pedir revisión al gestor'}
                   </button>
                 </div>
               </div>
@@ -1463,7 +1378,7 @@ export default function PortalClientePage() {
                 </div>
                 <div className="pt-3 border-t border-slate-800">
                   <span className="text-[10px] text-slate-400 uppercase font-mono-data">Estimación mensual:</span>
-                  <div className="text-2xl font-extrabold font-mono-data text-purple-400 mt-0.5">Hasta € 115,00 / hijo</div>
+                  <div className="text-2xl font-extrabold font-mono-data text-purple-400 mt-0.5">Sin importe registrado</div>
                   <button
                     type="button"
                     onClick={() => {
@@ -1662,7 +1577,7 @@ export default function PortalClientePage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-base text-white">Solicitar Cita con Asesor</h4>
-                  <p className="text-[11px] text-slate-400">Asignado: <strong>Rony P. (Gestor Oficial NL)</strong></p>
+                  <p className="text-[11px] text-slate-400">Contacto: <strong>{portalText(advisorProfile?.full_name || client.advisor)}</strong></p>
                 </div>
               </div>
               <button
@@ -1686,7 +1601,8 @@ export default function PortalClientePage() {
                   onChange={(e) => setBookingTopic(e.target.value)}
                   className="w-full h-11 px-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 font-medium"
                 >
-                  <option>Revisión y Firma de Declaración M-Form 2026</option>
+                  <option>Consulta con mi gestor</option>
+                  <option>Revisión y Firma de Declaración M-Form</option>
                   <option>Consulta y Solicitud de Subsidios (Zorgtoeslag / Huurtoeslag)</option>
                   <option>Dudas sobre Carta Postal de la Belastingdienst</option>
                   <option>Activación de Código DigiD y Certificados</option>
@@ -1731,33 +1647,17 @@ export default function PortalClientePage() {
                     required
                     type="date"
                     value={bookingDate}
-                    min="2026-10-10"
+                    min={localDate()}
                     onChange={(e) => setBookingDate(e.target.value)}
                     className="w-full h-11 px-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 font-mono-data"
                   />
                   {/* Píldoras rápidas */}
                   <div className="flex gap-1.5 mt-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setBookingDate('2026-10-12')}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
-                    >
-                      12 Oct
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBookingDate('2026-10-15')}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
-                    >
-                      15 Oct
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBookingDate('2026-10-20')}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
-                    >
-                      20 Oct
-                    </button>
+                    {nextWorkingDates().map(date => (
+                      <button key={date} type="button" onClick={() => setBookingDate(date)} className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">
+                        {new Date(`${date}T12:00:00`).toLocaleDateString(english ? 'en-GB' : 'es-NL', { day: 'numeric', month: 'short' })}
+                      </button>
+                    ))}
                   </div>
                 </div>
 

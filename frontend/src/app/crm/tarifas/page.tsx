@@ -389,7 +389,7 @@ export default function TerminalTarifasPage() {
             Gestión de Tarifas & Precios de Servicios
           </h1>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Modifica las tarifas oficiales en tiempo real. Cualquier cambio se refleja instantáneamente en la web pública, simuladores y facturación.
+            Modifica las tarifas oficiales en tiempo real. Los cambios guardados se usan en el catálogo de la web pública y en nuevos presupuestos de facturación.
           </p>
         </div>
 

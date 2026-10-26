@@ -667,3 +667,52 @@ input[type='number'] {
     display: none !important;
   }
 }
+
+/* Public website only: do not inherit these layout rules in CRM or portal. */
+html:has(.public-site), body:has(.public-site) { overflow-x: visible; }
+.public-site :where(section[id], main[id], [id="main-content"]) { scroll-margin-top: 6rem; }
+.public-site :where(.grid, .flex) > :not(.fixed, .absolute) { min-width: 0; }
+.public-site :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  max-width: 100%; min-width: 0; font-size: 1rem; min-height: 2.75rem;
+}
+.public-site :where(button, summary) { min-height: 2.75rem; }
+.public-site :where(a, button, input, select, textarea) { scroll-margin-block: 7rem; }
+.public-site :where(header a) { min-height: 2.75rem; }
+.public-site .material-symbols-outlined { flex-shrink: 0; }
+.public-site input[type="range"] { background: transparent; }
+@media (max-width: 639px) {
+  .public-site :where(footer a, footer button) { min-height: 2.75rem; display: inline-flex; align-items: center; }
+  .public-site h1 { font-size: clamp(2rem, 8.7vw, 2.5rem); line-height: 1.12; }
+  .public-site h2.text-3xl { font-size: 1.75rem; line-height: 1.2; }
+  .public-site section:is(.py-16, .py-20) { padding-block: 2.75rem; }
+  .public-site section.pt-16 { padding-top: 2.5rem; padding-bottom: 2rem; }
+  .public-site :is(.p-7, .p-8) { padding: 1.25rem; }
+  .public-site :is(.gap-12, .gap-10) { gap: 2rem; }
+  .public-site :is(.mb-20, .mb-12) { margin-bottom: 2rem; }
+  .public-site :is(.text-sm, .text-xs):is(p) { font-size: 1rem; line-height: 1.6; }
+  .public-site footer { padding-block: 2.5rem 1.5rem; font-size: .875rem; }
+  .public-site footer p { font-size: .875rem !important; }
+  .public-site footer > div > .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+  .public-site footer > div > .grid > :is(:first-child, :last-child) { grid-column: 1 / -1; }
+  .public-site footer > div > .grid > :last-child ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1rem; }
+  .public-site footer li { margin-block: 0; }
+  .public-home .public-hero-grid { padding-block: 2rem; gap: 1.75rem; }
+  .public-home #inicio h1 { max-width: 19ch; }
+  .public-home #inicio p.mt-7 { margin-top: 1.25rem; font-size: 1.0625rem; line-height: 1.6; }
+  .public-home #inicio .mt-10 { margin-top: 1.5rem; }
+  .public-home .public-hero-media { aspect-ratio: 5 / 4; }
+  .public-home .public-hero-caption { inset: auto .75rem .75rem; padding: 1rem; }
+  .public-home .public-hero-caption p.text-xl { font-size: 1.125rem; line-height: 1.35; }
+  .public-home #como-funciona { padding-block: 3rem; }
+  .public-home #como-funciona .mt-12 { margin-top: 1.5rem; }
+  .public-home #como-funciona article { padding: 1.25rem; }
+  .public-home #como-funciona h3.mt-8 { margin-top: 1rem; }
+  .public-home #servicios article { padding: 1.25rem; }
+  .public-home #servicios article h3 { margin-top: 1rem; }
+  .public-home #servicios a { min-height: 2.75rem; display: inline-flex; align-items: center; }
+  .public-home .public-portal-media { min-height: 0; aspect-ratio: 5 / 4; }
+  .public-home .public-portal-media > div:last-child { inset: auto 1.25rem 1.25rem; }
+  .public-home .public-portal-media p.text-2xl { font-size: 1.25rem; line-height: 1.35; }
+  .public-home .public-contact-card { padding: 1.25rem; gap: 1.5rem; border-radius: 1.25rem; }
+  .public-home #contacto a { padding-inline: .75rem; }
+}

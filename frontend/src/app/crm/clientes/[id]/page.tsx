@@ -1,24 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { clientFinancials, debtOutstanding, validateClientDetail } from '@/lib/client-ficha';
 
 type ClientDetail = {
   client: Record<string, any>;
-  dossiers?: any[];
-  service_requests?: any[];
-  quotes?: any[];
-  invoices?: any[];
-  appointments?: any[];
-  debts?: any[];
-  documents?: any[];
-  messages?: any[];
-  audit?: any[];
-  tasks?: any[];
+  dossiers?: any[]; service_requests?: any[]; quotes?: any[]; invoices?: any[];
+  appointments?: any[]; debts?: any[]; documents?: any[]; messages?: any[]; audit?: any[]; tasks?: any[];
 };
-
 const money = (value: unknown) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(Number(value || 0));
 const dateLabel = (value: unknown) => {
   if (!value) return '—';
@@ -26,11 +18,11 @@ const dateLabel = (value: unknown) => {
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'CL';
-
 const tabs = [
   ['resumen', 'Resumen', 'dashboard'], ['expedientes', 'Expedientes', 'folder_open'], ['facturacion', 'Facturación', 'receipt_long'], ['deudas', 'Deudas y pagos', 'payments'],
   ['documentos', 'Documentos', 'description'], ['citas', 'Citas', 'calendar_month'], ['mensajes', 'Mensajes', 'chat'], ['historial', 'Historial', 'history'],
 ] as const;
+type PanelKey = Exclude<typeof tabs[number][0], 'resumen'>;
 
 export default function ClienteFichaPage() {
   const params = useParams<{ id: string }>();
@@ -38,7 +30,7 @@ export default function ClienteFichaPage() {
   const [data, setData] = useState<ClientDetail | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('resumen');
+  const [openPanel, setOpenPanel] = useState<PanelKey | null>(null);
   const [actionOpen, setActionOpen] = useState(false);
   const [isGeneratingPortalAccess, setIsGeneratingPortalAccess] = useState(false);
   const [portalAccessNotice, setPortalAccessNotice] = useState<{ username: string; password: string } | null>(null);
@@ -47,23 +39,32 @@ export default function ClienteFichaPage() {
 
   useEffect(() => {
     let active = true;
-    apiFetch('/clients/' + encodeURIComponent(params.id))
-      .then(async (response) => {
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'No se pudo cargar la ficha del cliente.');
-        if (active) setData(payload);
-      })
-      .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : 'Error al cargar el cliente.'); })
+    setLoading(true); setError(''); setData(null); setOpenPanel(null);
+    apiFetch('/clients/' + encodeURIComponent(params.id)).then(async (response) => {
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'No se pudo cargar la ficha del cliente.');
+      validateClientDetail(payload);
+      if (active) setData(payload);
+    }).catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : 'Error al cargar el cliente.'); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [params.id]);
 
-  if (loading) return <main className="h-full p-6" role="status">Cargando ficha del cliente…</main>;
-  if (error || !data?.client) return <main className="h-full space-y-4 p-6"><p role="alert" className="text-red-700">{error || 'Cliente no encontrado.'}</p><Link className="text-blue-700 underline" href="/crm/clientes">Volver al directorio</Link></main>;
+  useEffect(() => {
+    if (!openPanel) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpenPanel(null); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', onKeyDown); };
+  }, [openPanel]);
+
+  if (loading) return <div className="flex h-full min-h-0 items-center justify-center" role="status">Cargando ficha del cliente…</div>;
+  if (error || !data?.client) return <div className="flex h-full min-h-0 flex-col items-center justify-center gap-4 p-6"><p role="alert" className="text-red-700">{error || 'Cliente no encontrado.'}</p><Link className="text-blue-700 underline" href="/crm/clientes">Volver al directorio</Link></div>;
 
   const client = data.client;
   const dossiers = Array.isArray(data.dossiers) ? data.dossiers : [];
-  const serviceRequests = Array.isArray(data.service_requests) ? data.service_requests : [];
+  const activeServices = (Array.isArray(data.service_requests) ? data.service_requests : []).filter((row) => !['completada', 'completado', 'cancelada', 'cancelado', 'rechazada'].includes(String(row.status || '').toLowerCase()));
   const invoices = Array.isArray(data.invoices) ? data.invoices : [];
   const appointments = Array.isArray(data.appointments) ? data.appointments : [];
   const debts = Array.isArray(data.debts) ? data.debts : [];
@@ -176,7 +177,11 @@ export default function ClienteFichaPage() {
           <div className="relative flex items-center gap-2"><Link href={`/crm/clientes?id=${encodeURIComponent(String(client.id))}&edit=1&from=ficha`} className="inline-flex h-10 items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 text-xs font-bold text-blue-700 hover:bg-blue-50"><span className="material-symbols-outlined text-[17px]">edit</span>Editar cliente</Link><button type="button" onClick={() => setActionOpen((value) => !value)} aria-expanded={actionOpen} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-800"><span className="material-symbols-outlined text-[17px]">add</span>Nueva acción<span className="material-symbols-outlined text-[17px]">{actionOpen ? 'expand_less' : 'expand_more'}</span></button>{actionOpen && <div className="absolute right-0 top-12 z-20 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"><button type="button" onClick={() => router.push(`/crm/agenda?client_id=${encodeURIComponent(String(client.id))}&client=${encodeURIComponent(client.full_name)}&from=ficha`)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-blue-50"><span className="material-symbols-outlined text-[16px]">calendar_add_on</span>Nueva cita</button><button type="button" onClick={() => router.push(`/crm/facturacion?client_id=${encodeURIComponent(String(client.id))}&client=${encodeURIComponent(client.full_name)}&action=new-invoice&from=ficha`)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-blue-50"><span className="material-symbols-outlined text-[16px]">receipt_long</span>Nueva factura</button><button type="button" onClick={() => router.push(`/crm/tareas?client_id=${encodeURIComponent(String(client.id))}&client=${encodeURIComponent(client.full_name)}&from=ficha`)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-blue-50"><span className="material-symbols-outlined text-[16px]">task_alt</span>Nueva tarea</button></div>}</div>
         </header>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><div className="grid gap-5 lg:grid-cols-[1.3fr_1fr_230px] lg:items-center"><div className="flex items-center gap-4"><div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-2xl font-extrabold text-[#233b73]">{initials(client.full_name)}</div><div><div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-extrabold">{client.full_name}</h2><span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700"><span className="h-2 w-2 rounded-full bg-emerald-500" />{statusLabel}</span></div><p className="mt-1 text-sm text-slate-600">Tipo: {client.type || 'Particular'} <span className="mx-2 text-slate-300">|</span> Responsable: {client.responsible || 'Equipo gestor'}</p></div></div><div className="grid gap-2 border-slate-200 text-sm text-slate-700 lg:border-l lg:pl-5"><p className="flex items-center gap-2 truncate"><span className="material-symbols-outlined text-[18px]">mail</span>{email}</p><p className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">call</span>{phone}</p><p className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">location_on</span>{client.city || 'Países Bajos'}, {client.country || 'Países Bajos'}</p></div><div className="rounded-xl bg-slate-50 p-3 text-right text-xs text-slate-600"><p>Cliente desde <strong className="float-right text-slate-800">{dateLabel(client.created_at)}</strong></p><p className="mt-3">Última actividad <strong className="float-right text-slate-800">{dateLabel(client.last_activity || client.updated_at)}</strong></p></div></div></section>
+      <section className="grid min-h-0 flex-1 gap-2 overflow-hidden md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.45fr)_minmax(0,1fr)]">
+        <article className="min-h-0 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"><h2 className="mb-2 flex items-center gap-2 text-base font-extrabold"><span className="material-symbols-outlined text-[20px] text-slate-600">person</span>Resumen del cliente</h2><dl className="grid grid-cols-[84px_minmax(0,1fr)] gap-x-2 gap-y-1.5 text-xs sm:grid-cols-[96px_minmax(0,1fr)]"><dt className="text-slate-500">Nombre</dt><dd className="truncate font-semibold">{client.full_name}</dd><dt className="text-slate-500">Tipo</dt><dd className="truncate">{client.type || 'Sin dato'}</dd><dt className="text-slate-500">Estado</dt><dd><span className="rounded-md bg-emerald-50 px-2 py-0.5 font-bold text-emerald-700">{statusLabel}</span></dd><dt className="text-slate-500">Responsable</dt><dd className="truncate">{client.responsible || 'Sin asignar'}</dd><dt className="text-slate-500">Email</dt><dd className="truncate font-semibold text-blue-700">{email}</dd><dt className="text-slate-500">Teléfono</dt><dd className="truncate font-semibold text-blue-700">{phone}</dd><dt className="text-slate-500">Dirección</dt><dd className="truncate">{client.address || 'Sin dato'}</dd><dt className="text-slate-500">Idioma</dt><dd className="truncate">{client.language || 'Sin dato'}</dd><dt className="text-slate-500">Notas</dt><dd className="line-clamp-2">{client.notes || 'Sin notas internas.'}</dd></dl><div className="mt-3 border-t border-slate-100 pt-2"><h3 className="mb-1 flex items-center gap-2 text-sm font-extrabold"><span className="material-symbols-outlined text-[17px]">layers</span>Servicios activos</h3>{activeServices.length ? <div className="flex flex-wrap gap-1.5">{activeServices.slice(0, 3).map((service) => <span key={service.id} className="max-w-full truncate rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">{service.service_title || 'Solicitud de servicio'} · {service.status}</span>)}</div> : <p className="text-xs text-slate-500">No hay solicitudes activas.</p>}</div></article>
+        <div className="grid min-h-0 min-w-0 grid-rows-2 gap-2"><section className="min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"><div className="mb-2 flex items-center justify-between gap-2"><h2 className="flex min-w-0 items-center gap-1.5 truncate text-base font-extrabold"><span className="material-symbols-outlined text-[19px]">receipt_long</span>Facturación reciente</h2><button type="button" onClick={() => open('facturacion')} className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">Ver toda →</button></div><div className="overflow-x-auto"><table className="w-full min-w-[400px] text-left text-xs"><thead className="border-b border-slate-200 text-[11px] uppercase text-slate-500"><tr><th className="py-1.5">Número</th><th>Fecha</th><th>Concepto</th><th>Importe</th><th>Estado</th></tr></thead><tbody className="divide-y divide-slate-100">{invoices.slice(0, 3).map((invoice, index) => <tr key={invoice.id || index}><td className="py-1.5 font-semibold">{invoice.code || invoice.number || '—'}</td><td>{dateLabel(invoice.created_at || invoice.date || invoice.due_date)}</td><td className="max-w-[120px] truncate">{invoice.concept || invoice.items?.[0]?.description || invoice.items?.[0]?.title || 'Sin concepto'}</td><td>{money(invoice.total)}</td><td>{invoice.status || 'Sin estado'}</td></tr>)}{!invoices.length && <tr><td colSpan={5} className="py-4 text-center text-slate-500">No hay facturas.</td></tr>}</tbody></table></div></section><section className="min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"><div className="mb-2 flex items-center justify-between gap-2"><h2 className="flex min-w-0 items-center gap-1.5 truncate text-base font-extrabold"><span className="material-symbols-outlined text-[19px]">folder_open</span>Expedientes recientes</h2><button type="button" onClick={() => open('expedientes')} className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">Ver todos →</button></div><div className="overflow-x-auto"><table className="w-full min-w-[360px] text-left text-xs"><thead className="border-b border-slate-200 text-[11px] uppercase text-slate-500"><tr><th className="py-1.5">Referencia</th><th>Trámite</th><th>Estado</th><th>Fecha</th></tr></thead><tbody className="divide-y divide-slate-100">{dossiers.slice(0, 3).map((row, index) => <tr key={row.id || index}><td className="py-1.5 font-semibold">{row.code || '—'}</td><td className="max-w-[140px] truncate">{row.title || row.category || 'Expediente'}</td><td>{row.status || 'Sin estado'}</td><td>{dateLabel(row.updated_at || row.created_at || row.deadline)}</td></tr>)}{!dossiers.length && <tr><td colSpan={4} className="py-4 text-center text-slate-500">No hay expedientes.</td></tr>}</tbody></table></div></section></div>
+        <div className="grid min-h-0 grid-rows-2 gap-2"><section className="min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"><h2 className="mb-2 flex items-center gap-1.5 text-base font-extrabold"><span className="material-symbols-outlined text-[19px]">calendar_month</span>Próxima acción</h2>{nextAction ? <><div className="rounded-lg border border-blue-200 bg-blue-50 p-2.5"><strong className="block line-clamp-2 text-sm text-blue-800">{nextAction.title || nextAction.kind}</strong><p className="mt-1 text-xs text-slate-600">{nextAction.kind} · {dateLabel(nextAction.date)}</p>{nextAction.notes && <p className="mt-1 line-clamp-2 text-xs text-slate-600">{nextAction.notes}</p>}</div><button type="button" onClick={() => open(nextAction.kind === 'Cita' ? 'citas' : 'expedientes')} className="mt-2 min-h-9 w-full rounded-lg border border-blue-300 text-xs font-bold text-blue-700 hover:bg-blue-50">Abrir {nextAction.kind.toLowerCase()}</button></> : <p className="py-4 text-sm text-slate-500">No hay próximas acciones.</p>}</section><section className="min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"><div className="mb-2 flex items-center justify-between gap-2"><h2 className="flex items-center gap-1.5 text-base font-extrabold"><span className="material-symbols-outlined text-[19px]">euro</span>Deudas y pagos</h2><button type="button" onClick={() => open('deudas')} className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">Ver todas →</button></div>{debts.filter((row) => row.status !== 'deleted').slice(0, 2).map((row, index) => <div key={row.id || index} className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs"><span className="truncate text-slate-500">{row.creditor || 'Acreedor'}</span><strong className="text-right text-red-600">{money(debtOutstanding(row))}</strong><span className="truncate text-slate-500">{row.reference || 'Referencia'}</span><span className="truncate text-right">{dateLabel(row.due_date)}</span></div>)}{!debts.some((row) => row.status !== 'deleted') && <p className="text-sm text-slate-500">No hay deudas pendientes.</p>}</section></div>
+      </section>
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><button type="button" onClick={() => scrollTo('expedientes')} className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm hover:border-blue-300 hover:shadow-md"><span className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-700"><span className="material-symbols-outlined">folder_open</span></span><span><small className="block text-xs text-slate-500">Expedientes activos</small><strong className="text-xl">{dossiers.filter((row) => !['finalizado', 'cerrado'].includes(String(row.status || '').toLowerCase())).length}</strong></span></span><span className="material-symbols-outlined text-slate-400 transition-transform group-hover:translate-x-1">chevron_right</span></button><button type="button" onClick={() => scrollTo('facturacion')} className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm hover:border-emerald-300 hover:shadow-md"><span className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><span className="material-symbols-outlined">bar_chart</span></span><span><small className="block text-xs text-slate-500">Facturado este mes</small><strong className="text-xl">{money(billed)}</strong></span></span><span className="material-symbols-outlined text-slate-400 transition-transform group-hover:translate-x-1">chevron_right</span></button><button type="button" onClick={() => scrollTo('facturacion')} className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm hover:border-amber-300 hover:shadow-md"><span className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-700"><span className="material-symbols-outlined">schedule</span></span><span><small className="block text-xs text-slate-500">Pendiente de cobro</small><strong className="text-xl">{money(pendingInvoices.reduce((sum, row) => sum + Number(row.total || 0), 0))}</strong></span></span><span className="material-symbols-outlined text-slate-400 transition-transform group-hover:translate-x-1">chevron_right</span></button><button type="button" onClick={() => scrollTo('deudas')} className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm hover:border-red-300 hover:shadow-md"><span className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600"><span className="material-symbols-outlined">euro</span></span><span><small className="block text-xs text-slate-500">Deuda pendiente</small><strong className="text-xl text-red-600">{money(debt ? Number(debt.original_amount || 0) - Number(debt.paid_total || debt.paid_amount || 0) : 0)}</strong></span></span><span className="material-symbols-outlined text-slate-400 transition-transform group-hover:translate-x-1">chevron_right</span></button></section>
 

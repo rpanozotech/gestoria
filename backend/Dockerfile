@@ -32,6 +32,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nextjs:nodejs /app/src/db/schema.sql ./dist/db/schema.sql
 
 # Change ownership of application files
 RUN chown -R nextjs:nodejs /app

@@ -1,0 +1,16 @@
+**
+!dist/
+!dist/routes/
+!dist/routes/*.js
+!dist/middleware/
+!dist/middleware/auth.js
+!dist/utils/
+!dist/utils/dossier-number.js
+!dist/utils/auth-security.js
+!Dockerfile.repair
+
+!dist/db/
+!dist/db/migrate.js
+!dist/db/schema.sql
+
+!dist/index.js

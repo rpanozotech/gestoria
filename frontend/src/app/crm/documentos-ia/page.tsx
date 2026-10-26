@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { exportDocumentToDocx } from '@/lib/docxExport';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiUrl } from '@/lib/api';
+import { prepareImageForOcr, startLocalOcrWorker } from '@/lib/local-ocr-worker';
+import { extractDocumentText } from '@/lib/document-text-extraction';
+import { readDocumentAnalysis } from '@/lib/document-analysis';
 import { getToken } from '@/lib/session';
 
 /**
@@ -851,6 +854,7 @@ ${
     type: string;
     previewUrl?: string;
     extractedText: string;
+    extractionError?: string;
     addedAt: string;
   }
 
@@ -865,7 +869,15 @@ ${
     attachedDocs[0]?.extractedText || ''
   );
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisError, setAnalysisError] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionProgress, setExtractionProgress] = useState('');
+  const extractionInProgress = useRef(false);
+  const documentPreviewUrls = useRef(new Set<string>());
+  useEffect(() => () => {
+    documentPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
 
   // Cerrar pantalla completa con la tecla Escape
   useEffect(() => {
@@ -878,66 +890,94 @@ ${
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isAnalyzerMaximized]);
 
-  // Manejo de subida y adjunción de documentos
-  const handleAttachDocs = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  // Extract real file content before it can be submitted to analysis.
+  const handleAttachDocs = async (files: FileList | null) => {
+    if (!files?.length || extractionInProgress.current || isAnalyzing) return;
+    extractionInProgress.current = true;
+    setIsExtracting(true);
+    setDocToAnalyze('');
+    setActiveDocId(null);
+    setAnalysisResult(null);
     const newItems: AttachedDocItem[] = [];
-
-    Array.from(files).forEach((file) => {
-      const isImg = file.type.startsWith('image/');
-      const previewUrl = isImg ? URL.createObjectURL(file) : undefined;
-      const lower = file.name.toLowerCase();
-
-      // Heurística de OCR inteligente según el nombre o tipo del archivo
-      let extracted = '';
-      if (lower.includes('zorg') || lower.includes('toeslag')) {
-        extracted = `Dienst Toeslagen / Belastingdienst\nBetreft: Voorschotbeschikking Zorgtoeslag 2026\nBurgerservicenummer: \nDagtekening: 20 januari 2026\n\nBeschikking:\nUw berekende toetsingsinkomen: € 26.500 per jaar.\nVoorschot per maand: € 123,00\nTotaal over 2026: € 1.476,00\n\nUitbetaling:\nHet bedrag wordt maandelijks rond de 20e dag overgemaakt naar uw opgegeven bankrekening.\n\nBezwaar:\nBent u het niet eens? U heeft 6 weken de tijd na dagtekening om een bezwaarschrift in te dienen.`;
-      } else if (lower.includes('cak') || lower.includes('boete')) {
-        extracted = `Centraal Administratie Kantoor (CAK) - Den Haag\nBetreft: Bestuursrechtelijke premie zorgverzekering / Onverzekerd\nKenmerk: CAK-2026-88129-Z\nDagtekening: 10 februari 2026\n\nConstatering:\nUit controle blijkt dat voor u geen Nederlandse basisverzekering is afgesloten.\nBoetebedrag eerste overtreding: € 496,25\n\nHersteltermijn:\nU dient binnen 3 maanden een geldige zorgverzekering af te sluiten of bewijs van buitenlandse dekking (formulier E106/S1) aan te leveren.\nRechtsmiddel: Bezwaar binnen 6 weken bij CAK Bezwaarschriften.`;
-      } else if (lower.includes('huur') || lower.includes('woning')) {
-        extracted = `Dienst Toeslagen\nBetreft: Definitieve berekening Huurtoeslag 2025\nKenmerk: HT-2025-99214\nDagtekening: 15 januari 2026\n\nRekenhuur: € 780,00 per maand\nVastgesteld gezamenlijk inkomen: € 29.800\nTe veel ontvangen huurtoeslag: € 340,00\n\nTerugbetaling:\nU dient € 340,00 terug te betalen voor 1 maart 2026.\nBezwaartermijn: 6 weken na dagtekening.`;
-      } else {
-        extracted = `Documento Oficial Neerlandés: ${file.name}\nTamaño: ${(file.size / 1024).toFixed(1)} KB\nFecha de digitalización: ${new Date().toLocaleDateString('es-ES')}\n\nTexto extraído (OCR):\nBurgerservicenummer (BSN): \nKenmerk / Referentie: 2026-${Math.floor(10000 + Math.random() * 90000)}\nDagtekening: ${new Date().toLocaleDateString('nl-NL')}\n\nOnderwerp: Officiële mededeling betreffende fiscale of administratieve status.\nTermijn voor actie of bezwaar: 6 weken conform artikel 7:1 Algemene wet bestuursrecht (Awb).`;
-      }
-
-      const item: AttachedDocItem = {
-        id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        name: file.name,
-        size: file.size,
-        type: file.type || (lower.endsWith('.pdf') ? 'application/pdf' : 'document'),
-        previewUrl,
-        extractedText: extracted,
-        addedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      if (file.type.includes('text') || lower.endsWith('.txt') || lower.endsWith('.md')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const txt = (e.target?.result as string) || '';
-          item.extractedText = txt;
-          setDocToAnalyze(txt);
+    let worker: Awaited<ReturnType<typeof startLocalOcrWorker>> | undefined;
+    try {
+      for (const file of Array.from(files)) {
+        setExtractionProgress(`Extrayendo texto: ${file.name}`);
+        const item: AttachedDocItem = {
+          id: crypto.randomUUID(),
+          name: file.name,
+          size: file.size,
+          type: file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'document'),
+          extractedText: '',
+          addedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
-        reader.readAsText(file);
+        try {
+          item.extractedText = await extractDocumentText(file, {
+            image: async (image) => {
+              const input = await prepareImageForOcr(image);
+              if (!worker) {
+                const { createWorker } = await import('tesseract.js');
+                worker = await startLocalOcrWorker(createWorker, setExtractionProgress);
+              }
+              const result = await worker.recognize(input);
+              return result.data.text || '';
+            },
+            pdf: async (pdf) => {
+              const dataUrl = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('No se pudo leer el archivo PDF.'));
+                reader.onabort = () => reject(new Error('Lectura del PDF cancelada.'));
+                reader.readAsDataURL(pdf);
+              });
+              const init = { method: 'POST', body: JSON.stringify({ dataUrl }) };
+              const response = process.env.NODE_ENV === 'production'
+                ? await apiFetch('/ai-local/extract', init)
+                : await fetch(apiUrl('/ai-local/extract'), { ...init, headers: { 'Content-Type': 'application/json' } });
+              if (!response.ok) throw new Error('El PDF no se pudo leer localmente.');
+              const data = await response.json();
+              return typeof data.text === 'string' ? data.text : '';
+            },
+          });
+          if (file.type.startsWith('image/')) {
+            item.previewUrl = URL.createObjectURL(file);
+            documentPreviewUrls.current.add(item.previewUrl);
+          }
+        } catch (error) {
+          item.extractionError = error instanceof Error ? error.message : 'No se pudo leer el documento.';
+        }
+        newItems.push(item);
       }
-
-      newItems.push(item);
-    });
-
-    setAttachedDocs((prev) => [...newItems, ...prev]);
-    if (newItems.length > 0) {
+      setAttachedDocs((prev) => [...newItems, ...prev]);
       setActiveDocId(newItems[0].id);
       setDocToAnalyze(newItems[0].extractedText);
-      showToast(`${newItems.length} documento(s) adjuntado(s) para análisis`);
+      const readableCount = newItems.filter((item) => item.extractedText).length;
+      showToast(`${readableCount} de ${newItems.length} documento(s) con texto extraído`);
+    } finally {
+      try { await worker?.terminate(); } catch { /* Extraction results remain available if worker cleanup fails. */ }
+      extractionInProgress.current = false;
+      setIsExtracting(false);
+      setExtractionProgress('');
+      if (analyzerFileInputRef.current) analyzerFileInputRef.current.value = '';
     }
   };
 
   const handleSelectActiveDoc = (doc: AttachedDocItem) => {
+    if (extractionInProgress.current || isAnalyzing) return;
+    setAnalysisResult(null);
     setActiveDocId(doc.id);
     setDocToAnalyze(doc.extractedText);
   };
 
   const handleRemoveDoc = (docId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (extractionInProgress.current || isAnalyzing) return;
+    const removed = attachedDocs.find((doc) => doc.id === docId);
+    if (removed?.previewUrl) {
+      URL.revokeObjectURL(removed.previewUrl);
+      documentPreviewUrls.current.delete(removed.previewUrl);
+    }
+    setAnalysisResult(null);
     const remaining = attachedDocs.filter((d) => d.id !== docId);
     setAttachedDocs(remaining);
     if (activeDocId === docId && remaining.length > 0) {
@@ -950,6 +990,8 @@ ${
   };
 
   const handleLoadSampleDoc = (sampleType: 'belastingdienst' | 'zorgtoeslag' | 'cak' | 'huurtoeslag') => {
+    if (extractionInProgress.current || isAnalyzing) return;
+    setAnalysisResult(null);
     let name = '';
     let text = '';
     let type = 'application/pdf';
@@ -971,7 +1013,7 @@ ${
 
     const newDoc: AttachedDocItem = {
       id: `doc_${Date.now()}`,
-      name,
+      name: `Ejemplo: ${name}`,
       size: Math.floor(250000 + Math.random() * 300000),
       type,
       extractedText: text,
@@ -985,9 +1027,10 @@ ${
   };
 
   const handleAnalyzeDoc = async () => {
-    if (!docToAnalyze.trim()) return;
+    if (extractionInProgress.current || isAnalyzing || !docToAnalyze.trim()) return;
     setIsAnalyzing(true);
     setAnalysisResult(null);
+    setAnalysisError('');
 
     try {
       const systemPrompt = `Eres un perito experto en análisis de resoluciones y cartas oficiales de Países Bajos. Devuelve EXCLUSIVAMENTE un JSON:
@@ -1016,28 +1059,12 @@ ${
         }),
       });
 
-      const data = await res.json();
-      let parsed = null;
-      try {
-        const clean = data.text.replace(/```json\s*/, '').replace(/```$/, '').trim();
-        parsed = JSON.parse(clean);
-      } catch {
-        parsed = {
-          entity: 'Belastingdienst (Administración Tributaria de los Países Bajos)',
-          documentType: 'Definitieve aanslag inkomstenbelasting 2025',
-          bsn: '',
-          letterDate: '18 de febrero de 2026',
-          deadline: '1 de abril de 2026 / 6 semanas para recurso',
-          financialOutcome: '€ 784,00 a pagar',
-          summaryEs:
-            'Liquidación definitiva con resultado de 784 € a pagar. Si el cliente no está de acuerdo, existe plazo legal de 6 semanas naturales para recurrir (Bezwaarschrift).',
-          recommendedAction: 'Comprobar nóminas (loonstroken) e interponer bezwaarschrift si hay error en deducciones.',
-        };
-      }
+      const parsed = await readDocumentAnalysis(res);
       setAnalysisResult(parsed);
       showToast('Análisis de documento completado');
-    } catch {
-      // ignore
+    } catch (reason) {
+      setAnalysisResult(null);
+      setAnalysisError(reason instanceof Error ? reason.message : 'No se pudo analizar el documento. No se ha generado ningún resultado.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -1046,7 +1073,7 @@ ${
   const handleApplyAnalysisToLetter = () => {
     if (!analysisResult) return;
     setDetails(
-      `Discrepancia en la resolución oficial (${analysisResult.documentType || 'Aanslag'}). ${analysisResult.summaryEs}. Solicitamos rectificación de la cuota (${analysisResult.financialOutcome}) y suspensión de cobro.`
+      `Discrepancia en la resolución oficial (${analysisResult.documentType || 'Aanslag'}). ${analysisResult.summaryEs}. Solicitamos rectificación de la cuota (${analysisResult.financialOutcome || 'Importe no identificado'}) y suspensión de cobro.`
     );
     setActiveView('generador');
     handleGenerate('Redacta un bezwaarschrift formal respondiendo a la resolución analizada.');
@@ -1061,6 +1088,8 @@ ${
           <span className="text-xs font-semibold">{toastMessage}</span>
         </div>
       )}
+
+      {analysisError && <p role="alert" className="shrink-0 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">{analysisError}</p>}
 
       {/* Header Principal */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2 border-b border-surface-container no-print shrink-0">
@@ -1455,7 +1484,8 @@ ${
                 ref={analyzerFileInputRef}
                 type="file"
                 multiple
-                accept=".pdf,image/*,.docx,.doc,.txt,.md"
+                accept=".pdf,image/*,.txt,.md"
+                disabled={isExtracting || isAnalyzing}
                 className="hidden"
                 onChange={(e) => handleAttachDocs(e.target.files)}
               />
@@ -1496,7 +1526,7 @@ ${
                       type="button"
                       onClick={() => analyzerFileInputRef.current?.click()}
                       className="h-8 px-2.5 bg-secondary text-white hover:bg-blue-700 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm transition-colors"
-                      title="Subir documentos PDF, imágenes o Word"
+                      title="Subir PDF, imágenes, TXT o Markdown"
                     >
                       <span className="material-symbols-outlined text-[16px]">upload_file</span>
                       <span>+ Añadir Documentos</span>
@@ -1641,10 +1671,15 @@ ${
                     </div>
                   </div>
 
+                  {isExtracting && <p role="status" className="text-xs text-outline">{extractionProgress || 'Extrayendo texto…'}</p>}
+                  {attachedDocs.find((doc) => doc.id === activeDocId)?.extractionError && (
+                    <p role="alert" className="text-xs text-red-600">{attachedDocs.find((doc) => doc.id === activeDocId)?.extractionError}</p>
+                  )}
                   <textarea
                     rows={13}
                     value={docToAnalyze}
-                    onChange={(e) => setDocToAnalyze(e.target.value)}
+                    readOnly={isExtracting || isAnalyzing}
+                    onChange={(e) => { setDocToAnalyze(e.target.value); setAnalysisResult(null); }}
                     placeholder="Pega aquí el texto completo del documento oficial o arrastra un archivo PDF / foto..."
                   className="w-full flex-1 min-h-[260px] p-3 border border-outline-variant rounded-lg bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none resize-none"
                   />
@@ -1652,7 +1687,7 @@ ${
 
                 <button type="button"
                   onClick={handleAnalyzeDoc}
-                  disabled={isAnalyzing || !docToAnalyze.trim()}
+                  disabled={isExtracting || isAnalyzing || !docToAnalyze.trim()}
                   className="w-full h-10 mt-auto bg-primary text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-[17px] text-amber-400">
@@ -1695,14 +1730,14 @@ ${
                           <span className="text-[10px] text-outline uppercase font-semibold block">Plazo Fatal</span>
                           <span className="font-bold text-rose-700 flex items-center gap-1 mt-0.5">
                             <span className="material-symbols-outlined text-[14px]">event_busy</span>
-                            <span>{analysisResult.deadline || '6 semanas para recurso'}</span>
+                            <span>{analysisResult.deadline || 'Plazo no identificado: revisión manual necesaria'}</span>
                           </span>
                         </div>
 
                         <div className="p-2.5 bg-surface rounded-lg border border-surface-container">
                           <span className="text-[10px] text-outline uppercase font-semibold block">Impacto Económico</span>
                           <span className="font-bold text-slate-900 mt-0.5 block font-mono-data">
-                            {analysisResult.financialOutcome}
+                            {analysisResult.financialOutcome || 'Importe no identificado'}
                           </span>
                         </div>
                       </div>
@@ -1951,7 +1986,7 @@ ${
               <button
                 type="button"
                 onClick={handleAnalyzeDoc}
-                disabled={isAnalyzing || !docToAnalyze.trim()}
+                disabled={isExtracting || isAnalyzing || !docToAnalyze.trim()}
                 className="h-9 px-4 bg-primary text-white rounded-md text-xs font-semibold flex items-center gap-2 shadow-sm hover:bg-slate-800 transition-colors disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-[17px] text-amber-400">
@@ -2065,10 +2100,15 @@ ${
                         )}
                       </div>
                     </div>
-                    <textarea
+                    {isExtracting && <p role="status" className="text-xs text-outline">{extractionProgress || 'Extrayendo texto…'}</p>}
+                  {attachedDocs.find((doc) => doc.id === activeDocId)?.extractionError && (
+                    <p role="alert" className="text-xs text-red-600">{attachedDocs.find((doc) => doc.id === activeDocId)?.extractionError}</p>
+                  )}
+                  <textarea
                       rows={20}
                       value={docToAnalyze}
-                      onChange={(e) => setDocToAnalyze(e.target.value)}
+                      readOnly={isExtracting || isAnalyzing}
+                    onChange={(e) => { setDocToAnalyze(e.target.value); setAnalysisResult(null); }}
                       placeholder="Pega el texto de la carta o arrastra un archivo PDF / foto para analizar..."
                       className="w-full p-4 border border-outline-variant rounded-xl bg-surface font-mono-data text-xs leading-relaxed focus:border-secondary focus:outline-none transition-colors"
                     />
@@ -2077,7 +2117,7 @@ ${
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-surface-container">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] text-outline font-semibold">Cargar ejemplos oficiales:</span>
+                    <span className="text-[11px] text-outline font-semibold">Cargar documentos de ejemplo:</span>
                     <button
                       type="button"
                       onClick={() => handleLoadSampleDoc('belastingdienst')}
@@ -2105,7 +2145,7 @@ ${
 
                   <button type="button"
                     onClick={handleAnalyzeDoc}
-                    disabled={isAnalyzing || !docToAnalyze.trim()}
+                    disabled={isExtracting || isAnalyzing || !docToAnalyze.trim()}
                     className="h-11 px-8 bg-primary text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50 ml-auto"
                   >
                     <span className="material-symbols-outlined text-[18px] text-amber-400">
@@ -2136,7 +2176,7 @@ ${
                       <span className="material-symbols-outlined text-4xl text-outline-variant">find_in_page</span>
                       <p className="font-semibold text-on-surface text-sm">Sin análisis realizado aún</p>
                       <p className="text-outline max-w-sm mx-auto">
-                        Pulsa en &ldquo;Analizar Documento con IA&rdquo; para extraer automáticamente plazos improrrogables de recurso, importes a pagar o devolver y dictamen oficial conforme a la Algemene wet bestuursrecht (Awb).
+                        Pulsa en &ldquo;Analizar Documento con IA&rdquo; para obtener una orientación basada en el texto. El gestor debe comprobar importes, plazos y conclusiones antes de utilizarlos.
                       </p>
                     </div>
                   ) : (
@@ -2152,14 +2192,14 @@ ${
                           <span className="text-[10px] text-rose-900 uppercase font-bold block">Plazo Improrrogable</span>
                           <span className="font-bold text-rose-700 flex items-center gap-1.5 mt-1 text-sm">
                             <span className="material-symbols-outlined text-[16px]">event_busy</span>
-                            <span>{analysisResult.deadline || '6 semanas para recurso'}</span>
+                            <span>{analysisResult.deadline || 'Plazo no identificado: revisión manual necesaria'}</span>
                           </span>
                         </div>
 
                         <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl">
                           <span className="text-[10px] text-emerald-900 uppercase font-bold block">Resultado Económico</span>
                           <span className="font-bold text-emerald-800 mt-1 block font-mono-data text-sm">
-                            {analysisResult.financialOutcome}
+                            {analysisResult.financialOutcome || 'Importe no identificado'}
                           </span>
                         </div>
                       </div>

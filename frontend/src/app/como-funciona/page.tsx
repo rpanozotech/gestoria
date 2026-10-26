@@ -12,7 +12,7 @@ export default function ComoFuncionaPage() {
   const { lang } = useLanguage();
   const english = lang === 'EN';
   return (
-    <div role="main" id="main-content" className="min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
+    <div role="main" id="main-content" className="public-site min-h-screen bg-bg text-text font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
         <PublishedContent pageKey="como-funciona" />
@@ -34,7 +34,7 @@ export default function ComoFuncionaPage() {
               {english ? 'We manage your documents with Dutch authorities in four simple steps. No endless in-person appointments or letters in Dutch.' : 'Gestionamos tu documentación ante la administración holandesa en 4 sencillos pasos. Sin citas presenciales interminables ni cartas en neerlandés.'}
             </p>
 
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
               <Link
                 href="/reservar"
                 className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-md shadow-blue-600/20 transition-all"
