@@ -42,6 +42,7 @@ export default function CRMClientesPage() {
 }
 
 function CRMClientesContent() {
+  const [importedAccess, setImportedAccess] = useState<{ id: string; full_name: string; portal_access: { username: string; password: string } }[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'con_digid' | 'pendientes'>('todos');
 
@@ -134,6 +135,7 @@ function CRMClientesContent() {
       const response = await apiFetch('/clients/import', { method: 'POST', body: JSON.stringify({ csv }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'No se pudo importar el CSV.');
+      setImportedAccess((data.created || []).filter((client: any) => client.portal_access));
       const refreshed = await apiFetch('/clients');
       const refreshedData = await refreshed.json().catch(() => ({}));
       if (Array.isArray(refreshedData.clients)) setClients(refreshedData.clients.map((c: any) => ({ ...c, dossiers: [], quotes: [], invoices: [], appointments: [], service_requests: [], documents: [] })));
@@ -1634,6 +1636,7 @@ function CRMClientesContent() {
 
   return (
     <div className="crm-clientes-reference w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
+      {importedAccess.length > 0 && <section role="dialog" aria-modal="true" aria-label="Accesos de clientes importados" className="fixed inset-0 z-[210] overflow-y-auto bg-slate-950/50 p-6"><div className="mx-auto max-w-xl rounded-xl bg-white p-5"><h2 className="text-lg font-bold">Clientes activos: accesos al portal</h2><p className="my-3 text-sm">Guarda estas claves ahora y entrégalas por un canal privado. Solo se muestran en esta sesión.</p>{importedAccess.map((client) => <dl key={client.id} className="my-3 rounded-lg border p-3"><dt className="font-semibold">{client.full_name}</dt><dd>Usuario: <span className="font-mono">{client.portal_access.username}</span></dd><dd>Contraseña inicial: <span className="font-mono">{client.portal_access.password}</span></dd></dl>)}<button type="button" onClick={() => setImportedAccess([])} className="rounded-lg bg-blue-700 px-4 py-2 text-white">He guardado los accesos</button></div></section>}
       {/* Toast de Notificaciones */}
       {toastMessage && (
         <div
