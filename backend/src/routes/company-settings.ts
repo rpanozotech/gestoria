@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
 
 const router = Router();
-const fields = ['logo_url','commercial_name','legal_name','description','address','city','country','kvk','vat_id','iban','email','phone','footer_text','default_language','quote_prefix','invoice_prefix','number_format'] as const;
+const fields = ['logo_url','commercial_name','legal_name','description','address','city','country','kvk','vat_id','iban','email','phone','footer_text','default_language','quote_prefix','invoice_prefix','number_format','currency','date_format','default_invoice_status','default_quote_status','pdf_template'] as const;
 
 router.get('/', async (_req: Request, res: Response) => {
   const result = await query('SELECT * FROM company_document_settings WHERE id = 1');

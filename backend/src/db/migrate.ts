@@ -232,6 +232,18 @@ export async function migrateDatabase() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     INSERT INTO company_document_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+    ALTER TABLE company_document_settings ADD COLUMN IF NOT EXISTS currency VARCHAR(5) NOT NULL DEFAULT 'EUR';
+    ALTER TABLE company_document_settings ADD COLUMN IF NOT EXISTS date_format VARCHAR(40) NOT NULL DEFAULT 'dd/MM/yyyy';
+    ALTER TABLE company_document_settings ADD COLUMN IF NOT EXISTS default_invoice_status VARCHAR(30) NOT NULL DEFAULT 'pendiente';
+    ALTER TABLE company_document_settings ADD COLUMN IF NOT EXISTS default_quote_status VARCHAR(30) NOT NULL DEFAULT 'borrador';
+    ALTER TABLE company_document_settings ADD COLUMN IF NOT EXISTS pdf_template VARCHAR(50) NOT NULL DEFAULT 'rp-estandar';
+    CREATE TABLE IF NOT EXISTS booking_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+      updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO booking_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
     CREATE TABLE IF NOT EXISTS quote_versions (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), quote_id UUID NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
       version INTEGER NOT NULL, snapshot JSONB NOT NULL, changes JSONB NOT NULL DEFAULT '{}'::jsonb,

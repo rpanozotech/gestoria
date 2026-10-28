@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const items = [
-  { href: '/crm/ajustes-datos-empresa', label: 'Empresa', icon: 'business' },
-  { href: '/crm/asesor-portal', label: 'Perfil y portal', icon: 'badge' },
+  { href: '/crm/ajustes-datos-empresa', label: 'Datos de empresa', icon: 'business' },
+  { href: '/crm/ajustes-horarios', label: 'Horarios y disponibilidad', icon: 'calendar_month' },
+  { href: '/crm/ajustes-sistema', label: 'Preferencias del sistema', icon: 'tune' },
+  { href: '/crm/preferencias-avisos', label: 'Notificaciones', icon: 'notifications' },
+  { href: '/crm/usuarios-permisos', label: 'Usuarios y permisos', icon: 'admin_panel_settings' },
   { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
-  { href: '/crm/preferencias-avisos', label: 'Avisos', icon: 'notifications' },
-  { href: '/crm/contenido', label: 'Web / CMS', icon: 'language' },
-  { href: '/crm/backup', label: 'Copias', icon: 'cloud_download' },
-  { href: '/faq', label: 'Ayuda', icon: 'help' },
+  { href: '/crm/contenido', label: 'CMS', icon: 'language' },
+  { href: '/faq', label: 'Centro de ayuda', icon: 'help' },
 ];
 
 export default function ConfigurationNav() {

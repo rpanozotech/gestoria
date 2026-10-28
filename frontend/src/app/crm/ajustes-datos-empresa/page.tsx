@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import ConfigurationNav from '@/components/crm/ConfigurationNav';
 
-const empty = { logo_url:'', commercial_name:'', legal_name:'', description:'', address:'', city:'', country:'Países Bajos', kvk:'', vat_id:'', iban:'', email:'', phone:'', footer_text:'', default_language:'es', quote_prefix:'PRE', invoice_prefix:'FAC', number_format:'{prefix}-{year}-{number}' };
+const empty = { logo_url:'', commercial_name:'', legal_name:'', description:'', address:'', city:'', country:'Países Bajos', kvk:'', vat_id:'', iban:'', email:'', phone:'', footer_text:'', default_language:'es', quote_prefix:'PRE', invoice_prefix:'FAC', number_format:'{prefix}-{year}-{number}', currency:'EUR', date_format:'dd/MM/yyyy', default_invoice_status:'pendiente', default_quote_status:'borrador', pdf_template:'rp-estandar' };
 type Settings = typeof empty;
 const labels: Array<[keyof Settings,string]> = [['logo_url','Logo (URL)'],['commercial_name','Nombre comercial'],['legal_name','Razón social'],['description','Descripción'],['address','Dirección'],['city','Ciudad'],['country','País'],['kvk','KVK'],['vat_id','BTW-id'],['iban','IBAN'],['email','Email'],['phone','Teléfono'],['footer_text','Texto legal del pie'],['default_language','Idioma predeterminado'],['quote_prefix','Prefijo de presupuestos'],['invoice_prefix','Prefijo de facturas'],['number_format','Formato de numeración']];
 

@@ -171,7 +171,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             ? 'INICIO'
             : pathname === '/crm/clientes' || pathname.startsWith('/crm/clientes/demo-client-1') || pathname.startsWith('/crm/contacto')
               ? 'CLIENTES'
-              : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
+              : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/ajustes-horarios') || pathname.startsWith('/crm/ajustes-sistema') || pathname.startsWith('/crm/preferencias-avisos') || pathname.startsWith('/crm/usuarios-permisos') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
                 ? 'CONFIGURACIÓN'
                 : null;
     if (activeGroup) {
@@ -230,7 +230,11 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       { href: '/crm/chat-ia', label: 'Chat IA', icon: 'chat_bubble_outline', badge: '● En vivo', badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
     ] },
     { label: 'CONFIGURACIÓN', leading: { href: '/crm/ajustes-datos-empresa', label: 'Configuración', icon: 'settings' }, collapsible: true, items: [
-      { href: '/crm/asesor-portal', label: 'Perfil del asesor', icon: 'badge' },
+      { href: '/crm/ajustes-datos-empresa', label: 'Datos de empresa', icon: 'business' },
+      { href: '/crm/ajustes-horarios', label: 'Horarios y disponibilidad', icon: 'calendar_month' },
+      { href: '/crm/ajustes-sistema', label: 'Preferencias del sistema', icon: 'tune' },
+      { href: '/crm/preferencias-avisos', label: 'Notificaciones', icon: 'notifications' },
+      { href: '/crm/usuarios-permisos', label: 'Usuarios y permisos', icon: 'admin_panel_settings' },
       { href: '/crm/integraciones', label: 'Integraciones', icon: 'hub' },
       { href: '/crm/contenido', label: 'CMS', icon: 'language' },
       { href: '/faq', label: 'Centro de ayuda', icon: 'help' },
@@ -329,7 +333,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                       ? pathname.startsWith('/crm/facturacion') || pathname.startsWith('/crm/deudas') || pathname.startsWith('/crm/tarifas')
                       : group.label === 'AUTOMATIZACIÓN'
                         ? pathname.startsWith('/crm/clientes/alta-ia') || pathname.startsWith('/crm/documentos-ia') || pathname.startsWith('/crm/chat-ia')
-                        : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
+                        : pathname.startsWith('/crm/ajustes-datos-empresa') || pathname.startsWith('/crm/ajustes-horarios') || pathname.startsWith('/crm/ajustes-sistema') || pathname.startsWith('/crm/preferencias-avisos') || pathname.startsWith('/crm/usuarios-permisos') || pathname.startsWith('/crm/integraciones') || pathname.startsWith('/crm/asesor-portal') || pathname.startsWith('/crm/contenido') || pathname.startsWith('/crm/backup')
                           || isActivePath(leadingItem.href) || group.items.some((item) => isActivePath(item.href));
 
               const toggleGroup = () => {

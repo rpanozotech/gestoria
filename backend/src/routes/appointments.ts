@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { pool, query } from '../db/index.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { diffChangedFields } from '../utils/audit.js';
+import { buildSlots, getBookingSettings, isSlotConfigured } from './booking-settings.js';
 
 const router = Router();
 
@@ -19,6 +20,7 @@ const requireGestorForLinkedClient = (req: Request, res: Response, next: NextFun
 router.get('/availability', async (req: Request, res: Response) => {
   try {
     const { date } = req.query;
+    const bookingSettings = await getBookingSettings();
     const params: any[] = [];
     let sql = `
       SELECT appointment_date, appointment_time, duration_minutes, status
@@ -33,7 +35,16 @@ router.get('/availability', async (req: Request, res: Response) => {
 
     sql += ' ORDER BY appointment_date ASC, appointment_time ASC';
     const result = await query(sql, params);
-    res.json({ appointments: result.rows });
+    res.json({
+      appointments: result.rows,
+      slots: typeof date === 'string' ? buildSlots(date, bookingSettings) : [],
+      settings: {
+        timezone: bookingSettings.timezone,
+        appointment_duration: bookingSettings.appointment_duration,
+        buffer_minutes: bookingSettings.buffer_minutes,
+        min_notice_minutes: bookingSettings.min_notice_minutes,
+      },
+    });
   } catch (error) {
     console.error('Error consultando disponibilidad:', error);
     res.status(500).json({ error: 'No se pudo consultar la disponibilidad' });
@@ -114,8 +125,14 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
     if (!Number.isInteger(requestedDuration) || requestedDuration < 1 || requestedDuration > 480) {
       return res.status(400).json({ error: 'La duración de la cita no es válida.' });
     }
+    const bookingSettings = await getBookingSettings();
+    if ((source || 'crm') === 'web') {
+      if (!isSlotConfigured(String(appointment_date), String(appointment_time), requestedDuration, bookingSettings)) {
+        return res.status(409).json({ error: 'Ese horario está fuera de la disponibilidad configurada.' });
+      }
+    }
 
-    // Cada cita exige su duración más 15 minutos libres antes de la siguiente.
+    // Cada cita exige su duración más el margen configurado antes de la siguiente.
     // El bloqueo transaccional por fecha serializa la comprobación
     // y la inserción incluso si llegan dos reservas a la vez.
     const client = await pool.connect();
@@ -132,18 +149,18 @@ router.post('/', requireGestorForLinkedClient, async (req: Request, res: Respons
           FROM appointments
           WHERE appointment_date = $1
             AND status NOT IN ('cancelada', 'completada')
-            AND ($2::time < appointment_time + ((COALESCE(duration_minutes, 30) + 15) * interval '1 minute'))
-            AND (($2::time + (($3::int + 15) * interval '1 minute')) > appointment_time)
+            AND ($2::time < appointment_time + ((COALESCE(duration_minutes, 30) + $4::int) * interval '1 minute'))
+            AND (($2::time + (($3::int + $4::int) * interval '1 minute')) > appointment_time)
           LIMIT 1
         `,
-        [appointment_date, appointment_time, requestedDuration]
+        [appointment_date, appointment_time, requestedDuration, bookingSettings.buffer_minutes]
       );
 
       if (conflict.rows.length > 0) {
         await client.query('ROLLBACK');
         transactionOpen = false;
         return res.status(409).json({
-          error: 'Ese horario no está disponible. Respeta la duración de la cita y deja 15 minutos entre citas.',
+          error: `Ese horario no está disponible. Respeta la duración de la cita y deja ${bookingSettings.buffer_minutes} minutos entre citas.`,
         });
       }
 

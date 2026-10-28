@@ -42,6 +42,8 @@ export default function ReservarCitaPage() {
   const [availabilityError, setAvailabilityError] = useState('');
   const [availabilityDate, setAvailabilityDate] = useState('');
   const [availabilityRetry, setAvailabilityRetry] = useState(0);
+  const [configuredSlots, setConfiguredSlots] = useState<string[]>(BOOKING_SLOTS);
+  const [appointmentDuration, setAppointmentDuration] = useState(APPOINTMENT_MINUTES);
   const [bookingError, setBookingError] = useState('');
   const [legalConsent, setLegalConsent] = useState(false);
 
@@ -61,9 +63,9 @@ export default function ReservarCitaPage() {
     return hours * 60 + minutes;
   };
 
-  const isSlotAvailable = (slot: string, appointments = busyAppointments) => {
+  const isSlotAvailable = (slot: string, appointments = busyAppointments, duration = appointmentDuration) => {
     const start = toMinutes(slot);
-    const end = start + APPOINTMENT_MINUTES;
+    const end = start + duration;
     return !appointments.some((appointment) => {
       if (appointment.status === 'cancelada' || appointment.status === 'completada') return false;
       const existingStart = toMinutes(appointment.appointment_time);
@@ -72,7 +74,7 @@ export default function ReservarCitaPage() {
     });
   };
 
-  const availableSlots = availabilityLoading || availabilityError || availabilityDate !== bookDate ? [] : BOOKING_SLOTS.filter((slot) => isSlotAvailable(slot));
+  const availableSlots = availabilityLoading || availabilityError || availabilityDate !== bookDate ? [] : configuredSlots.filter((slot) => isSlotAvailable(slot));
 
   useEffect(() => {
     let cancelled = false;
@@ -95,11 +97,17 @@ export default function ReservarCitaPage() {
         }
       }
 
+      let loadedSlots = BOOKING_SLOTS;
+      let loadedDuration = APPOINTMENT_MINUTES;
       try {
         const response = await fetch(apiUrl(`/appointments/availability?date=${bookDate}`));
         if (!response.ok) throw new Error('No se pudo consultar la disponibilidad.');
         const data = await response.json();
         if (!Array.isArray(data.appointments)) throw new Error('La disponibilidad recibida está incompleta.');
+        loadedSlots = Array.isArray(data.slots) ? data.slots : BOOKING_SLOTS;
+        loadedDuration = Number(data.settings?.appointment_duration) || APPOINTMENT_MINUTES;
+        setConfiguredSlots(loadedSlots);
+        setAppointmentDuration(loadedDuration);
         localAppointments.push(...data.appointments);
       } catch {
         if (!cancelled) {
@@ -119,7 +127,7 @@ export default function ReservarCitaPage() {
         const nextBusy = Array.from(unique.values());
         setBusyAppointments(nextBusy);
         setAvailabilityDate(bookDate);
-        setBookTime((current) => BOOKING_SLOTS.includes(current) && isSlotAvailable(current, nextBusy) ? current : (BOOKING_SLOTS.find((slot) => isSlotAvailable(slot, nextBusy)) || ''));
+        setBookTime((current) => loadedSlots.includes(current) && isSlotAvailable(current, nextBusy, loadedDuration) ? current : (loadedSlots.find((slot) => isSlotAvailable(slot, nextBusy, loadedDuration)) || ''));
         setAvailabilityLoading(false);
       }
     };
@@ -158,7 +166,7 @@ export default function ReservarCitaPage() {
       client_phone: bookPhone,
       appointment_date: bookDate,
       appointment_time: `${bookTime}:00`,
-      duration_minutes: APPOINTMENT_MINUTES,
+      duration_minutes: appointmentDuration,
       modality,
       status: 'pendiente',
       notes: `Reserva realizada desde la web. Email: ${bookEmail}`,
@@ -189,7 +197,7 @@ export default function ReservarCitaPage() {
           title: `Cita Web: ${serviceTitle}`,
           appointment_date: bookDate,
           appointment_time: bookTime,
-          duration_minutes: APPOINTMENT_MINUTES,
+          duration_minutes: appointmentDuration,
           modality,
           legal_consent: true,
           legal_terms_version: '2026-10-07',
