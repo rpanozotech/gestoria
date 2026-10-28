@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiFetch, apiUrl } from '@/lib/api';
 import { createPortalAccess } from '@/lib/portal';
+import { withoutPortalCredentials } from '@/lib/client-draft';
 import { reviewOcrResult } from '@/lib/ocr-review';
 import { buildMultiClientAiConfig } from '@/lib/multi-client-ai-config';
 import { extractExplicitClients } from '@/lib/explicit-client-fields';
@@ -764,7 +765,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
                 postal_code: client.postal_code || existing.postal_code || null,
                 nationality: client.nationality || existing.nationality || null,
                 country: client.country || existing.country || null,
-                status: client.status || existing.status || null,
+                status: existing.status || null,
                 digid_status: client.digid_status || existing.digid_status || null,
                 iban: client.iban || existing.iban || null,
                 city: client.city || existing.city || null,
@@ -795,7 +796,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
               document_review: true,
               city: client.city,
               address: client.address,
-              status: client.status || 'activo',
+              status: 'activo',
               digid_status: client.digid_status || null,
               notes: client.notes || null,
             }),
@@ -859,7 +860,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
             ...client,
             id: clientData.client.id,
             digid_status: client.digid_status || null,
-            status: client.status || 'activo',
+            status: clientData.client.status || 'activo',
             portal_username: clientData.client.portal_username || clientData.portal_access?.username,
             portal_password: clientData.portal_access?.password,
           });
@@ -877,7 +878,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
           method: 'POST',
           body: JSON.stringify({
             source_text: originalImportText || 'Alta manual asistida por IA',
-            result: { clients: persistedClients.map((client) => ({ ...client, bsn: client.bsn ? '••••••••' : '' })) },
+            result: { clients: withoutPortalCredentials(persistedClients.map((client) => ({ ...client, bsn: client.bsn ? '••••••••' : '' }))) },
             client_ids: persistedClients.map((client) => client.id),
           }),
         });
@@ -1040,7 +1041,7 @@ Trámite: Solicitud Subsidio Huurtoeslag (95€). Contrato de alquiler de 950€
 
   const handleSaveDraft = () => {
     try {
-      localStorage.setItem('nexusgest_client_draft', JSON.stringify(detectedClients));
+      localStorage.setItem('nexusgest_client_draft', JSON.stringify(withoutPortalCredentials(detectedClients)));
       showToast('Ficha guardada como borrador.', 'info');
     } catch {
       showToast('No se pudo guardar el borrador.', 'error');

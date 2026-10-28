@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import type { PoolClient } from 'pg';
 import { pool, query } from '../db/index.js';
 import { diffChangedFields } from '../utils/audit.js';
+import { provisionNewClientPortal } from '../utils/portal-provision.js';
 
 const router = Router();
 
@@ -159,9 +160,21 @@ router.post('/import', async (req: Request, res: Response) => {
       const data = Object.fromEntries(headers.map((header: string, i: number) => [header, values[i] || '']));
       if (!data.full_name) { skipped.push({ row: index + 2, reason: 'full_name vacío' }); continue; }
       if (data.email) { const existing = await query('SELECT id FROM clients WHERE lower(email) = lower($1) AND status <> $2 LIMIT 1', [data.email, 'eliminado']); if (existing.rows.length) { skipped.push({ row: index + 2, reason: 'email ya registrado' }); continue; } }
-      const result = await query(`INSERT INTO clients (full_name,email,phone,bsn,address,city,postal_code,country,iban,status,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'activo',$10) RETURNING id,full_name,email`, [data.full_name, data.email || null, data.phone || null, data.bsn || null, data.address || null, data.city || null, data.postal_code || null, data.country || 'Países Bajos', data.iban || null, data.notes || null]);
-      created.push(result.rows[0]);
+      const db = await pool.connect();
+      try {
+        await db.query('BEGIN');
+        const result = await db.query(`INSERT INTO clients (full_name,email,phone,bsn,address,city,postal_code,country,iban,status,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'activo',$10) RETURNING id,full_name,email,status`, [data.full_name, data.email || null, data.phone || null, data.bsn || null, data.address || null, data.city || null, data.postal_code || null, data.country || 'Países Bajos', data.iban || null, data.notes || null]);
+        const client = result.rows[0];
+        const access = await provisionNewClientPortal(db, client);
+        await db.query('COMMIT');
+        created.push({ ...client, portal_username: access.username, portal_access: { username: access.username, password: access.password } });
+      } catch (error: any) {
+        await db.query('ROLLBACK').catch(() => undefined);
+        if (error.code === '23505') { skipped.push({ row: index + 2, reason: 'Identidad ya registrada' }); continue; }
+        throw error;
+      } finally { db.release(); }
     }
+    res.setHeader('Cache-Control', 'no-store');
     res.status(201).json({ created, skipped });
   } catch (error) { console.error('Error importando clientes:', error); res.status(500).json({ error: 'No se pudo importar el CSV' }); }
 });
@@ -271,38 +284,24 @@ router.post('/', async (req: Request, res: Response) => {
       country || 'Países Bajos',
       iban ? iban.trim().toUpperCase() : null,
       digid_status || 'sin_digid',
-      status || 'activo',
+      'activo',
       notes || null,
     ];
 
     const clientResult = await db.query(insertSql, values);
     const client = clientResult.rows[0];
 
-    // Credenciales reales del portal: la clave se muestra una sola vez en la
-    // respuesta y solo el hash queda guardado en PostgreSQL.
-    const baseUsername = full_name.trim()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '').slice(0, 32) || 'cliente';
-    const portalUsername = `${baseUsername}-${crypto.randomBytes(3).toString('hex')}`;
-    const portalPassword = `RP-${crypto.randomBytes(6).toString('base64url')}`;
-    const portalHash = await bcrypt.hash(portalPassword, 12);
-    const userResult = await db.query(
-      `INSERT INTO users (email, password_hash, full_name, role, is_active)
-       VALUES ($1, $2, $3, 'cliente', true) RETURNING id, email, full_name, role`,
-      [`${portalUsername}@portal.local`, portalHash, full_name.trim()]
-    );
-    await db.query(
-      'UPDATE clients SET user_id = $1, portal_username = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
-      [userResult.rows[0].id, portalUsername, client.id]
-    );
-    client.user_id = userResult.rows[0].id;
-    client.portal_username = portalUsername;
+    // New CRM clients are active regardless of an extracted/requested status.
+    const access = await provisionNewClientPortal(db, client);
+    client.user_id = access.userId;
+    client.portal_username = access.username;
 
     await db.query('COMMIT');
     transactionOpen = false;
+    res.setHeader('Cache-Control', 'no-store');
     res.status(201).json({
       client,
-      portal_access: { username: portalUsername, password: portalPassword },
+      portal_access: { username: access.username, password: access.password },
       message: 'Cliente registrado exitosamente',
     });
   } catch (error: any) {
