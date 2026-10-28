@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { apiFetch, apiUrl } from '@/lib/api';
 import { getToken } from '@/lib/session';
+import ConfigurationNav from '@/components/crm/ConfigurationNav';
 
 interface BackupStats {
   counts: {
@@ -264,7 +265,8 @@ export default function CRMBackupPage() {
   };
 
   return (
-    <div className="w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
+    <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-2">
+      <ConfigurationNav />
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-6 right-6 z-[100] bg-emerald-700 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-top duration-300">

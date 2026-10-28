@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import ConfigurationNav from '@/components/crm/ConfigurationNav';
 
 type Integration = {
   channel: 'email' | 'whatsapp';
@@ -57,12 +57,12 @@ export default function IntegracionesPage() {
   };
 
   return (
-    <div className="w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
+    <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-2">
       {/* Header */}
       <header className="shrink-0 pb-1.5 border-b border-surface-container flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-on-surface">Integraciones & Canales de Envío</h1>
+            <h1 className="text-xl font-bold tracking-tight text-on-surface">Configuración · Integraciones</h1>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary/10 text-secondary">
               Email & WhatsApp
             </span>
@@ -73,30 +73,7 @@ export default function IntegracionesPage() {
         </div>
       </header>
 
-      {/* Sub-Tabs de Navegación */}
-      <div className="flex border-b border-surface-container gap-3 shrink-0 text-xs font-semibold">
-        <Link
-          href="/crm/ajustes-datos-empresa"
-          className="pb-1.5 border-b-2 border-transparent text-outline hover:text-on-surface flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-[15px]">business</span>
-          <span>Datos de Empresa</span>
-        </Link>
-        <Link
-          href="/crm/integraciones"
-          className="pb-1.5 border-b-2 border-secondary text-secondary flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-[15px]">hub</span>
-          <span>Integraciones (Email & WhatsApp)</span>
-        </Link>
-        <Link
-          href="/crm/preferencias-avisos"
-          className="pb-1.5 border-b-2 border-transparent text-outline hover:text-on-surface flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-[15px]">notifications</span>
-          <span>Preferencias de Avisos</span>
-        </Link>
-      </div>
+      <ConfigurationNav />
 
       {status && (
         <div role="status" className="rounded-lg border border-secondary/30 bg-secondary/10 p-2.5 text-xs text-on-surface shrink-0">
@@ -105,7 +82,7 @@ export default function IntegracionesPage() {
       )}
 
       {/* Grid de 2 Columnas para Email y WhatsApp a Pantalla Completa */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto no-scrollbar pr-1">
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3 overflow-hidden pr-1">
         {(['email', 'whatsapp'] as const).map((channel) => {
           const item = value(channel);
           const isEmail = channel === 'email';
@@ -113,7 +90,7 @@ export default function IntegracionesPage() {
           return (
             <section
               key={channel}
-              className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col justify-between shadow-xs space-y-3.5"
+              className="bg-surface-container-lowest border border-outline-variant rounded-xl p-3 flex flex-col justify-between shadow-xs space-y-3"
             >
               <div className="space-y-3">
                 {/* Header de canal */}
@@ -125,10 +102,10 @@ export default function IntegracionesPage() {
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-on-surface">
+                      <h2 className="text-[15px] font-bold text-on-surface">
                         {isEmail ? 'Email Transaccional' : 'WhatsApp Business'}
                       </h2>
-                      <p className="text-[11px] text-outline">
+                    <p className="text-xs text-outline">
                         {isEmail ? 'Brevo o Resend para confirmaciones y facturas' : 'Meta Cloud API o Twilio para alertas'}
                       </p>
                     </div>

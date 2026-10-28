@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ConfigurationNav from '@/components/crm/ConfigurationNav';
 
 export default function ContentAdminPage() {
   const [pageKey, setPageKey] = useState('home');
@@ -39,7 +40,7 @@ export default function ContentAdminPage() {
   };
 
   return (
-    <div className="w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
+    <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-2">
       {/* Header */}
       <header className="shrink-0 pb-1.5 border-b border-surface-container flex items-center justify-between">
         <div>
@@ -76,6 +77,8 @@ export default function ContentAdminPage() {
           </button>
         </div>
       </header>
+
+      <ConfigurationNav />
 
       {/* Grid a Pantalla Completa: Editor (8 cols) + Versiones (4 cols) */}
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 overflow-hidden">

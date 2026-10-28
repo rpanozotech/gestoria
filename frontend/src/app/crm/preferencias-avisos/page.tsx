@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import ConfigurationNav from '@/components/crm/ConfigurationNav';
 import { defaultPreferences as defaults, persistedPreferences, pushJson, persistPushSubscription, deletePushSubscription } from '@/lib/push-settings';
 
 const labels: Record<string, { title: string; desc: string; icon: string }> = {
@@ -148,12 +148,12 @@ export default function NotificationPreferencesPage() {
   };
 
   return (
-    <div className="w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
+    <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-2">
       {/* Header */}
       <header className="shrink-0 pb-1.5 border-b border-surface-container flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-on-surface">Preferencias de Avisos & Notificaciones</h1>
+            <h1 className="text-xl font-bold tracking-tight text-on-surface">Configuración · Avisos</h1>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary/10 text-secondary">
               Alertas Push & Sistema
             </span>
@@ -164,30 +164,7 @@ export default function NotificationPreferencesPage() {
         </div>
       </header>
 
-      {/* Sub-Tabs de Navegación */}
-      <div className="flex border-b border-surface-container gap-3 shrink-0 text-xs font-semibold">
-        <Link
-          href="/crm/ajustes-datos-empresa"
-          className="pb-1.5 border-b-2 border-transparent text-outline hover:text-on-surface flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-[15px]">business</span>
-          <span>Datos de Empresa</span>
-        </Link>
-        <Link
-          href="/crm/integraciones"
-          className="pb-1.5 border-b-2 border-transparent text-outline hover:text-on-surface flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-[15px]">hub</span>
-          <span>Integraciones (Email & WhatsApp)</span>
-        </Link>
-        <Link
-          href="/crm/preferencias-avisos"
-          className="pb-1.5 border-b-2 border-secondary text-secondary flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-[15px]">notifications</span>
-          <span>Preferencias de Avisos</span>
-        </Link>
-      </div>
+      <ConfigurationNav />
 
       {notice && (
         <div role="status" className="rounded-lg border border-secondary/30 bg-secondary/10 px-3 py-2 text-xs font-semibold text-on-surface shrink-0">

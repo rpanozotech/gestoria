@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
+import ConfigurationNav from '@/components/crm/ConfigurationNav';
 
 const emptyProfile = { full_name: '', title: '', organization: '', phone: '', email: '', hours: '', online: true, avatar_url: '', bio: '', booking_enabled: true, chat_enabled: true };
 
@@ -38,7 +39,7 @@ export default function AdvisorProfilePage() {
   };
 
   return (
-    <div className="w-full h-full max-h-[calc(100vh-4.6rem)] overflow-hidden flex flex-col gap-2.5">
+    <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-2">
       <header className="shrink-0 pb-2 border-b border-surface-container flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -65,6 +66,8 @@ export default function AdvisorProfilePage() {
           </button>
         </div>
       </header>
+
+      <ConfigurationNav />
 
       {error && (
         <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-800 shrink-0 flex items-center justify-between">
