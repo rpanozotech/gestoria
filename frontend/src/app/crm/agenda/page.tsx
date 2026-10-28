@@ -89,6 +89,19 @@ export default function CRMAgendaPage() {
   };
   return (
     <main className="crm-agenda-reference flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#f3f7fd] text-[#10264c]">
+      <style jsx global>{`
+        /* La agenda debe conservar el encabezado y permitir consultar todas las horas
+           dentro del calendario, sin empujar ni recortar el panel lateral. */
+        .crm-agenda-reference > div.mt-4.grid { grid-template-columns: minmax(0, 1fr) 380px; }
+        .crm-agenda-reference > div.mt-4.grid > section { display: flex; min-height: 0; flex-direction: column; }
+        .crm-agenda-reference > div.mt-4.grid > section > div.grid:nth-child(2) { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+        .crm-agenda-reference > div.mt-4.grid > aside { min-height: 0; overflow: hidden; }
+        .crm-agenda-reference > div.mt-4.grid > aside > section:first-child { max-height: 250px; flex-shrink: 0; overflow-y: auto; }
+        .crm-agenda-reference > div.mt-4.grid > aside > section:last-child { min-height: 0; overflow-y: auto; }
+        @media (max-width: 1100px) {
+          .crm-agenda-reference > div.mt-4.grid { grid-template-columns: minmax(0, 1fr) 340px; }
+        }
+      `}</style>
       <header className="flex shrink-0 items-start justify-between gap-5">
         <div><p className="text-[15px] font-medium text-[#6a7e99]">Agenda y citas</p><h1 className="mt-0.5 text-[40px] font-extrabold leading-[1.05] tracking-[-1.2px]">Agenda</h1><p className="mt-1 text-[16px] text-[#61768e]">Gestiona tus citas y reuniones. Semana del <strong className="text-[#0568e8] capitalize">{formatLongDate(weekDates[0])}.</strong></p></div>
         <div className="flex items-center gap-1.5"><button onClick={() => { setWeekOffset((value) => value - 1); setDayPanelOffset(0); }} aria-label="Semana anterior" className="ml-3 h-10 w-10 rounded-[9px] border border-[#dce6f3] bg-white"><Icon>chevron_left</Icon></button><button onClick={() => { setWeekOffset(0); setDayPanelOffset(0); }} aria-label="Ir a hoy" className="h-10 rounded-[9px] border border-[#dce6f3] bg-white px-4 text-[13px] font-bold"><Icon className="mr-2 align-middle text-[18px]">calendar_month</Icon>Hoy</button><button onClick={() => { setWeekOffset((value) => value + 1); setDayPanelOffset(0); }} aria-label="Semana siguiente" className="h-10 w-10 rounded-[9px] border border-[#dce6f3] bg-white"><Icon>chevron_right</Icon></button></div>
