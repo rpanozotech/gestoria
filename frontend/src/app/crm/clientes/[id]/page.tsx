@@ -165,6 +165,9 @@ export default function ClienteFichaPage() {
       <style jsx global>{`
         /* La ficha 360 ocupa la pantalla útil; el contenido secundario se desplaza dentro de su panel. */
         .crm-client-ficha-canvas { zoom: 0.9; width: 100%; max-width: none; margin-inline: 0; font-size: 14px; }
+        /* El bloque resumen anterior quedó duplicado tras integrar la nueva ficha.
+           Se conserva el marcado durante esta transición, pero no se muestra. */
+        .crm-client-ficha-canvas > section:first-of-type { display: none; }
         .crm-client-ficha-canvas .text-xs,
         .crm-client-ficha-canvas .text-\[10px\],
         .crm-client-ficha-canvas .text-\[11px\] { font-size: 14px; line-height: 1.15; }
